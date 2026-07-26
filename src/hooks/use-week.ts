@@ -1,0 +1,2 @@
+import { useMemo, useState } from 'react';import { addDays,getWeekDates,getStartOfWeek } from '@/services/date-service';
+export function useWeek(){const[anchor,setAnchor]=useState(new Date());const start=useMemo(()=>getStartOfWeek(anchor),[anchor]);const dates=useMemo(()=>getWeekDates(anchor),[anchor]);return{start,dates,previous:()=>setAnchor(d=>addDays(d,-7)),next:()=>setAnchor(d=>addDays(d,7)),today:()=>setAnchor(new Date())}}

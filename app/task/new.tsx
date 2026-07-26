@@ -1,0 +1,2 @@
+import { router,useLocalSearchParams } from 'expo-router';import { TaskForm } from '@/components/task-form';import { usePlanner } from '@/store/planner-store';import { toDateKey } from '@/services/date-service';
+export default function NewTask(){const{date}=useLocalSearchParams<{date?:string}>();const{create}=usePlanner();return <TaskForm initial={undefined} onSave={async input=>{await create({...input,date:date??input.date??toDateKey(new Date())});router.back()}}/>}

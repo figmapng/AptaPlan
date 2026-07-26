@@ -1,0 +1,2 @@
+import { Text,View } from 'react-native';import { colors } from '@/constants/colors';import { SwipeHintIcon } from './swipe-hint-icon';
+export function WeekNavigation(_: {previous?:()=>void;next?:()=>void}){return <View accessibilityLabel="Апталарды ауыстыру үшін оңға немесе солға сырғытыңыз" style={{minHeight:44,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8}}><SwipeHintIcon/><Text style={{fontSize:12,fontWeight:'500',color:colors.secondary}}>Апталарды ауыстыру үшін сырғытыңыз</Text></View>}
