@@ -384,6 +384,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 12,
     backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
   activeRow: {
     backgroundColor: '#FFFFFF',

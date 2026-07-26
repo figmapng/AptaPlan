@@ -349,21 +349,21 @@ function TrashIcon() {
 const styles = StyleSheet.create({
   wrapper: {
     position: 'relative',
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   deleteBg: {
     position: 'absolute',
-    right: 0,
+    right: -42,
     top: 0,
     bottom: 0,
-    width: 60,
+    width: 44,
     justifyContent: 'center',
-    alignItems: 'flex-end',
+    alignItems: 'center',
   },
   deleteBtn: {
-    width: 52,
-    height: 44,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     backgroundColor: '#FFECEC',
     alignItems: 'center',
     justifyContent: 'center',
