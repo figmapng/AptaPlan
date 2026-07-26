@@ -127,7 +127,7 @@ export const TaskRow = React.memo(function TaskRow({
     onPress?.();
   };
 
-  // Swipe Left PanResponder
+  // Swipe Left PanResponder with iOS Apple physics
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -135,7 +135,7 @@ export const TaskRow = React.memo(function TaskRow({
         onStartShouldSetPanResponderCapture: () => false,
         onMoveShouldSetPanResponder: (_, gesture) => {
           if (compact) return false;
-          return Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy);
+          return Math.abs(gesture.dx) > 6 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2;
         },
         onPanResponderGrant: () => {
           if (isSwipingRef) isSwipingRef.current = true;
@@ -145,27 +145,41 @@ export const TaskRow = React.memo(function TaskRow({
         onPanResponderMove: (_, gesture) => {
           onScrollEnabledChange?.(false);
           if (gesture.dx < 0) {
-            const clamped = Math.max(-68, gesture.dx);
+            const dx = gesture.dx;
+            // Apple iOS rubberband physics beyond -64px
+            const clamped = dx < -64 ? -64 + (dx + 64) * 0.35 : dx;
             swipeX.setValue(clamped);
-          } else if (gesture.dx > 0) {
-            swipeX.setValue(Math.min(0, gesture.dx));
+          } else {
+            swipeX.setValue(Math.min(10, gesture.dx * 0.2));
           }
         },
         onPanResponderRelease: (_, gesture) => {
           if (isSwipingRef) isSwipingRef.current = false;
           onScrollEnabledChange?.(true);
-          if (gesture.dx < -30) {
+
+          // Full swipe to delete threshold (iOS long swipe)
+          if (gesture.dx < -160 || gesture.vx < -0.8) {
+            void triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+            executeDeleteAction();
+            return;
+          }
+
+          // Apple spring snap open
+          if (gesture.dx < -28 || gesture.vx < -0.3) {
+            void triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
             Animated.spring(swipeX, {
               toValue: -64,
-              friction: 8,
-              tension: 70,
+              stiffness: 320,
+              damping: 28,
+              mass: 0.8,
               useNativeDriver: false,
             }).start();
           } else {
             Animated.spring(swipeX, {
               toValue: 0,
-              friction: 8,
-              tension: 70,
+              stiffness: 320,
+              damping: 28,
+              mass: 0.8,
               useNativeDriver: false,
             }).start();
           }
@@ -173,7 +187,13 @@ export const TaskRow = React.memo(function TaskRow({
         onPanResponderTerminate: () => {
           if (isSwipingRef) isSwipingRef.current = false;
           onScrollEnabledChange?.(true);
-          Animated.spring(swipeX, { toValue: 0, friction: 8, tension: 70, useNativeDriver: false }).start();
+          Animated.spring(swipeX, {
+            toValue: 0,
+            stiffness: 320,
+            damping: 28,
+            mass: 0.8,
+            useNativeDriver: false,
+          }).start();
         },
       }),
     [compact, swipeX, isSwipingRef, onScrollEnabledChange]
