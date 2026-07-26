@@ -95,24 +95,6 @@ function SortableRowItem<T>({
     return Animated.multiply(dragHandleOpacity, fade);
   }, [dragHandleOpacity, swipeXAnim]);
 
-  const trashOpacity = React.useMemo(() => {
-    if (!swipeXAnim) return 0;
-    return swipeXAnim.interpolate({
-      inputRange: [-48, -10, 0],
-      outputRange: [1, 0, 0],
-      extrapolate: 'clamp',
-    });
-  }, [swipeXAnim]);
-
-  const redBgWidth = React.useMemo(() => {
-    if (!swipeXAnim) return 0;
-    return swipeXAnim.interpolate({
-      inputRange: [-260, -64, 0],
-      outputRange: [260, 60, 0],
-      extrapolate: 'clamp',
-    });
-  }, [swipeXAnim]);
-
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -144,10 +126,6 @@ function SortableRowItem<T>({
         },
       ];
 
-  const translateXStyle = swipeXAnim
-    ? { transform: [{ translateX: swipeXAnim }] }
-    : undefined;
-
   return (
     <Animated.View
       style={rowStyle}
@@ -156,39 +134,10 @@ function SortableRowItem<T>({
         if (h > 0) onLayout(index, h);
       }}
     >
-      {/* Apple Reminders Dynamic Expandable Red Pill Background */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          right: 2,
-          top: 2,
-          bottom: 2,
-          width: redBgWidth,
-          backgroundColor: '#FF3B30',
-          borderRadius: 14,
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          zIndex: 1,
-        }}
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Тапсырманы өшіру"
-          onPress={() => onDeleteRef.current?.()}
-          style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Animated.View style={{ alignItems: 'center', justifyContent: 'center', opacity: trashOpacity }}>
-            <TrashIcon color="white" />
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: '600', marginTop: 2 }}>Өшіру</Text>
-          </Animated.View>
-        </Pressable>
-      </Animated.View>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, zIndex: 2 }}>
-        <Animated.View style={[styles.contentWrapper, translateXStyle]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, overflow: 'visible' }}>
+        <View style={styles.contentWrapper}>
           {renderItem(item, isActive, index, totalCount, handleSwipeX, onScrollEnabledChange)}
-        </Animated.View>
+        </View>
         <View style={styles.handleContainer} collapsable={false}>
           <Animated.View {...panResponder.panHandlers} style={{ opacity: dragOpacity }}>
             <DragHandle active={isActive} />

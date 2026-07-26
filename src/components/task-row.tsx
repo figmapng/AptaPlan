@@ -127,6 +127,8 @@ export const TaskRow = React.memo(function TaskRow({
     onPress?.();
   };
 
+  const hasVibrated = useRef(false);
+
   // Swipe Left PanResponder with iOS Apple physics
   const panResponder = useMemo(
     () =>
@@ -141,6 +143,7 @@ export const TaskRow = React.memo(function TaskRow({
           if (isSwipingRef) isSwipingRef.current = true;
           onScrollEnabledChange?.(false);
           swipeX.stopAnimation();
+          hasVibrated.current = false;
         },
         onPanResponderMove: (_, gesture) => {
           onScrollEnabledChange?.(false);
@@ -149,6 +152,14 @@ export const TaskRow = React.memo(function TaskRow({
             // Apple iOS rubberband physics beyond -64px
             const clamped = dx < -64 ? -64 + (dx + 64) * 0.35 : dx;
             swipeX.setValue(clamped);
+
+            // iPhone Haptic Vibration when swiped to delete threshold (-140px)
+            if (gesture.dx < -140 && !hasVibrated.current) {
+              hasVibrated.current = true;
+              void triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+            } else if (gesture.dx >= -140) {
+              hasVibrated.current = false;
+            }
           } else {
             swipeX.setValue(Math.min(10, gesture.dx * 0.2));
           }
@@ -156,10 +167,11 @@ export const TaskRow = React.memo(function TaskRow({
         onPanResponderRelease: (_, gesture) => {
           if (isSwipingRef) isSwipingRef.current = false;
           onScrollEnabledChange?.(true);
+          hasVibrated.current = false;
 
           // Full swipe to delete threshold (iOS long swipe)
-          if (gesture.dx < -160 || gesture.vx < -0.8) {
-            void triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+          if (gesture.dx < -140 || gesture.vx < -0.8) {
+            void triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
             executeDeleteAction();
             return;
           }
@@ -169,7 +181,7 @@ export const TaskRow = React.memo(function TaskRow({
             void triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
             Animated.spring(swipeX, {
               toValue: -64,
-              stiffness: 320,
+              stiffness: 340,
               damping: 28,
               mass: 0.8,
               useNativeDriver: false,
@@ -177,7 +189,7 @@ export const TaskRow = React.memo(function TaskRow({
           } else {
             Animated.spring(swipeX, {
               toValue: 0,
-              stiffness: 320,
+              stiffness: 340,
               damping: 28,
               mass: 0.8,
               useNativeDriver: false,
@@ -187,9 +199,10 @@ export const TaskRow = React.memo(function TaskRow({
         onPanResponderTerminate: () => {
           if (isSwipingRef) isSwipingRef.current = false;
           onScrollEnabledChange?.(true);
+          hasVibrated.current = false;
           Animated.spring(swipeX, {
             toValue: 0,
-            stiffness: 320,
+            stiffness: 340,
             damping: 28,
             mass: 0.8,
             useNativeDriver: false,
@@ -226,6 +239,14 @@ export const TaskRow = React.memo(function TaskRow({
           {
             opacity: rowOpacity,
             transform: [{ translateX: swipeX }],
+            backgroundColor: swipeX.interpolate({
+              inputRange: [-10, 0],
+              outputRange: ['#F2F2F7', 'transparent'],
+              extrapolate: 'clamp',
+            }),
+            borderRadius: 12,
+            paddingVertical: 4,
+            paddingHorizontal: 4,
           },
         ]}
       >
@@ -308,6 +329,51 @@ export const TaskRow = React.memo(function TaskRow({
           )}
           </Animated.View>
         </Pressable>
+
+        {/* Apple Reminders Dynamic Red Delete Pill Attached Directly to Right Edge */}
+        {!compact && (
+          <Animated.View
+            style={{
+              position: 'absolute',
+              left: '100%',
+              top: 2,
+              bottom: 2,
+              width: swipeX.interpolate({
+                inputRange: [-300, -64, 0],
+                outputRange: [300, 64, 0],
+                extrapolate: 'clamp',
+              }),
+              backgroundColor: '#FF3B30',
+              borderRadius: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              marginLeft: 4,
+            }}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Тапсырманы өшіру"
+              onPress={executeDeleteAction}
+              style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Animated.View
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: swipeX.interpolate({
+                    inputRange: [-48, -10, 0],
+                    outputRange: [1, 0, 0],
+                    extrapolate: 'clamp',
+                  }),
+                }}
+              >
+                <TrashIcon color="white" />
+                <Text style={{ color: 'white', fontSize: 10, fontWeight: '600', marginTop: 2 }}>Өшіру</Text>
+              </Animated.View>
+            </Pressable>
+          </Animated.View>
+        )}
       </Animated.View>
     </View>
   );
@@ -327,12 +393,12 @@ function RepeatIcon({ color = '#707684' }: { color?: string }) {
   );
 }
 
-function TrashIcon() {
+function TrashIcon({ color = 'white' }: { color?: string }) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
       <Path
         d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"
-        stroke="#FF4B3E"
+        stroke={color}
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
