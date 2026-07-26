@@ -94,10 +94,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     await loadRange(dateKey, dateKey);
   }, [loadRange]);
 
-  const targetHeight = Math.min(
-    height - insets.top - 102,
-    Math.max(270, 106 + Math.min(transition?.tasks.length ?? 0, 5) * 54)
-  );
+  const taskCount = transition?.tasks.length ?? 0;
+  const contentHeight = taskCount === 0 ? 112 : 48 + 10 + taskCount * 46 + 8;
+  const maxHeight = height - insets.top - insets.bottom - 110;
+  const targetHeight = Math.min(maxHeight, contentHeight);
 
   const openCard = (date: Date, tasks: Task[], frame: Frame) => {
     if (transitionRef.current) return;
@@ -462,7 +462,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     scrollYRef.current = e.nativeEvent.contentOffset.y;
                   }}
                   scrollEventThrottle={16}
-                  contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 16 }}
+                  contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 8 }}
                 >
                   {dayTasks.length ? (
                     <SortableTaskList
