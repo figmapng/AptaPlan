@@ -276,7 +276,6 @@ export function DayCard({
             borderWidth: 1,
             borderColor: cardBorderColor,
             overflow: 'hidden',
-            boxShadow: '0 1px 3px rgba(31,32,38,0.035)',
             opacity: isTransitioning ? 0 : wideOpacity,
             height: wideHeight,
             marginTop: wideMarginTop,
@@ -303,7 +302,6 @@ export function DayCard({
         borderWidth: 1,
         borderColor: cardBorderColor,
         overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(31,32,38,0.035)',
         opacity: isTransitioning ? 0 : 1,
       }}
     >

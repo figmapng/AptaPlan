@@ -362,10 +362,8 @@ const styles = StyleSheet.create({
   },
   activeRow: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   contentWrapper: {
     flex: 1,

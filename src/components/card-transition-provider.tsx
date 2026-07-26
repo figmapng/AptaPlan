@@ -321,7 +321,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 borderCurve: 'continuous',
                 borderWidth: 1,
                 borderColor: today ? colors.activeCardBorder : colors.cardBorder,
-                boxShadow: '0 4px 16px rgba(31,32,38,0.12)',
               }}
             >
               {/* Header Morphing with Swipe down responder */}
@@ -351,15 +350,20 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   style={{
                     backgroundColor: today ? 'white' : '#F0F0F2',
                     borderRadius: 6,
-                    paddingHorizontal: 6,
+                    paddingHorizontal: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [6, 8],
+                    }),
                     paddingVertical: 3,
+                    flexDirection: 'row',
+                    alignItems: 'center',
                   }}
                 >
                   <Animated.Text
                     style={{
                       fontSize: progress.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [12, 13],
+                        outputRange: [12, 14],
                       }),
                       fontWeight: '600',
                       color: today ? colors.activeHeaderBg : weekend ? colors.sundayText : colors.dateNumText,
@@ -367,6 +371,20 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     }}
                   >
                     {format(day!, 'dd')}
+                  </Animated.Text>
+                  <Animated.Text
+                    style={{
+                      opacity: progress,
+                      fontSize: 14,
+                      fontWeight: '600',
+                      color: today ? colors.activeHeaderBg : weekend ? colors.sundayText : colors.dateNumText,
+                      marginLeft: progress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 4],
+                      }),
+                    }}
+                  >
+                    {months[day!.getMonth()]}
                   </Animated.Text>
                 </Animated.View>
                 <Animated.Text
@@ -380,7 +398,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   }}
                 >
                   {weekdays[day!.getDay()]}
-                  <Animated.Text style={{ opacity: progress, fontSize: 14, fontWeight: '500' }}> {months[day!.getMonth()]}</Animated.Text>
                 </Animated.Text>
 
                 {/* Completion Counter Badge */}
