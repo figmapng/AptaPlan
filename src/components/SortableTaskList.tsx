@@ -147,10 +147,10 @@ function SortableRowItem<T>({
         if (h > 0) onLayout(index, h);
       }}
     >
-      <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', flex: 1 }, translateXStyle]}>
-        <View style={styles.contentWrapper}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+        <Animated.View style={[styles.contentWrapper, translateXStyle]}>
           {renderItem(item, isActive, index, totalCount, handleSwipeX, onScrollEnabledChange)}
-        </View>
+        </Animated.View>
         <View style={styles.handleContainer} collapsable={false}>
           <Animated.View {...panResponder.panHandlers} style={{ opacity: dragOpacity }}>
             <DragHandle active={isActive} />
@@ -175,7 +175,7 @@ function SortableRowItem<T>({
             </Pressable>
           </Animated.View>
         </View>
-      </Animated.View>
+      </View>
     </Animated.View>
   );
 }
