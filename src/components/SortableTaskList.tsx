@@ -21,7 +21,7 @@ function DragHandle({ active, opacity }: { active?: boolean; opacity?: any }) {
 interface Props<T> {
   data: T[];
   onReorder: (newData: T[]) => void;
-  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value) => void) => React.ReactNode;
+  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value) => void, onScrollEnabledChange?: (enabled: boolean) => void) => React.ReactNode;
   keyExtractor: (item: T) => string;
   onScrollEnabledChange?: (enabled: boolean) => void;
   onAutoScroll?: (offsetDelta: number) => void;
@@ -37,7 +37,8 @@ interface RowItemProps<T> {
   dragYAnim: Animated.Value;
   shiftAnim: Animated.Value;
   dragHandleOpacity?: any;
-  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value) => void) => React.ReactNode;
+  onScrollEnabledChange?: (enabled: boolean) => void;
+  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value) => void, onScrollEnabledChange?: (enabled: boolean) => void) => React.ReactNode;
   onLayout: (index: number, height: number) => void;
   onGrant: (index: number) => void;
   onMove: (dy: number, moveY: number) => void;
@@ -53,6 +54,7 @@ function SortableRowItem<T>({
   dragYAnim,
   shiftAnim,
   dragHandleOpacity,
+  onScrollEnabledChange,
   renderItem,
   onLayout,
   onGrant,
@@ -109,6 +111,10 @@ function SortableRowItem<T>({
         },
       ];
 
+  const translateXStyle = swipeXAnim
+    ? { transform: [{ translateX: swipeXAnim }] }
+    : undefined;
+
   return (
     <Animated.View
       style={rowStyle}
@@ -117,12 +123,14 @@ function SortableRowItem<T>({
         if (h > 0) onLayout(index, h);
       }}
     >
-      <View style={styles.contentWrapper}>
-        {renderItem(item, isActive, index, totalCount, handleSwipeX)}
-      </View>
-      <View {...panResponder.panHandlers} style={styles.handleContainer} collapsable={false}>
-        <DragHandle active={isActive} opacity={handleOpacity} />
-      </View>
+      <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', flex: 1 }, translateXStyle]}>
+        <View style={styles.contentWrapper}>
+          {renderItem(item, isActive, index, totalCount, handleSwipeX, onScrollEnabledChange)}
+        </View>
+        <View {...panResponder.panHandlers} style={styles.handleContainer} collapsable={false}>
+          <DragHandle active={isActive} opacity={dragHandleOpacity} />
+        </View>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -348,6 +356,7 @@ export function SortableTaskList<T>({
               dragYAnim={dragY}
               shiftAnim={getShiftAnim(keyStr)}
               dragHandleOpacity={dragHandleOpacity}
+              onScrollEnabledChange={onScrollEnabledChange}
               renderItem={renderItem}
               onLayout={handleLayout}
               onGrant={handleGrant}

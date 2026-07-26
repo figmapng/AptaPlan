@@ -16,6 +16,7 @@ export const TaskRow = React.memo(function TaskRow({
   onPendingDelete,
   isSwipingRef,
   onSwipeX,
+  onScrollEnabledChange,
 }: {
   task: Task;
   compact?: boolean;
@@ -26,6 +27,7 @@ export const TaskRow = React.memo(function TaskRow({
   onPendingDelete?: (task: Task) => void;
   isSwipingRef?: React.RefObject<boolean>;
   onSwipeX?: (anim: Animated.Value) => void;
+  onScrollEnabledChange?: (enabled: boolean) => void;
 }) {
   const { toggle, settings } = usePlanner();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -133,12 +135,15 @@ export const TaskRow = React.memo(function TaskRow({
         onStartShouldSetPanResponderCapture: () => false,
         onMoveShouldSetPanResponder: (_, gesture) => {
           if (compact) return false;
-          return Math.abs(gesture.dx) > 12 && Math.abs(gesture.dx) > Math.abs(gesture.dy);
+          return Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy);
         },
         onPanResponderGrant: () => {
+          if (isSwipingRef) isSwipingRef.current = true;
+          onScrollEnabledChange?.(false);
           swipeX.stopAnimation();
         },
         onPanResponderMove: (_, gesture) => {
+          onScrollEnabledChange?.(false);
           if (gesture.dx < 0) {
             const clamped = Math.max(-68, gesture.dx);
             swipeX.setValue(clamped);
@@ -147,7 +152,9 @@ export const TaskRow = React.memo(function TaskRow({
           }
         },
         onPanResponderRelease: (_, gesture) => {
-          if (gesture.dx < -36) {
+          if (isSwipingRef) isSwipingRef.current = false;
+          onScrollEnabledChange?.(true);
+          if (gesture.dx < -30) {
             Animated.spring(swipeX, {
               toValue: -64,
               friction: 8,
@@ -164,10 +171,12 @@ export const TaskRow = React.memo(function TaskRow({
           }
         },
         onPanResponderTerminate: () => {
+          if (isSwipingRef) isSwipingRef.current = false;
+          onScrollEnabledChange?.(true);
           Animated.spring(swipeX, { toValue: 0, friction: 8, tension: 70, useNativeDriver: false }).start();
         },
       }),
-    [compact, swipeX]
+    [compact, swipeX, isSwipingRef, onScrollEnabledChange]
   );
 
   const hasTime = !!task.time;
