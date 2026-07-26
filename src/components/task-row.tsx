@@ -15,6 +15,7 @@ export const TaskRow = React.memo(function TaskRow({
   onInteraction,
   onPendingDelete,
   isSwipingRef,
+  onSwipeX,
 }: {
   task: Task;
   compact?: boolean;
@@ -24,6 +25,7 @@ export const TaskRow = React.memo(function TaskRow({
   onInteraction?: () => void;
   onPendingDelete?: (task: Task) => void;
   isSwipingRef?: React.RefObject<boolean>;
+  onSwipeX?: (anim: Animated.Value) => void;
 }) {
   const { toggle, settings } = usePlanner();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -39,6 +41,10 @@ export const TaskRow = React.memo(function TaskRow({
   const rowHeightAnim = useRef(new Animated.Value(1)).current;
   const rowOpacityAnim = useRef(new Animated.Value(1)).current;
   const pressScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    onSwipeX?.(swipeX);
+  }, [onSwipeX, swipeX]);
 
   useEffect(() => {
     Animated.parallel([

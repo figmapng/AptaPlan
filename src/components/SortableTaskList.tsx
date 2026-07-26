@@ -21,7 +21,7 @@ function DragHandle({ active, opacity }: { active?: boolean; opacity?: any }) {
 interface Props<T> {
   data: T[];
   onReorder: (newData: T[]) => void;
-  renderItem: (item: T, isActive: boolean, index: number, totalCount: number) => React.ReactNode;
+  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value) => void) => React.ReactNode;
   keyExtractor: (item: T) => string;
   onScrollEnabledChange?: (enabled: boolean) => void;
   onAutoScroll?: (offsetDelta: number) => void;
@@ -37,7 +37,7 @@ interface RowItemProps<T> {
   dragYAnim: Animated.Value;
   shiftAnim: Animated.Value;
   dragHandleOpacity?: any;
-  renderItem: (item: T, isActive: boolean, index: number, totalCount: number) => React.ReactNode;
+  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value) => void) => React.ReactNode;
   onLayout: (index: number, height: number) => void;
   onGrant: (index: number) => void;
   onMove: (dy: number, moveY: number) => void;
@@ -60,13 +60,29 @@ function SortableRowItem<T>({
   onRelease,
   onTerminate,
 }: RowItemProps<T>) {
+  const [swipeXAnim, setSwipeXAnim] = useState<Animated.Value | null>(null);
+
+  const handleSwipeX = React.useCallback((anim: Animated.Value) => {
+    setSwipeXAnim(anim);
+  }, []);
+
+  const handleOpacity = React.useMemo(() => {
+    if (!swipeXAnim) return dragHandleOpacity;
+    const swipeFade = swipeXAnim.interpolate({
+      inputRange: [-40, 0],
+      outputRange: [0, 1],
+      extrapolate: 'clamp',
+    });
+    if (!dragHandleOpacity) return swipeFade;
+    return Animated.multiply(dragHandleOpacity, swipeFade);
+  }, [dragHandleOpacity, swipeXAnim]);
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onStartShouldSetPanResponderCapture: () => true,
         onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dy) > 2,
-        onMoveShouldSetPanResponderCapture: (_, gs) => Math.abs(gs.dy) > 2,
         onPanResponderGrant: () => onGrant(index),
         onPanResponderMove: (_, gs) => onMove(gs.dy, gs.moveY),
         onPanResponderRelease: () => onRelease(),
@@ -102,10 +118,10 @@ function SortableRowItem<T>({
       }}
     >
       <View style={styles.contentWrapper}>
-        {renderItem(item, isActive, index, totalCount)}
+        {renderItem(item, isActive, index, totalCount, handleSwipeX)}
       </View>
       <View {...panResponder.panHandlers} style={styles.handleContainer} collapsable={false}>
-        <DragHandle active={isActive} opacity={dragHandleOpacity} />
+        <DragHandle active={isActive} opacity={handleOpacity} />
       </View>
     </Animated.View>
   );

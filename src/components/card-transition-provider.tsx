@@ -473,13 +473,14 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       onAutoScroll={handleAutoScroll}
                       gap={4}
                       dragHandleOpacity={fadeFirstOpacity}
-                      renderItem={(task, isActive, index, totalCount) => (
+                      renderItem={(task, isActive, index, totalCount, onSwipeX) => (
                         <TaskRow
                           task={task}
                           isLast={index === totalCount - 1}
                           onPress={() => beginEditing(task)}
                           onPendingDelete={handlePendingDelete}
                           isActive={isActive}
+                          onSwipeX={onSwipeX}
                         />
                       )}
                     />
