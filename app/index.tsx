@@ -524,7 +524,7 @@ function BookSpine({ progress, collapsedHeight = 540, expandedHeight = 382 }: { 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
   return (
     <AnimatedPressable accessibilityRole="button" accessibilityLabel="Жаңа тапсырма қосу" onPress={() => { onInteraction?.(); onAddTask(); }} activeScale={0.97}
-      style={{ height: 48, borderRadius: 24, borderWidth: 1, borderColor: colors.inputBorder, backgroundColor: colors.inputBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 10, marginTop: 10, boxShadow: '0 1px 3px rgba(31,32,38,0.035)' }}>
+      style={{ height: 48, borderRadius: 24, borderWidth: 1, borderColor: colors.inputBorder, backgroundColor: colors.inputBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 10, marginTop: 10 }}>
       <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>
       <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>Тапсырма қосу</Text>
     </AnimatedPressable>
