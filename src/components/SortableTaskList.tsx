@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, StyleSheet, View } from 'react-native';
+import { Animated, Easing, PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 
@@ -18,10 +18,24 @@ function DragHandle({ active, opacity }: { active?: boolean; opacity?: any }) {
   );
 }
 
+function TrashIcon() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"
+        stroke="#FF4B3E"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 interface Props<T> {
   data: T[];
   onReorder: (newData: T[]) => void;
-  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value) => void, onScrollEnabledChange?: (enabled: boolean) => void) => React.ReactNode;
+  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value, onDelete?: () => void) => void, onScrollEnabledChange?: (enabled: boolean) => void) => React.ReactNode;
   keyExtractor: (item: T) => string;
   onScrollEnabledChange?: (enabled: boolean) => void;
   onAutoScroll?: (offsetDelta: number) => void;
@@ -38,7 +52,7 @@ interface RowItemProps<T> {
   shiftAnim: Animated.Value;
   dragHandleOpacity?: any;
   onScrollEnabledChange?: (enabled: boolean) => void;
-  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value) => void, onScrollEnabledChange?: (enabled: boolean) => void) => React.ReactNode;
+  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value, onDelete?: () => void) => void, onScrollEnabledChange?: (enabled: boolean) => void) => React.ReactNode;
   onLayout: (index: number, height: number) => void;
   onGrant: (index: number) => void;
   onMove: (dy: number, moveY: number) => void;
@@ -63,21 +77,32 @@ function SortableRowItem<T>({
   onTerminate,
 }: RowItemProps<T>) {
   const [swipeXAnim, setSwipeXAnim] = useState<Animated.Value | null>(null);
+  const onDeleteRef = useRef<(() => void) | null>(null);
 
-  const handleSwipeX = React.useCallback((anim: Animated.Value) => {
+  const handleSwipeX = React.useCallback((anim: Animated.Value, onDelete?: () => void) => {
     setSwipeXAnim(anim);
+    if (onDelete) onDeleteRef.current = onDelete;
   }, []);
 
-  const handleOpacity = React.useMemo(() => {
+  const dragOpacity = React.useMemo(() => {
     if (!swipeXAnim) return dragHandleOpacity;
-    const swipeFade = swipeXAnim.interpolate({
-      inputRange: [-40, 0],
+    const fade = swipeXAnim.interpolate({
+      inputRange: [-36, 0],
       outputRange: [0, 1],
       extrapolate: 'clamp',
     });
-    if (!dragHandleOpacity) return swipeFade;
-    return Animated.multiply(dragHandleOpacity, swipeFade);
+    if (!dragHandleOpacity) return fade;
+    return Animated.multiply(dragHandleOpacity, fade);
   }, [dragHandleOpacity, swipeXAnim]);
+
+  const trashOpacity = React.useMemo(() => {
+    if (!swipeXAnim) return 0;
+    return swipeXAnim.interpolate({
+      inputRange: [-48, -10, 0],
+      outputRange: [1, 0, 0],
+      extrapolate: 'clamp',
+    });
+  }, [swipeXAnim]);
 
   const panResponder = useMemo(
     () =>
@@ -90,8 +115,7 @@ function SortableRowItem<T>({
         onPanResponderRelease: () => onRelease(),
         onPanResponderTerminate: () => onTerminate(),
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [index]
+    [index, onGrant, onMove, onRelease, onTerminate]
   );
 
   const rowStyle = isActive
@@ -127,8 +151,29 @@ function SortableRowItem<T>({
         <View style={styles.contentWrapper}>
           {renderItem(item, isActive, index, totalCount, handleSwipeX, onScrollEnabledChange)}
         </View>
-        <View {...panResponder.panHandlers} style={styles.handleContainer} collapsable={false}>
-          <DragHandle active={isActive} opacity={dragHandleOpacity} />
+        <View style={styles.handleContainer} collapsable={false}>
+          <Animated.View {...panResponder.panHandlers} style={{ opacity: dragOpacity }}>
+            <DragHandle active={isActive} />
+          </Animated.View>
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFillObject,
+              {
+                justifyContent: 'center',
+                alignItems: 'center',
+                opacity: trashOpacity,
+              },
+            ]}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Тапсырманы өшіру"
+              onPress={() => onDeleteRef.current?.()}
+              style={styles.deleteBtn}
+            >
+              <TrashIcon />
+            </Pressable>
+          </Animated.View>
         </View>
       </Animated.View>
     </Animated.View>
@@ -395,15 +440,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   handleContainer: {
-    paddingLeft: 6,
-    paddingRight: 0,
-    paddingVertical: 8,
+    width: 32,
+    height: 32,
+    marginLeft: 6,
+    marginRight: 0,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
   },
   handleWrap: {
     width: 32,
     height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    backgroundColor: '#FFECEC',
     alignItems: 'center',
     justifyContent: 'center',
   },

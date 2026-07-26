@@ -26,7 +26,7 @@ export const TaskRow = React.memo(function TaskRow({
   onInteraction?: () => void;
   onPendingDelete?: (task: Task) => void;
   isSwipingRef?: React.RefObject<boolean>;
-  onSwipeX?: (anim: Animated.Value) => void;
+  onSwipeX?: (anim: Animated.Value, onDelete: () => void) => void;
   onScrollEnabledChange?: (enabled: boolean) => void;
 }) {
   const { toggle, settings } = usePlanner();
@@ -45,7 +45,7 @@ export const TaskRow = React.memo(function TaskRow({
   const pressScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    onSwipeX?.(swipeX);
+    onSwipeX?.(swipeX, executeDeleteAction);
   }, [onSwipeX, swipeX]);
 
   useEffect(() => {
@@ -197,31 +197,6 @@ export const TaskRow = React.memo(function TaskRow({
 
   return (
     <View style={styles.wrapper}>
-      {/* Swipe Left Delete Action */}
-      {!compact && (
-        <Animated.View
-          style={[
-            styles.deleteBg,
-            {
-              opacity: swipeX.interpolate({
-                inputRange: [-64, -10, 0],
-                outputRange: [1, 0, 0],
-                extrapolate: 'clamp',
-              }),
-            },
-          ]}
-        >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Тапсырманы өшіру"
-            onPress={executeDeleteAction}
-            style={styles.deleteBtn}
-          >
-            <TrashIcon />
-          </Pressable>
-        </Animated.View>
-      )}
-
       {/* Main Task Row */}
       <Animated.View
         {...panResponder.panHandlers}
