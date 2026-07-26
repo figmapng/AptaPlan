@@ -95,8 +95,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   }, [loadRange]);
 
   const taskCount = transition?.tasks.length ?? 0;
-  const contentHeight = taskCount === 0 ? 112 : 48 + 10 + taskCount * 46 + 8;
-  const maxHeight = height - insets.top - insets.bottom - 110;
+  const contentHeight = taskCount === 0 ? 112 : 48 + 12 + taskCount * 56 + 12;
+  const maxHeight = height - (insets.top + 16) - (insets.bottom + 90);
   const targetHeight = Math.min(maxHeight, contentHeight);
 
   const openCard = (date: Date, tasks: Task[], frame: Frame) => {
