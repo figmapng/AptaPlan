@@ -275,8 +275,8 @@ export default function DayScreen() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Басты бетке оралу"
-        onPress={() => router.replace('/')}
-        style={{ flex: 1, minHeight: 1 }}
+        onPress={returnToList}
+        style={{ flex: 1, minHeight: 1, backgroundColor: colors.background }}
       />
     </View>
 

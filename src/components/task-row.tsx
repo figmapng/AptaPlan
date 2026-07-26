@@ -14,6 +14,7 @@ export const TaskRow = React.memo(function TaskRow({
   isActive = false,
   onInteraction,
   onPendingDelete,
+  isSwipingRef,
 }: {
   task: Task;
   compact?: boolean;
@@ -22,6 +23,7 @@ export const TaskRow = React.memo(function TaskRow({
   isActive?: boolean;
   onInteraction?: () => void;
   onPendingDelete?: (task: Task) => void;
+  isSwipingRef?: React.RefObject<boolean>;
 }) {
   const { toggle, settings } = usePlanner();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -74,6 +76,7 @@ export const TaskRow = React.memo(function TaskRow({
   };
 
   const onToggle = async () => {
+    if (isSwipingRef?.current) return;
     onInteraction?.();
     await triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     await toggle(task);
@@ -92,6 +95,7 @@ export const TaskRow = React.memo(function TaskRow({
   };
 
   const handlePressIn = () => {
+    if (isSwipingRef?.current) return;
     Animated.spring(pressScale, {
       toValue: 0.97,
       speed: 24,
@@ -110,6 +114,7 @@ export const TaskRow = React.memo(function TaskRow({
   };
 
   const handlePress = () => {
+    if (isSwipingRef?.current) return;
     onInteraction?.();
     onPress?.();
   };

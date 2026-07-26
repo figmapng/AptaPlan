@@ -3,9 +3,9 @@ import { Animated, Easing, PanResponder, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 
-function DragHandle({ active }: { active?: boolean }) {
+function DragHandle({ active, opacity }: { active?: boolean; opacity?: any }) {
   return (
-    <View style={styles.handleWrap} collapsable={false}>
+    <Animated.View style={[styles.handleWrap, opacity !== undefined && { opacity }]} collapsable={false}>
       <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
         <Path
           d="M4 6.5h12M4 10h12M4 13.5h12"
@@ -14,7 +14,7 @@ function DragHandle({ active }: { active?: boolean }) {
           strokeLinecap="round"
         />
       </Svg>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -26,6 +26,7 @@ interface Props<T> {
   onScrollEnabledChange?: (enabled: boolean) => void;
   onAutoScroll?: (offsetDelta: number) => void;
   gap?: number;
+  dragHandleOpacity?: any;
 }
 
 interface RowItemProps<T> {
@@ -35,6 +36,7 @@ interface RowItemProps<T> {
   isActive: boolean;
   dragYAnim: Animated.Value;
   shiftAnim: Animated.Value;
+  dragHandleOpacity?: any;
   renderItem: (item: T, isActive: boolean, index: number, totalCount: number) => React.ReactNode;
   onLayout: (index: number, height: number) => void;
   onGrant: (index: number) => void;
@@ -50,6 +52,7 @@ function SortableRowItem<T>({
   isActive,
   dragYAnim,
   shiftAnim,
+  dragHandleOpacity,
   renderItem,
   onLayout,
   onGrant,
@@ -102,7 +105,7 @@ function SortableRowItem<T>({
         {renderItem(item, isActive, index, totalCount)}
       </View>
       <View {...panResponder.panHandlers} style={styles.handleContainer} collapsable={false}>
-        <DragHandle active={isActive} />
+        <DragHandle active={isActive} opacity={dragHandleOpacity} />
       </View>
     </Animated.View>
   );
@@ -118,6 +121,7 @@ export function SortableTaskList<T>({
   onScrollEnabledChange,
   onAutoScroll,
   gap = 4,
+  dragHandleOpacity,
 }: Props<T>) {
   const [dataState, setDataState] = useState<T[]>(() => [...data]);
   const [activeIndex, setActiveIndex] = useState<number>(-1);
@@ -327,6 +331,7 @@ export function SortableTaskList<T>({
               isActive={isActive}
               dragYAnim={dragY}
               shiftAnim={getShiftAnim(keyStr)}
+              dragHandleOpacity={dragHandleOpacity}
               renderItem={renderItem}
               onLayout={handleLayout}
               onGrant={handleGrant}
@@ -334,7 +339,9 @@ export function SortableTaskList<T>({
               onRelease={handleRelease}
               onTerminate={handleTerminate}
             />
-            {showDivider && <View style={styles.divider} />}
+            {showDivider && (
+              <Animated.View style={[styles.divider, dragHandleOpacity !== undefined && { opacity: dragHandleOpacity }]} />
+            )}
           </React.Fragment>
         );
       })}

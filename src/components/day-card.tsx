@@ -19,6 +19,7 @@ type DayCardProps = {
   expandedBodyHeight?: number;
   expandedSundayHeight?: number;
   onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
+  isSwipingRef?: React.RefObject<boolean>;
 };
 
 export function DayCard({
@@ -31,6 +32,7 @@ export function DayCard({
   expandedBodyHeight = 88,
   expandedSundayHeight = 156,
   onLayoutMeasured,
+  isSwipingRef,
 }: DayCardProps) {
   const key = toDateKey(date);
   const today = isToday(date);
@@ -43,24 +45,13 @@ export function DayCard({
   const { openCard, activeDate } = useCardTransition();
   const isTransitioning = activeDate === key;
 
+  const measuredFrameRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+
   const open = () => {
+    if (isSwipingRef?.current) return;
     onInteraction?.();
-    if (!cardRef.current) {
-      openCard(date, tasks, { x: 0, y: 0, width: 300, height: 160 });
-      return;
-    }
-    try {
-      cardRef.current.measureInWindow((x, y, width, height) => {
-        openCard(date, tasks, {
-          x: typeof x === 'number' && !isNaN(x) ? x : 0,
-          y: typeof y === 'number' && !isNaN(y) ? y : 0,
-          width: typeof width === 'number' && !isNaN(width) ? width : 300,
-          height: typeof height === 'number' && !isNaN(height) ? height : 160,
-        });
-      });
-    } catch {
-      openCard(date, tasks, { x: 0, y: 0, width: 300, height: 160 });
-    }
+    const frame = measuredFrameRef.current ?? { x: 16, y: 120, width: 170, height: 160 };
+    openCard(date, tasks, frame);
   };
 
   const bodyHeight = progress
@@ -79,22 +70,22 @@ export function DayCard({
 
   const wideOpacity = progress
     ? progress.interpolate({
-        inputRange: [0, 0.25, 1],
-        outputRange: [0, 0.2, 1],
+        inputRange: [0, 0.2, 1],
+        outputRange: [0, 0.1, 1],
       })
     : 1;
 
   const wideTranslateY = progress
     ? progress.interpolate({
         inputRange: [0, 1],
-        outputRange: [36, 0],
+        outputRange: [24, 0],
       })
     : 0;
 
   const wideScale = progress
     ? progress.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.96, 1],
+        outputRange: [0.92, 1],
       })
     : 1;
 
@@ -198,8 +189,15 @@ export function DayCard({
     </AnimatedPressable>
   );
 
+  const wideBodyHeight = progress
+    ? progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, Math.max(80, expandedSundayHeight - 34)],
+      })
+    : Math.max(80, expandedSundayHeight - 34);
+
   const cardBodyContent = (
-    <Animated.View style={[{ overflow: 'hidden' }, wide ? { height: 118 } : { height: bodyHeight }]}>
+    <Animated.View style={[{ overflow: 'hidden' }, wide ? { height: wideBodyHeight } : { height: bodyHeight }]}>
       <Pressable
         onPress={open}
         style={{
@@ -218,6 +216,7 @@ export function DayCard({
               compact
               onPress={open}
               onInteraction={onInteraction}
+              isSwipingRef={isSwipingRef}
             />
           ))
         ) : (
@@ -251,11 +250,12 @@ export function DayCard({
   );
 
   const handleCardLayout = () => {
-    if (!onLayoutMeasured) return;
     requestAnimationFrame(() => {
       cardRef.current?.measureInWindow((x, y, width, height) => {
         if (typeof x === 'number' && !isNaN(x) && width > 0 && height > 0) {
-          onLayoutMeasured(key, { x, y, width, height });
+          const frame = { x, y, width, height };
+          measuredFrameRef.current = frame;
+          onLayoutMeasured?.(key, frame);
         }
       });
     });

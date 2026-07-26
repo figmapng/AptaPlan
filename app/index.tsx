@@ -103,91 +103,6 @@ export default function Home() {
     return diff * screenWidth;
   };
 
-  // ── Touch handlers ───────────────────────────────────────────────
-  const touchStartX = useRef(0);
-  const touchStartY = useRef(0);
-  const isHorizontalGesture = useRef(false);
-  const hasDetermined = useRef(false);
-
-  const onSwipeComplete = useCallback((direction: -1 | 1) => {
-    setCurrSlot((prev) => {
-      // direction: -1 = swiped left → advance to next
-      //            +1 = swiped right → go to prev
-      const next = ((prev - direction + 3) % 3) as SlotIndex;
-
-      if (direction === -1) weekRef.current.next();
-      else weekRef.current.previous();
-
-      setSlotDates((old) => {
-        const newCurrDates = old[next];
-        const result: Date[][] = [...old];
-        result[((next + 2) % 3) as SlotIndex] = newCurrDates.map((d) => addDays(d, -7));
-        result[((next + 1) % 3) as SlotIndex] = newCurrDates.map((d) => addDays(d, 7));
-        return result;
-      });
-
-      return next;
-    });
-    carouselAnim.setValue(0);
-    isAnimatingRef.current = false;
-  }, [carouselAnim]);
-
-  const gestureHandlers = {
-    onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (modeRef.current !== 'week' || isAnimatingRef.current) return;
-      touchStartX.current = e.nativeEvent.pageX;
-      touchStartY.current = e.nativeEvent.pageY;
-      isHorizontalGesture.current = false;
-      hasDetermined.current = false;
-      carouselAnim.stopAnimation();
-    },
-    onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (modeRef.current !== 'week' || isAnimatingRef.current) return;
-      const dx = e.nativeEvent.pageX - touchStartX.current;
-      const dy = e.nativeEvent.pageY - touchStartY.current;
-
-      if (!hasDetermined.current) {
-        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
-        isHorizontalGesture.current = Math.abs(dx) >= Math.abs(dy);
-        hasDetermined.current = true;
-      }
-
-      if (!isHorizontalGesture.current) return;
-      carouselAnim.setValue(dx);
-    },
-    onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (modeRef.current !== 'week' || !hasDetermined.current || isAnimatingRef.current) return;
-      if (!isHorizontalGesture.current) return;
-
-      const dx = e.nativeEvent.pageX - touchStartX.current;
-      const threshold = screenWidth * 0.25;
-
-      if (Math.abs(dx) > threshold) {
-        const direction = dx < 0 ? -1 : 1;
-        const target = direction * screenWidth;
-        isAnimatingRef.current = true;
-        Animated.spring(carouselAnim, {
-          toValue: target,
-          tension: 300,
-          friction: 38,
-          useNativeDriver: true,
-        }).start(({ finished }) => {
-          if (finished) onSwipeComplete(direction);
-        });
-      } else {
-        isAnimatingRef.current = true;
-        Animated.spring(carouselAnim, {
-          toValue: 0,
-          tension: 300,
-          friction: 38,
-          useNativeDriver: true,
-        }).start(() => {
-          isAnimatingRef.current = false;
-        });
-      }
-    },
-  };
-
   // ── Week expand/collapse ────────────────────────────────────────
   const weekProgress = useRef(new Animated.Value(0)).current;
   const isExpandedRef = useRef(false);
@@ -215,14 +130,141 @@ export default function Home() {
   const collapseWeek = useCallback(() => {
     userSundayStateRef.current = 'collapsed';
     isExpandedRef.current = false;
-    Animated.spring(weekProgress, { toValue: 0, tension: 100, friction: 12, useNativeDriver: false }).start();
+    Animated.spring(weekProgress, { toValue: 0, tension: 180, friction: 18, useNativeDriver: false }).start();
   }, [weekProgress]);
 
   const expandWeek = useCallback(() => {
     userSundayStateRef.current = 'expanded';
     isExpandedRef.current = true;
-    Animated.spring(weekProgress, { toValue: 1, tension: 100, friction: 12, useNativeDriver: false }).start();
+    Animated.spring(weekProgress, { toValue: 1, tension: 180, friction: 18, useNativeDriver: false }).start();
   }, [weekProgress]);
+
+  // ── Touch handlers ───────────────────────────────────────────────
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const isHorizontalGesture = useRef(false);
+  const hasDetermined = useRef(false);
+  const isSwipingRef = useRef(false);
+
+  const onSwipeComplete = useCallback((direction: -1 | 1, currentDx: number) => {
+    isAnimatingRef.current = true;
+    isSwipingRef.current = true;
+
+    if (direction === -1) weekRef.current.next();
+    else weekRef.current.previous();
+
+    const prevSlot = currSlotRef.current;
+    const nextSlot = ((prevSlot - direction + 3) % 3) as SlotIndex;
+
+    setCurrSlot(nextSlot);
+    setSlotDates((old) => {
+      const newCurrDates = old[nextSlot];
+      const result: Date[][] = [...old];
+      result[((nextSlot + 2) % 3) as SlotIndex] = newCurrDates.map((d) => addDays(d, -7));
+      result[((nextSlot + 1) % 3) as SlotIndex] = newCurrDates.map((d) => addDays(d, 7));
+      return result;
+    });
+
+    const startVal = currentDx - (direction * screenWidth);
+    carouselAnim.setValue(startVal);
+
+    Animated.spring(carouselAnim, {
+      toValue: 0,
+      tension: 320,
+      friction: 36,
+      useNativeDriver: true,
+    }).start(() => {
+      isAnimatingRef.current = false;
+      setTimeout(() => {
+        isSwipingRef.current = false;
+      }, 50);
+    });
+  }, [carouselAnim, screenWidth]);
+
+  const gestureHandlers = {
+    onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (modeRef.current !== 'week' || isAnimatingRef.current) return;
+      touchStartX.current = e.nativeEvent.pageX;
+      touchStartY.current = e.nativeEvent.pageY;
+      isHorizontalGesture.current = false;
+      hasDetermined.current = false;
+      isSwipingRef.current = false;
+      carouselAnim.stopAnimation();
+    },
+    onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (modeRef.current !== 'week' || isAnimatingRef.current) return;
+      const dx = e.nativeEvent.pageX - touchStartX.current;
+      const dy = e.nativeEvent.pageY - touchStartY.current;
+
+      if (!hasDetermined.current) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        isHorizontalGesture.current = Math.abs(dx) > Math.abs(dy) * 1.1;
+        hasDetermined.current = true;
+      }
+
+      if (isHorizontalGesture.current) {
+        isSwipingRef.current = true;
+        carouselAnim.setValue(dx);
+      } else {
+        const startVal = isExpandedRef.current ? 1 : 0;
+        const delta = -dy / 160;
+        const newVal = Math.max(0, Math.min(1, startVal + delta));
+        weekProgress.setValue(newVal);
+      }
+    },
+    onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (modeRef.current !== 'week' || !hasDetermined.current || isAnimatingRef.current) return;
+      if (isHorizontalGesture.current) {
+        const dx = e.nativeEvent.pageX - touchStartX.current;
+        const threshold = screenWidth * 0.2;
+
+        if (Math.abs(dx) > threshold) {
+          const direction = dx < 0 ? -1 : 1;
+          onSwipeComplete(direction, dx);
+        } else {
+          isAnimatingRef.current = true;
+          Animated.spring(carouselAnim, {
+            toValue: 0,
+            tension: 320,
+            friction: 36,
+            useNativeDriver: true,
+          }).start(() => {
+            isAnimatingRef.current = false;
+            isSwipingRef.current = false;
+          });
+        }
+      } else {
+        const dy = e.nativeEvent.pageY - touchStartY.current;
+        if (dy < -20) {
+          expandWeek();
+        } else if (dy > 20) {
+          collapseWeek();
+        } else {
+          if (isExpandedRef.current) expandWeek();
+          else collapseWeek();
+        }
+      }
+    },
+    onTouchCancel: () => {
+      if (modeRef.current !== 'week') return;
+      if (isHorizontalGesture.current) {
+        isAnimatingRef.current = true;
+        Animated.spring(carouselAnim, {
+          toValue: 0,
+          tension: 320,
+          friction: 36,
+          useNativeDriver: true,
+        }).start(() => {
+          isAnimatingRef.current = false;
+          isSwipingRef.current = false;
+        });
+      } else {
+        isSwipingRef.current = false;
+        if (isExpandedRef.current) expandWeek();
+        else collapseWeek();
+      }
+    },
+  };
 
   useEffect(() => {
     const sub = Keyboard.addListener('keyboardDidShow', collapseWeek);
@@ -340,6 +382,7 @@ export default function Home() {
             return (
               <Animated.View
                 key={slotIdx}
+                pointerEvents={slotIdx === currSlot ? 'auto' : 'none'}
                 style={{
                   position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                   paddingHorizontal: 16,
@@ -356,6 +399,7 @@ export default function Home() {
                   expandedBodyHeight={expandedBodyHeight}
                   expandedSundayHeight={expandedSundayHeight}
                   onLayoutMeasured={slotIdx === currSlot ? handleCardLayoutMeasured : undefined}
+                  isSwipingRef={isSwipingRef}
                 />
               </Animated.View>
             );
@@ -427,35 +471,36 @@ function CalendarIcon() {
   );
 }
 
-function WeekView({ dates, tasks, progress, onInteraction, collapsedBodyHeight = 156, expandedBodyHeight = 98, expandedSundayHeight = 159, onLayoutMeasured }: {
+function WeekView({ dates, tasks, progress, onInteraction, collapsedBodyHeight = 156, expandedBodyHeight = 98, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef }: {
   dates: Date[]; tasks: ReturnType<typeof usePlanner>['tasks']; progress: Animated.Value;
   onInteraction?: () => void; collapsedBodyHeight?: number; expandedBodyHeight?: number;
   expandedSundayHeight?: number; onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
+  isSwipingRef?: React.RefObject<boolean>;
 }) {
   return (
     <View style={{ gap: 8 }}>
       <View style={{ flexDirection: 'row', gap: 10, position: 'relative' }}>
         <View style={{ flex: 1, gap: 8 }}>
           {dates.slice(0, 3).map((date) => (
-            <DayCard key={toDateKey(date)} date={date} tasks={tasks.filter((t) => t.date === toDateKey(date))} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} />
+            <DayCard key={toDateKey(date)} date={date} tasks={tasks.filter((t) => t.date === toDateKey(date))} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
           ))}
         </View>
         <View style={{ flex: 1, gap: 8 }}>
           {dates.slice(3, 6).map((date) => (
-            <DayCard key={toDateKey(date)} date={date} tasks={tasks.filter((t) => t.date === toDateKey(date))} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} />
+            <DayCard key={toDateKey(date)} date={date} tasks={tasks.filter((t) => t.date === toDateKey(date))} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
           ))}
         </View>
-        <BookSpine progress={progress} collapsedHeight={3 * (collapsedBodyHeight + 34) + 16} />
+        <BookSpine progress={progress} collapsedHeight={3 * (collapsedBodyHeight + 34) + 16} expandedHeight={3 * (expandedBodyHeight + 34) + 16} />
       </View>
-      <DayCard date={dates[6]} tasks={tasks.filter((t) => t.date === toDateKey(dates[6]))} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} />
+      <DayCard date={dates[6]} tasks={tasks.filter((t) => t.date === toDateKey(dates[6]))} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
     </View>
   );
 }
 
-function BookSpine({ progress, collapsedHeight = 540 }: { progress: Animated.Value; collapsedHeight?: number }) {
-  const h = progress ? progress.interpolate({ inputRange: [0, 1], outputRange: [collapsedHeight, 382] }) : collapsedHeight;
+function BookSpine({ progress, collapsedHeight = 540, expandedHeight = 382 }: { progress: Animated.Value; collapsedHeight?: number; expandedHeight?: number }) {
+  const h = progress ? progress.interpolate({ inputRange: [0, 1], outputRange: [collapsedHeight, expandedHeight] }) : collapsedHeight;
   return (
-    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: '50%', top: 12, width: 12, transform: [{ translateX: -6 }], overflow: 'hidden', height: h }}>
+    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: '50%', top: 0, width: 12, transform: [{ translateX: -6 }], overflow: 'hidden', height: h }}>
       <Svg width={12} height="100%">
         <Defs>
           <LinearGradient id="bsg" x1="0" y1="0" x2="100%" y2="0">
