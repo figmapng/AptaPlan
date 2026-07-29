@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, PanResponder, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 
-function DragHandle({ active, opacity }: { active?: boolean; opacity?: any }) {
+function DragHandle({ active, opacity }: { active: boolean; opacity?: any }) {
   return (
-    <Animated.View style={[styles.handleWrap, opacity !== undefined && { opacity }]} collapsable={false}>
-      <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
+    <Animated.View style={[styles.handleWrap, opacity !== undefined && { opacity }]}>
+      <Svg width={14} height={14} viewBox="0 0 16 16" fill="none">
         <Path
-          d="M4 6.5h12M4 10h12M4 13.5h12"
+          d="M2.5 5h11M2.5 8h11M2.5 11h11"
           stroke={active ? '#374151' : '#9CA3AF'}
-          strokeWidth="2"
+          strokeWidth="1.5"
           strokeLinecap="round"
         />
       </Svg>
@@ -95,18 +95,46 @@ function SortableRowItem<T>({
     return Animated.multiply(dragHandleOpacity, fade);
   }, [dragHandleOpacity, swipeXAnim]);
 
+  const trashOpacity = React.useMemo(() => {
+    if (!swipeXAnim) return 0;
+    return swipeXAnim.interpolate({
+      inputRange: [-48, -10, 0],
+      outputRange: [1, 0, 0],
+      extrapolate: 'clamp',
+    });
+  }, [swipeXAnim]);
+
+  const redBgWidth = React.useMemo(() => {
+    if (!swipeXAnim) return 0;
+    return swipeXAnim.interpolate({
+      inputRange: [-300, -72, 0],
+      outputRange: [280, 72, 0],
+      extrapolate: 'clamp',
+    });
+  }, [swipeXAnim]);
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onStartShouldSetPanResponderCapture: () => true,
-        onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dy) > 2,
-        onPanResponderGrant: () => onGrant(index),
+        onMoveShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponderCapture: () => true,
+        onPanResponderGrant: () => {
+          onScrollEnabledChange?.(false);
+          onGrant(index);
+        },
         onPanResponderMove: (_, gs) => onMove(gs.dy, gs.moveY),
-        onPanResponderRelease: () => onRelease(),
-        onPanResponderTerminate: () => onTerminate(),
+        onPanResponderRelease: () => {
+          onScrollEnabledChange?.(true);
+          onRelease();
+        },
+        onPanResponderTerminate: () => {
+          onScrollEnabledChange?.(true);
+          onTerminate();
+        },
       }),
-    [index, onGrant, onMove, onRelease, onTerminate]
+    [index, onGrant, onMove, onRelease, onTerminate, onScrollEnabledChange]
   );
 
   const rowStyle = isActive
@@ -126,6 +154,10 @@ function SortableRowItem<T>({
         },
       ];
 
+  const translateXStyle = swipeXAnim
+    ? { transform: [{ translateX: swipeXAnim }] }
+    : undefined;
+
   return (
     <Animated.View
       style={rowStyle}
@@ -134,7 +166,73 @@ function SortableRowItem<T>({
         if (h > 0) onLayout(index, h);
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, overflow: 'visible' }}>
+      {/* Red Delete Button & Below Text - Matching user screenshot 100% */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          right: 10,
+          top: 2,
+          bottom: 2,
+          width: redBgWidth,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          zIndex: 1,
+        }}
+      >
+        <TouchableOpacity
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Тапсырманы өшіру"
+          onPress={() => onDeleteRef.current?.()}
+          style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Animated.View
+            style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: trashOpacity,
+            }}
+          >
+            {/* Red Oval Pill - Compact height & stretches horizontally on pull */}
+            <Animated.View
+              style={{
+                width: swipeXAnim
+                  ? swipeXAnim.interpolate({
+                      inputRange: [-300, -64, 0],
+                      outputRange: [200, 52, 52],
+                      extrapolate: 'clamp',
+                    })
+                  : 52,
+                height: 28,
+                borderRadius: 14,
+                backgroundColor: '#FF3B30',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <TrashIcon color="white" />
+            </Animated.View>
+            {/* Soft Grey Text Below */}
+            <Text style={{ color: '#8E8E93', fontSize: 10, fontWeight: '400', marginTop: 2 }}>Өшіру</Text>
+          </Animated.View>
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Foreground Swiping Row (Translates Left over Red Pill) */}
+      <Animated.View
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+            zIndex: 2,
+            borderRadius: 14,
+            backgroundColor: 'transparent',
+          },
+          translateXStyle,
+        ]}
+      >
         <View style={styles.contentWrapper}>
           {renderItem(item, isActive, index, totalCount, handleSwipeX, onScrollEnabledChange)}
         </View>
@@ -143,7 +241,7 @@ function SortableRowItem<T>({
             <DragHandle active={isActive} />
           </Animated.View>
         </View>
-      </View>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -395,7 +493,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 16,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     backgroundColor: 'transparent',
     overflow: 'hidden',
   },
@@ -433,7 +531,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#F3F4F6',
-    marginLeft: 46,
-    marginRight: 12,
+    marginLeft: 42,
+    marginRight: 10,
   },
 });

@@ -42,7 +42,7 @@ export function DayCard({
 
   const completedCount = tasks.filter((task) => task.isCompleted).length;
   const cardRef = useRef<View>(null);
-  const { openCard, activeDate } = useCardTransition();
+  const { openCard, activeDate, progress: transitionProgress, originFrame } = useCardTransition();
   const isTransitioning = activeDate === key;
 
   const measuredFrameRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
@@ -50,9 +50,72 @@ export function DayCard({
   const open = () => {
     if (isSwipingRef?.current) return;
     onInteraction?.();
-    const frame = measuredFrameRef.current ?? { x: 16, y: 120, width: 170, height: 160 };
-    openCard(date, tasks, frame);
+
+    const maxGridH = wide ? expandedSundayHeight + 34 : collapsedBodyHeight + 34;
+
+    if (cardRef.current) {
+      cardRef.current.measureInWindow((x, y, w, h) => {
+        if (typeof x === 'number' && !isNaN(x) && w > 0 && h > 0) {
+          const exactH = Math.min(h, maxGridH);
+          const freshFrame = { x, y, width: w, height: exactH };
+          measuredFrameRef.current = freshFrame;
+          openCard(date, tasks, freshFrame);
+        } else {
+          const fallback = measuredFrameRef.current ?? { x: 16, y: 120, width: 170, height: maxGridH };
+          openCard(date, tasks, fallback);
+        }
+      });
+    } else {
+      const fallback = measuredFrameRef.current ?? { x: 16, y: 120, width: 170, height: maxGridH };
+      openCard(date, tasks, fallback);
+    }
   };
+
+  // Spatial push-away direction calculation when another card is expanding
+  const pushDirRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  if (activeDate && originFrame && measuredFrameRef.current) {
+    const cardX = measuredFrameRef.current.x;
+    const cardY = measuredFrameRef.current.y;
+    const origX = originFrame.x;
+    const origY = originFrame.y;
+
+    let px = 0;
+    let py = 0;
+    if (cardX > origX + 20) px = 60;
+    else if (cardX < origX - 20) px = -60;
+
+    if (cardY > origY + 20) py = 70;
+    else if (cardY < origY - 20) py = -50;
+
+    pushDirRef.current = { x: px, y: py };
+  } else if (!activeDate) {
+    pushDirRef.current = { x: 0, y: 0 };
+  }
+
+  const { x: pushX, y: pushY } = pushDirRef.current;
+
+  // Pure linear 1-to-1 trajectory interpolations (Zero curve deviation on close)
+  const gridPushTranslateX = transitionProgress && activeDate && !isTransitioning
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, pushX],
+      })
+    : 0;
+
+  const gridPushTranslateY = transitionProgress && activeDate && !isTransitioning
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, pushY],
+      })
+    : 0;
+
+  const gridPushOpacity = transitionProgress && activeDate && !isTransitioning
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 0.25],
+      })
+    : 1;
 
   const bodyHeight = progress
     ? progress.interpolate({
@@ -250,6 +313,7 @@ export function DayCard({
   );
 
   const handleCardLayout = () => {
+    if (activeDate) return;
     requestAnimationFrame(() => {
       cardRef.current?.measureInWindow((x, y, width, height) => {
         if (typeof x === 'number' && !isNaN(x) && width > 0 && height > 0) {
@@ -290,7 +354,7 @@ export function DayCard({
   }
 
   return (
-    <View
+    <Animated.View
       ref={cardRef}
       collapsable={false}
       onLayout={handleCardLayout}
@@ -302,12 +366,16 @@ export function DayCard({
         borderWidth: 1,
         borderColor: cardBorderColor,
         overflow: 'hidden',
-        opacity: isTransitioning ? 0 : 1,
+        opacity: isTransitioning ? 0 : gridPushOpacity,
+        transform: [
+          { translateX: gridPushTranslateX },
+          { translateY: gridPushTranslateY },
+        ],
       }}
     >
       {cardHeader}
       {cardBodyContent}
-    </View>
+    </Animated.View>
   );
 }
 

@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, Easing, PanResponder, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import type { Task } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
+import { useCardTransition } from './card-transition-provider';
 
 export const TaskRow = React.memo(function TaskRow({
   task,
@@ -30,6 +31,7 @@ export const TaskRow = React.memo(function TaskRow({
   onScrollEnabledChange?: (enabled: boolean) => void;
 }) {
   const { toggle, settings } = usePlanner();
+  const { progress: transitionProgress, activeDate } = useCardTransition();
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Checkbox spring, checkmark scale & completion opacity animations
@@ -39,7 +41,6 @@ export const TaskRow = React.memo(function TaskRow({
 
   // Swipe Left animations
   const swipeX = useRef(new Animated.Value(0)).current;
-  const trashScale = useRef(new Animated.Value(0.8)).current;
   const rowHeightAnim = useRef(new Animated.Value(1)).current;
   const rowOpacityAnim = useRef(new Animated.Value(1)).current;
   const pressScale = useRef(new Animated.Value(1)).current;
@@ -58,48 +59,88 @@ export const TaskRow = React.memo(function TaskRow({
         }),
         Animated.spring(boxScale, {
           toValue: 1,
-          friction: 4,
-          tension: 200,
+          stiffness: 300,
+          damping: 24,
           useNativeDriver: false,
         }),
       ]),
-      Animated.spring(checkScale, {
+      Animated.timing(checkScale, {
         toValue: task.isCompleted ? 1 : 0,
-        friction: 6,
-        tension: 140,
+        duration: 160,
+        easing: Easing.out(Easing.back(1.5)),
         useNativeDriver: false,
       }),
       Animated.timing(rowOpacity, {
         toValue: task.isCompleted ? 0.55 : 1,
-        duration: 220,
+        duration: 200,
         useNativeDriver: false,
       }),
     ]).start();
-  }, [task.isCompleted, checkScale, boxScale, rowOpacity]);
+  }, [task.isCompleted, boxScale, checkScale, rowOpacity]);
 
   const triggerHaptic = async (style: Haptics.ImpactFeedbackStyle) => {
-    if (settings.haptics && process.env.EXPO_OS === 'ios') {
+    if (process.env.EXPO_OS === 'ios' && settings.haptics) {
       await Haptics.impactAsync(style);
     }
   };
 
   const onToggle = async () => {
-    if (isSwipingRef?.current) return;
     onInteraction?.();
-    await triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    await triggerHaptic(
+      task.isCompleted
+        ? Haptics.ImpactFeedbackStyle.Light
+        : Haptics.ImpactFeedbackStyle.Medium
+    );
     await toggle(task);
   };
 
-  const executeDeleteAction = async () => {
+  const executeDeleteAction = () => {
     onInteraction?.();
-    await triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
-    setIsDeleting(true);
-    Animated.parallel([
-      Animated.timing(rowHeightAnim, { toValue: 0, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: false }),
-      Animated.timing(rowOpacityAnim, { toValue: 0, duration: 200, useNativeDriver: false }),
-    ]).start(() => {
-      onPendingDelete?.(task);
-    });
+    void triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+
+    Alert.alert(
+      'Тапсырманы өшіру',
+      'Бұл тапсырманы жоюды растайсыз ба? Өшірілген тапсырманы қайта қалпына келтіру мүмкін емес!',
+      [
+        {
+          text: 'Бас тарту',
+          style: 'cancel',
+          onPress: () => {
+            Animated.spring(swipeX, {
+              toValue: 0,
+              stiffness: 340,
+              damping: 28,
+              mass: 0.8,
+              useNativeDriver: false,
+            }).start();
+          },
+        },
+        {
+          text: 'Өшіру',
+          style: 'destructive',
+          onPress: async () => {
+            await triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
+            setIsDeleting(true);
+            Animated.parallel([
+              Animated.timing(rowHeightAnim, {
+                toValue: 0,
+                duration: 240,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: false,
+              }),
+              Animated.timing(rowOpacityAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: false,
+              }),
+            ]).start(() => {
+              onPendingDelete?.(task);
+            });
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const handlePressIn = () => {
@@ -137,7 +178,8 @@ export const TaskRow = React.memo(function TaskRow({
         onStartShouldSetPanResponderCapture: () => false,
         onMoveShouldSetPanResponder: (_, gesture) => {
           if (compact) return false;
-          return Math.abs(gesture.dx) > 6 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2;
+          // Strict horizontal swipe lock to prevent gesture trembling with drag handle
+          return Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 2.5;
         },
         onPanResponderGrant: () => {
           if (isSwipingRef) isSwipingRef.current = true;
@@ -149,8 +191,8 @@ export const TaskRow = React.memo(function TaskRow({
           onScrollEnabledChange?.(false);
           if (gesture.dx < 0) {
             const dx = gesture.dx;
-            // Apple iOS rubberband physics beyond -64px
-            const clamped = dx < -64 ? -64 + (dx + 64) * 0.35 : dx;
+            // Apple iOS rubberband physics beyond -72px
+            const clamped = dx < -72 ? -72 + (dx + 72) * 0.35 : dx;
             swipeX.setValue(clamped);
 
             // iPhone Haptic Vibration when swiped to delete threshold (-140px)
@@ -180,7 +222,7 @@ export const TaskRow = React.memo(function TaskRow({
           if (gesture.dx < -28 || gesture.vx < -0.3) {
             void triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
             Animated.spring(swipeX, {
-              toValue: -64,
+              toValue: -72,
               stiffness: 340,
               damping: 28,
               mass: 0.8,
@@ -228,9 +270,39 @@ export const TaskRow = React.memo(function TaskRow({
     );
   }
 
+  const isMorphing = !compact && activeDate && transitionProgress;
+
+  const dynamicPaddingVertical = isMorphing
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 4],
+      })
+    : compact ? 1 : 4;
+
+  const dynamicGap = isMorphing
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [6, 12],
+      })
+    : compact ? 8 : 12;
+
+  const dynamicCheckboxScale = isMorphing
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.72, 1],
+      })
+    : 1;
+
+  const dynamicTitleFontSize = isMorphing
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [12, 14],
+      })
+    : compact ? 12 : 14;
+
   return (
     <View style={styles.wrapper}>
-      {/* Main Task Row */}
+      {/* Foreground Task Row Content */}
       <Animated.View
         {...panResponder.panHandlers}
         style={[
@@ -238,15 +310,15 @@ export const TaskRow = React.memo(function TaskRow({
           compact && styles.compactRowContainer,
           {
             opacity: rowOpacity,
-            transform: [{ translateX: swipeX }],
             backgroundColor: swipeX.interpolate({
               inputRange: [-10, 0],
-              outputRange: ['#F2F2F7', 'transparent'],
+              outputRange: ['#F2F2F7', '#FFFFFF'],
               extrapolate: 'clamp',
             }),
             borderRadius: 12,
-            paddingVertical: 4,
+            paddingVertical: dynamicPaddingVertical,
             paddingHorizontal: 4,
+            gap: dynamicGap,
           },
         ]}
       >
@@ -268,7 +340,7 @@ export const TaskRow = React.memo(function TaskRow({
               styles.checkbox,
               compact && styles.compactCheckbox,
               task.isCompleted && styles.checkboxCompleted,
-              { transform: [{ scale: boxScale }] },
+              { transform: [{ scale: boxScale }, { scale: dynamicCheckboxScale }] },
             ]}
           >
             {task.isCompleted && (
@@ -297,17 +369,18 @@ export const TaskRow = React.memo(function TaskRow({
           ]}
         >
           <Animated.View style={{ transform: [{ scale: pressScale }] }}>
-            <Text
-            numberOfLines={compact ? 1 : 2}
-            ellipsizeMode="tail"
-            style={[
-              styles.title,
-              compact && styles.compactTitle,
-              task.isCompleted && styles.completedTitle,
-            ]}
-          >
-            {task.title}
-          </Text>
+            <Animated.Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[
+                styles.title,
+                compact && styles.compactTitle,
+                task.isCompleted && styles.completedTitle,
+                { fontSize: dynamicTitleFontSize },
+              ]}
+            >
+              {task.title}
+            </Animated.Text>
 
           {/* Metadata Row (only in non-compact detail mode) */}
           {hasMetadata && (
@@ -329,51 +402,6 @@ export const TaskRow = React.memo(function TaskRow({
           )}
           </Animated.View>
         </Pressable>
-
-        {/* Apple Reminders Dynamic Red Delete Pill Attached Directly to Right Edge */}
-        {!compact && (
-          <Animated.View
-            style={{
-              position: 'absolute',
-              left: '100%',
-              top: 2,
-              bottom: 2,
-              width: swipeX.interpolate({
-                inputRange: [-300, -64, 0],
-                outputRange: [300, 64, 0],
-                extrapolate: 'clamp',
-              }),
-              backgroundColor: '#FF3B30',
-              borderRadius: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-              marginLeft: 4,
-            }}
-          >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Тапсырманы өшіру"
-              onPress={executeDeleteAction}
-              style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <Animated.View
-                style={{
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  opacity: swipeX.interpolate({
-                    inputRange: [-48, -10, 0],
-                    outputRange: [1, 0, 0],
-                    extrapolate: 'clamp',
-                  }),
-                }}
-              >
-                <TrashIcon color="white" />
-                <Text style={{ color: 'white', fontSize: 10, fontWeight: '600', marginTop: 2 }}>Өшіру</Text>
-              </Animated.View>
-            </Pressable>
-          </Animated.View>
-        )}
       </Animated.View>
     </View>
   );

@@ -1,11 +1,11 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Easing, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { Animated, Easing, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format, isToday } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
-import { fromDateKey, months, toDateKey, weekdays } from '@/services/date-service';
+import { months, toDateKey, weekdays } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from './task-row';
 import { TaskBottomSheet } from './TaskBottomSheet';
@@ -15,7 +15,7 @@ import { getDatabase } from '@/database/database';
 import type { Task } from '@/types/task';
 
 type Frame = { x: number; y: number; width: number; height: number };
-type Transition = { date: Date; tasks: Task[]; frame: Frame; phase: 'opening' | 'closing' };
+type Transition = { date: Date; tasks: Task[]; frame: Frame; targetHeight: number; phase: 'opening' | 'closing' };
 type ContextValue = {
   openCard: (date: Date, tasks: Task[], frame: Frame) => void;
   closeCard: () => void;
@@ -23,6 +23,8 @@ type ContextValue = {
   updateInteractiveClose: (translationY: number) => void;
   endInteractiveClose: (translationY: number, velocityY: number) => void;
   activeDate: string | null;
+  progress: Animated.Value;
+  originFrame: Frame | null;
 };
 
 const CardTransitionContext = createContext<ContextValue | null>(null);
@@ -33,12 +35,9 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const { tasks, settings, loadRange, remove } = usePlanner();
 
   const progress = useRef(new Animated.Value(0)).current;
-  const contentProgress = useRef(new Animated.Value(0)).current;
-  const overlayOpacity = useRef(new Animated.Value(1)).current;
 
   const origin = useRef<Omit<Transition, 'phase'> | null>(null);
   const transitionRef = useRef<Transition | null>(null);
-  const closeStarted = useRef(false);
   const [transition, setTransition] = useState<Transition | null>(null);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -47,6 +46,22 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const scrollRef = useRef<ScrollView>(null);
   const scrollYRef = useRef(0);
+
+  const [measuredListHeight, setMeasuredListHeight] = useState<number>(0);
+  const isAnimatingRef = useRef(false);
+
+  const handleListLayout = useCallback((h: number) => {
+    if (isAnimatingRef.current) return;
+    setMeasuredListHeight((prev) => (Math.abs(prev - h) > 8 ? h : prev));
+  }, []);
+
+  const taskCount = transition?.tasks.length ?? 0;
+  const contentHeight =
+    taskCount === 0
+      ? 112
+      : 48 + 10 + (measuredListHeight > 0 ? measuredListHeight : taskCount * 52) + 12;
+  const maxHeight = height - (insets.top + 16) - (insets.bottom + 90);
+  const targetHeight = Math.min(maxHeight, contentHeight);
 
   const handleScrollEnabled = useCallback((enabled: boolean) => {
     setScrollEnabled(enabled);
@@ -75,160 +90,108 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     setPendingDeleteTask(null);
   };
 
-  const handleReorder = useCallback(async (newData: Task[]) => {
-    if (!transitionRef.current?.date) return;
-    const dateKey = toDateKey(transitionRef.current.date);
-    const db = await getDatabase();
-    const updatedAt = new Date().toISOString();
+  const handleReorder = useCallback(
+    async (newData: Task[]) => {
+      if (!transitionRef.current?.date) return;
+      const dateKey = toDateKey(transitionRef.current.date);
+      const db = await getDatabase();
+      const updatedAt = new Date().toISOString();
 
-    await db.withTransactionAsync(async () => {
-      for (let i = 0; i < newData.length; i++) {
-        await db.runAsync(
-          'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
-          i,
-          updatedAt,
-          newData[i].id,
-        );
-      }
-    });
-    await loadRange(dateKey, dateKey);
-  }, [loadRange]);
-
-  const taskCount = transition?.tasks.length ?? 0;
-  const contentHeight = taskCount === 0 ? 112 : 48 + 12 + taskCount * 56 + 12;
-  const maxHeight = height - (insets.top + 16) - (insets.bottom + 90);
-  const targetHeight = Math.min(maxHeight, contentHeight);
-
-  const openCard = (date: Date, tasks: Task[], frame: Frame) => {
-    if (transitionRef.current) return;
-    closeStarted.current = false;
-    const next = { date, tasks, frame };
-    origin.current = next;
-    transitionRef.current = { ...next, phase: 'opening' };
-    setTransition(transitionRef.current);
-    progress.setValue(0);
-    contentProgress.setValue(0);
-    overlayOpacity.setValue(1);
-
-    requestAnimationFrame(() => {
-      Animated.parallel([
-        Animated.spring(progress, {
-          toValue: 1,
-          tension: 240,
-          friction: 24,
-          useNativeDriver: false,
-        }),
-        Animated.spring(contentProgress, {
-          toValue: 1,
-          tension: 240,
-          friction: 24,
-          useNativeDriver: false,
-        }),
-      ]).start();
-    });
-  };
+      await db.withTransactionAsync(async () => {
+        for (let i = 0; i < newData.length; i++) {
+          await db.runAsync(
+            'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
+            i,
+            updatedAt,
+            newData[i].id
+          );
+        }
+      });
+      await loadRange(dateKey, dateKey);
+    },
+    [loadRange]
+  );
 
   const cleanupClose = () => {
     origin.current = null;
-    closeStarted.current = false;
     transitionRef.current = null;
     setTransition(null);
   };
 
-  const finishClose = () => {
-    progress.stopAnimation();
-    contentProgress.stopAnimation();
-    closeStarted.current = true;
+  const openCard = (date: Date, cardTasks: Task[], frame: Frame) => {
+    if (transitionRef.current) return;
+    isAnimatingRef.current = true;
+    const taskCount = cardTasks.length;
+    const calcContentHeight = taskCount === 0 ? 112 : 48 + 10 + taskCount * 52 + 12;
+    const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
+    const frameSnapshot = Object.freeze({ x: frame.x, y: frame.y, width: frame.width, height: frame.height });
 
+    const next = { date, tasks: cardTasks, frame: frameSnapshot, targetHeight: calcTargetHeight };
+    origin.current = next;
+    transitionRef.current = { ...next, phase: 'opening' };
+    setMeasuredListHeight(cardTasks.length * 52);
+    setTransition(transitionRef.current);
+
+    progress.setValue(0);
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 440,
+      easing: Easing.bezier(0.12, 1, 0.22, 1),
+      useNativeDriver: false,
+    }).start(() => {
+      isAnimatingRef.current = false;
+    });
+  };
+
+  const closeCard = () => {
     if (!origin.current) {
       cleanupClose();
       return;
     }
+    isAnimatingRef.current = true;
+    transitionRef.current = { ...origin.current, phase: 'closing' };
 
-    requestAnimationFrame(() => {
-      Animated.parallel([
-        Animated.spring(progress, {
-          toValue: 0,
-          tension: 240,
-          friction: 24,
-          useNativeDriver: false,
-        }),
-        Animated.spring(contentProgress, {
-          toValue: 0,
-          tension: 240,
-          friction: 24,
-          useNativeDriver: false,
-        }),
-      ]).start(() => {
-        cleanupClose();
-      });
-    });
-
-    setTimeout(cleanupClose, 320);
-  };
-
-  const closeCard = () => {
-    closeStarted.current = false;
-    const previous = origin.current;
-    if (!previous) {
+    Animated.timing(progress, {
+      toValue: 0,
+      duration: 320,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
+      useNativeDriver: false,
+    }).start(() => {
+      isAnimatingRef.current = false;
       cleanupClose();
-      return;
-    }
-    transitionRef.current = { ...previous, phase: 'closing' };
-    setTransition(transitionRef.current);
-    finishClose();
+    });
   };
 
   const beginInteractiveClose = () => {
-    closeStarted.current = false;
-    const previous = origin.current;
-    if (!previous) return;
-    transitionRef.current = { ...previous, phase: 'closing' };
+    if (!origin.current) return;
+    transitionRef.current = { ...origin.current, phase: 'closing' };
     setTransition(transitionRef.current);
     progress.setValue(1);
-    contentProgress.setValue(1);
-    overlayOpacity.setValue(1);
   };
 
   const updateInteractiveClose = (translationY: number) => {
     if (!origin.current || !transitionRef.current || translationY <= 0) return;
     const cardProgress = Math.max(0, Math.min(1, 1 - translationY / 280));
-    const detailProgress = Math.max(0, Math.min(1, 1 - translationY / 100));
     progress.setValue(cardProgress);
-    contentProgress.setValue(detailProgress);
   };
 
   const endInteractiveClose = (translationY: number, velocityY: number) => {
     if (!origin.current || !transitionRef.current) return;
     if (translationY > 90 || velocityY > 0.6) {
-      finishClose();
+      closeCard();
       return;
     }
-    Animated.parallel([
-      Animated.spring(progress, {
-        toValue: 1,
-        stiffness: 220,
-        damping: 26,
-        mass: 0.8,
-        overshootClamping: true,
-        useNativeDriver: false,
-      }),
-      Animated.timing(contentProgress, {
-        toValue: 1,
-        duration: 160,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-    ]).start(() => {
-      if (transitionRef.current?.phase !== 'closing') {
-        transitionRef.current = null;
-        setTransition(null);
-      }
-    });
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 200,
+      easing: Easing.bezier(0.32, 0.72, 0, 1),
+      useNativeDriver: false,
+    }).start();
   };
 
   const detailSwipeResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gesture) => gesture.dy > 14 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
+    onMoveShouldSetPanResponder: (_, gesture) =>
+      gesture.dy > 14 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
     onPanResponderMove: (_, gesture) => {
       beginInteractiveClose();
       updateInteractiveClose(gesture.dy);
@@ -254,6 +217,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     updateInteractiveClose,
     endInteractiveClose,
     activeDate: transition ? toDateKey(transition.date) : null,
+    progress,
+    originFrame: transition?.frame ?? null,
   };
 
   const current = transition;
@@ -264,15 +229,23 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const weekend = day ? day.getDay() === 0 || day.getDay() === 6 : false;
   const today = day ? isToday(day) : false;
 
-  const fadeFirstOpacity = progress.interpolate({
-    inputRange: [0.8, 1],
-    outputRange: [0, 1],
-  });
-
   return (
     <CardTransitionContext.Provider value={value}>
       <View style={{ flex: 1 }}>
-        {children}
+        {/* Background Grid View with opacity: 0.4 on expansion */}
+        <Animated.View
+          style={{
+            flex: 1,
+            opacity: progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [1, 0.4],
+            }),
+          }}
+        >
+          {children}
+        </Animated.View>
+
+        {/* Absolute Positioned Overlay - No Modal */}
         {current && (
           <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
             {/* Backdrop Overlay - tap to close */}
@@ -291,11 +264,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
               />
             </Pressable>
 
-            {/* Matched Geometry Morphing Card */}
+            {/* FLIP Manual Shared-Element Morphing Card */}
             <Animated.View
               style={{
                 position: 'absolute',
-                opacity: overlayOpacity,
                 left: progress.interpolate({
                   inputRange: [0, 1],
                   outputRange: [current.frame.x, 16],
@@ -310,15 +282,16 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 }),
                 height: progress.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [current.frame.height, targetHeight],
+                  outputRange: [current.frame.height, current.targetHeight],
                 }),
-                overflow: 'hidden',
-                backgroundColor: colors.card,
                 borderRadius: progress.interpolate({
                   inputRange: [0, 1],
                   outputRange: [12, 20],
                 }),
-                borderCurve: 'continuous',
+                backgroundColor: colors.card,
+                overflow: 'hidden',
+                zIndex: 9999,
+                elevation: 10,
                 borderWidth: 1,
                 borderColor: today ? colors.activeCardBorder : colors.cardBorder,
               }}
@@ -333,17 +306,14 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   }),
                   paddingHorizontal: progress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [8, 12],
+                    outputRange: [8, 10],
                   }),
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 8,
                   backgroundColor: today ? colors.activeHeaderBg : colors.card,
                   borderBottomWidth: 1,
-                  borderBottomColor: today ? colors.activeHeaderBg : fadeFirstOpacity.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['transparent', colors.divider],
-                  }),
+                  borderBottomColor: today ? colors.activeHeaderBg : colors.divider,
                 }}
               >
                 <Animated.View
@@ -366,7 +336,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                         outputRange: [12, 14],
                       }),
                       fontWeight: '600',
-                      color: today ? colors.activeHeaderBg : weekend ? colors.sundayText : colors.dateNumText,
+                      color: today
+                        ? colors.activeHeaderBg
+                        : weekend
+                        ? colors.sundayText
+                        : colors.dateNumText,
                       fontVariant: ['tabular-nums'],
                     }}
                   >
@@ -374,15 +348,28 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   </Animated.Text>
                   <Animated.Text
                     style={{
-                      opacity: progress,
+                      opacity: progress.interpolate({
+                        inputRange: [0.25, 1],
+                        outputRange: [0, 1],
+                      }),
+                      maxWidth: progress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 64],
+                      }),
                       fontSize: 14,
                       fontWeight: '600',
-                      color: today ? colors.activeHeaderBg : weekend ? colors.sundayText : colors.dateNumText,
+                      color: today
+                        ? colors.activeHeaderBg
+                        : weekend
+                        ? colors.sundayText
+                        : colors.dateNumText,
                       marginLeft: progress.interpolate({
                         inputRange: [0, 1],
                         outputRange: [0, 4],
                       }),
+                      overflow: 'hidden',
                     }}
+                    numberOfLines={1}
                   >
                     {months[day!.getMonth()]}
                   </Animated.Text>
@@ -421,34 +408,58 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       justifyContent: 'center',
                     }}
                   >
-                    <Text style={{ color: today ? 'white' : colors.text, fontSize: 9, fontWeight: '800', lineHeight: 10 }}>✓</Text>
+                    <Text
+                      style={{
+                        color: today ? 'white' : colors.text,
+                        fontSize: 9,
+                        fontWeight: '800',
+                        lineHeight: 10,
+                      }}
+                    >
+                      ✓
+                    </Text>
                   </View>
-                  <Text style={{ color: today ? 'white' : colors.text, fontSize: 12, fontWeight: '600', fontVariant: ['tabular-nums'] }}>{completedCount}</Text>
-                  <Text style={{ color: today ? 'rgba(255,255,255,0.72)' : colors.secondary, fontSize: 12, fontWeight: '600', fontVariant: ['tabular-nums'] }}>/{dayTasks.length}</Text>
+                  <Text
+                    style={{
+                      color: today ? 'white' : colors.text,
+                      fontSize: 12,
+                      fontWeight: '600',
+                      fontVariant: ['tabular-nums'],
+                    }}
+                  >
+                    {completedCount}
+                  </Text>
+                  <Text
+                    style={{
+                      color: today ? 'rgba(255,255,255,0.72)' : colors.secondary,
+                      fontSize: 12,
+                      fontWeight: '600',
+                      fontVariant: ['tabular-nums'],
+                    }}
+                  >
+                    /{dayTasks.length}
+                  </Text>
                 </Animated.View>
               </Animated.View>
 
-              {/* Content Morphing with SortableTaskList - ALWAYS VISIBLE */}
+              {/* Content Morphing with SortableTaskList */}
               <Animated.View
                 style={{
+                  flex: 1,
+                  paddingHorizontal: 0,
                   opacity: 1,
                   transform: [
                     {
                       scale: progress.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [0.94, 1],
+                        outputRange: [0.95, 1],
                       }),
                     },
                   ],
-                  paddingHorizontal: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [2, 4],
-                  }),
                   paddingTop: progress.interpolate({
                     inputRange: [0, 1],
                     outputRange: [4, 10],
                   }),
-                  flex: 1,
                 }}
               >
                 <ScrollView
@@ -462,31 +473,50 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     scrollYRef.current = e.nativeEvent.contentOffset.y;
                   }}
                   scrollEventThrottle={16}
-                  contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 8 }}
+                  contentContainerStyle={{ paddingHorizontal: 0, paddingBottom: 8 }}
                 >
                   {dayTasks.length ? (
-                    <SortableTaskList
-                      data={dayTasks}
-                      keyExtractor={(task) => `${task.id}:${task.date}`}
-                      onReorder={(newData) => void handleReorder(newData)}
-                      onScrollEnabledChange={handleScrollEnabled}
-                      onAutoScroll={handleAutoScroll}
-                      gap={4}
-                      dragHandleOpacity={fadeFirstOpacity}
-                      renderItem={(task, isActive, index, totalCount, onSwipeX, onScrollEnabledChange) => (
-                        <TaskRow
-                          task={task}
-                          isLast={index === totalCount - 1}
-                          onPress={() => beginEditing(task)}
-                          onPendingDelete={handlePendingDelete}
-                          isActive={isActive}
-                          onSwipeX={onSwipeX}
-                          onScrollEnabledChange={onScrollEnabledChange}
-                        />
-                      )}
-                    />
+                    <View onLayout={(e) => handleListLayout(e.nativeEvent.layout.height)}>
+                      <SortableTaskList
+                        data={dayTasks}
+                        keyExtractor={(task) => `${task.id}:${task.date}`}
+                        onReorder={(newData) => void handleReorder(newData)}
+                        onScrollEnabledChange={handleScrollEnabled}
+                        onAutoScroll={handleAutoScroll}
+                        gap={4}
+                        dragHandleOpacity={progress.interpolate({
+                          inputRange: [0.85, 1],
+                          outputRange: [0, 1],
+                        })}
+                        renderItem={(
+                          task,
+                          isActive,
+                          index,
+                          totalCount,
+                          onSwipeX,
+                          onScrollEnabledChange
+                        ) => (
+                          <TaskRow
+                            task={task}
+                            isLast={index === totalCount - 1}
+                            onPress={() => beginEditing(task)}
+                            onPendingDelete={handlePendingDelete}
+                            isActive={isActive}
+                            onSwipeX={onSwipeX}
+                            onScrollEnabledChange={onScrollEnabledChange}
+                          />
+                        )}
+                      />
+                    </View>
                   ) : (
-                    <Text style={{ color: colors.secondary, fontSize: 16, paddingVertical: 24, textAlign: 'center' }}>
+                    <Text
+                      style={{
+                        color: colors.secondary,
+                        fontSize: 16,
+                        paddingVertical: 24,
+                        textAlign: 'center',
+                      }}
+                    >
                       Тапсырма жоқ
                     </Text>
                   )}
@@ -511,14 +541,20 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   justifyContent: 'space-between',
                   paddingHorizontal: 16,
                   zIndex: 140,
-                  opacity: progress,
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+                  opacity: progress.interpolate({
+                    inputRange: [0.8, 1],
+                    outputRange: [0, 1],
+                  }),
                 }}
               >
                 <Text style={{ color: 'white', fontSize: 14, fontWeight: '500' }}>
                   Тапсырма өшірілді
                 </Text>
-                <Pressable accessibilityRole="button" accessibilityLabel="Өшіруді болдырмау" onPress={handleUndo}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Өшіруді болдырмау"
+                  onPress={handleUndo}
+                >
                   <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700' }}>
                     Болдырмау
                   </Text>
@@ -539,7 +575,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 alignItems: 'center',
                 gap: 10,
                 zIndex: 100,
-                opacity: fadeFirstOpacity,
+                opacity: progress.interpolate({
+                  inputRange: [0.7, 1],
+                  outputRange: [0, 1],
+                }),
                 transform: [
                   {
                     translateY: progress.interpolate({
@@ -587,8 +626,19 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   gap: 10,
                 }}
               >
-                <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>
-                <Text style={{ color: colors.inputPlaceholder, fontSize: 14, fontWeight: '500' }}>Тапсырма қосу</Text>
+                <Text
+                  style={{
+                    color: colors.inputPlusIcon,
+                    fontSize: 20,
+                    lineHeight: 22,
+                    fontWeight: '300',
+                  }}
+                >
+                  +
+                </Text>
+                <Text style={{ color: colors.inputPlaceholder, fontSize: 14, fontWeight: '500' }}>
+                  Тапсырма қосу
+                </Text>
               </AnimatedPressable>
             </Animated.View>
 
@@ -627,5 +677,3 @@ export function useCardTransition() {
   if (!value) throw new Error('CardTransitionProvider missing');
   return value;
 }
-
-const styles = StyleSheet.create({});
