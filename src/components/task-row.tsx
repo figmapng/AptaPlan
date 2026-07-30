@@ -308,6 +308,7 @@ export const TaskRow = React.memo(function TaskRow({
         style={[
           styles.rowContainer,
           compact && styles.compactRowContainer,
+          !hasMetadata && { alignItems: 'center' },
           {
             opacity: rowOpacity,
             backgroundColor: swipeX.interpolate({
@@ -333,7 +334,7 @@ export const TaskRow = React.memo(function TaskRow({
           }
           onPress={onToggle}
           hitSlop={8}
-          style={styles.checkboxTouch}
+          style={[styles.checkboxTouch, !hasMetadata && { marginTop: 0 }]}
         >
           <Animated.View
             style={[

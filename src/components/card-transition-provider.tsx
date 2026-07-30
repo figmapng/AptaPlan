@@ -1,8 +1,53 @@
-import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { format, isToday } from 'date-fns';
+import { addDays, format, isToday } from 'date-fns';
+
+function BouncingArrowPointer() {
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: 10,
+          duration: 700,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: false,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 700,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: false,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [bounceAnim]);
+
+  return (
+    <Animated.View
+      style={{
+        transform: [{ translateY: bounceAnim }],
+        alignItems: 'center',
+        marginTop: 14,
+      }}
+    >
+      <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+        <Path
+          d="M12 4V18M12 18L6 12M12 18L18 12"
+          stroke={colors.today}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    </Animated.View>
+  );
+}
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { months, toDateKey, weekdays } from '@/services/date-service';
@@ -35,6 +80,28 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const { tasks, settings, loadRange, remove } = usePlanner();
 
   const progress = useRef(new Animated.Value(0)).current;
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: 8,
+          duration: 650,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: false,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 0,
+          duration: 650,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: false,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [bounceAnim]);
 
   const origin = useRef<Omit<Transition, 'phase'> | null>(null);
   const transitionRef = useRef<Transition | null>(null);
@@ -55,12 +122,13 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     setMeasuredListHeight((prev) => (Math.abs(prev - h) > 8 ? h : prev));
   }, []);
 
-  const taskCount = transition?.tasks.length ?? 0;
-  const contentHeight =
-    taskCount === 0
-      ? 112
-      : 48 + 10 + (measuredListHeight > 0 ? measuredListHeight : taskCount * 52) + 12;
-  const maxHeight = height - (insets.top + 16) - (insets.bottom + 90);
+  const activeDateKey = transition?.date ? toDateKey(transition.date) : null;
+  const activeDayTasks = activeDateKey ? tasks.filter((t) => t.date === activeDateKey) : (transition?.tasks ?? []);
+  const taskCount = activeDayTasks.length;
+  const emptyCardHeight = Math.round(height * 0.45);
+  const rawContentHeight = 48 + 8 + (measuredListHeight > 0 ? measuredListHeight : taskCount * 48) + 12;
+  const contentHeight = Math.max(emptyCardHeight, rawContentHeight);
+  const maxHeight = height - (insets.top + 4) - (Math.max(insets.bottom + 8, 16) + 48 + 24);
   const targetHeight = Math.min(maxHeight, contentHeight);
 
   const handleScrollEnabled = useCallback((enabled: boolean) => {
@@ -122,14 +190,14 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     if (transitionRef.current) return;
     isAnimatingRef.current = true;
     const taskCount = cardTasks.length;
-    const calcContentHeight = taskCount === 0 ? 112 : 48 + 10 + taskCount * 52 + 12;
+    const calcContentHeight = Math.max(emptyCardHeight, 48 + 8 + taskCount * 48 + 12);
     const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
     const frameSnapshot = Object.freeze({ x: frame.x, y: frame.y, width: frame.width, height: frame.height });
 
     const next = { date, tasks: cardTasks, frame: frameSnapshot, targetHeight: calcTargetHeight };
     origin.current = next;
     transitionRef.current = { ...next, phase: 'opening' };
-    setMeasuredListHeight(cardTasks.length * 52);
+    setMeasuredListHeight(cardTasks.length * 48);
     setTransition(transitionRef.current);
 
     progress.setValue(0);
@@ -189,15 +257,86 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     }).start();
   };
 
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const switchDay = useCallback(
+    (offset: -1 | 1) => {
+      if (!transitionRef.current || isAnimatingRef.current) return;
+      isAnimatingRef.current = true;
+
+      const currentDay = transitionRef.current.date;
+      const nextDay = addDays(currentDay, offset);
+      const nextKey = toDateKey(nextDay);
+      const nextTasks = tasks.filter((t) => t.date === nextKey);
+
+      if (settings.haptics && Platform.OS === 'ios') {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+
+      const exitVal = offset === 1 ? -width * 0.4 : width * 0.4;
+      const enterVal = offset === 1 ? width * 0.4 : -width * 0.4;
+
+      Animated.timing(slideAnim, {
+        toValue: exitVal,
+        duration: 120,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }).start(() => {
+        const calcContentHeight = Math.max(emptyCardHeight, 48 + 8 + nextTasks.length * 48 + 12);
+        const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
+        const updated = {
+          ...transitionRef.current!,
+          date: nextDay,
+          tasks: nextTasks,
+          targetHeight: calcTargetHeight,
+        };
+        origin.current = updated;
+        transitionRef.current = updated;
+        setTransition(updated);
+
+        slideAnim.setValue(enterVal);
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 160,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+        }).start(() => {
+          isAnimatingRef.current = false;
+        });
+      });
+    },
+    [tasks, maxHeight, slideAnim, width, settings.haptics]
+  );
+
   const detailSwipeResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (_, gesture) =>
-      gesture.dy > 14 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
+      Math.abs(gesture.dx) > 16 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
     onPanResponderMove: (_, gesture) => {
-      beginInteractiveClose();
-      updateInteractiveClose(gesture.dy);
+      if (Math.abs(gesture.dx) > Math.abs(gesture.dy)) {
+        slideAnim.setValue(gesture.dx);
+      }
     },
-    onPanResponderRelease: (_, gesture) => endInteractiveClose(gesture.dy, gesture.vy),
-    onPanResponderTerminate: (_, gesture) => endInteractiveClose(gesture.dy, gesture.vy),
+    onPanResponderRelease: (_, gesture) => {
+      if (Math.abs(gesture.dx) > 40 || Math.abs(gesture.vx) > 0.35) {
+        if (gesture.dx < 0 || gesture.vx < -0.35) {
+          switchDay(1);
+        } else {
+          switchDay(-1);
+        }
+      } else {
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          useNativeDriver: false,
+          bounciness: 4,
+        }).start();
+      }
+    },
+    onPanResponderTerminate: () => {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: false,
+      }).start();
+    },
   });
 
   const beginAdding = () => {
@@ -247,7 +386,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
         {/* Absolute Positioned Overlay - No Modal */}
         {current && (
-          <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
+          <View {...detailSwipeResponder.panHandlers} pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
             {/* Backdrop Overlay - tap to close */}
             <Pressable onPress={closeCard} style={StyleSheet.absoluteFillObject}>
               <Animated.View
@@ -282,7 +421,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 }),
                 height: progress.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [current.frame.height, current.targetHeight],
+                  outputRange: [current.frame.height, targetHeight],
                 }),
                 borderRadius: progress.interpolate({
                   inputRange: [0, 1],
@@ -294,9 +433,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 elevation: 10,
                 borderWidth: 1,
                 borderColor: today ? colors.activeCardBorder : colors.cardBorder,
+                transform: [{ translateX: slideAnim }],
               }}
             >
-              {/* Header Morphing with Swipe down responder */}
+              {/* Header Morphing */}
               <Animated.View
                 {...detailSwipeResponder.panHandlers}
                 style={{
@@ -458,7 +598,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   ],
                   paddingTop: progress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [4, 10],
+                    outputRange: [2, 6],
                   }),
                 }}
               >
@@ -509,16 +649,24 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       />
                     </View>
                   ) : (
-                    <Text
+                    <View
                       style={{
-                        color: colors.secondary,
-                        fontSize: 16,
-                        paddingVertical: 24,
-                        textAlign: 'center',
+                        minHeight: Math.max(160, targetHeight - 80),
+                        justifyContent: 'center',
+                        alignItems: 'center',
                       }}
                     >
-                      Тапсырма жоқ
-                    </Text>
+                      <Text
+                        style={{
+                          color: colors.secondary,
+                          fontSize: 16,
+                          fontWeight: '500',
+                          textAlign: 'center',
+                        }}
+                      >
+                        Тапсырма жоқ
+                      </Text>
+                    </View>
                   )}
                 </ScrollView>
               </Animated.View>
@@ -561,6 +709,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 </Pressable>
               </Animated.View>
             )}
+
+
 
             {/* Bottom Action Bar: Back button < and + Тапсырма қосу input bar */}
             <Animated.View
