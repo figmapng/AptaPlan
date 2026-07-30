@@ -301,22 +301,29 @@ export default function Home() {
     }
   }, []);
 
-  // ── Layout metrics ───────────────────────────────────────────────
-  const bottomInputOffset = Math.max(insets.bottom + 8, 16);
-  const cardGridBottomPadding = bottomInputOffset + 48 + 36;
-  const maxGridHeight = Math.max(460, screenHeight - (insets.top + 50) - cardGridBottomPadding);
-  const collapsedBodyHeight = Math.max(120, Math.floor((maxGridHeight - 16) / 3) - 34);
-  const expandedBodyHeight = Math.max(76, Math.floor((maxGridHeight - 24) / 4.3) - 34);
-  const expandedSundayHeight = Math.max(124, maxGridHeight - 3 * (34 + expandedBodyHeight) - 24);
-
+  // ── Layout metrics ──────────────────────────────────────
   const currDates = slotDates[currSlot] ?? week.dates;
-  const activeHeaderDate = currDates[0];
+  
+  const headerSpace = insets.top + 68;
+  const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 60;
+  const availableHeight = screenHeight - headerSpace - bottomBarSpace;
+  const collapsedBodyHeight = Math.max(120, Math.floor((availableHeight - 16 - 3 * 34) / 3));
+  const expandedBodyHeight = Math.max(70, Math.floor((availableHeight - 16 - 156 - 4 * 34) / 3));
+  const expandedSundayHeight = 156;
+  const cardGridBottomPadding = bottomBarSpace;
+  const activeHeaderDate = currDates.find((d) => isToday(d)) ?? currDates[0];
   const title =
     mode === 'week'
       ? `${months[activeHeaderDate.getMonth()][0].toUpperCase()}${months[activeHeaderDate.getMonth()].slice(1)} ${activeHeaderDate.getFullYear()}`
       : mode === 'month'
       ? `${months[month.getMonth()][0].toUpperCase()}${months[month.getMonth()].slice(1)} ${month.getFullYear()}`
       : `${year} жыл`;
+
+  const todayTime = new Date().setHours(0, 0, 0, 0);
+  const firstWeekDateTime = currDates[0].getTime();
+  const lastWeekDateTime = currDates[6].getTime();
+  const isFutureWeek = firstWeekDateTime > todayTime;
+  const isPastWeek = lastWeekDateTime < todayTime;
 
   const selectMode = (nextMode: ViewMode) => {
     collapseWeek();
@@ -346,46 +353,65 @@ export default function Home() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           {/* Left Title & Metrics Column */}
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 20 : 23, fontWeight: '800', letterSpacing: -0.65, color: colors.text, fontVariant: ['tabular-nums'] }}>
-                {title}
-              </Text>
-              {mode === 'week' && !currDates.some((d) => isToday(d)) && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {/* Left Return Button (When viewing FUTURE week -> return left to present) */}
+              {mode === 'week' && isFutureWeek && (
                 <AnimatedPressable
                   accessibilityRole="button"
                   accessibilityLabel="Бүгінгі күнге қайту"
                   onPress={resetToCurrentWeek}
                   activeScale={0.93}
                   style={{
-                    height: 23,
-                    borderRadius: 11.5,
-                    paddingHorizontal: 7,
+                    height: 24,
+                    borderRadius: 12,
+                    paddingHorizontal: 8,
                     backgroundColor: colors.today,
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexDirection: 'row',
-                    gap: 3.5,
+                    gap: 4,
                   }}
                 >
                   <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M9 14L4 9l5-5"
-                      stroke="white"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <Path
-                      d="M4 9h11a5 5 0 0 1 5 5v2"
-                      stroke="white"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                    <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                   </Svg>
                   <Text style={{ color: 'white', fontSize: 11, fontWeight: '700' }}>
                     {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
                   </Text>
+                </AnimatedPressable>
+              )}
+
+              {/* Month & Year Title */}
+              <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
+                {title}
+              </Text>
+
+              {/* Right Return Button (When viewing PAST week -> return right to present) */}
+              {mode === 'week' && isPastWeek && (
+                <AnimatedPressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Бүгінгі күнге қайту"
+                  onPress={resetToCurrentWeek}
+                  activeScale={0.93}
+                  style={{
+                    height: 24,
+                    borderRadius: 12,
+                    paddingHorizontal: 8,
+                    backgroundColor: colors.today,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    gap: 4,
+                  }}
+                >
+                  <Text style={{ color: 'white', fontSize: 11, fontWeight: '700' }}>
+                    {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
+                  </Text>
+                  <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
+                    <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
                 </AnimatedPressable>
               )}
             </View>
@@ -435,8 +461,8 @@ export default function Home() {
             })()}
           </View>
 
-          {/* Right Mode Picker & Settings */}
-          <View style={{ position: 'relative', zIndex: 20 }}>
+          {/* Right Mode Picker & Settings Control Group */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, position: 'relative', zIndex: 20 }}>
             <AnimatedPressable
               accessibilityRole="button"
               onPress={() => { collapseWeek(); setModePickerOpen((o) => !o); }}
@@ -446,7 +472,9 @@ export default function Home() {
               <CalendarIcon />
               <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>{modeLabels[mode]}</Text>
             </AnimatedPressable>
-            {modePickerOpen && (
+
+            
+{modePickerOpen && (
               <View style={{ position: 'absolute', right: 0, top: 44, width: 126, padding: 4, gap: 2, backgroundColor: colors.card, borderRadius: 14, borderCurve: 'continuous', boxShadow: '0 6px 16px rgba(31,32,38,0.14)' }}>
                 {(Object.keys(modeLabels) as ViewMode[]).map((item) => (
                   <AnimatedPressable key={item} accessibilityRole="button" onPress={() => selectMode(item)} activeScale={0.96}
@@ -514,7 +542,7 @@ export default function Home() {
         </ScrollView>
       )}
 
-      {/* ── Floating input ─────────────────────────────────────── */}
+      {/* ── Floating input ───────────────────────────────────────── */}
       {mode === 'week' && (
         <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30 }}>
           <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
@@ -636,7 +664,7 @@ function BookSpine({ progress, collapsedHeight = 540, expandedHeight = 382 }: { 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
   return (
     <AnimatedPressable accessibilityRole="button" accessibilityLabel="Жаңа тапсырма қосу" onPress={() => { onInteraction?.(); onAddTask(); }} activeScale={0.97}
-      style={{ height: 48, borderRadius: 24, borderWidth: 1, borderColor: colors.inputBorder, backgroundColor: colors.inputBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 10, marginTop: 10 }}>
+      style={{ height: 48, borderRadius: 24, borderWidth: 1, borderColor: colors.inputBorder, backgroundColor: colors.inputBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 10 }}>
       <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>
       <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>Тапсырма қосу</Text>
     </AnimatedPressable>

@@ -431,7 +431,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 overflow: 'hidden',
                 zIndex: 9999,
                 elevation: 10,
-                borderWidth: 1,
+                borderWidth: today ? 1.5 : 1,
                 borderColor: today ? colors.activeCardBorder : colors.cardBorder,
                 transform: [{ translateX: slideAnim }],
               }}
@@ -451,14 +451,14 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 8,
-                  backgroundColor: today ? colors.activeHeaderBg : colors.card,
+                  backgroundColor: colors.card,
                   borderBottomWidth: 1,
-                  borderBottomColor: today ? colors.activeHeaderBg : colors.divider,
+                  borderBottomColor: colors.divider,
                 }}
               >
                 <Animated.View
                   style={{
-                    backgroundColor: today ? 'white' : '#F0F0F2',
+                    backgroundColor: today ? colors.today : '#F0F0F2',
                     borderRadius: 6,
                     paddingHorizontal: progress.interpolate({
                       inputRange: [0, 1],
@@ -477,7 +477,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       }),
                       fontWeight: '600',
                       color: today
-                        ? colors.activeHeaderBg
+                        ? '#FFFFFF'
                         : weekend
                         ? colors.sundayText
                         : colors.dateNumText,
@@ -499,7 +499,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       fontSize: 14,
                       fontWeight: '600',
                       color: today
-                        ? colors.activeHeaderBg
+                        ? '#FFFFFF'
                         : weekend
                         ? colors.sundayText
                         : colors.dateNumText,
@@ -521,7 +521,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       outputRange: [12, 16],
                     }),
                     fontWeight: '700',
-                    color: today ? 'white' : weekend ? colors.sundayText : colors.text,
+                    color: today ? colors.today : weekend ? colors.sundayText : colors.text,
                   }}
                 >
                   {weekdays[day!.getDay()]}
@@ -543,42 +543,40 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       marginRight: 6,
                       borderRadius: 4,
                       borderWidth: 1.25,
-                      borderColor: today ? 'white' : colors.text,
+                      borderColor: colors.text,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Text
-                      style={{
-                        color: today ? 'white' : colors.text,
-                        fontSize: 9,
-                        fontWeight: '800',
-                        lineHeight: 10,
-                      }}
-                    >
-                      ✓
-                    </Text>
+                    <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
+                      <Path
+                        d="M20 6L9 17l-5-5"
+                        stroke={colors.text}
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </Svg>
                   </View>
-                  <Text
+                  <Animated.Text
                     style={{
-                      color: today ? 'white' : colors.text,
                       fontSize: 12,
-                      fontWeight: '600',
-                      fontVariant: ['tabular-nums'],
+                      fontWeight: '700',
+                      color: colors.text,
                     }}
                   >
                     {completedCount}
-                  </Text>
-                  <Text
+                  </Animated.Text>
+                  <Animated.Text
                     style={{
-                      color: today ? 'rgba(255,255,255,0.72)' : colors.secondary,
+                      color: colors.secondary,
                       fontSize: 12,
                       fontWeight: '600',
                       fontVariant: ['tabular-nums'],
                     }}
                   >
                     /{dayTasks.length}
-                  </Text>
+                  </Animated.Text>
                 </Animated.View>
               </Animated.View>
 

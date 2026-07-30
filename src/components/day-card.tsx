@@ -159,15 +159,15 @@ export function DayCard({
       })
     : 0;
 
-  // Header styles per specification
-  const headerBg = today ? colors.activeHeaderBg : colors.card;
+  // Header styles per specification matching user screenshot
+  const headerBg = colors.card;
   const cardBorderColor = today ? colors.activeCardBorder : colors.cardBorder;
-  const numBg = today ? '#FFFFFF' : isWeekend ? colors.sundayNumBg : colors.dateNumBg;
-  const numTextColor = today ? colors.activeHeaderBg : isWeekend ? colors.sundayText : colors.dateNumText;
-  const dayNameColor = today ? colors.activeHeaderText : isWeekend ? colors.sundayText : colors.text;
-  const progressCountColor = today ? colors.activeHeaderText : colors.text;
-  const progressTotalColor = today ? 'rgba(255,255,255,0.72)' : colors.secondary;
-  const progressIconBorder = today ? 'white' : colors.text;
+  const numBg = today ? colors.today : isWeekend ? colors.sundayNumBg : colors.dateNumBg;
+  const numTextColor = today ? '#FFFFFF' : isWeekend ? colors.sundayText : colors.dateNumText;
+  const dayNameColor = today ? colors.today : isWeekend ? colors.sundayText : colors.text;
+  const progressCountColor = colors.text;
+  const progressTotalColor = colors.secondary;
+  const progressIconBorder = colors.text;
 
   const dayName = (weekdays[date.getDay()] ?? '').toUpperCase();
 
@@ -183,7 +183,7 @@ export function DayCard({
         paddingHorizontal: 8,
         backgroundColor: headerBg,
         borderBottomWidth: 1,
-        borderBottomColor: today ? colors.activeHeaderBg : colors.divider,
+        borderBottomColor: colors.divider,
       }}
     >
       <View
@@ -337,7 +337,7 @@ export function DayCard({
             backgroundColor: colors.card,
             borderRadius: 12,
             borderCurve: 'continuous',
-            borderWidth: 1,
+            borderWidth: today ? 1.5 : 1,
             borderColor: cardBorderColor,
             overflow: 'hidden',
             opacity: isTransitioning ? 0 : wideOpacity,
@@ -363,7 +363,7 @@ export function DayCard({
         backgroundColor: colors.card,
         borderRadius: 12,
         borderCurve: 'continuous',
-        borderWidth: 1,
+        borderWidth: today ? 1.5 : 1,
         borderColor: cardBorderColor,
         overflow: 'hidden',
         opacity: isTransitioning ? 0 : gridPushOpacity,
