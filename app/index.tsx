@@ -1,4 +1,4 @@
-import { isToday } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -12,7 +12,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Svg, { Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors } from '@/constants/colors';
@@ -22,6 +22,7 @@ import {
   addDays,
   formatWeekRange,
   getMonthGrid,
+  getWeekDates,
   isSameMonth,
   months,
   toDateKey,
@@ -181,6 +182,19 @@ export default function Home() {
     });
   }, [carouselAnim, screenWidth]);
 
+  const resetToCurrentWeek = useCallback(() => {
+    if (isAnimatingRef.current) return;
+    weekRef.current.today();
+    const cur = getWeekDates(new Date());
+    setCurrSlot(1);
+    setSlotDates([
+      cur.map((d) => addDays(d, -7)),
+      cur,
+      cur.map((d) => addDays(d, 7)),
+    ]);
+    carouselAnim.setValue(0);
+  }, [carouselAnim]);
+
   const gestureHandlers = {
     onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
       if (modeRef.current !== 'week' || isAnimatingRef.current) return;
@@ -296,9 +310,10 @@ export default function Home() {
   const expandedSundayHeight = Math.max(124, maxGridHeight - 3 * (34 + expandedBodyHeight) - 24);
 
   const currDates = slotDates[currSlot] ?? week.dates;
+  const activeHeaderDate = currDates[0];
   const title =
     mode === 'week'
-      ? formatWeekRange(currDates[0], currDates[6]).replace('–', ' - ')
+      ? `${months[activeHeaderDate.getMonth()][0].toUpperCase()}${months[activeHeaderDate.getMonth()].slice(1)} ${activeHeaderDate.getFullYear()}`
       : mode === 'month'
       ? `${months[month.getMonth()][0].toUpperCase()}${months[month.getMonth()].slice(1)} ${month.getFullYear()}`
       : `${year} жыл`;
@@ -329,17 +344,98 @@ export default function Home() {
       {/* ── Header ───────────────────────────────────────────────── */}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 4, backgroundColor: colors.background, zIndex: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          {/* Left Title & Metrics Column */}
           <View style={{ flex: 1 }}>
-            <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 22 : 24, fontWeight: '800', letterSpacing: -0.65, color: colors.text, fontVariant: ['tabular-nums'] }}>
-              {title}
-            </Text>
-            {mode === 'week' && (
-              <Text style={{ fontSize: 13, fontWeight: '500', color: colors.secondary, marginTop: 2 }}>
-                {getSlotTasks(currDates).length} тапсырма бар
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 20 : 23, fontWeight: '800', letterSpacing: -0.65, color: colors.text, fontVariant: ['tabular-nums'] }}>
+                {title}
               </Text>
-            )}
+              {mode === 'week' && !currDates.some((d) => isToday(d)) && (
+                <AnimatedPressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Бүгінгі күнге қайту"
+                  onPress={resetToCurrentWeek}
+                  activeScale={0.93}
+                  style={{
+                    height: 23,
+                    borderRadius: 11.5,
+                    paddingHorizontal: 7,
+                    backgroundColor: colors.today,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    gap: 3.5,
+                  }}
+                >
+                  <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M9 14L4 9l5-5"
+                      stroke="white"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <Path
+                      d="M4 9h11a5 5 0 0 1 5 5v2"
+                      stroke="white"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                  <Text style={{ color: 'white', fontSize: 11, fontWeight: '700' }}>
+                    {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
+                  </Text>
+                </AnimatedPressable>
+              )}
+            </View>
+
+            {mode === 'week' && (() => {
+              const wTasks = getSlotTasks(currDates);
+              const total = wTasks.length;
+              const done = wTasks.filter((t) => t.isCompleted).length;
+              const pending = total - done;
+
+              if (total === 0) {
+                return (
+                  <Text style={{ fontSize: 13, fontWeight: '500', color: colors.secondary, marginTop: 2 }}>
+                    Тапсырма жоқ
+                  </Text>
+                );
+              }
+
+              return (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 3 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.secondary }}>
+                    Осы апта:
+                  </Text>
+
+                  {/* Done Count Badge */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Svg width={13} height={13} viewBox="0 0 24 24" fill="none">
+                      <Rect x="2" y="2" width="20" height="20" rx="5" fill="#10B981" />
+                      <Path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </Svg>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#059669', fontVariant: ['tabular-nums'] }}>
+                      {done}
+                    </Text>
+                  </View>
+
+                  {/* Pending Count Badge */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Svg width={13} height={13} viewBox="0 0 24 24" fill="none">
+                      <Rect x="2.5" y="2.5" width="19" height="19" rx="5" stroke="#9CA3AF" strokeWidth="2.5" />
+                    </Svg>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: colors.secondary, fontVariant: ['tabular-nums'] }}>
+                      {pending}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })()}
           </View>
 
+          {/* Right Mode Picker & Settings */}
           <View style={{ position: 'relative', zIndex: 20 }}>
             <AnimatedPressable
               accessibilityRole="button"
@@ -500,22 +596,38 @@ function WeekView({ dates, tasks, progress, onInteraction, collapsedBodyHeight =
 function BookSpine({ progress, collapsedHeight = 540, expandedHeight = 382 }: { progress: Animated.Value; collapsedHeight?: number; expandedHeight?: number }) {
   const h = progress ? progress.interpolate({ inputRange: [0, 1], outputRange: [collapsedHeight, expandedHeight] }) : collapsedHeight;
   return (
-    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: '50%', top: 0, width: 12, transform: [{ translateX: -6 }], overflow: 'hidden', height: h }}>
-      <Svg width={12} height="100%">
+    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: '50%', top: 0, width: 14, transform: [{ translateX: -7 }], overflow: 'hidden', height: h, zIndex: 5 }}>
+      <Svg width={14} height="100%">
         <Defs>
-          <LinearGradient id="bsg" x1="0" y1="0" x2="100%" y2="0">
-            <Stop offset="0" stopColor="#C6C8D2" stopOpacity="0" /><Stop offset="0.2" stopColor="#C6C8D2" stopOpacity="0.1" />
-            <Stop offset="0.38" stopColor="#A8ACB9" stopOpacity="0.22" /><Stop offset="0.5" stopColor="#858A9A" stopOpacity="0.36" />
-            <Stop offset="0.62" stopColor="#A8ACB9" stopOpacity="0.22" /><Stop offset="0.8" stopColor="#C6C8D2" stopOpacity="0.1" />
-            <Stop offset="1" stopColor="#C6C8D2" stopOpacity="0" />
+          {/* Realistic 3D Book Crease Horizontal Shadow Gradient */}
+          <LinearGradient id="bookSpineGrad" x1="0" y1="0" x2="100%" y2="0">
+            <Stop offset="0%" stopColor="#8E95A5" stopOpacity="0.06" />
+            <Stop offset="30%" stopColor="#8E95A5" stopOpacity="0.02" />
+            <Stop offset="45%" stopColor="#646C7F" stopOpacity="0.08" />
+            <Stop offset="50%" stopColor="#474E5D" stopOpacity="0.14" />
+            <Stop offset="55%" stopColor="#646C7F" stopOpacity="0.08" />
+            <Stop offset="70%" stopColor="#8E95A5" stopOpacity="0.02" />
+            <Stop offset="100%" stopColor="#8E95A5" stopOpacity="0.06" />
           </LinearGradient>
-          <LinearGradient id="bsf" x1="0" y1="0" x2="0" y2="100%">
-            <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0" /><Stop offset="0.06" stopColor="#FFFFFF" stopOpacity="1" />
-            <Stop offset="0.94" stopColor="#FFFFFF" stopOpacity="1" /><Stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+
+          {/* Smooth Vertical Fade for Top & Bottom Ends */}
+          <LinearGradient id="bookSpineFade" x1="0" y1="0" x2="0" y2="100%">
+            <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0" />
+            <Stop offset="4%" stopColor="#FFFFFF" stopOpacity="1" />
+            <Stop offset="96%" stopColor="#FFFFFF" stopOpacity="1" />
+            <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
           </LinearGradient>
-          <Mask id="bsm" x="0" y="0" width="100%" height="100%"><Rect width="100%" height="100%" fill="url(#bsf)" /></Mask>
+
+          <Mask id="bookSpineMask" x="0" y="0" width="100%" height="100%">
+            <Rect width="100%" height="100%" fill="url(#bookSpineFade)" />
+          </Mask>
         </Defs>
-        <Rect width="12" height="100%" fill="url(#bsg)" mask="url(#bsm)" />
+
+        {/* 3D Soft Shadow Base */}
+        <Rect width="14" height="100%" fill="url(#bookSpineGrad)" mask="url(#bookSpineMask)" />
+
+        {/* Center Precise 1px Deep Crease Line */}
+        <Rect x="6.5" y="0" width="1" height="100%" fill="#788194" fillOpacity="0.12" mask="url(#bookSpineMask)" />
       </Svg>
     </Animated.View>
   );

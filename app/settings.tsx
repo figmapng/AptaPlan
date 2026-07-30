@@ -3,10 +3,12 @@ import Constants from 'expo-constants';
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { UserGuideModal } from '@/components/UserGuideModal';
 
 export default function Settings() {
   const { settings, setPref, clearAll } = usePlanner();
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const clear = () =>
     Alert.alert(
@@ -31,61 +33,72 @@ export default function Settings() {
     );
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, gap: 20 }}>
-      <Section title="Аптаның бірінші күні">
-        <Row label="Дүйсенбі">
-          <Text style={{ color: colors.todayDark, fontWeight: '600' }}>Белсенді</Text>
-        </Row>
-      </Section>
+    <>
+      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, gap: 20 }}>
+        <Section title="Аптаның бірінші күні">
+          <Row label="Дүйсенбі">
+            <Text style={{ color: colors.todayDark, fontWeight: '600' }}>Белсенді</Text>
+          </Row>
+        </Section>
 
-      <Section title="Орындалған тапсырмалар">
-        <Choice
-          value={settings.completedPlacement === 'keep'}
-          label="Орнында қалдыру"
-          onPress={() => setPref('completedPlacement', 'keep')}
-        />
-        <Choice
-          value={settings.completedPlacement === 'bottom'}
-          label="Төменге жылжыту"
-          onPress={() => setPref('completedPlacement', 'bottom')}
-        />
-      </Section>
+        <Section title="Көмек">
+          <AnimatedPressable activeScale={0.97} onPress={() => setGuideOpen(true)} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ color: colors.today, fontSize: 17, fontWeight: '600' }}>📖 Пайдалану гиды</Text>
+            <Text style={{ color: colors.secondary, fontSize: 16 }}>→</Text>
+          </AnimatedPressable>
+        </Section>
 
-      <Section title="Қолданба">
-        <Row label="Haptic feedback">
-          <Switch
-            value={settings.haptics}
-            onValueChange={(v) => setPref('haptics', v)}
-            trackColor={{ true: colors.today }}
+        <Section title="Орындалған тапсырмалар">
+          <Choice
+            value={settings.completedPlacement === 'keep'}
+            label="Орнында қалдыру"
+            onPress={() => setPref('completedPlacement', 'keep')}
           />
-        </Row>
-      </Section>
+          <Choice
+            value={settings.completedPlacement === 'bottom'}
+            label="Төменге жылжыту"
+            onPress={() => setPref('completedPlacement', 'bottom')}
+          />
+        </Section>
 
-      <Section title="Автоматты сұрыптау">
-        <Choice
-          value={settings.sortMode === 'time'}
-          label="Уақыт бойынша"
-          onPress={() => setPref('sortMode', 'time')}
-        />
-        <Choice
-          value={settings.sortMode === 'manual'}
-          label="Қолмен"
-          onPress={() => setPref('sortMode', 'manual')}
-        />
-      </Section>
+        <Section title="Қолданба">
+          <Row label="Haptic feedback">
+            <Switch
+              value={settings.haptics}
+              onValueChange={(v) => setPref('haptics', v)}
+              trackColor={{ true: colors.today }}
+            />
+          </Row>
+        </Section>
 
-      <Section title="Деректер">
-        <AnimatedPressable activeScale={0.97} onPress={clear} style={{ padding: 16 }}>
-          <Text style={{ color: colors.danger, fontSize: 17, fontWeight: '600' }}>Барлық деректі өшіру</Text>
-        </AnimatedPressable>
-      </Section>
+        <Section title="Автоматты сұрыптау">
+          <Choice
+            value={settings.sortMode === 'time'}
+            label="Уақыт бойынша"
+            onPress={() => setPref('sortMode', 'time')}
+          />
+          <Choice
+            value={settings.sortMode === 'manual'}
+            label="Қолмен"
+            onPress={() => setPref('sortMode', 'manual')}
+          />
+        </Section>
 
-      <Section title="Қосымша туралы">
-        <Row label="Нұсқа">
-          <Text style={{ color: colors.secondary }}>{Constants.expoConfig?.version ?? '1.0.0'}</Text>
-        </Row>
-      </Section>
-    </ScrollView>
+        <Section title="Деректер">
+          <AnimatedPressable activeScale={0.97} onPress={clear} style={{ padding: 16 }}>
+            <Text style={{ color: colors.danger, fontSize: 17, fontWeight: '600' }}>Барлық деректі өшіру</Text>
+          </AnimatedPressable>
+        </Section>
+
+        <Section title="Қосымша туралы">
+          <Row label="Нұсқа">
+            <Text style={{ color: colors.secondary }}>{Constants.expoConfig?.version ?? '1.0.0'}</Text>
+          </Row>
+        </Section>
+      </ScrollView>
+
+      <UserGuideModal visible={guideOpen} onClose={() => setGuideOpen(false)} />
+    </>
   );
 }
 
