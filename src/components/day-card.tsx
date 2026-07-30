@@ -265,7 +265,7 @@ export function DayCard({
         onPress={open}
         style={{
           flex: 1,
-          paddingHorizontal: 10,
+          paddingHorizontal: 8,
           paddingTop: 6,
           paddingBottom: 6,
           gap: 4,

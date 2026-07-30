@@ -300,6 +300,13 @@ export const TaskRow = React.memo(function TaskRow({
       })
     : compact ? 12 : 14;
 
+  const dynamicPaddingHorizontal = isMorphing
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 4],
+      })
+    : compact ? 0 : 4;
+
   return (
     <View style={styles.wrapper}>
       {/* Foreground Task Row Content */}
@@ -318,7 +325,7 @@ export const TaskRow = React.memo(function TaskRow({
             }),
             borderRadius: 12,
             paddingVertical: dynamicPaddingVertical,
-            paddingHorizontal: 4,
+            paddingHorizontal: dynamicPaddingHorizontal,
             gap: dynamicGap,
           },
         ]}

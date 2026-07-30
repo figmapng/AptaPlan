@@ -458,15 +458,23 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
               >
                 <Animated.View
                   style={{
-                    backgroundColor: today ? colors.today : '#F0F0F2',
+                    backgroundColor: today
+                      ? colors.today
+                      : weekend
+                      ? colors.sundayNumBg
+                      : colors.dateNumBg,
                     borderRadius: 6,
+                    height: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [20, 26],
+                    }),
                     paddingHorizontal: progress.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [6, 8],
+                      outputRange: [5, 8],
                     }),
-                    paddingVertical: 3,
                     flexDirection: 'row',
                     alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
                   <Animated.Text
