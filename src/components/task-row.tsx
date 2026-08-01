@@ -18,6 +18,7 @@ export const TaskRow = React.memo(function TaskRow({
   isSwipingRef,
   onSwipeX,
   onScrollEnabledChange,
+  cardBg = '#FFFFFF',
 }: {
   task: Task;
   compact?: boolean;
@@ -29,6 +30,7 @@ export const TaskRow = React.memo(function TaskRow({
   isSwipingRef?: React.RefObject<boolean>;
   onSwipeX?: (anim: Animated.Value, onDelete: () => void) => void;
   onScrollEnabledChange?: (enabled: boolean) => void;
+  cardBg?: string;
 }) {
   const { toggle, settings } = usePlanner();
   const { progress: transitionProgress, activeDate } = useCardTransition();
@@ -320,7 +322,7 @@ export const TaskRow = React.memo(function TaskRow({
             opacity: rowOpacity,
             backgroundColor: swipeX.interpolate({
               inputRange: [-10, 0],
-              outputRange: ['#F2F2F7', '#FFFFFF'],
+              outputRange: ['#F2F2F7', cardBg],
               extrapolate: 'clamp',
             }),
             borderRadius: 12,
@@ -347,6 +349,7 @@ export const TaskRow = React.memo(function TaskRow({
             style={[
               styles.checkbox,
               compact && styles.compactCheckbox,
+              cardBg === '#FAFCFF' && { borderColor: '#DAE6F9', backgroundColor: 'transparent' },
               task.isCompleted && styles.checkboxCompleted,
               { transform: [{ scale: boxScale }, { scale: dynamicCheckboxScale }] },
             ]}

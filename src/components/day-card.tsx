@@ -160,8 +160,10 @@ export function DayCard({
     : 0;
 
   // Header styles per specification matching user screenshot
-  const headerBg = colors.card;
-  const cardBorderColor = today ? colors.activeCardBorder : colors.cardBorder;
+  const headerBg = today ? '#FAFCFF' : colors.card;
+  const cardBg = today ? '#FAFCFF' : colors.card;
+  const cardBorderColor = today ? '#BDD6FB' : colors.cardBorder;
+  const cardDivider = today ? '#BDD6FB' : colors.divider;
   const numBg = today ? colors.today : isWeekend ? '#FAB9B3' : '#D9DDE5';
   const numTextColor = today ? colors.today : isWeekend ? colors.sundayText : colors.dateNumText;
   const dayNameColor = today ? colors.today : isWeekend ? colors.sundayText : colors.text;
@@ -183,7 +185,7 @@ export function DayCard({
         paddingHorizontal: 8,
         backgroundColor: headerBg,
         borderBottomWidth: 1,
-        borderBottomColor: colors.divider,
+        borderBottomColor: cardDivider,
       }}
     >
       {/* Outer badge — 22×20, cornerRadius 8, fill #D9DDE5 */}
@@ -298,6 +300,7 @@ export function DayCard({
               onPress={open}
               onInteraction={onInteraction}
               isSwipingRef={isSwipingRef}
+              cardBg={cardBg}
             />
           ))
         ) : (
@@ -352,7 +355,7 @@ export function DayCard({
         accessibilityLabel={`${weekdays[date.getDay()]}, ${tasks.length} тапсырма`}
         style={[
           {
-            backgroundColor: colors.card,
+            backgroundColor: cardBg,
             borderRadius: 16,
             borderCurve: 'continuous',
             borderWidth: today ? 1.5 : 1,
@@ -378,7 +381,7 @@ export function DayCard({
       onLayout={handleCardLayout}
       accessibilityLabel={`${weekdays[date.getDay()]}, ${tasks.length} тапсырма`}
       style={{
-        backgroundColor: colors.card,
+        backgroundColor: cardBg,
         borderRadius: 16,
         borderCurve: 'continuous',
         borderWidth: today ? 1.5 : 1,

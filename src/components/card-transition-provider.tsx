@@ -425,14 +425,14 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 }),
                 borderRadius: progress.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [12, 20],
+                  outputRange: [16, 20],
                 }),
-                backgroundColor: colors.card,
+                backgroundColor: today ? '#FAFCFF' : colors.card,
                 overflow: 'hidden',
                 zIndex: 9999,
                 elevation: 10,
                 borderWidth: today ? 1.5 : 1,
-                borderColor: today ? colors.activeCardBorder : colors.cardBorder,
+                borderColor: today ? '#BDD6FB' : colors.cardBorder,
                 transform: [{ translateX: slideAnim }],
               }}
             >
@@ -451,9 +451,9 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 8,
-                  backgroundColor: colors.card,
+                  backgroundColor: today ? '#FAFCFF' : colors.card,
                   borderBottomWidth: 1,
-                  borderBottomColor: colors.divider,
+                  borderBottomColor: today ? '#BDD6FB' : colors.divider,
                 }}
               >
                 <Animated.View
@@ -461,66 +461,54 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     backgroundColor: today
                       ? colors.today
                       : weekend
-                      ? colors.sundayNumBg
-                      : colors.dateNumBg,
-                    borderRadius: 6,
+                      ? '#FAB9B3'
+                      : '#D9DDE5',
+                    borderRadius: 8,
+                    minWidth: 22,
                     height: progress.interpolate({
                       inputRange: [0, 1],
                       outputRange: [20, 26],
                     }),
-                    paddingHorizontal: progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [5, 8],
-                    }),
+                    paddingTop: 4,
+                    paddingRight: 1,
+                    paddingBottom: 1,
+                    paddingLeft: 1,
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Animated.Text
+                  {/* Inner white frame */}
+                  <View
                     style={{
-                      fontSize: progress.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [12, 14],
-                      }),
-                      fontWeight: '600',
-                      color: today
-                        ? '#FFFFFF'
-                        : weekend
-                        ? colors.sundayText
-                        : colors.dateNumText,
-                      fontVariant: ['tabular-nums'],
+                      alignSelf: 'stretch',
+                      borderRadius: 7,
+                      paddingHorizontal: 3,
+                      paddingTop: 1,
+                      paddingBottom: 2,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#FFFFFF',
                     }}
                   >
-                    {format(day!, 'dd')}
-                  </Animated.Text>
-                  <Animated.Text
-                    style={{
-                      opacity: progress.interpolate({
-                        inputRange: [0.25, 1],
-                        outputRange: [0, 1],
-                      }),
-                      maxWidth: progress.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, 64],
-                      }),
-                      fontSize: 14,
-                      fontWeight: '600',
-                      color: today
-                        ? '#FFFFFF'
-                        : weekend
-                        ? colors.sundayText
-                        : colors.dateNumText,
-                      marginLeft: progress.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, 4],
-                      }),
-                      overflow: 'hidden',
-                    }}
-                    numberOfLines={1}
-                  >
-                    {months[day!.getMonth()]}
-                  </Animated.Text>
+                    <Animated.Text
+                      style={{
+                        fontSize: progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [12, 14],
+                        }),
+                        fontWeight: today ? '700' : '600',
+                        color: today
+                          ? colors.today
+                          : weekend
+                          ? colors.sundayText
+                          : colors.dateNumText,
+                        fontVariant: ['tabular-nums'],
+                      }}
+                    >
+                      {format(day!, 'dd')}
+                    </Animated.Text>
+                  </View>
                 </Animated.View>
                 <Animated.Text
                   style={{
@@ -650,6 +638,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                             isActive={isActive}
                             onSwipeX={onSwipeX}
                             onScrollEnabledChange={onScrollEnabledChange}
+                            cardBg={today ? '#FAFCFF' : '#FFFFFF'}
                           />
                         )}
                       />
