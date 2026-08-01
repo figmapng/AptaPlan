@@ -162,8 +162,8 @@ export function DayCard({
   // Header styles per specification matching user screenshot
   const headerBg = colors.card;
   const cardBorderColor = today ? colors.activeCardBorder : colors.cardBorder;
-  const numBg = today ? colors.today : isWeekend ? colors.sundayNumBg : colors.dateNumBg;
-  const numTextColor = today ? '#FFFFFF' : isWeekend ? colors.sundayText : colors.dateNumText;
+  const numBg = today ? colors.today : isWeekend ? '#FAB9B3' : '#D9DDE5';
+  const numTextColor = today ? colors.today : isWeekend ? colors.sundayText : colors.dateNumText;
   const dayNameColor = today ? colors.today : isWeekend ? colors.sundayText : colors.text;
   const progressCountColor = colors.text;
   const progressTotalColor = colors.secondary;
@@ -186,28 +186,46 @@ export function DayCard({
         borderBottomColor: colors.divider,
       }}
     >
+      {/* Outer badge — 22×20, cornerRadius 8, fill #D9DDE5 */}
       <View
         style={{
-          height: 20,
+          minWidth: 22,
+          minHeight: 20,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: numBg,
-          borderRadius: 6,
-          paddingHorizontal: 5,
-          paddingVertical: 2,
+          borderRadius: 8,
+          paddingTop: 4,
+          paddingRight: 1,
+          paddingBottom: 1,
+          paddingLeft: 1,
         }}
       >
-        <Text
+        {/* Inner frame — 15px tall, cornerRadius 7, white bg, centered */}
+        <View
           style={{
-            fontSize: 12,
-            lineHeight: 15,
-            fontWeight: '600',
-            color: numTextColor,
-            fontVariant: ['tabular-nums'],
+            alignSelf: 'stretch',
+            borderRadius: 7,
+            paddingHorizontal: 3,
+            paddingTop: 1,
+            paddingBottom: 2,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#FFFFFF',
           }}
         >
-          {format(date, 'dd')}
-        </Text>
+          <Text
+            style={{
+              fontSize: 12,
+              lineHeight: 14,
+              fontWeight: today ? '700' : '600',
+              color: numTextColor,
+              fontVariant: ['tabular-nums'],
+            }}
+          >
+            {format(date, 'dd')}
+          </Text>
+        </View>
       </View>
 
       <Text
@@ -335,7 +353,7 @@ export function DayCard({
         style={[
           {
             backgroundColor: colors.card,
-            borderRadius: 12,
+            borderRadius: 16,
             borderCurve: 'continuous',
             borderWidth: today ? 1.5 : 1,
             borderColor: cardBorderColor,
@@ -361,7 +379,7 @@ export function DayCard({
       accessibilityLabel={`${weekdays[date.getDay()]}, ${tasks.length} тапсырма`}
       style={{
         backgroundColor: colors.card,
-        borderRadius: 12,
+        borderRadius: 16,
         borderCurve: 'continuous',
         borderWidth: today ? 1.5 : 1,
         borderColor: cardBorderColor,
