@@ -159,17 +159,19 @@ export function DayCard({
       })
     : 0;
 
-  // Header styles per specification matching user screenshot
-  const headerBg = today ? '#FAFCFF' : colors.card;
-  const cardBg = today ? '#FAFCFF' : colors.card;
-  const cardBorderColor = today ? '#BDD6FB' : colors.cardBorder;
-  const cardDivider = today ? '#BDD6FB' : colors.divider;
-  const numBg = today ? colors.today : isWeekend ? '#FAB9B3' : '#D9DDE5';
-  const numTextColor = today ? colors.today : isWeekend ? colors.sundayText : colors.dateNumText;
-  const dayNameColor = today ? colors.today : isWeekend ? colors.sundayText : colors.text;
-  const progressCountColor = colors.text;
-  const progressTotalColor = colors.secondary;
-  const progressIconBorder = colors.text;
+  const headerBg = today ? '#00A3FF' : '#EDEFF2';
+  const outerBg = today ? '#00A3FF' : '#EDEFF2';
+  const cardBorderColor = today ? '#00A3FF' : '#EDEFF2';
+  const cardBorderWidth = 0;
+
+  const numOuterBg = today ? '#008ADB' : isWeekend ? '#FAB9B3' : '#DDE3EA';
+  const numInnerBg = '#FFFFFF';
+  const numTextColor = today ? '#049BD6' : isWeekend ? colors.sundayText : '#333C4E';
+
+  const dayNameColor = today ? '#FFFFFF' : isWeekend ? colors.sundayText : '#333C4E';
+  const progressCountColor = today ? '#FFFFFF' : '#333C4E';
+  const progressTotalColor = today ? 'rgba(255, 255, 255, 0.8)' : '#707684';
+  const progressIconBorder = today ? '#FFFFFF' : '#333C4E';
 
   const dayName = (weekdays[date.getDay()] ?? '').toUpperCase();
 
@@ -178,24 +180,22 @@ export function DayCard({
       onPress={open}
       activeScale={0.98}
       style={{
-        height: 34,
+        height: 38,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
         paddingHorizontal: 8,
         backgroundColor: headerBg,
-        borderBottomWidth: 1,
-        borderBottomColor: cardDivider,
       }}
     >
-      {/* Outer badge — 22×20, cornerRadius 8, fill #D9DDE5 */}
+      {/* Outer badge */}
       <View
         style={{
           minWidth: 22,
           minHeight: 20,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: numBg,
+          backgroundColor: numOuterBg,
           borderRadius: 8,
           paddingTop: 4,
           paddingRight: 1,
@@ -203,7 +203,7 @@ export function DayCard({
           paddingLeft: 1,
         }}
       >
-        {/* Inner frame — 15px tall, cornerRadius 7, white bg, centered */}
+        {/* Inner frame */}
         <View
           style={{
             alignSelf: 'stretch',
@@ -213,7 +213,7 @@ export function DayCard({
             paddingBottom: 2,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: numInnerBg,
           }}
         >
           <Text
@@ -280,7 +280,19 @@ export function DayCard({
     : Math.max(80, expandedSundayHeight - 34);
 
   const cardBodyContent = (
-    <Animated.View style={[{ overflow: 'hidden' }, wide ? { height: wideBodyHeight } : { height: bodyHeight }]}>
+    <Animated.View
+      style={[
+        {
+          overflow: 'hidden',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 12,
+          borderCurve: 'continuous',
+          marginHorizontal: 2,
+          marginBottom: 2,
+        },
+        wide ? { height: wideBodyHeight } : { height: bodyHeight },
+      ]}
+    >
       <Pressable
         onPress={open}
         style={{
@@ -300,7 +312,7 @@ export function DayCard({
               onPress={open}
               onInteraction={onInteraction}
               isSwipingRef={isSwipingRef}
-              cardBg={cardBg}
+              cardBg="#FFFFFF"
             />
           ))
         ) : (
@@ -355,10 +367,10 @@ export function DayCard({
         accessibilityLabel={`${weekdays[date.getDay()]}, ${tasks.length} тапсырма`}
         style={[
           {
-            backgroundColor: cardBg,
-            borderRadius: 16,
+            backgroundColor: outerBg,
+            borderRadius: 14,
             borderCurve: 'continuous',
-            borderWidth: today ? 1.5 : 1,
+            borderWidth: cardBorderWidth,
             borderColor: cardBorderColor,
             overflow: 'hidden',
             opacity: isTransitioning ? 0 : wideOpacity,
@@ -381,10 +393,10 @@ export function DayCard({
       onLayout={handleCardLayout}
       accessibilityLabel={`${weekdays[date.getDay()]}, ${tasks.length} тапсырма`}
       style={{
-        backgroundColor: cardBg,
-        borderRadius: 16,
+        backgroundColor: outerBg,
+        borderRadius: 14,
         borderCurve: 'continuous',
-        borderWidth: today ? 1.5 : 1,
+        borderWidth: cardBorderWidth,
         borderColor: cardBorderColor,
         overflow: 'hidden',
         opacity: isTransitioning ? 0 : gridPushOpacity,

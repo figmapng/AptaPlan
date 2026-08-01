@@ -425,14 +425,14 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 }),
                 borderRadius: progress.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [16, 20],
+                  outputRange: [14, 20],
                 }),
-                backgroundColor: today ? '#FAFCFF' : colors.card,
+                backgroundColor: today ? '#00A3FF' : '#EDEFF2',
                 overflow: 'hidden',
                 zIndex: 9999,
                 elevation: 10,
-                borderWidth: today ? 1.5 : 1,
-                borderColor: today ? '#BDD6FB' : colors.cardBorder,
+                borderWidth: 0,
+                borderColor: today ? '#00A3FF' : '#EDEFF2',
                 transform: [{ translateX: slideAnim }],
               }}
             >
@@ -442,7 +442,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 style={{
                   height: progress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [34, 48],
+                    outputRange: [38, 48],
                   }),
                   paddingHorizontal: progress.interpolate({
                     inputRange: [0, 1],
@@ -451,18 +451,16 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 8,
-                  backgroundColor: today ? '#FAFCFF' : colors.card,
-                  borderBottomWidth: 1,
-                  borderBottomColor: today ? '#BDD6FB' : colors.divider,
+                  backgroundColor: today ? '#00A3FF' : '#EDEFF2',
                 }}
               >
                 <Animated.View
                   style={{
                     backgroundColor: today
-                      ? colors.today
+                      ? '#008ADB'
                       : weekend
                       ? '#FAB9B3'
-                      : '#D9DDE5',
+                      : '#DDE3EA',
                     borderRadius: 8,
                     minWidth: 22,
                     height: progress.interpolate({
@@ -499,10 +497,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                         }),
                         fontWeight: today ? '700' : '600',
                         color: today
-                          ? colors.today
+                          ? '#049BD6'
                           : weekend
                           ? colors.sundayText
-                          : colors.dateNumText,
+                          : '#333C4E',
                         fontVariant: ['tabular-nums'],
                       }}
                     >
@@ -517,7 +515,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       outputRange: [12, 16],
                     }),
                     fontWeight: '700',
-                    color: today ? colors.today : weekend ? colors.sundayText : colors.text,
+                    color: today ? '#FFFFFF' : weekend ? colors.sundayText : '#333C4E',
                   }}
                 >
                   {weekdays[day!.getDay()]}
@@ -539,7 +537,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       marginRight: 6,
                       borderRadius: 4,
                       borderWidth: 1.25,
-                      borderColor: colors.text,
+                      borderColor: today ? '#FFFFFF' : '#333C4E',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
@@ -547,7 +545,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
                       <Path
                         d="M20 6L9 17l-5-5"
-                        stroke={colors.text}
+                        stroke={today ? '#FFFFFF' : '#333C4E'}
                         strokeWidth="3.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -558,14 +556,14 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     style={{
                       fontSize: 12,
                       fontWeight: '700',
-                      color: colors.text,
+                      color: today ? '#FFFFFF' : '#333C4E',
                     }}
                   >
                     {completedCount}
                   </Animated.Text>
                   <Animated.Text
                     style={{
-                      color: colors.secondary,
+                      color: today ? 'rgba(255,255,255,0.8)' : '#707684',
                       fontSize: 12,
                       fontWeight: '600',
                       fontVariant: ['tabular-nums'],
@@ -581,6 +579,12 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 style={{
                   flex: 1,
                   paddingHorizontal: 0,
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 12,
+                  borderCurve: 'continuous',
+                  marginHorizontal: 2,
+                  marginBottom: 2,
+                  overflow: 'hidden',
                   opacity: 1,
                   transform: [
                     {
@@ -638,7 +642,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                             isActive={isActive}
                             onSwipeX={onSwipeX}
                             onScrollEnabledChange={onScrollEnabledChange}
-                            cardBg={today ? '#FAFCFF' : '#FFFFFF'}
+                            cardBg="#FFFFFF"
                           />
                         )}
                       />
