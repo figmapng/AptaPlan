@@ -1,53 +1,16 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Easing, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { addDays, format, isToday } from 'date-fns';
-
-function BouncingArrowPointer() {
-  const bounceAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(bounceAnim, {
-          toValue: 10,
-          duration: 700,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: false,
-        }),
-        Animated.timing(bounceAnim, {
-          toValue: 0,
-          duration: 700,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: false,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [bounceAnim]);
-
-  return (
-    <Animated.View
-      style={{
-        transform: [{ translateY: bounceAnim }],
-        alignItems: 'center',
-        marginTop: 14,
-      }}
-    >
-      <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M12 4V18M12 18L6 12M12 18L18 12"
-          stroke={colors.today}
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    </Animated.View>
-  );
-}
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Reanimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  runOnJS,
+  type SharedValue,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { months, toDateKey, weekdays } from '@/services/date-service';
@@ -73,6 +36,320 @@ type ContextValue = {
 };
 
 const CardTransitionContext = createContext<ContextValue | null>(null);
+
+const isWeekendDay = (d: Date) => d.getDay() === 0 || d.getDay() === 6;
+
+interface CarouselCardProps {
+  offset: number;
+  currentDate: Date;
+  currentFrame: Frame;
+  targetHeight: number;
+  progress: Animated.Value;
+  carouselX: SharedValue<number>;
+  width: number;
+  insets: any;
+  tasks: Task[];
+  emptyCardHeight: number;
+  maxHeight: number;
+  scrollEnabled: boolean;
+  handleListLayout: (h: number) => void;
+  handleReorder: (newData: Task[]) => Promise<void>;
+  handleScrollEnabled: (enabled: boolean) => void;
+  handleAutoScroll: (delta: number) => void;
+  beginEditing: (task: Task) => void;
+  handlePendingDelete: (task: Task) => void;
+}
+
+function CarouselCard({
+  offset,
+  currentDate,
+  currentFrame,
+  targetHeight,
+  progress,
+  carouselX,
+  width,
+  insets,
+  tasks,
+  scrollEnabled,
+  handleListLayout,
+  handleReorder,
+  handleScrollEnabled,
+  handleAutoScroll,
+  beginEditing,
+  handlePendingDelete,
+}: CarouselCardProps) {
+  const cardDate = addDays(currentDate, offset);
+  const cardKey = toDateKey(cardDate);
+  const cardTasks = tasks.filter((t) => t.date === cardKey);
+  const completedCount = cardTasks.filter((t) => t.isCompleted).length;
+  const isTodayCard = isToday(cardDate);
+  const isWeekendCard = isWeekendDay(cardDate);
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollYRef = useRef(0);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const translateX = offset * width + carouselX.value;
+    return {
+      transform: [{ translateX }],
+    };
+  });
+
+  const isCenter = offset === 0;
+
+  return (
+    <Reanimated.View
+      style={[
+        {
+          position: 'absolute',
+          left: progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [currentFrame.x, 16],
+          }),
+          top: progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [currentFrame.y, insets.top + 4],
+          }),
+          width: progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [currentFrame.width, width - 32],
+          }),
+          height: progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [currentFrame.height, targetHeight],
+          }),
+          borderRadius: progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [14, 16],
+          }),
+          backgroundColor: isTodayCard ? '#00A3FF' : '#EDEFF2',
+          overflow: 'hidden',
+          zIndex: isCenter ? 9999 : 9998,
+          elevation: isCenter ? 10 : 5,
+          borderWidth: 0,
+          borderColor: isTodayCard ? '#00A3FF' : '#EDEFF2',
+        },
+        animatedStyle,
+      ]}
+    >
+      {/* Header */}
+      <Animated.View
+        style={{
+          height: progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [32, 44],
+          }),
+          paddingVertical: 6,
+          paddingHorizontal: progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [6, 10],
+          }),
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          backgroundColor: isTodayCard ? '#00A3FF' : '#EDEFF2',
+        }}
+      >
+        <View
+          style={{
+            backgroundColor: isTodayCard
+              ? '#008ADB'
+              : isWeekendCard
+              ? '#FAB9B3'
+              : '#C4CAD7',
+            borderRadius: 6,
+            minWidth: 22,
+            paddingTop: 5,
+            paddingRight: 1,
+            paddingBottom: 1,
+            paddingLeft: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {/* Inner white frame */}
+          <View
+            style={{
+              alignSelf: 'stretch',
+              borderRadius: 5,
+              paddingHorizontal: 3,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#FFFFFF',
+            }}
+          >
+            <Animated.Text
+              style={{
+                fontSize: progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [12, 14],
+                }),
+                fontWeight: isTodayCard ? '700' : '600',
+                color: isTodayCard
+                  ? '#049BD6'
+                  : isWeekendCard
+                  ? colors.sundayText
+                  : '#333C4E',
+                fontVariant: ['tabular-nums'],
+              }}
+            >
+              {format(cardDate, 'dd')}
+            </Animated.Text>
+          </View>
+        </View>
+        <Animated.Text
+          style={{
+            fontSize: progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [12, 16],
+            }),
+            fontWeight: '700',
+            color: isTodayCard ? '#FFFFFF' : isWeekendCard ? colors.sundayText : '#333C4E',
+          }}
+        >
+          {weekdays[cardDate.getDay()]}
+        </Animated.Text>
+
+        {/* Completion Counter Badge */}
+        <Animated.View
+          style={{
+            marginLeft: 'auto',
+            flexDirection: 'row',
+            alignItems: 'center',
+            opacity: progress,
+          }}
+        >
+          <View
+            style={{
+              width: 14,
+              height: 14,
+              marginRight: 6,
+              borderRadius: 4,
+              borderWidth: 1.25,
+              borderColor: isTodayCard ? '#FFFFFF' : '#333C4E',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M20 6L9 17l-5-5"
+                stroke={isTodayCard ? '#FFFFFF' : '#333C4E'}
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </View>
+          <Animated.Text
+            style={{
+              fontSize: 12,
+              fontWeight: '700',
+              color: isTodayCard ? '#FFFFFF' : '#333C4E',
+            }}
+          >
+            {completedCount}
+          </Animated.Text>
+          <Animated.Text
+            style={{
+              color: isTodayCard ? 'rgba(255,255,255,0.8)' : '#707684',
+              fontSize: 12,
+              fontWeight: '600',
+              fontVariant: ['tabular-nums'],
+            }}
+          >
+            /{cardTasks.length}
+          </Animated.Text>
+        </Animated.View>
+      </Animated.View>
+
+      {/* Content Morphing with SortableTaskList */}
+      <Animated.View
+        style={{
+          flex: 1,
+          paddingHorizontal: 0,
+          backgroundColor: '#FFFFFF',
+          borderRadius: 14,
+          borderCurve: 'continuous',
+          marginHorizontal: 2,
+          marginBottom: 2,
+          overflow: 'hidden',
+          opacity: 1,
+          paddingTop: 6,
+        }}
+      >
+        <ScrollView
+          ref={scrollRef}
+          scrollEnabled={scrollEnabled}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+          alwaysBounceVertical={true}
+          onScroll={(e) => {
+            scrollYRef.current = e.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
+          contentContainerStyle={{ paddingHorizontal: 0, paddingBottom: 8 }}
+        >
+          {cardTasks.length ? (
+            <View onLayout={(e) => isCenter && handleListLayout(e.nativeEvent.layout.height)}>
+              <SortableTaskList
+                data={cardTasks}
+                keyExtractor={(task) => `${task.id}:${task.date}`}
+                onReorder={(newData) => void handleReorder(newData)}
+                onScrollEnabledChange={handleScrollEnabled}
+                onAutoScroll={handleAutoScroll}
+                gap={4}
+                dragHandleOpacity={progress.interpolate({
+                  inputRange: [0.85, 1],
+                  outputRange: [0, 1],
+                })}
+                renderItem={(
+                  task,
+                  isActive,
+                  index,
+                  totalCount,
+                  onSwipeX,
+                  onScrollEnabledChangeItem
+                ) => (
+                  <TaskRow
+                    task={task}
+                    isLast={index === totalCount - 1}
+                    onPress={() => beginEditing(task)}
+                    onPendingDelete={handlePendingDelete}
+                    isActive={isActive}
+                    onSwipeX={onSwipeX}
+                    onScrollEnabledChange={onScrollEnabledChangeItem}
+                    cardBg="#FFFFFF"
+                  />
+                )}
+              />
+            </View>
+          ) : (
+            <View
+              style={{
+                minHeight: Math.max(160, targetHeight - 80),
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.secondary,
+                  fontSize: 16,
+                  fontWeight: '500',
+                  textAlign: 'center',
+                }}
+              >
+                Тапсырма жоқ
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </Animated.View>
+    </Reanimated.View>
+  );
+}
 
 export function CardTransitionProvider({ children }: { children: React.ReactNode }) {
   const { width, height } = useWindowDimensions();
@@ -111,11 +388,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
-  const scrollRef = useRef<ScrollView>(null);
-  const scrollYRef = useRef(0);
 
   const [measuredListHeight, setMeasuredListHeight] = useState<number>(0);
   const isAnimatingRef = useRef(false);
+
+  const carouselX = useSharedValue(0);
 
   const handleListLayout = useCallback((h: number) => {
     if (isAnimatingRef.current) return;
@@ -136,9 +413,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   }, []);
 
   const handleAutoScroll = useCallback((delta: number) => {
-    const nextY = Math.max(0, scrollYRef.current + delta);
-    scrollYRef.current = nextY;
-    scrollRef.current?.scrollTo({ y: nextY, animated: false });
+    // scroll handling passed to active list
   }, []);
 
   const handlePendingDelete = (task: Task) => {
@@ -184,12 +459,14 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     origin.current = null;
     transitionRef.current = null;
     setTransition(null);
+    carouselX.value = 0;
   };
 
   const openCard = (date: Date, cardTasks: Task[], frame: Frame) => {
     if (transitionRef.current) return;
-    const taskCount = cardTasks.length;
-    const calcContentHeight = Math.max(emptyCardHeight, 48 + 8 + taskCount * 48 + 12);
+    isAnimatingRef.current = true;
+    const calcTaskCount = cardTasks.length;
+    const calcContentHeight = Math.max(emptyCardHeight, 48 + 8 + calcTaskCount * 48 + 12);
     const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
     const frameSnapshot = Object.freeze({ x: frame.x, y: frame.y, width: frame.width, height: frame.height });
 
@@ -198,8 +475,17 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     transitionRef.current = { ...next, phase: 'opening' };
     setMeasuredListHeight(cardTasks.length * 48);
     setTransition(transitionRef.current);
-    progress.setValue(1);
-    isAnimatingRef.current = false;
+    carouselX.value = 0;
+
+    progress.setValue(0);
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 380,
+      easing: Easing.bezier(0.12, 1, 0.22, 1),
+      useNativeDriver: false,
+    }).start(() => {
+      isAnimatingRef.current = false;
+    });
   };
 
   const closeCard = () => {
@@ -207,9 +493,18 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
       cleanupClose();
       return;
     }
-    progress.setValue(0);
-    isAnimatingRef.current = false;
-    cleanupClose();
+    isAnimatingRef.current = true;
+    transitionRef.current = { ...origin.current, phase: 'closing' };
+
+    Animated.timing(progress, {
+      toValue: 0,
+      duration: 280,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
+      useNativeDriver: false,
+    }).start(() => {
+      isAnimatingRef.current = false;
+      cleanupClose();
+    });
   };
 
   const beginInteractiveClose = () => {
@@ -234,97 +529,84 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     Animated.timing(progress, {
       toValue: 1,
       duration: 200,
-      easing: Easing.bezier(0.32, 0.72, 0, 1),
+      easing: Easing.out(Easing.quad),
       useNativeDriver: false,
     }).start();
   };
 
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const handleNextDay = useCallback(() => {
+    if (!transitionRef.current) return;
+    if (settings.haptics && Platform.OS === 'ios') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    const newDate = addDays(transitionRef.current.date, 1);
+    const newKey = toDateKey(newDate);
+    const newTasks = tasks.filter((t) => t.date === newKey);
+    const calcContentHeight = Math.max(emptyCardHeight, 48 + 8 + newTasks.length * 48 + 12);
+    const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
 
-  const switchDay = useCallback(
-    (offset: -1 | 1) => {
-      if (!transitionRef.current || isAnimatingRef.current) return;
-      isAnimatingRef.current = true;
+    const updated = {
+      ...transitionRef.current,
+      date: newDate,
+      tasks: newTasks,
+      targetHeight: calcTargetHeight,
+    };
+    origin.current = updated;
+    transitionRef.current = updated;
+    setTransition(updated);
+    carouselX.value = 0;
+  }, [tasks, emptyCardHeight, maxHeight, settings.haptics, carouselX]);
 
-      const currentDay = transitionRef.current.date;
-      const nextDay = addDays(currentDay, offset);
-      const nextKey = toDateKey(nextDay);
-      const nextTasks = tasks.filter((t) => t.date === nextKey);
+  const handlePrevDay = useCallback(() => {
+    if (!transitionRef.current) return;
+    if (settings.haptics && Platform.OS === 'ios') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    const newDate = addDays(transitionRef.current.date, -1);
+    const newKey = toDateKey(newDate);
+    const newTasks = tasks.filter((t) => t.date === newKey);
+    const calcContentHeight = Math.max(emptyCardHeight, 48 + 8 + newTasks.length * 48 + 12);
+    const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
 
-      if (settings.haptics && Platform.OS === 'ios') {
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
+    const updated = {
+      ...transitionRef.current,
+      date: newDate,
+      tasks: newTasks,
+      targetHeight: calcTargetHeight,
+    };
+    origin.current = updated;
+    transitionRef.current = updated;
+    setTransition(updated);
+    carouselX.value = 0;
+  }, [tasks, emptyCardHeight, maxHeight, settings.haptics, carouselX]);
 
-      const exitVal = offset === 1 ? -width * 0.4 : width * 0.4;
-      const enterVal = offset === 1 ? width * 0.4 : -width * 0.4;
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-10, 10])
+    .failOffsetY([-10, 10])
+    .onUpdate((e) => {
+      carouselX.value = e.translationX;
+    })
+    .onEnd((e) => {
+      const distanceThreshold = (width - 32) * 0.25;
+      const velocityThreshold = 500;
+      const springConfig = { damping: 22, stiffness: 220, mass: 0.6 };
 
-      Animated.timing(slideAnim, {
-        toValue: exitVal,
-        duration: 120,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }).start(() => {
-        const calcContentHeight = Math.max(emptyCardHeight, 48 + 8 + nextTasks.length * 48 + 12);
-        const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
-        const updated = {
-          ...transitionRef.current!,
-          date: nextDay,
-          tasks: nextTasks,
-          targetHeight: calcTargetHeight,
-        };
-        origin.current = updated;
-        transitionRef.current = updated;
-        setTransition(updated);
-
-        slideAnim.setValue(enterVal);
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 160,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: false,
-        }).start(() => {
-          isAnimatingRef.current = false;
+      if (e.translationX < -distanceThreshold || e.velocityX < -velocityThreshold) {
+        carouselX.value = withSpring(-width, springConfig, (finished) => {
+          if (finished) {
+            runOnJS(handleNextDay)();
+          }
         });
-      });
-    },
-    [tasks, maxHeight, slideAnim, width, settings.haptics]
-  );
-
-  const detailSwipeResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gesture) =>
-      Math.abs(gesture.dx) > 16 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
-    onPanResponderMove: (_, gesture) => {
-      if (Math.abs(gesture.dx) > Math.abs(gesture.dy)) {
-        slideAnim.setValue(gesture.dx);
-      }
-    },
-    onPanResponderRelease: (_, gesture) => {
-      if (Math.abs(gesture.dx) > 40 || Math.abs(gesture.vx) > 0.35) {
-        if (gesture.dx < 0 || gesture.vx < -0.35) {
-          switchDay(1);
-        } else {
-          switchDay(-1);
-        }
+      } else if (e.translationX > distanceThreshold || e.velocityX > velocityThreshold) {
+        carouselX.value = withSpring(width, springConfig, (finished) => {
+          if (finished) {
+            runOnJS(handlePrevDay)();
+          }
+        });
       } else {
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          useNativeDriver: false,
-          bounciness: 4,
-        }).start();
+        carouselX.value = withSpring(0, springConfig);
       }
-    },
-    onPanResponderTerminate: () => {
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: false,
-      }).start();
-    },
-  });
-
-  const beginAdding = () => {
-    setEditingTask(null);
-    setShowBottomSheet(true);
-  };
+    });
 
   const beginEditing = (task: Task) => {
     setEditingTask(task);
@@ -343,32 +625,26 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   };
 
   const current = transition;
-  const day = current?.date;
-  const dateKey = day ? toDateKey(day) : null;
-  const dayTasks = dateKey ? tasks.filter((t) => t.date === dateKey) : (current?.tasks ?? []);
-  const completedCount = dayTasks.filter((t) => t.isCompleted).length;
-  const weekend = day ? day.getDay() === 0 || day.getDay() === 6 : false;
-  const today = day ? isToday(day) : false;
 
   return (
     <CardTransitionContext.Provider value={value}>
       <View style={{ flex: 1 }}>
-        {/* Background Grid View with opacity: 0.4 on expansion */}
+        {/* Background Grid View with opacity: 0.5 on expansion */}
         <Animated.View
           style={{
             flex: 1,
             opacity: progress.interpolate({
               inputRange: [0, 1],
-              outputRange: [1, 0.4],
+              outputRange: [1, 0.5],
             }),
           }}
         >
           {children}
         </Animated.View>
 
-        {/* Absolute Positioned Overlay - No Modal */}
+        {/* Absolute Positioned Overlay */}
         {current && (
-          <View {...detailSwipeResponder.panHandlers} pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
+          <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
             {/* Backdrop Overlay - tap to close */}
             <Pressable onPress={closeCard} style={StyleSheet.absoluteFillObject}>
               <Animated.View
@@ -385,268 +661,34 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
               />
             </Pressable>
 
-            {/* FLIP Manual Shared-Element Morphing Card */}
-            <Animated.View
-              style={{
-                position: 'absolute',
-                left: progress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [current.frame.x, 16],
-                }),
-                top: progress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [current.frame.y, insets.top + 4],
-                }),
-                width: progress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [current.frame.width, width - 32],
-                }),
-                height: progress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [current.frame.height, targetHeight],
-                }),
-                borderRadius: progress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [14, 16],
-                }),
-                backgroundColor: today ? '#00A3FF' : '#EDEFF2',
-                overflow: 'hidden',
-                zIndex: 9999,
-                elevation: 10,
-                borderWidth: 0,
-                borderColor: today ? '#00A3FF' : '#EDEFF2',
-                transform: [{ translateX: slideAnim }],
-              }}
-            >
-              {/* Header Morphing */}
-              <Animated.View
-                {...detailSwipeResponder.panHandlers}
-                style={{
-                  height: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [32, 44],
-                  }),
-                  paddingVertical: 6,
-                  paddingHorizontal: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [6, 10],
-                  }),
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                  backgroundColor: today ? '#00A3FF' : '#EDEFF2',
-                }}
-              >
-                <Animated.View
-                  style={{
-                    backgroundColor: today
-                      ? '#008ADB'
-                      : weekend
-                      ? '#FAB9B3'
-                      : '#C4CAD7',
-                    borderRadius: 6,
-                    minWidth: 22,
-                    paddingTop: 5,
-                    paddingRight: 1,
-                    paddingBottom: 1,
-                    paddingLeft: 1,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {/* Inner white frame */}
-                  <View
-                    style={{
-                      alignSelf: 'stretch',
-                      borderRadius: 5,
-                      paddingHorizontal: 3,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: '#FFFFFF',
-                    }}
-                  >
-                    <Animated.Text
-                      style={{
-                        fontSize: progress.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [12, 14],
-                        }),
-                        fontWeight: today ? '700' : '600',
-                        color: today
-                          ? '#049BD6'
-                          : weekend
-                          ? colors.sundayText
-                          : '#333C4E',
-                        fontVariant: ['tabular-nums'],
-                      }}
-                    >
-                      {format(day!, 'dd')}
-                    </Animated.Text>
-                  </View>
-                </Animated.View>
-                <Animated.Text
-                  style={{
-                    fontSize: progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [12, 16],
-                    }),
-                    fontWeight: '700',
-                    color: today ? '#FFFFFF' : weekend ? colors.sundayText : '#333C4E',
-                  }}
-                >
-                  {weekdays[day!.getDay()]}
-                </Animated.Text>
-
-                {/* Completion Counter Badge */}
-                <Animated.View
-                  style={{
-                    marginLeft: 'auto',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    opacity: progress,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 14,
-                      height: 14,
-                      marginRight: 6,
-                      borderRadius: 4,
-                      borderWidth: 1.25,
-                      borderColor: today ? '#FFFFFF' : '#333C4E',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M20 6L9 17l-5-5"
-                        stroke={today ? '#FFFFFF' : '#333C4E'}
-                        strokeWidth="3.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
-                  </View>
-                  <Animated.Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: '700',
-                      color: today ? '#FFFFFF' : '#333C4E',
-                    }}
-                  >
-                    {completedCount}
-                  </Animated.Text>
-                  <Animated.Text
-                    style={{
-                      color: today ? 'rgba(255,255,255,0.8)' : '#707684',
-                      fontSize: 12,
-                      fontWeight: '600',
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    /{dayTasks.length}
-                  </Animated.Text>
-                </Animated.View>
-              </Animated.View>
-
-              {/* Content Morphing with SortableTaskList */}
-              <Animated.View
-                style={{
-                  flex: 1,
-                  paddingHorizontal: 0,
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: 14,
-                  borderCurve: 'continuous',
-                  marginHorizontal: 2,
-                  marginBottom: 2,
-                  overflow: 'hidden',
-                  opacity: 1,
-                  transform: [
-                    {
-                      scale: progress.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.95, 1],
-                      }),
-                    },
-                  ],
-                  paddingTop: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [2, 6],
-                  }),
-                }}
-              >
-                <ScrollView
-                  ref={scrollRef}
-                  scrollEnabled={scrollEnabled}
-                  nestedScrollEnabled
-                  showsVerticalScrollIndicator={false}
-                  bounces={true}
-                  alwaysBounceVertical={true}
-                  onScroll={(e) => {
-                    scrollYRef.current = e.nativeEvent.contentOffset.y;
-                  }}
-                  scrollEventThrottle={16}
-                  contentContainerStyle={{ paddingHorizontal: 0, paddingBottom: 8 }}
-                >
-                  {dayTasks.length ? (
-                    <View onLayout={(e) => handleListLayout(e.nativeEvent.layout.height)}>
-                      <SortableTaskList
-                        data={dayTasks}
-                        keyExtractor={(task) => `${task.id}:${task.date}`}
-                        onReorder={(newData) => void handleReorder(newData)}
-                        onScrollEnabledChange={handleScrollEnabled}
-                        onAutoScroll={handleAutoScroll}
-                        gap={4}
-                        dragHandleOpacity={progress.interpolate({
-                          inputRange: [0.85, 1],
-                          outputRange: [0, 1],
-                        })}
-                        renderItem={(
-                          task,
-                          isActive,
-                          index,
-                          totalCount,
-                          onSwipeX,
-                          onScrollEnabledChange
-                        ) => (
-                          <TaskRow
-                            task={task}
-                            isLast={index === totalCount - 1}
-                            onPress={() => beginEditing(task)}
-                            onPendingDelete={handlePendingDelete}
-                            isActive={isActive}
-                            onSwipeX={onSwipeX}
-                            onScrollEnabledChange={onScrollEnabledChange}
-                            cardBg="#FFFFFF"
-                          />
-                        )}
-                      />
-                    </View>
-                  ) : (
-                    <View
-                      style={{
-                        minHeight: Math.max(160, targetHeight - 80),
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: colors.secondary,
-                          fontSize: 16,
-                          fontWeight: '500',
-                          textAlign: 'center',
-                        }}
-                      >
-                        Тапсырма жоқ
-                      </Text>
-                    </View>
-                  )}
-                </ScrollView>
-              </Animated.View>
-            </Animated.View>
+            {/* FLIP Manual Shared-Element 3-Card Carousel */}
+            <GestureDetector gesture={panGesture}>
+              <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
+                {[-1, 0, 1].map((offset) => (
+                  <CarouselCard
+                    key={`${toDateKey(addDays(current.date, offset))}:${offset}`}
+                    offset={offset}
+                    currentDate={current.date}
+                    currentFrame={current.frame}
+                    targetHeight={targetHeight}
+                    progress={progress}
+                    carouselX={carouselX}
+                    width={width}
+                    insets={insets}
+                    tasks={tasks}
+                    emptyCardHeight={emptyCardHeight}
+                    maxHeight={maxHeight}
+                    scrollEnabled={scrollEnabled}
+                    handleListLayout={handleListLayout}
+                    handleReorder={handleReorder}
+                    handleScrollEnabled={handleScrollEnabled}
+                    handleAutoScroll={handleAutoScroll}
+                    beginEditing={beginEditing}
+                    handlePendingDelete={handlePendingDelete}
+                  />
+                ))}
+              </View>
+            </GestureDetector>
 
             {/* Undo Delete Snackbar */}
             {pendingDeleteTask && (
@@ -656,150 +698,84 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   position: 'absolute',
                   left: 16,
                   right: 16,
-                  bottom: Math.max(insets.bottom + 68, 76),
-                  height: 48,
-                  borderRadius: 18,
-                  backgroundColor: '#23262D',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: 16,
-                  zIndex: 140,
-                  opacity: progress.interpolate({
-                    inputRange: [0.8, 1],
-                    outputRange: [0, 1],
-                  }),
+                  bottom: Math.max(insets.bottom + 12, 24),
+                  zIndex: 10000,
+                  elevation: 12,
                 }}
               >
-                <Text style={{ color: 'white', fontSize: 14, fontWeight: '500' }}>
-                  Тапсырма өшірілді
-                </Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Өшіруді болдырмау"
-                  onPress={handleUndo}
-                >
-                  <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700' }}>
-                    Болдырмау
-                  </Text>
-                </Pressable>
-              </Animated.View>
-            )}
-
-
-
-            {/* Bottom Action Bar: Back button < and + Тапсырма қосу input bar */}
-            <Animated.View
-              pointerEvents="box-none"
-              style={{
-                position: 'absolute',
-                left: 16,
-                right: 16,
-                bottom: Math.max(insets.bottom + 8, 16),
-                height: 48,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-                zIndex: 100,
-                opacity: progress.interpolate({
-                  inputRange: [0.7, 1],
-                  outputRange: [0, 1],
-                }),
-                transform: [
-                  {
-                    translateY: progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [30, 0],
-                    }),
-                  },
-                ],
-              }}
-            >
-              <AnimatedPressable
-                accessibilityRole="button"
-                accessibilityLabel="Артқа оралу"
-                onPress={closeCard}
-                activeScale={0.92}
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: colors.inputBg,
-                  borderWidth: 1,
-                  borderColor: colors.inputBorder,
-                }}
-              >
-                <ChevronLeftIcon />
-              </AnimatedPressable>
-
-              <AnimatedPressable
-                accessibilityRole="button"
-                accessibilityLabel="Тапсырма қосу"
-                onPress={beginAdding}
-                activeScale={0.97}
-                style={{
-                  flex: 1,
-                  height: 48,
-                  borderRadius: 24,
-                  borderWidth: 1,
-                  borderColor: colors.inputBorder,
-                  backgroundColor: colors.inputBg,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingHorizontal: 16,
-                  gap: 10,
-                }}
-              >
-                <Text
+                <View
                   style={{
-                    color: colors.inputPlusIcon,
-                    fontSize: 20,
-                    lineHeight: 22,
-                    fontWeight: '300',
+                    backgroundColor: '#1E293B',
+                    borderRadius: 14,
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 8,
+                    elevation: 6,
                   }}
                 >
-                  +
-                </Text>
-                <Text style={{ color: colors.inputPlaceholder, fontSize: 14, fontWeight: '500' }}>
-                  Тапсырма қосу
-                </Text>
-              </AnimatedPressable>
-            </Animated.View>
-
-            <TaskBottomSheet
-              visible={showBottomSheet}
-              editingTask={editingTask}
-              initialDate={dateKey ?? undefined}
-              onClose={() => {
-                setShowBottomSheet(false);
-                setEditingTask(null);
-              }}
-            />
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: '#F8FAFC',
+                      fontSize: 14,
+                      fontWeight: '500',
+                      flex: 1,
+                      marginRight: 12,
+                    }}
+                  >
+                    Тапсырма өшірілді
+                  </Text>
+                  <Pressable
+                    onPress={handleUndo}
+                    style={({ pressed }) => ({
+                      opacity: pressed ? 0.7 : 1,
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      backgroundColor: 'rgba(255,255,255,0.15)',
+                      borderRadius: 8,
+                    })}
+                  >
+                    <Text
+                      style={{
+                        color: '#38BDF8',
+                        fontSize: 14,
+                        fontWeight: '700',
+                      }}
+                    >
+                      Қайтару
+                    </Text>
+                  </Pressable>
+                </View>
+              </Animated.View>
+            )}
           </View>
+        )}
+
+        {/* Task BottomSheet for Editing */}
+        {editingTask && (
+          <TaskBottomSheet
+            visible={showBottomSheet}
+            onClose={() => {
+              setShowBottomSheet(false);
+              setEditingTask(null);
+            }}
+            initialDate={editingTask.date}
+            editingTask={editingTask}
+          />
         )}
       </View>
     </CardTransitionContext.Provider>
   );
 }
 
-function ChevronLeftIcon() {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M15 18l-6-6 6-6"
-        stroke="#4A5260"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 export function useCardTransition() {
-  const value = useContext(CardTransitionContext);
-  if (!value) throw new Error('CardTransitionProvider missing');
-  return value;
+  const ctx = useContext(CardTransitionContext);
+  if (!ctx) throw new Error('useCardTransition must be used inside CardTransitionProvider');
+  return ctx;
 }
