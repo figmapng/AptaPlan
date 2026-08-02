@@ -313,17 +313,19 @@ export const DayCard = memo(function DayCardComponent({
               style={{
                 width: 16,
                 height: 16,
-                borderRadius: 5,
-                borderWidth: 1,
-                borderColor: colors.checkboxBorder,
-                backgroundColor: colors.checkboxBg,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ fontSize: 11, lineHeight: 12, fontWeight: '500', color: colors.secondary, textAlign: 'center' }}>
-                +
-              </Text>
+              <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M12 4v16M4 12h16"
+                  stroke={colors.secondary}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
             </View>
             <Text style={{ color: colors.secondary, fontSize: 12, lineHeight: 17, fontWeight: '400' }}>
               Тапсырма қосу
