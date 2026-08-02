@@ -47,6 +47,7 @@ type DayDataItem = {
 
 type SlotData = {
   id: number;
+  slotKey: 'prev' | 'curr' | 'next';
   baseX: number;
   dates: Date[];
   days: DayDataItem[];
@@ -110,9 +111,9 @@ export default function Home() {
     const currSlotDays = buildDays(currDates);
 
     const slots: SlotData[] = [
-      { id: 0, baseX: -screenWidth, dates: prevDates, days: buildDays(prevDates) },
-      { id: 1, baseX: 0, dates: currDates, days: currSlotDays },
-      { id: 2, baseX: screenWidth, dates: nextDates, days: buildDays(nextDates) },
+      { id: 0, slotKey: 'prev', baseX: -screenWidth, dates: prevDates, days: buildDays(prevDates) },
+      { id: 1, slotKey: 'curr', baseX: 0, dates: currDates, days: currSlotDays },
+      { id: 2, slotKey: 'next', baseX: screenWidth, dates: nextDates, days: buildDays(nextDates) },
     ];
 
     return {
@@ -173,6 +174,21 @@ export default function Home() {
   const hasDetermined = useRef(false);
   const isSwipingRef = useRef(false);
 
+  const pendingResetRef = useRef(false);
+
+  useEffect(() => {
+    if (pendingResetRef.current) {
+      const now = Date.now();
+      console.log(now, '[ReactCommit] React committed new weekStart data. Resetting carousel position to 0');
+      carouselAnim.setValue(0);
+      pendingResetRef.current = false;
+      isAnimatingRef.current = false;
+      setTimeout(() => {
+        isSwipingRef.current = false;
+      }, 50);
+    }
+  }, [weekStart, carouselAnim]);
+
   const onSwipeComplete = useCallback((direction: -1 | 1) => {
     isAnimatingRef.current = true;
     isSwipingRef.current = true;
@@ -185,12 +201,10 @@ export default function Home() {
       friction: 32,
       useNativeDriver: true,
     }).start(() => {
+      const now = Date.now();
+      console.log(now, '[SwipeComplete] Native animation finished. Scheduling setWeekStart');
+      pendingResetRef.current = true;
       setWeekStart((d) => addDays(d, -direction * 7));
-      carouselAnim.setValue(0);
-      isAnimatingRef.current = false;
-      setTimeout(() => {
-        isSwipingRef.current = false;
-      }, 50);
     });
   }, [carouselAnim, screenWidth]);
 
@@ -508,7 +522,7 @@ export default function Home() {
             });
             return (
               <Animated.View
-                key={slot.id}
+                key={slot.slotKey}
                 pointerEvents={slot.id === 1 ? 'auto' : 'none'}
                 style={{
                   position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
