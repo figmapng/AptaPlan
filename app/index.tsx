@@ -59,18 +59,6 @@ export default function Home() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [showBottomSheet, setShowBottomSheet] = useState(false);
 
-  // ── Three-slot page buffer ──────────────────────────────────────
-  const [currSlot, setCurrSlot] = useState<SlotIndex>(1);
-  const currSlotRef = useRef<SlotIndex>(1);
-  currSlotRef.current = currSlot;
-
-  const getSlotDates = useCallback((slotIdx: SlotIndex, activeSlot: SlotIndex, baseDates: Date[]) => {
-    let diff = slotIdx - activeSlot;
-    if (diff > 1) diff -= 3;
-    if (diff < -1) diff += 3;
-    return baseDates.map((d) => addDays(d, diff * 7));
-  }, []);
-
   const getSlotTasks = useCallback((dates: Date[]) => {
     if (!dates || dates.length === 0) return [];
     const start = toDateKey(dates[0]);
@@ -79,26 +67,14 @@ export default function Home() {
   }, [tasks]);
 
   // ── Animated.Value for carousel translation ──────────────────────
-  // Value 0 = resting (no drag). During drag it equals dx.
   const carouselAnim = useRef(new Animated.Value(0)).current;
   const isAnimatingRef = useRef(false);
 
-  // Animated styles for the three slots
-  // slot i visual X = (i - currSlot) * screenWidth + carouselAnim
-  // But since currSlot changes at the END of animation,
-  // we compute the offset live from currSlotRef inside interpolate.
-  // We use three separate Animated.Values to keep it simple.
-  // Actually, since Animated.Value is shared, we compute each slot offset as:
-  //   translateX = (slotBaseOffset[i]) + carouselAnim
-  // where slotBaseOffset[i] = (i - currSlot) * screenWidth (static at render time)
-  // This re-renders each time currSlot changes which is fine (after animation).
-
-  const getSlotBaseX = (slotIdx: SlotIndex, cur: SlotIndex) => {
-    let diff = slotIdx - cur;
-    if (diff > 1) diff -= 3;
-    if (diff < -1) diff += 3;
-    return diff * screenWidth;
-  };
+  const slotConfigs = useMemo(() => [
+    { id: 0, baseX: -screenWidth, dates: weekDates.map((d) => addDays(d, -7)) },
+    { id: 1, baseX: 0, dates: weekDates },
+    { id: 2, baseX: screenWidth, dates: weekDates.map((d) => addDays(d, 7)) },
+  ], [screenWidth, weekDates]);
 
   // ── Week expand/collapse ────────────────────────────────────────
   const weekProgress = useRef(new Animated.Value(0)).current;
@@ -143,25 +119,20 @@ export default function Home() {
   const hasDetermined = useRef(false);
   const isSwipingRef = useRef(false);
 
-  const onSwipeComplete = useCallback((direction: -1 | 1, currentDx: number) => {
+  const onSwipeComplete = useCallback((direction: -1 | 1) => {
     isAnimatingRef.current = true;
     isSwipingRef.current = true;
 
-    const prevSlot = currSlotRef.current;
-    const nextSlot = ((prevSlot - direction + 3) % 3) as SlotIndex;
-
-    setWeekStart((d: Date) => addDays(d, -direction * 7));
-    setCurrSlot(nextSlot);
-
-    const startVal = currentDx - (direction * screenWidth);
-    carouselAnim.setValue(startVal);
+    const targetVal = direction * screenWidth;
 
     Animated.spring(carouselAnim, {
-      toValue: 0,
-      tension: 420,
-      friction: 30,
+      toValue: targetVal,
+      tension: 450,
+      friction: 32,
       useNativeDriver: true,
     }).start(() => {
+      setWeekStart((d) => addDays(d, -direction * 7));
+      carouselAnim.setValue(0);
       isAnimatingRef.current = false;
       setTimeout(() => {
         isSwipingRef.current = false;
@@ -172,7 +143,6 @@ export default function Home() {
   const resetToCurrentWeek = useCallback(() => {
     if (isAnimatingRef.current) return;
     setWeekStart(getStartOfWeek(new Date()));
-    setCurrSlot(1);
     carouselAnim.setValue(0);
   }, [carouselAnim]);
 
@@ -216,7 +186,7 @@ export default function Home() {
 
         if (Math.abs(dx) > threshold) {
           const direction = dx < 0 ? -1 : 1;
-          onSwipeComplete(direction, dx);
+          onSwipeComplete(direction);
         } else {
           isAnimatingRef.current = true;
           Animated.spring(carouselAnim, {
@@ -487,17 +457,15 @@ export default function Home() {
       {/* ── Carousel or Month/Year ──────────────────────────────── */}
       {mode === 'week' ? (
         <View style={{ flex: 1, overflow: 'hidden' }} {...gestureHandlers}>
-          {([0, 1, 2] as SlotIndex[]).map((slotIdx) => {
-            const baseX = getSlotBaseX(slotIdx, currSlot);
+          {slotConfigs.map((slot) => {
             const translateX = carouselAnim.interpolate({
               inputRange: [-screenWidth, 0, screenWidth],
-              outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
+              outputRange: [slot.baseX - screenWidth, slot.baseX, slot.baseX + screenWidth],
             });
-            const slotDates = getSlotDates(slotIdx, currSlot, weekDates);
             return (
               <Animated.View
-                key={slotIdx}
-                pointerEvents={slotIdx === currSlot ? 'auto' : 'none'}
+                key={slot.id}
+                pointerEvents={slot.id === 1 ? 'auto' : 'none'}
                 style={{
                   position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                   paddingHorizontal: 16,
@@ -506,14 +474,14 @@ export default function Home() {
                 }}
               >
                 <WeekView
-                  dates={slotDates}
-                  tasks={getSlotTasks(slotDates)}
+                  dates={slot.dates}
+                  tasks={getSlotTasks(slot.dates)}
                   progress={weekProgress}
                   onInteraction={collapseWeek}
                   collapsedBodyHeight={collapsedBodyHeight}
                   expandedBodyHeight={expandedBodyHeight}
                   expandedSundayHeight={expandedSundayHeight}
-                  onLayoutMeasured={slotIdx === currSlot ? handleCardLayoutMeasured : undefined}
+                  onLayoutMeasured={slot.id === 1 ? handleCardLayoutMeasured : undefined}
                   isSwipingRef={isSwipingRef}
                 />
               </Animated.View>
