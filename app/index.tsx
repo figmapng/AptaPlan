@@ -32,8 +32,10 @@ import { DayCard } from '@/components/day-card';
 import { SettingsIcon } from '@/components/settings-icon';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { TaskBottomSheet } from '@/components/TaskBottomSheet';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { MotivationalHeader } from '@/components/MotivationalHeader';
 import type { Task } from '@/types/task';
 
 type ViewMode = 'week' | 'month' | 'year';
@@ -136,6 +138,47 @@ export default function Home() {
   const userSundayStateRef = useRef<'expanded' | 'collapsed' | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
 
+  // ── Motivational Header reveal ──────────────────────────────────
+  const motivationalAnim = useRef(new Animated.Value(0)).current;
+  const isMotivationalOpenRef = useRef(false);
+  const [isMotivationalOpen, setIsMotivationalOpen] = useState(false);
+
+  const openMotivationalHeader = useCallback(() => {
+    isMotivationalOpenRef.current = true;
+    setIsMotivationalOpen(true);
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    Animated.spring(motivationalAnim, {
+      toValue: 1,
+      tension: 200,
+      friction: 20,
+      useNativeDriver: false,
+    }).start();
+  }, [motivationalAnim]);
+
+  const closeMotivationalHeader = useCallback(() => {
+    isMotivationalOpenRef.current = false;
+    setIsMotivationalOpen(false);
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    Animated.spring(motivationalAnim, {
+      toValue: 0,
+      tension: 220,
+      friction: 22,
+      useNativeDriver: false,
+    }).start();
+  }, [motivationalAnim]);
+
+  const toggleMotivationalHeader = useCallback(() => {
+    if (isMotivationalOpenRef.current) {
+      closeMotivationalHeader();
+    } else {
+      openMotivationalHeader();
+    }
+  }, [openMotivationalHeader, closeMotivationalHeader]);
+
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setReducedMotion).catch(() => {});
     const l = AccessibilityInfo.addEventListener('reduceMotionChanged', setReducedMotion);
@@ -149,7 +192,7 @@ export default function Home() {
       const target =
         userSundayStateRef.current === 'expanded' ? 1
         : userSundayStateRef.current === 'collapsed' ? 0
-        : dates.length >= 7 && isToday(dates[6]) ? 1 : 0;
+        : 1;
       isExpandedRef.current = target === 1;
       Animated.timing(weekProgress, { toValue: target, duration: 180, useNativeDriver: false }).start();
     }
@@ -240,10 +283,27 @@ export default function Home() {
       if (isHorizontalGesture.current) {
         carouselAnim.setValue(dx);
       } else {
-        const startVal = isExpandedRef.current ? 1 : 0;
-        const delta = -dy / 160;
-        const newVal = Math.max(0, Math.min(1, startVal + delta));
-        weekProgress.setValue(newVal);
+        if (isMotivationalOpenRef.current) {
+          if (dy < 0) {
+            const val = Math.max(0, 1 + dy / 130);
+            motivationalAnim.setValue(val);
+          }
+        } else if (isExpandedRef.current) {
+          if (dy > 0) {
+            const delta = -dy / 160;
+            const newVal = Math.max(0, Math.min(1, 1 + delta));
+            weekProgress.setValue(newVal);
+          }
+        } else {
+          if (dy > 0) {
+            const val = Math.min(1, dy / 130);
+            motivationalAnim.setValue(val);
+          } else {
+            const delta = -dy / 160;
+            const newVal = Math.max(0, Math.min(1, delta));
+            weekProgress.setValue(newVal);
+          }
+        }
       }
     },
     onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
@@ -271,14 +331,29 @@ export default function Home() {
         }
       } else {
         const dy = e.nativeEvent.pageY - touchStartY.current;
-        if (dy < -20) {
-          expandWeek();
-        } else if (dy > 20) {
-          collapseWeek();
+
+        if (isMotivationalOpenRef.current) {
+          if (dy < -25) {
+            closeMotivationalHeader();
+          } else {
+            openMotivationalHeader();
+          }
+        } else if (isExpandedRef.current) {
+          if (dy > 25) {
+            collapseWeek();
+          } else {
+            expandWeek();
+          }
         } else {
-          if (isExpandedRef.current) expandWeek();
-          else collapseWeek();
+          if (dy > 40) {
+            openMotivationalHeader();
+          } else if (dy < -25) {
+            expandWeek();
+          } else {
+            collapseWeek();
+          }
         }
+
         setTimeout(() => {
           isSwipingRef.current = false;
         }, 180);
@@ -366,18 +441,81 @@ export default function Home() {
     );
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* ── Header ───────────────────────────────────────────────── */}
-      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 4, backgroundColor: colors.background, zIndex: 10 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          {/* Left Title & Metrics Column */}
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {/* Month & Year Title */}
-              <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
-                {title}
-              </Text>
-            </View>
+    <View style={{ flex: 1, backgroundColor: '#18181A' }}>
+      <StatusBar style={isMotivationalOpen ? 'light' : 'dark'} animated />
+      {/* ── Dark Motivational Header Reveal ────────────────────────── */}
+      <Animated.View
+        style={{
+          overflow: 'hidden',
+          maxHeight: motivationalAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 360],
+          }),
+          opacity: motivationalAnim.interpolate({
+            inputRange: [0, 0.15, 1],
+            outputRange: [0, 1, 1],
+          }),
+          transform: [
+            {
+              translateY: motivationalAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-25, 0],
+              }),
+            },
+          ],
+          zIndex: 30,
+        }}
+      >
+        <MotivationalHeader
+          tasks={tasks}
+          insetsTop={insets.top}
+          onClose={closeMotivationalHeader}
+        />
+      </Animated.View>
+
+      {/* ── Main Content Sheet ──────────────────────────────── */}
+      <Animated.View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          borderTopLeftRadius: motivationalAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 32],
+          }),
+          borderTopRightRadius: motivationalAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 32],
+          }),
+          borderCurve: 'continuous',
+          overflow: 'hidden',
+        }}
+        {...gestureHandlers}
+      >
+        {/* ── Header ───────────────────────────────────────────────── */}
+        <Animated.View
+          style={{
+            paddingTop: motivationalAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [insets.top + 8, 16],
+            }),
+            paddingHorizontal: 16,
+            paddingBottom: 4,
+            backgroundColor: colors.background,
+            zIndex: 10,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            {/* Left Title & Metrics Column */}
+            <View style={{ flex: 1 }}>
+              <Pressable onPress={toggleMotivationalHeader} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                {/* Month & Year Title */}
+                <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
+                  {title}
+                </Text>
+                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+                  <Path d="M6 9l6 6 6-6" stroke={colors.secondary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              </Pressable>
 
             {mode === 'week' && (() => {
               const wTasks = derivedWeekData.currSlotDays.flatMap((d) => d.tasks);
@@ -454,11 +592,11 @@ export default function Home() {
             <SettingsIcon />
           </AnimatedPressable>
         </View>
-      </View>
+      </Animated.View>
 
       {/* ── Carousel or Month/Year ──────────────────────────────── */}
       {mode === 'week' ? (
-        <View style={{ flex: 1, overflow: 'hidden' }} {...gestureHandlers}>
+        <View style={{ flex: 1, overflow: 'hidden' }}>
           {derivedWeekData.slots.map((slot) => {
             const translateX = carouselAnim.interpolate({
               inputRange: [-screenWidth, 0, screenWidth],
@@ -549,6 +687,7 @@ export default function Home() {
           )}
         </View>
       )}
+      </Animated.View>
 
       <TaskBottomSheet visible={showBottomSheet} onClose={() => setShowBottomSheet(false)} onTaskSaved={handleTaskSaved} />
       <FlyingTaskOverlay flyingTask={flyingTask} onComplete={() => setFlyingTask(null)} />
