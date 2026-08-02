@@ -560,8 +560,49 @@ export default function Home() {
 
       {/* ── Floating input ───────────────────────────────────────── */}
       {mode === 'week' && (
-        <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30 }}>
-          <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
+        <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
+          </View>
+          {(isFutureWeek || isPastWeek) && (
+            <AnimatedPressable
+              accessibilityRole="button"
+              accessibilityLabel="Бүгінгі күнге қайту"
+              onPress={resetToCurrentWeek}
+              activeScale={0.93}
+              style={{
+                height: 48,
+                borderRadius: 24,
+                paddingHorizontal: 14,
+                backgroundColor: colors.today,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 6,
+                shadowColor: colors.today,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.28,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              {isFutureWeek && (
+                <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+                  <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              )}
+              <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
+                {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
+              </Text>
+              {isPastWeek && (
+                <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+                  <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              )}
+            </AnimatedPressable>
+          )}
         </View>
       )}
 
