@@ -39,16 +39,33 @@ import type { Task } from '@/types/task';
 type ViewMode = 'week' | 'month' | 'year';
 const modeLabels: Record<ViewMode, string> = { week: 'Апта', month: 'Ай', year: 'Жыл' };
 
-type SlotIndex = 0 | 1 | 2;
+type DayDataItem = {
+  date: Date;
+  dateKey: string;
+  tasks: Task[];
+};
+
+type SlotData = {
+  id: number;
+  baseX: number;
+  dates: Date[];
+  days: DayDataItem[];
+};
+
+type DerivedWeekData = {
+  headerTitle: string;
+  activeHeaderDate: Date;
+  isFutureWeek: boolean;
+  isPastWeek: boolean;
+  currSlotDays: DayDataItem[];
+  slots: SlotData[];
+};
 
 export default function Home() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { ready, error, tasks, loadRange, create } = usePlanner();
   const [weekStart, setWeekStart] = useState(() => getStartOfWeek(new Date()));
-  const weekDates = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
-  const tasksRef = useRef(tasks);
-  tasksRef.current = tasks;
 
   const [mode, setMode] = useState<ViewMode>('week');
   const modeRef = useRef<ViewMode>('week');
@@ -59,22 +76,58 @@ export default function Home() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [showBottomSheet, setShowBottomSheet] = useState(false);
 
-  const getSlotTasks = useCallback((dates: Date[]) => {
-    if (!dates || dates.length === 0) return [];
-    const start = toDateKey(dates[0]);
-    const end = toDateKey(dates[6]);
-    return tasks.filter((t) => t.date >= start && t.date <= end);
-  }, [tasks]);
+  const derivedWeekData = useMemo<DerivedWeekData>(() => {
+    const currDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    const prevDates = currDates.map((d) => addDays(d, -7));
+    const nextDates = currDates.map((d) => addDays(d, 7));
+
+    const buildDays = (datesList: Date[]): DayDataItem[] => {
+      return datesList.map((date) => {
+        const key = toDateKey(date);
+        const dayTasks = tasks.filter((t) => t.date === key);
+        return {
+          date,
+          dateKey: key,
+          tasks: dayTasks,
+        };
+      });
+    };
+
+    const activeHeaderDate = currDates.find((d) => isToday(d)) ?? currDates[0];
+    const headerTitle =
+      mode === 'week'
+        ? `${months[activeHeaderDate.getMonth()][0].toUpperCase()}${months[activeHeaderDate.getMonth()].slice(1)} ${activeHeaderDate.getFullYear()}`
+        : mode === 'month'
+        ? `${months[month.getMonth()][0].toUpperCase()}${months[month.getMonth()].slice(1)} ${month.getFullYear()}`
+        : `${year} жыл`;
+
+    const todayTime = new Date().setHours(0, 0, 0, 0);
+    const firstWeekDateTime = currDates[0].getTime();
+    const lastWeekDateTime = currDates[6].getTime();
+    const isFutureWeek = firstWeekDateTime > todayTime;
+    const isPastWeek = lastWeekDateTime < todayTime;
+
+    const currSlotDays = buildDays(currDates);
+
+    const slots: SlotData[] = [
+      { id: 0, baseX: -screenWidth, dates: prevDates, days: buildDays(prevDates) },
+      { id: 1, baseX: 0, dates: currDates, days: currSlotDays },
+      { id: 2, baseX: screenWidth, dates: nextDates, days: buildDays(nextDates) },
+    ];
+
+    return {
+      headerTitle,
+      activeHeaderDate,
+      isFutureWeek,
+      isPastWeek,
+      currSlotDays,
+      slots,
+    };
+  }, [weekStart, tasks, screenWidth, mode, month, year]);
 
   // ── Animated.Value for carousel translation ──────────────────────
   const carouselAnim = useRef(new Animated.Value(0)).current;
   const isAnimatingRef = useRef(false);
-
-  const slotConfigs = useMemo(() => [
-    { id: 0, baseX: -screenWidth, dates: weekDates.map((d) => addDays(d, -7)) },
-    { id: 1, baseX: 0, dates: weekDates },
-    { id: 2, baseX: screenWidth, dates: weekDates.map((d) => addDays(d, 7)) },
-  ], [screenWidth, weekDates]);
 
   // ── Week expand/collapse ────────────────────────────────────────
   const weekProgress = useRef(new Animated.Value(0)).current;
@@ -89,16 +142,17 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (ready && weekDates.length > 0) {
-      void loadRange(toDateKey(weekDates[0]), toDateKey(weekDates[6]));
+    const dates = derivedWeekData.slots[1].dates;
+    if (ready && dates.length > 0) {
+      void loadRange(toDateKey(dates[0]), toDateKey(dates[6]));
       const target =
         userSundayStateRef.current === 'expanded' ? 1
         : userSundayStateRef.current === 'collapsed' ? 0
-        : weekDates.length >= 7 && isToday(weekDates[6]) ? 1 : 0;
+        : dates.length >= 7 && isToday(dates[6]) ? 1 : 0;
       isExpandedRef.current = target === 1;
       Animated.timing(weekProgress, { toValue: target, duration: 180, useNativeDriver: false }).start();
     }
-  }, [ready, weekDates, loadRange, weekProgress]);
+  }, [ready, derivedWeekData.slots, loadRange, weekProgress]);
 
   const collapseWeek = useCallback(() => {
     userSundayStateRef.current = 'collapsed';
@@ -255,15 +309,15 @@ export default function Home() {
   }, []);
 
   const handleTaskSaved = useCallback((createdTask: Task) => {
-    const currDates = weekDates;
-    const inCurr = currDates.some((d) => toDateKey(d) === createdTask.date);
+    const currDates = derivedWeekData.slots[1].dates;
+    const inCurr = currDates.some((d: Date) => toDateKey(d) === createdTask.date);
     if (inCurr && cardLayoutsRef.current[createdTask.date]) {
       setFlyingTask({ task: createdTask, targetLayout: cardLayoutsRef.current[createdTask.date] });
     }
-  }, [weekDates]);
+  }, [derivedWeekData.slots]);
 
   // ── Layout metrics ──────────────────────────────────────
-  const currDates = weekDates;
+  const currDates = derivedWeekData.slots[1].dates;
   
   const headerSpace = insets.top + 68;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 60;
@@ -272,19 +326,9 @@ export default function Home() {
   const expandedBodyHeight = Math.max(70, Math.floor((availableHeight - 24 - 156 - 3 * 34) / 3));
   const expandedSundayHeight = 156;
   const cardGridBottomPadding = bottomBarSpace;
-  const activeHeaderDate = currDates.find((d) => isToday(d)) ?? currDates[0];
-  const title =
-    mode === 'week'
-      ? `${months[activeHeaderDate.getMonth()][0].toUpperCase()}${months[activeHeaderDate.getMonth()].slice(1)} ${activeHeaderDate.getFullYear()}`
-      : mode === 'month'
-      ? `${months[month.getMonth()][0].toUpperCase()}${months[month.getMonth()].slice(1)} ${month.getFullYear()}`
-      : `${year} жыл`;
-
-  const todayTime = new Date().setHours(0, 0, 0, 0);
-  const firstWeekDateTime = currDates[0].getTime();
-  const lastWeekDateTime = currDates[6].getTime();
-  const isFutureWeek = firstWeekDateTime > todayTime;
-  const isPastWeek = lastWeekDateTime < todayTime;
+  const title = derivedWeekData.headerTitle;
+  const isFutureWeek = derivedWeekData.isFutureWeek;
+  const isPastWeek = derivedWeekData.isPastWeek;
 
   const selectMode = (nextMode: ViewMode) => {
     collapseWeek();
@@ -378,7 +422,7 @@ export default function Home() {
             </View>
 
             {mode === 'week' && (() => {
-              const wTasks = getSlotTasks(currDates);
+              const wTasks = derivedWeekData.currSlotDays.flatMap((d) => d.tasks);
               const total = wTasks.length;
               const done = wTasks.filter((t) => t.isCompleted).length;
               const pending = total - done;
@@ -457,7 +501,7 @@ export default function Home() {
       {/* ── Carousel or Month/Year ──────────────────────────────── */}
       {mode === 'week' ? (
         <View style={{ flex: 1, overflow: 'hidden' }} {...gestureHandlers}>
-          {slotConfigs.map((slot) => {
+          {derivedWeekData.slots.map((slot) => {
             const translateX = carouselAnim.interpolate({
               inputRange: [-screenWidth, 0, screenWidth],
               outputRange: [slot.baseX - screenWidth, slot.baseX, slot.baseX + screenWidth],
@@ -474,8 +518,7 @@ export default function Home() {
                 }}
               >
                 <WeekView
-                  dates={slot.dates}
-                  tasks={getSlotTasks(slot.dates)}
+                  days={slot.days}
                   progress={weekProgress}
                   onInteraction={collapseWeek}
                   collapsedBodyHeight={collapsedBodyHeight}
@@ -554,8 +597,8 @@ function CalendarIcon() {
   );
 }
 
-const WeekView = memo(function WeekViewComponent({ dates, tasks, progress, onInteraction, collapsedBodyHeight = 156, expandedBodyHeight = 98, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef }: {
-  dates: Date[]; tasks: ReturnType<typeof usePlanner>['tasks']; progress: Animated.Value;
+const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 156, expandedBodyHeight = 98, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef }: {
+  days: DayDataItem[]; progress: Animated.Value;
   onInteraction?: () => void; collapsedBodyHeight?: number; expandedBodyHeight?: number;
   expandedSundayHeight?: number; onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
   isSwipingRef?: React.RefObject<boolean>;
@@ -564,18 +607,20 @@ const WeekView = memo(function WeekViewComponent({ dates, tasks, progress, onInt
     <View style={{ gap: 8 }}>
       <View style={{ flexDirection: 'row', gap: 10, position: 'relative' }}>
         <View style={{ flex: 1, gap: 8 }}>
-          {dates.slice(0, 3).map((date) => (
-            <DayCard key={toDateKey(date)} date={date} tasks={tasks.filter((t) => t.date === toDateKey(date))} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
+          {days.slice(0, 3).map((day) => (
+            <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
           ))}
         </View>
         <View style={{ flex: 1, gap: 8 }}>
-          {dates.slice(3, 6).map((date) => (
-            <DayCard key={toDateKey(date)} date={date} tasks={tasks.filter((t) => t.date === toDateKey(date))} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
+          {days.slice(3, 6).map((day) => (
+            <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
           ))}
         </View>
         <BookSpine progress={progress} collapsedHeight={3 * (collapsedBodyHeight + 34) + 16} expandedHeight={3 * (expandedBodyHeight + 34) + 16} />
       </View>
-      <DayCard date={dates[6]} tasks={tasks.filter((t) => t.date === toDateKey(dates[6]))} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
+      {days[6] && (
+        <DayCard key={days[6].dateKey} date={days[6].date} tasks={days[6].tasks} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
+      )}
     </View>
   );
 });

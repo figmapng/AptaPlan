@@ -46,8 +46,8 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
       setSettings(await getSettings(db));
       
       const today = new Date();
-      const s = toDateKey(addDays(today, -28));
-      const e = toDateKey(addDays(today, 28));
+      const s = toDateKey(addDays(today, -60));
+      const e = toDateKey(addDays(today, 60));
       rangeRef.current = [s, e];
       setRange([s, e]);
       const loaded = await repo.getTasksForRange(db, s, e);
@@ -66,7 +66,7 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
   }, [init]);
 
   const loadRange = useCallback(async (s: string, e: string) => {
-    // If current loaded range already covers [s, e], use in-memory tasks without re-rendering!
+    // If current loaded range already covers [s, e], use in-memory tasks without re-rendering or DB querying!
     if (rangeRef.current && s >= rangeRef.current[0] && e <= rangeRef.current[1]) {
       return tasksRef.current;
     }
@@ -74,8 +74,8 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
       const db = await getDatabase();
       const startDate = fromDateKey(s);
       const endDate = fromDateKey(e);
-      const bufferStart = toDateKey(addDays(startDate, -28));
-      const bufferEnd = toDateKey(addDays(endDate, 28));
+      const bufferStart = toDateKey(addDays(startDate, -60));
+      const bufferEnd = toDateKey(addDays(endDate, 60));
       rangeRef.current = [bufferStart, bufferEnd];
       setRange([bufferStart, bufferEnd]);
       const loaded = await repo.getTasksForRange(db, bufferStart, bufferEnd);
