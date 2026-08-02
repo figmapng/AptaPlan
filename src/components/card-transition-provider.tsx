@@ -527,6 +527,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     }
     isAnimatingRef.current = true;
     transitionRef.current = { ...origin.current, phase: 'closing' };
+    setTransition(transitionRef.current);
 
     Animated.timing(progress, {
       toValue: 0,

@@ -53,21 +53,18 @@ export const DayCard = memo(function DayCardComponent({
 
     const maxGridH = wide ? expandedSundayHeight + 34 : collapsedBodyHeight + 34;
 
-    if (cardRef.current) {
+    if (measuredFrameRef.current && measuredFrameRef.current.width > 0 && measuredFrameRef.current.height > 0) {
+      openCard(date, tasks, measuredFrameRef.current);
+    } else if (cardRef.current) {
       cardRef.current.measureInWindow((x, y, w, h) => {
-        if (typeof x === 'number' && !isNaN(x) && w > 0 && h > 0) {
-          const exactH = Math.min(h, maxGridH);
-          const freshFrame = { x, y, width: w, height: exactH };
-          measuredFrameRef.current = freshFrame;
-          openCard(date, tasks, freshFrame);
-        } else {
-          const fallback = measuredFrameRef.current ?? { x: 16, y: 120, width: 170, height: maxGridH };
-          openCard(date, tasks, fallback);
-        }
+        const frame =
+          typeof x === 'number' && !isNaN(x) && w > 0 && h > 0
+            ? { x, y, width: w, height: Math.min(h, maxGridH) }
+            : { x: 16, y: 120, width: 170, height: maxGridH };
+
+        measuredFrameRef.current = frame;
+        openCard(date, tasks, frame);
       });
-    } else {
-      const fallback = measuredFrameRef.current ?? { x: 16, y: 120, width: 170, height: maxGridH };
-      openCard(date, tasks, fallback);
     }
   };
 
