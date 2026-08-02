@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { memo, useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { format, isToday } from 'date-fns';
@@ -22,7 +22,7 @@ type DayCardProps = {
   isSwipingRef?: React.RefObject<boolean>;
 };
 
-export function DayCard({
+export const DayCard = memo(function DayCardComponent({
   date,
   tasks,
   wide = false,
@@ -398,6 +398,6 @@ export function DayCard({
       {cardBodyContent}
     </Animated.View>
   );
-}
+});
 
 

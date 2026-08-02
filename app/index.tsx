@@ -1,5 +1,5 @@
 import { format, isToday } from 'date-fns';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -79,8 +79,8 @@ export default function Home() {
     if (!dates || dates.length === 0) return [];
     const start = toDateKey(dates[0]);
     const end = toDateKey(dates[6]);
-    return tasksRef.current.filter((t) => t.date >= start && t.date <= end);
-  }, []);
+    return tasks.filter((t) => t.date >= start && t.date <= end);
+  }, [tasks]);
 
   // ── Animated.Value for carousel translation ──────────────────────
   // Value 0 = resting (no drag). During drag it equals dx.
@@ -605,7 +605,7 @@ function CalendarIcon() {
   );
 }
 
-function WeekView({ dates, tasks, progress, onInteraction, collapsedBodyHeight = 156, expandedBodyHeight = 98, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef }: {
+const WeekView = memo(function WeekViewComponent({ dates, tasks, progress, onInteraction, collapsedBodyHeight = 156, expandedBodyHeight = 98, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef }: {
   dates: Date[]; tasks: ReturnType<typeof usePlanner>['tasks']; progress: Animated.Value;
   onInteraction?: () => void; collapsedBodyHeight?: number; expandedBodyHeight?: number;
   expandedSundayHeight?: number; onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
@@ -629,7 +629,7 @@ function WeekView({ dates, tasks, progress, onInteraction, collapsedBodyHeight =
       <DayCard date={dates[6]} tasks={tasks.filter((t) => t.date === toDateKey(dates[6]))} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
     </View>
   );
-}
+});
 
 function BookSpine({ progress, collapsedHeight = 540, expandedHeight = 382 }: { progress: Animated.Value; collapsedHeight?: number; expandedHeight?: number }) {
   const h = progress ? progress.interpolate({ inputRange: [0, 1], outputRange: [collapsedHeight, expandedHeight] }) : collapsedHeight;
