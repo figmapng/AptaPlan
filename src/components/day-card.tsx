@@ -300,7 +300,36 @@ export const DayCard = memo(function DayCardComponent({
               cardBg="#FFFFFF"
             />
           ))
-        ) : null}
+        ) : (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              paddingVertical: 1,
+            }}
+          >
+            <View
+              style={{
+                width: 16,
+                height: 16,
+                borderRadius: 5,
+                borderWidth: 1,
+                borderColor: colors.checkboxBorder,
+                backgroundColor: colors.checkboxBg,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 11, lineHeight: 12, fontWeight: '500', color: colors.secondary, textAlign: 'center' }}>
+                +
+              </Text>
+            </View>
+            <Text style={{ color: colors.secondary, fontSize: 12, lineHeight: 17, fontWeight: '400' }}>
+              Тапсырма қосу
+            </Text>
+          </View>
+        )}
       </Pressable>
     </Animated.View>
   );
