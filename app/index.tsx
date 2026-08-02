@@ -64,16 +64,12 @@ export default function Home() {
   const currSlotRef = useRef<SlotIndex>(1);
   currSlotRef.current = currSlot;
 
-  const [slotDates, setSlotDates] = useState<Date[][]>(() => {
-    const cur = week.dates;
-    return [
-      cur.map((d) => addDays(d, -7)), // slot 0 = prev
-      cur,                             // slot 1 = curr
-      cur.map((d) => addDays(d, 7)),  // slot 2 = next
-    ];
-  });
-  const slotDatesRef = useRef(slotDates);
-  slotDatesRef.current = slotDates;
+  const getSlotDates = useCallback((slotIdx: SlotIndex, activeSlot: SlotIndex, baseDates: Date[]) => {
+    let diff = slotIdx - activeSlot;
+    if (diff > 1) diff -= 3;
+    if (diff < -1) diff += 3;
+    return baseDates.map((d) => addDays(d, diff * 7));
+  }, []);
 
   const getSlotTasks = useCallback((dates: Date[]) => {
     if (!dates || dates.length === 0) return [];
@@ -158,13 +154,6 @@ export default function Home() {
     const nextSlot = ((prevSlot - direction + 3) % 3) as SlotIndex;
 
     setCurrSlot(nextSlot);
-    setSlotDates((old) => {
-      const newCurrDates = old[nextSlot];
-      const result: Date[][] = [...old];
-      result[((nextSlot + 2) % 3) as SlotIndex] = newCurrDates.map((d) => addDays(d, -7));
-      result[((nextSlot + 1) % 3) as SlotIndex] = newCurrDates.map((d) => addDays(d, 7));
-      return result;
-    });
 
     const startVal = currentDx - (direction * screenWidth);
     carouselAnim.setValue(startVal);
@@ -185,13 +174,7 @@ export default function Home() {
   const resetToCurrentWeek = useCallback(() => {
     if (isAnimatingRef.current) return;
     weekRef.current.today();
-    const cur = getWeekDates(new Date());
     setCurrSlot(1);
-    setSlotDates([
-      cur.map((d) => addDays(d, -7)),
-      cur,
-      cur.map((d) => addDays(d, 7)),
-    ]);
     carouselAnim.setValue(0);
   }, [carouselAnim]);
 
@@ -304,7 +287,7 @@ export default function Home() {
   }, []);
 
   const handleTaskSaved = useCallback((createdTask: Task) => {
-    const currDates = slotDatesRef.current[currSlotRef.current];
+    const currDates = weekRef.current.dates;
     const inCurr = currDates.some((d) => toDateKey(d) === createdTask.date);
     if (inCurr && cardLayoutsRef.current[createdTask.date]) {
       setFlyingTask({ task: createdTask, targetLayout: cardLayoutsRef.current[createdTask.date] });
@@ -312,7 +295,7 @@ export default function Home() {
   }, []);
 
   // ── Layout metrics ──────────────────────────────────────
-  const currDates = slotDates[currSlot] ?? week.dates;
+  const currDates = week.dates;
   
   const headerSpace = insets.top + 68;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 60;
@@ -512,7 +495,7 @@ export default function Home() {
               inputRange: [-screenWidth, 0, screenWidth],
               outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
             });
-            const dates = slotDates[slotIdx] ?? week.dates;
+            const slotDates = getSlotDates(slotIdx, currSlot, week.dates);
             return (
               <Animated.View
                 key={slotIdx}
@@ -525,8 +508,8 @@ export default function Home() {
                 }}
               >
                 <WeekView
-                  dates={dates}
-                  tasks={getSlotTasks(dates)}
+                  dates={slotDates}
+                  tasks={getSlotTasks(slotDates)}
                   progress={weekProgress}
                   onInteraction={collapseWeek}
                   collapsedBodyHeight={collapsedBodyHeight}
