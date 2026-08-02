@@ -229,7 +229,7 @@ const CarouselCard = React.memo(function CarouselCard({
                 inputRange: [0, 1],
                 outputRange: [12, 17],
               }),
-              fontWeight: '700',
+              fontWeight: '600',
               color: isTodayCard ? '#FFFFFF' : isWeekendCard ? colors.sundayText : '#333C4E',
             }}
           >

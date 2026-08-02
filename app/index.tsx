@@ -216,8 +216,9 @@ export default function Home() {
         hasDetermined.current = true;
       }
 
+      isSwipingRef.current = true;
+
       if (isHorizontalGesture.current) {
-        isSwipingRef.current = true;
         carouselAnim.setValue(dx);
       } else {
         const startVal = isExpandedRef.current ? 1 : 0;
@@ -244,7 +245,9 @@ export default function Home() {
             useNativeDriver: true,
           }).start(() => {
             isAnimatingRef.current = false;
-            isSwipingRef.current = false;
+            setTimeout(() => {
+              isSwipingRef.current = false;
+            }, 180);
           });
         }
       } else {
@@ -257,6 +260,9 @@ export default function Home() {
           if (isExpandedRef.current) expandWeek();
           else collapseWeek();
         }
+        setTimeout(() => {
+          isSwipingRef.current = false;
+        }, 180);
       }
     },
     onTouchCancel: () => {
@@ -270,12 +276,16 @@ export default function Home() {
           useNativeDriver: true,
         }).start(() => {
           isAnimatingRef.current = false;
-          isSwipingRef.current = false;
+          setTimeout(() => {
+            isSwipingRef.current = false;
+          }, 180);
         });
       } else {
-        isSwipingRef.current = false;
         if (isExpandedRef.current) expandWeek();
         else collapseWeek();
+        setTimeout(() => {
+          isSwipingRef.current = false;
+        }, 180);
       }
     },
   };
@@ -308,7 +318,7 @@ export default function Home() {
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 60;
   const availableHeight = screenHeight - headerSpace - bottomBarSpace;
   const collapsedBodyHeight = Math.max(120, Math.floor((availableHeight - 16 - 3 * 34) / 3));
-  const expandedBodyHeight = Math.max(70, Math.floor((availableHeight - 16 - 156 - 4 * 34) / 3));
+  const expandedBodyHeight = Math.max(70, Math.floor((availableHeight - 24 - 156 - 3 * 34) / 3));
   const expandedSundayHeight = 156;
   const cardGridBottomPadding = bottomBarSpace;
   const activeHeaderDate = currDates.find((d) => isToday(d)) ?? currDates[0];

@@ -173,8 +173,7 @@ export function DayCard({
   const progressTotalColor = today ? 'rgba(255, 255, 255, 0.8)' : isWeekend ? 'rgba(123, 69, 69, 0.7)' : '#707684';
   const progressIconBorder = today ? '#FFFFFF' : isWeekend ? '#7B4545' : '#333C4E';
 
-  const dayName = (weekdays[date.getDay()] ?? '').toUpperCase();
-
+  const dayName = weekdays[date.getDay()] ?? '';
   const cardHeader = (
     <AnimatedPressable
       onPress={open}
@@ -233,7 +232,7 @@ export function DayCard({
         numberOfLines={1}
         style={{
           fontSize: 12,
-          fontWeight: '700',
+          fontWeight: '600',
           letterSpacing: 0.2,
           color: dayNameColor,
           flex: 1,
