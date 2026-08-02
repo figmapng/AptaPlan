@@ -22,6 +22,7 @@ import {
   addDays,
   formatWeekRange,
   getMonthGrid,
+  getStartOfWeek,
   getWeekDates,
   isSameMonth,
   months,
@@ -44,9 +45,8 @@ export default function Home() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { ready, error, tasks, loadRange, create } = usePlanner();
-  const week = useWeek();
-  const weekRef = useRef(week);
-  weekRef.current = week;
+  const [weekStart, setWeekStart] = useState(() => getStartOfWeek(new Date()));
+  const weekDates = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
   const tasksRef = useRef(tasks);
   tasksRef.current = tasks;
 
@@ -113,16 +113,16 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (ready && week.dates.length > 0) {
-      void loadRange(toDateKey(week.dates[0]), toDateKey(week.dates[6]));
+    if (ready && weekDates.length > 0) {
+      void loadRange(toDateKey(weekDates[0]), toDateKey(weekDates[6]));
       const target =
         userSundayStateRef.current === 'expanded' ? 1
         : userSundayStateRef.current === 'collapsed' ? 0
-        : week.dates.length >= 7 && isToday(week.dates[6]) ? 1 : 0;
+        : weekDates.length >= 7 && isToday(weekDates[6]) ? 1 : 0;
       isExpandedRef.current = target === 1;
       Animated.timing(weekProgress, { toValue: target, duration: 180, useNativeDriver: false }).start();
     }
-  }, [ready, week.dates, loadRange, weekProgress]);
+  }, [ready, weekDates, loadRange, weekProgress]);
 
   const collapseWeek = useCallback(() => {
     userSundayStateRef.current = 'collapsed';
@@ -147,12 +147,10 @@ export default function Home() {
     isAnimatingRef.current = true;
     isSwipingRef.current = true;
 
-    if (direction === -1) weekRef.current.next();
-    else weekRef.current.previous();
-
     const prevSlot = currSlotRef.current;
     const nextSlot = ((prevSlot - direction + 3) % 3) as SlotIndex;
 
+    setWeekStart((d: Date) => addDays(d, -direction * 7));
     setCurrSlot(nextSlot);
 
     const startVal = currentDx - (direction * screenWidth);
@@ -160,8 +158,8 @@ export default function Home() {
 
     Animated.spring(carouselAnim, {
       toValue: 0,
-      tension: 320,
-      friction: 36,
+      tension: 420,
+      friction: 30,
       useNativeDriver: true,
     }).start(() => {
       isAnimatingRef.current = false;
@@ -173,7 +171,7 @@ export default function Home() {
 
   const resetToCurrentWeek = useCallback(() => {
     if (isAnimatingRef.current) return;
-    weekRef.current.today();
+    setWeekStart(getStartOfWeek(new Date()));
     setCurrSlot(1);
     carouselAnim.setValue(0);
   }, [carouselAnim]);
@@ -214,7 +212,7 @@ export default function Home() {
       if (modeRef.current !== 'week' || !hasDetermined.current || isAnimatingRef.current) return;
       if (isHorizontalGesture.current) {
         const dx = e.nativeEvent.pageX - touchStartX.current;
-        const threshold = screenWidth * 0.2;
+        const threshold = screenWidth * 0.1;
 
         if (Math.abs(dx) > threshold) {
           const direction = dx < 0 ? -1 : 1;
@@ -223,8 +221,8 @@ export default function Home() {
           isAnimatingRef.current = true;
           Animated.spring(carouselAnim, {
             toValue: 0,
-            tension: 320,
-            friction: 36,
+            tension: 420,
+            friction: 30,
             useNativeDriver: true,
           }).start(() => {
             isAnimatingRef.current = false;
@@ -287,15 +285,15 @@ export default function Home() {
   }, []);
 
   const handleTaskSaved = useCallback((createdTask: Task) => {
-    const currDates = weekRef.current.dates;
+    const currDates = weekDates;
     const inCurr = currDates.some((d) => toDateKey(d) === createdTask.date);
     if (inCurr && cardLayoutsRef.current[createdTask.date]) {
       setFlyingTask({ task: createdTask, targetLayout: cardLayoutsRef.current[createdTask.date] });
     }
-  }, []);
+  }, [weekDates]);
 
   // ── Layout metrics ──────────────────────────────────────
-  const currDates = week.dates;
+  const currDates = weekDates;
   
   const headerSpace = insets.top + 68;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 60;
@@ -495,7 +493,7 @@ export default function Home() {
               inputRange: [-screenWidth, 0, screenWidth],
               outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
             });
-            const slotDates = getSlotDates(slotIdx, currSlot, week.dates);
+            const slotDates = getSlotDates(slotIdx, currSlot, weekDates);
             return (
               <Animated.View
                 key={slotIdx}
