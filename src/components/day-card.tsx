@@ -159,9 +159,9 @@ export function DayCard({
       })
     : 0;
 
-  const headerBg = today ? '#00A3FF' : '#EDEFF2';
-  const outerBg = today ? '#00A3FF' : '#EDEFF2';
-  const cardBorderColor = today ? '#00A3FF' : '#EDEFF2';
+  const headerBg = today ? '#00A3FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
+  const outerBg = today ? '#00A3FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
+  const cardBorderColor = today ? '#00A3FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
   const cardBorderWidth = 0;
 
   const numOuterBg = today ? '#008ADB' : isWeekend ? '#FAB9B3' : '#C4CAD7';
@@ -169,9 +169,9 @@ export function DayCard({
   const numTextColor = today ? '#049BD6' : isWeekend ? colors.sundayText : '#333C4E';
 
   const dayNameColor = today ? '#FFFFFF' : isWeekend ? colors.sundayText : '#333C4E';
-  const progressCountColor = today ? '#FFFFFF' : '#333C4E';
-  const progressTotalColor = today ? 'rgba(255, 255, 255, 0.8)' : '#707684';
-  const progressIconBorder = today ? '#FFFFFF' : '#333C4E';
+  const progressCountColor = today ? '#FFFFFF' : isWeekend ? '#7B4545' : '#333C4E';
+  const progressTotalColor = today ? 'rgba(255, 255, 255, 0.8)' : isWeekend ? 'rgba(123, 69, 69, 0.7)' : '#707684';
+  const progressIconBorder = today ? '#FFFFFF' : isWeekend ? '#7B4545' : '#333C4E';
 
   const dayName = (weekdays[date.getDay()] ?? '').toUpperCase();
 
@@ -242,30 +242,20 @@ export function DayCard({
         {dayName}
       </Text>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
         <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
           <Rect x="2.5" y="2.5" width="19" height="19" rx="4" stroke={progressIconBorder} strokeWidth="2.5" />
           <Path d="M7 12l3.5 3.5L17 8" stroke={progressIconBorder} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
         <Text
           style={{
-            color: progressCountColor,
             fontSize: 11,
             fontWeight: '600',
             fontVariant: ['tabular-nums'],
           }}
         >
-          {completedCount}
-        </Text>
-        <Text
-          style={{
-            color: progressTotalColor,
-            fontSize: 11,
-            fontWeight: '600',
-            fontVariant: ['tabular-nums'],
-          }}
-        >
-          /{tasks.length}
+          <Text style={{ color: progressCountColor }}>{completedCount}</Text>
+          <Text style={{ color: progressTotalColor }}>/{tasks.length}</Text>
         </Text>
       </View>
     </AnimatedPressable>

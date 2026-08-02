@@ -1,7 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { PlannerProvider } from '@/store/planner-store';
 import { colors } from '@/constants/colors';
@@ -15,7 +14,7 @@ export const unstable_settings = {
 
 export default function Layout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <PlannerProvider>
         <CardTransitionProvider>
           <StatusBar style="dark" />
@@ -35,8 +34,6 @@ export default function Layout() {
           </Stack>
         </CardTransitionProvider>
       </PlannerProvider>
-    </GestureHandlerRootView>
+    </View>
   );
 }
-
-
