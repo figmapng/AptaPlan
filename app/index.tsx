@@ -373,66 +373,10 @@ export default function Home() {
           {/* Left Title & Metrics Column */}
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {/* Left Return Button (When viewing FUTURE week -> return left to present) */}
-              {mode === 'week' && isFutureWeek && (
-                <AnimatedPressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Бүгінгі күнге қайту"
-                  onPress={resetToCurrentWeek}
-                  activeScale={0.93}
-                  style={{
-                    height: 24,
-                    borderRadius: 12,
-                    paddingHorizontal: 8,
-                    backgroundColor: colors.today,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexDirection: 'row',
-                    gap: 4,
-                  }}
-                >
-                  <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
-                    <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
-                  <Text style={{ color: 'white', fontSize: 11, fontWeight: '700' }}>
-                    {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
-                  </Text>
-                </AnimatedPressable>
-              )}
-
               {/* Month & Year Title */}
               <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
                 {title}
               </Text>
-
-              {/* Right Return Button (When viewing PAST week -> return right to present) */}
-              {mode === 'week' && isPastWeek && (
-                <AnimatedPressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Бүгінгі күнге қайту"
-                  onPress={resetToCurrentWeek}
-                  activeScale={0.93}
-                  style={{
-                    height: 24,
-                    borderRadius: 12,
-                    paddingHorizontal: 8,
-                    backgroundColor: colors.today,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexDirection: 'row',
-                    gap: 4,
-                  }}
-                >
-                  <Text style={{ color: 'white', fontSize: 11, fontWeight: '700' }}>
-                    {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
-                  </Text>
-                  <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
-                    <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
-                </AnimatedPressable>
-              )}
             </View>
 
             {mode === 'week' && (() => {
