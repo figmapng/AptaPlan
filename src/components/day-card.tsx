@@ -164,7 +164,7 @@ export function DayCard({
   const cardBorderColor = today ? '#00A3FF' : '#EDEFF2';
   const cardBorderWidth = 0;
 
-  const numOuterBg = today ? '#008ADB' : isWeekend ? '#FAB9B3' : '#DDE3EA';
+  const numOuterBg = today ? '#008ADB' : isWeekend ? '#FAB9B3' : '#C4CAD7';
   const numInnerBg = '#FFFFFF';
   const numTextColor = today ? '#049BD6' : isWeekend ? colors.sundayText : '#333C4E';
 
@@ -180,11 +180,12 @@ export function DayCard({
       onPress={open}
       activeScale={0.98}
       style={{
-        height: 38,
+        height: 32,
+        paddingVertical: 6,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        paddingHorizontal: 8,
+        paddingHorizontal: 6,
         backgroundColor: headerBg,
       }}
     >
@@ -196,8 +197,8 @@ export function DayCard({
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: numOuterBg,
-          borderRadius: 8,
-          paddingTop: 4,
+          borderRadius: 6,
+          paddingTop: 5,
           paddingRight: 1,
           paddingBottom: 1,
           paddingLeft: 1,
@@ -207,10 +208,8 @@ export function DayCard({
         <View
           style={{
             alignSelf: 'stretch',
-            borderRadius: 7,
+            borderRadius: 5,
             paddingHorizontal: 3,
-            paddingTop: 1,
-            paddingBottom: 2,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: numInnerBg,

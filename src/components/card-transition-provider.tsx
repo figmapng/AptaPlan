@@ -188,7 +188,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
   const openCard = (date: Date, cardTasks: Task[], frame: Frame) => {
     if (transitionRef.current) return;
-    isAnimatingRef.current = true;
     const taskCount = cardTasks.length;
     const calcContentHeight = Math.max(emptyCardHeight, 48 + 8 + taskCount * 48 + 12);
     const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
@@ -199,16 +198,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     transitionRef.current = { ...next, phase: 'opening' };
     setMeasuredListHeight(cardTasks.length * 48);
     setTransition(transitionRef.current);
-
-    progress.setValue(0);
-    Animated.timing(progress, {
-      toValue: 1,
-      duration: 440,
-      easing: Easing.bezier(0.12, 1, 0.22, 1),
-      useNativeDriver: false,
-    }).start(() => {
-      isAnimatingRef.current = false;
-    });
+    progress.setValue(1);
+    isAnimatingRef.current = false;
   };
 
   const closeCard = () => {
@@ -216,18 +207,9 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
       cleanupClose();
       return;
     }
-    isAnimatingRef.current = true;
-    transitionRef.current = { ...origin.current, phase: 'closing' };
-
-    Animated.timing(progress, {
-      toValue: 0,
-      duration: 320,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
-      useNativeDriver: false,
-    }).start(() => {
-      isAnimatingRef.current = false;
-      cleanupClose();
-    });
+    progress.setValue(0);
+    isAnimatingRef.current = false;
+    cleanupClose();
   };
 
   const beginInteractiveClose = () => {
@@ -425,7 +407,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 }),
                 borderRadius: progress.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [14, 20],
+                  outputRange: [14, 16],
                 }),
                 backgroundColor: today ? '#00A3FF' : '#EDEFF2',
                 overflow: 'hidden',
@@ -442,11 +424,12 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 style={{
                   height: progress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [38, 48],
+                    outputRange: [32, 44],
                   }),
+                  paddingVertical: 6,
                   paddingHorizontal: progress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [8, 10],
+                    outputRange: [6, 10],
                   }),
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -460,14 +443,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       ? '#008ADB'
                       : weekend
                       ? '#FAB9B3'
-                      : '#DDE3EA',
-                    borderRadius: 8,
+                      : '#C4CAD7',
+                    borderRadius: 6,
                     minWidth: 22,
-                    height: progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [20, 26],
-                    }),
-                    paddingTop: 4,
+                    paddingTop: 5,
                     paddingRight: 1,
                     paddingBottom: 1,
                     paddingLeft: 1,
@@ -480,10 +459,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   <View
                     style={{
                       alignSelf: 'stretch',
-                      borderRadius: 7,
+                      borderRadius: 5,
                       paddingHorizontal: 3,
-                      paddingTop: 1,
-                      paddingBottom: 2,
                       alignItems: 'center',
                       justifyContent: 'center',
                       backgroundColor: '#FFFFFF',
@@ -580,7 +557,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   flex: 1,
                   paddingHorizontal: 0,
                   backgroundColor: '#FFFFFF',
-                  borderRadius: 12,
+                  borderRadius: 14,
                   borderCurve: 'continuous',
                   marginHorizontal: 2,
                   marginBottom: 2,
