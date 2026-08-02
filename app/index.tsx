@@ -1,5 +1,5 @@
 import { format, isToday } from 'date-fns';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -176,10 +176,10 @@ export default function Home() {
 
   const pendingResetRef = useRef(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (pendingResetRef.current) {
       const now = Date.now();
-      console.log(now, '[ReactCommit] React committed new weekStart data. Resetting carousel position to 0');
+      console.log(now, '[ReactLayoutCommit] Synchronously resetting carousel position to 0 before paint');
       carouselAnim.setValue(0);
       pendingResetRef.current = false;
       isAnimatingRef.current = false;
