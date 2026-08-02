@@ -68,45 +68,6 @@ export const DayCard = memo(function DayCardComponent({
     }
   };
 
-  // Spatial push-away direction calculation when another card is expanding
-  const pushDirRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-
-  if (activeDate && originFrame && measuredFrameRef.current) {
-    const cardX = measuredFrameRef.current.x;
-    const cardY = measuredFrameRef.current.y;
-    const origX = originFrame.x;
-    const origY = originFrame.y;
-
-    let px = 0;
-    let py = 0;
-    if (cardX > origX + 20) px = 60;
-    else if (cardX < origX - 20) px = -60;
-
-    if (cardY > origY + 20) py = 70;
-    else if (cardY < origY - 20) py = -50;
-
-    pushDirRef.current = { x: px, y: py };
-  } else if (!activeDate) {
-    pushDirRef.current = { x: 0, y: 0 };
-  }
-
-  const { x: pushX, y: pushY } = pushDirRef.current;
-
-  // Pure linear 1-to-1 trajectory interpolations (Zero curve deviation on close)
-  const gridPushTranslateX = transitionProgress && activeDate && !isTransitioning
-    ? transitionProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, pushX],
-      })
-    : 0;
-
-  const gridPushTranslateY = transitionProgress && activeDate && !isTransitioning
-    ? transitionProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, pushY],
-      })
-    : 0;
-
   const gridPushOpacity = transitionProgress && activeDate && !isTransitioning
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
@@ -391,10 +352,6 @@ export const DayCard = memo(function DayCardComponent({
         borderColor: cardBorderColor,
         overflow: 'hidden',
         opacity: isTransitioning ? 0 : gridPushOpacity,
-        transform: [
-          { translateX: gridPushTranslateX },
-          { translateY: gridPushTranslateY },
-        ],
       }}
     >
       {cardHeader}
