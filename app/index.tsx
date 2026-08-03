@@ -36,6 +36,8 @@ import { StatusBar } from 'expo-status-bar';
 import { TaskBottomSheet } from '@/components/TaskBottomSheet';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { MotivationalHeader } from '@/components/MotivationalHeader';
+import { useCardTransition } from '@/components/card-transition-provider';
+import { MonthPickerModal } from '@/components/MonthPickerModal';
 import type { Task } from '@/types/task';
 
 type ViewMode = 'week' | 'month' | 'year';
@@ -75,9 +77,31 @@ export default function Home() {
   modeRef.current = mode;
 
   const [modePickerOpen, setModePickerOpen] = useState(false);
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [month, setMonth] = useState(new Date());
   const [year, setYear] = useState(new Date().getFullYear());
   const [showBottomSheet, setShowBottomSheet] = useState(false);
+
+  const handleMonthPickerSelect = useCallback((selectedDate: Date) => {
+    if (modeRef.current === 'week') {
+      setWeekStart(getStartOfWeek(selectedDate));
+    } else if (modeRef.current === 'month') {
+      setMonth(selectedDate);
+    } else {
+      setMonth(selectedDate);
+      setYear(selectedDate.getFullYear());
+      setMode('month');
+    }
+  }, []);
+
+  // ── Month carousel ──────────────────────────────────────────────
+  const monthCarouselAnim = useRef(new Animated.Value(0)).current;
+  const isMonthAnimatingRef = useRef(false);
+  const pendingMonthResetRef = useRef(false);
+  const monthTouchStartX = useRef(0);
+  const monthTouchStartY = useRef(0);
+  const isMonthHorizontal = useRef(false);
+  const monthHasDetermined = useRef(false);
 
   const derivedWeekData = useMemo<DerivedWeekData>(() => {
     const currDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -198,6 +222,14 @@ export default function Home() {
     }
   }, [ready, derivedWeekData.slots, loadRange, weekProgress]);
 
+  // ── Month data load ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!ready || mode !== 'month') return;
+    const from = new Date(month.getFullYear(), month.getMonth() - 1, 1);
+    const to = new Date(month.getFullYear(), month.getMonth() + 2, 0);
+    void loadRange(toDateKey(from), toDateKey(to));
+  }, [ready, month, mode, loadRange]);
+
   const collapseWeek = useCallback(() => {
     userSundayStateRef.current = 'collapsed';
     isExpandedRef.current = false;
@@ -232,6 +264,15 @@ export default function Home() {
     }
   }, [weekStart, carouselAnim]);
 
+  // ── Month carousel reset ─────────────────────────────────────────
+  useEffect(() => {
+    if (pendingMonthResetRef.current) {
+      monthCarouselAnim.setValue(0);
+      pendingMonthResetRef.current = false;
+      isMonthAnimatingRef.current = false;
+    }
+  }, [month, monthCarouselAnim]);
+
   const onSwipeComplete = useCallback((direction: -1 | 1) => {
     isAnimatingRef.current = true;
     isSwipingRef.current = true;
@@ -256,6 +297,102 @@ export default function Home() {
     setWeekStart(getStartOfWeek(new Date()));
     carouselAnim.setValue(0);
   }, [carouselAnim]);
+
+  // ── Month swipe complete ─────────────────────────────────────────
+  const onMonthSwipeComplete = useCallback((direction: -1 | 1) => {
+    isMonthAnimatingRef.current = true;
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    Animated.spring(monthCarouselAnim, {
+      toValue: direction * screenWidth,
+      tension: 450,
+      friction: 32,
+      useNativeDriver: true,
+    }).start(() => {
+      pendingMonthResetRef.current = true;
+      setMonth((m) => new Date(m.getFullYear(), m.getMonth() - direction, 1));
+    });
+  }, [monthCarouselAnim, screenWidth]);
+
+  const monthGestureHandlers = {
+    onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (isMonthAnimatingRef.current) return;
+      monthTouchStartX.current = e.nativeEvent.pageX;
+      monthTouchStartY.current = e.nativeEvent.pageY;
+      isMonthHorizontal.current = false;
+      monthHasDetermined.current = false;
+      monthCarouselAnim.stopAnimation();
+    },
+    onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (isMonthAnimatingRef.current) return;
+      const dx = e.nativeEvent.pageX - monthTouchStartX.current;
+      const dy = e.nativeEvent.pageY - monthTouchStartY.current;
+      if (!monthHasDetermined.current) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        isMonthHorizontal.current = Math.abs(dx) > Math.abs(dy) * 1.2;
+        monthHasDetermined.current = true;
+      }
+      if (isMonthHorizontal.current) {
+        monthCarouselAnim.setValue(dx);
+      } else {
+        if (isMotivationalOpenRef.current) {
+          if (dy < 0) {
+            const val = Math.max(0, 1 + dy / 130);
+            motivationalAnim.setValue(val);
+          }
+        } else {
+          if (dy > 0) {
+            const val = Math.min(1, dy / 130);
+            motivationalAnim.setValue(val);
+          }
+        }
+      }
+    },
+    onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (!monthHasDetermined.current || isMonthAnimatingRef.current) return;
+      if (isMonthHorizontal.current) {
+        const dx = e.nativeEvent.pageX - monthTouchStartX.current;
+        const threshold = screenWidth * 0.1;
+        if (Math.abs(dx) > threshold) {
+          onMonthSwipeComplete(dx < 0 ? -1 : 1);
+        } else {
+          isMonthAnimatingRef.current = true;
+          Animated.spring(monthCarouselAnim, {
+            toValue: 0, tension: 420, friction: 30, useNativeDriver: true,
+          }).start(() => { isMonthAnimatingRef.current = false; });
+        }
+      } else {
+        const dy = e.nativeEvent.pageY - monthTouchStartY.current;
+        if (isMotivationalOpenRef.current) {
+          if (dy < -25) {
+            closeMotivationalHeader();
+          } else {
+            openMotivationalHeader();
+          }
+        } else {
+          if (dy > 35) {
+            openMotivationalHeader();
+          } else {
+            closeMotivationalHeader();
+          }
+        }
+      }
+    },
+    onTouchCancel: () => {
+      if (monthHasDetermined.current) {
+        if (isMonthHorizontal.current) {
+          isMonthAnimatingRef.current = true;
+          Animated.spring(monthCarouselAnim, {
+            toValue: 0, tension: 320, friction: 36, useNativeDriver: true,
+          }).start(() => { isMonthAnimatingRef.current = false; });
+        } else {
+          if (isMotivationalOpenRef.current) openMotivationalHeader();
+          else closeMotivationalHeader();
+        }
+      }
+    },
+  };
 
   const gestureHandlers = {
     onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
@@ -411,6 +548,8 @@ export default function Home() {
   const headerSpace = insets.top + 68;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 60;
   const availableHeight = screenHeight - headerSpace - bottomBarSpace;
+  // Month grid uses the same available height as week view
+  const monthGridAvailH = availableHeight;
   const collapsedBodyHeight = Math.max(120, Math.floor((availableHeight - 16 - 3 * 31) / 3));
   const expandedBodyHeight = Math.max(70, Math.floor((availableHeight - 24 - 156 - 3 * 31) / 3));
   const expandedSundayHeight = 156;
@@ -507,7 +646,7 @@ export default function Home() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             {/* Left Title & Metrics Column */}
             <View style={{ flex: 1 }}>
-              <Pressable onPress={toggleMotivationalHeader} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Pressable onPress={() => setMonthPickerOpen(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 {/* Month & Year Title */}
                 <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
                   {title}
@@ -618,21 +757,47 @@ export default function Home() {
             );
           })}
         </View>
+      ) : mode === 'month' ? (
+        <View
+          style={{
+            flex: 1,
+            overflow: 'hidden',
+            backgroundColor: '#FFFFFF',
+          }}
+          {...monthGestureHandlers}
+        >
+          {([-1, 0, 1] as const).map((offset) => {
+            const slotDate = new Date(month.getFullYear(), month.getMonth() + offset, 1);
+            const baseX = offset * screenWidth;
+            const translateX = monthCarouselAnim.interpolate({
+              inputRange: [-screenWidth, 0, screenWidth],
+              outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
+            });
+            return (
+              <Animated.View
+                key={offset}
+                pointerEvents={offset === 0 ? 'auto' : 'none'}
+                style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  transform: [{ translateX }],
+                }}
+              >
+                <MonthGrid date={slotDate} tasks={tasks} availableHeight={monthGridAvailH} bottomPadding={bottomBarSpace} />
+              </Animated.View>
+            );
+          })}
+        </View>
       ) : (
         <ScrollView
           contentInsetAdjustmentBehavior="never"
           contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingBottom: insets.bottom + 24, gap: 4 }}
         >
-          {mode === 'month' ? (
-            <MonthView date={month} tasks={tasks} />
-          ) : (
-            <YearView year={year} tasks={tasks} onSelect={(i) => { setMonth(new Date(year, i, 1)); setMode('month'); }} />
-          )}
+          <YearView year={year} tasks={tasks} onSelect={(i) => { setMonth(new Date(year, i, 1)); setMode('month'); }} />
         </ScrollView>
       )}
 
       {/* ── Floating input ───────────────────────────────────────── */}
-      {mode === 'week' && (
+      {(mode === 'week' || mode === 'month') && (
         <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ flex: 1 }}>
             <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
@@ -682,6 +847,12 @@ export default function Home() {
 
       <TaskBottomSheet visible={showBottomSheet} onClose={() => setShowBottomSheet(false)} onTaskSaved={handleTaskSaved} />
       <FlyingTaskOverlay flyingTask={flyingTask} onComplete={() => setFlyingTask(null)} />
+      <MonthPickerModal
+        visible={monthPickerOpen}
+        currentDate={mode === 'week' ? derivedWeekData.activeHeaderDate : mode === 'month' ? month : new Date(year, 0, 1)}
+        onSelectMonth={handleMonthPickerSelect}
+        onClose={() => setMonthPickerOpen(false)}
+      />
     </View>
   );
 }
@@ -763,34 +934,232 @@ function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => v
   );
 }
 
-function MonthView({ date, tasks }: { date: Date; tasks: ReturnType<typeof usePlanner>['tasks'] }) {
+function MonthGrid({
+  date,
+  tasks,
+  availableHeight,
+  bottomPadding,
+}: {
+  date: Date;
+  tasks: ReturnType<typeof usePlanner>['tasks'];
+  availableHeight: number;
+  bottomPadding: number;
+}) {
   const grid = getMonthGrid(date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayKey = toDateKey(today);
+
+  const weeks: Date[][] = [];
+  for (let i = 0; i < grid.length; i += 7) weeks.push(grid.slice(i, i + 7));
+
+  const todayWeekIdx = weeks.findIndex((week) =>
+    week.some((d) => toDateKey(d) === todayKey)
+  );
+
+  const H_PAD = 12;
+  const CELL_GAP = 3;
+  const ROW_GAP = 4;
+  const DAY_LABEL_H = 30;
+  const TOP_PAD = 8;
+  const numWeeks = weeks.length;
+
+  const rawCellH = Math.floor(
+    (availableHeight - DAY_LABEL_H - ROW_GAP * (numWeeks - 1) - TOP_PAD) / numWeeks
+  );
+  const cellH = Math.min(86, Math.max(64, rawCellH));
+
+  const DAY_LABELS = ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жс'];
+
   return (
-    <View style={{ backgroundColor: 'white', borderRadius: 20, borderCurve: 'continuous', padding: 12, gap: 8 }}>
-      <View style={{ flexDirection: 'row' }}>
-        {['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жс'].map((label, i) => (
-          <Text key={label} style={{ flex: 1, textAlign: 'center', fontWeight: '700', color: i > 4 ? colors.weekend : colors.secondary }}>{label}</Text>
+    <View
+      style={{
+        flex: 1,
+        paddingHorizontal: H_PAD,
+        paddingTop: TOP_PAD,
+        paddingBottom: bottomPadding,
+        backgroundColor: '#FFFFFF',
+      }}
+    >
+      {/* ── Day-of-week labels */}
+      <View style={{ flexDirection: 'row', height: DAY_LABEL_H, alignItems: 'center', marginBottom: 2 }}>
+        {DAY_LABELS.map((label, i) => (
+          <Text
+            key={label}
+            style={{
+              flex: 1,
+              textAlign: 'center',
+              fontSize: 11,
+              fontWeight: '600',
+              letterSpacing: 0.2,
+              color: i >= 5 ? colors.weekend : '#9A9AA0',
+            }}
+          >
+            {label}
+          </Text>
         ))}
       </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        {grid.map((day) => {
-          const key = toDateKey(day);
-          const dt = tasks.filter((t) => t.date === key);
-          const done = dt.filter((t) => t.isCompleted).length;
+
+      {/* ── Week rows */}
+      <View style={{ gap: ROW_GAP }}>
+        {weeks.map((week, weekIdx) => {
+          const isCurrentWeek = weekIdx === todayWeekIdx;
           return (
-            <Pressable key={key} onPress={() => router.push(`/day/${key}`)} style={{ width: '14.285%', minHeight: 68, padding: 4, borderTopWidth: 1, borderColor: colors.divider, opacity: isSameMonth(day, date) ? 1 : 0.35 }}>
-              <Text style={{ fontWeight: '700', fontVariant: ['tabular-nums'], color: day.getDay() % 6 === 0 ? colors.weekend : colors.text }}>{day.getDate()}</Text>
-              {dt.length > 0 && (<>
-                <Text numberOfLines={1} style={{ fontSize: 10, color: colors.secondary, marginTop: 5 }}>{dt.length} тапсырма</Text>
-                <View style={{ height: 3, borderRadius: 2, backgroundColor: colors.divider, marginTop: 4 }}>
-                  <View style={{ height: 3, borderRadius: 2, width: `${(done / dt.length) * 100}%`, backgroundColor: colors.today }} />
-                </View>
-              </>)}
-            </Pressable>
+            <View
+              key={weekIdx}
+              style={{
+                position: 'relative',
+                marginHorizontal: isCurrentWeek ? -4 : 0,
+                marginVertical: isCurrentWeek ? 4 : 0,
+                paddingHorizontal: isCurrentWeek ? 4 : 0,
+              }}
+            >
+              {/* Current week subtle border */}
+              {isCurrentWeek && (
+                <View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    top: -5,
+                    left: 0,
+                    right: 0,
+                    bottom: -5,
+                    borderRadius: 16,
+                    borderWidth: 1.5,
+                    borderColor: '#2F7DF270',
+                    backgroundColor: '#2F7DF206',
+                    zIndex: 10,
+                  }}
+                />
+              )}
+
+              {/* Cells row */}
+              <View style={{ flexDirection: 'row', gap: CELL_GAP }}>
+                {week.map((day) => (
+                  <MonthDayCell
+                    key={toDateKey(day)}
+                    day={day}
+                    date={date}
+                    tasks={tasks}
+                    cellH={cellH}
+                    todayKey={todayKey}
+                  />
+                ))}
+              </View>
+            </View>
           );
         })}
       </View>
     </View>
+  );
+}
+
+function MonthDayCell({
+  day,
+  date,
+  tasks,
+  cellH,
+  todayKey,
+}: {
+  day: Date;
+  date: Date;
+  tasks: Task[];
+  cellH: number;
+  todayKey: string;
+}) {
+  const { openCard } = useCardTransition();
+  const cellRef = useRef<View>(null);
+  const key = toDateKey(day);
+  const dt = tasks.filter((t) => t.date === key);
+  const isToday = key === todayKey;
+  const isOffMonth = !isSameMonth(day, date);
+  const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+
+  const maxChips = Math.max(1, Math.floor((cellH - 26) / 15));
+  const visible = dt.slice(0, maxChips);
+  const overflow = dt.length - maxChips;
+
+  const handlePress = () => {
+    if (cellRef.current) {
+      cellRef.current.measureInWindow((x, y, w, h) => {
+        if (typeof x === 'number' && !isNaN(x) && w > 0 && h > 0 && y > 0) {
+          openCard(day, dt, { x, y, width: w, height: h });
+        } else {
+          openCard(day, dt, { x: 16, y: 120, width: 300, height: 400 });
+        }
+      });
+    } else {
+      openCard(day, dt, { x: 16, y: 120, width: 300, height: 400 });
+    }
+  };
+
+  return (
+    <Pressable
+      ref={cellRef}
+      onPress={handlePress}
+      style={{
+        flex: 1,
+        height: cellH,
+        backgroundColor: isToday ? colors.today : '#F6F8FB',
+        borderRadius: 10,
+        borderWidth: isToday ? 0 : 1,
+        borderColor: '#EAEFF5',
+        paddingHorizontal: 4,
+        paddingVertical: 5,
+        opacity: isOffMonth ? 0.3 : 1,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Date number */}
+      <Text
+        style={{
+          fontSize: 13,
+          fontWeight: '700',
+          lineHeight: 18,
+          color: isToday ? '#FFFFFF' : isWeekend ? colors.weekend : '#1C1C1E',
+          fontVariant: ['tabular-nums'],
+          textAlign: 'center',
+          marginBottom: 3,
+        }}
+      >
+        {day.getDate()}
+      </Text>
+
+      {/* Tasks — plain text, no chip background */}
+      <View style={{ gap: 1, flex: 1, overflow: 'hidden' }}>
+        {visible.map((task) => (
+          <Text
+            key={task.id}
+            numberOfLines={1}
+            style={{
+              fontSize: 9.5,
+              fontWeight: '500',
+              lineHeight: 13,
+              color: isToday
+                ? 'rgba(255,255,255,0.9)'
+                : task.isCompleted
+                ? '#ADADB8'
+                : '#3A3A3C',
+              textDecorationLine: task.isCompleted ? 'line-through' : 'none',
+            }}
+          >
+            {task.title}
+          </Text>
+        ))}
+        {overflow > 0 && (
+          <Text
+            style={{
+              fontSize: 9,
+              fontWeight: '600',
+              lineHeight: 12,
+              color: isToday ? 'rgba(255,255,255,0.6)' : '#ADADB8',
+            }}
+          >
+            +{overflow}
+          </Text>
+        )}
+      </View>
+    </Pressable>
   );
 }
 

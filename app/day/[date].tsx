@@ -108,6 +108,11 @@ export default function DayScreen() {
   const taskAreaMaxHeight = cardMaxHeight - 48;
   const returnToList = () => {
     closeCard();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
   };
   const detailSwipeResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (_, gesture) => gesture.dy > 14 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
