@@ -3,6 +3,7 @@ import { addDays, addMonths, addYears, eachDayOfInterval, endOfMonth, format, ge
 export const months = ['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'];
 export const shortMonths = ['қаң','ақп','нау','сәу','мам','мау','шіл','там','қыр','қаз','қар','жел'];
 export const weekdays = ['Жексенбі', 'Дүйсенбі', 'Сейсенбі', 'Сәрсенбі', 'Бейсенбі', 'Жұма', 'Сенбі'];
+export const weekdaysShort = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
 export const toDateKey = (date: Date) => format(date, 'yyyy-MM-dd');
 export const fromDateKey = (key: string) => parseISO(`${key}T12:00:00`);
 export const getStartOfWeek = (date: Date) => startOfWeek(date, { weekStartsOn: 1 });

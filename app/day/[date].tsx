@@ -14,6 +14,7 @@ import { useCardTransition } from '@/components/card-transition-provider';
 import { TaskBottomSheet } from '@/components/TaskBottomSheet';
 import { SortableTaskList } from '@/components/SortableTaskList';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { CompactWeekStrip } from '@/components/CompactWeekStrip';
 import type { Task } from '@/types/task';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getDatabase } from '@/database/database';
@@ -194,6 +195,17 @@ export default function DayScreen() {
         gap: 8,
       }}
     >
+      <View {...detailSwipeResponder.panHandlers}>
+        <CompactWeekStrip
+          selectedDate={selectedDate}
+          onSelectDate={(d) => {
+            const newKey = toDateKey(d);
+            if (newKey !== date) {
+              router.replace(`/day/${newKey}`);
+            }
+          }}
+        />
+      </View>
       <View
         style={{
           backgroundColor: colors.card,

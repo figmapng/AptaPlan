@@ -10,6 +10,7 @@ import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from './task-row';
 import { TaskBottomSheet } from './TaskBottomSheet';
 import { SortableTaskList } from './SortableTaskList';
+import { CompactWeekStrip } from './CompactWeekStrip';
 import { getDatabase } from '@/database/database';
 import { AnimatedPressable } from './AnimatedPressable';
 import type { Task } from '@/types/task';
@@ -103,7 +104,7 @@ const CarouselCard = React.memo(function CarouselCard({
           }),
           top: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: [currentFrame.y, insets.top + 4],
+            outputRange: [currentFrame.y, insets.top + 62],
           }),
           width: progress.interpolate({
             inputRange: [0, 1],
@@ -564,38 +565,37 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
             void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           }
           const nextIndex = pageIndexRef.current + 1;
+          pageIndexRef.current = nextIndex;
+          setPageIndex(nextIndex);
+          if (transitionRef.current?.date) {
+            const newKey = toDateKey(addDays(transitionRef.current.date, nextIndex));
+            void loadRange(newKey, newKey);
+          }
           Animated.spring(carouselX, {
             toValue: -nextIndex * width,
             useNativeDriver: false,
             bounciness: 0,
             speed: 20,
-          }).start(() => {
-            pageIndexRef.current = nextIndex;
-            setPageIndex(nextIndex);
-            if (transitionRef.current?.date) {
-              const newKey = toDateKey(addDays(transitionRef.current.date, nextIndex));
-              void loadRange(newKey, newKey);
-            }
-          });
+          }).start();
         } else if (gesture.dx > threshold || velocity > 0.35) {
           if (settings.haptics && Platform.OS === 'ios') {
             void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           }
           const prevIndex = pageIndexRef.current - 1;
+          pageIndexRef.current = prevIndex;
+          setPageIndex(prevIndex);
+          if (transitionRef.current?.date) {
+            const newKey = toDateKey(addDays(transitionRef.current.date, prevIndex));
+            void loadRange(newKey, newKey);
+          }
           Animated.spring(carouselX, {
             toValue: -prevIndex * width,
             useNativeDriver: false,
             bounciness: 0,
             speed: 20,
-          }).start(() => {
-            pageIndexRef.current = prevIndex;
-            setPageIndex(prevIndex);
-            if (transitionRef.current?.date) {
-              const newKey = toDateKey(addDays(transitionRef.current.date, prevIndex));
-              void loadRange(newKey, newKey);
-            }
-          });
+          }).start();
         } else {
+          setPageIndex(pageIndexRef.current);
           Animated.spring(carouselX, {
             toValue: -pageIndexRef.current * width,
             useNativeDriver: false,
@@ -604,6 +604,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
         }
       },
       onPanResponderTerminate: () => {
+        setPageIndex(pageIndexRef.current);
         Animated.spring(carouselX, {
           toValue: -pageIndexRef.current * width,
           useNativeDriver: false,
@@ -702,6 +703,41 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 );
               })}
             </View>
+
+            {/* Top Compact Week Strip placed directly above the open card */}
+            <Animated.View
+              pointerEvents="box-none"
+              style={{
+                position: 'absolute',
+                top: insets.top + 2,
+                left: 0,
+                right: 0,
+                zIndex: 10001,
+                opacity: progress.interpolate({
+                  inputRange: [0.5, 1],
+                  outputRange: [0, 1],
+                }),
+              }}
+            >
+              <CompactWeekStrip
+                selectedDate={activeCardDate}
+                carouselX={carouselX}
+                screenWidth={width}
+                pageIndex={pageIndex}
+                onSelectDate={(targetDate) => {
+                  const diff = Math.round((targetDate.getTime() - current.date.getTime()) / (1000 * 60 * 60 * 24));
+                  const newIndex = diff;
+                  pageIndexRef.current = newIndex;
+                  setPageIndex(newIndex);
+                  Animated.spring(carouselX, {
+                    toValue: -newIndex * width,
+                    useNativeDriver: false,
+                    bounciness: 0,
+                    speed: 24,
+                  }).start();
+                }}
+              />
+            </Animated.View>
 
             <Animated.View
               pointerEvents="box-none"
