@@ -139,9 +139,9 @@ export const DayCard = memo(function DayCardComponent({
       })
     : 0;
 
-  const headerBg = today ? '#00A3FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
-  const outerBg = today ? '#00A3FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
-  const cardBorderColor = today ? '#00A3FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
+  const headerBg = today ? '#01B7FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
+  const outerBg = today ? '#01B7FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
+  const cardBorderColor = today ? '#01B7FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
   const cardBorderWidth = 0;
 
   const numOuterBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;

@@ -193,12 +193,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#2F7DF214',
+    backgroundColor: '#01B7FF14',
   },
   todayText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#2F7DF2',
+    color: '#01B7FF',
   },
   yearRow: {
     flexDirection: 'row',
@@ -245,11 +245,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   monthCardSelected: {
-    backgroundColor: '#2F7DF2',
-    borderColor: '#2F7DF2',
+    backgroundColor: '#01B7FF',
+    borderColor: '#01B7FF',
   },
   monthCardToday: {
-    borderColor: '#2F7DF2',
+    borderColor: '#01B7FF',
   },
   monthText: {
     fontSize: 14,

@@ -118,7 +118,7 @@ const CarouselCard = React.memo(function CarouselCard({
             inputRange: [0, 1],
             outputRange: [14, 16],
           }),
-          backgroundColor: isTodayCard ? '#00A3FF' : isWeekendCard ? '#FFE5E2' : '#EDEFF2',
+          backgroundColor: isTodayCard ? '#01B7FF' : isWeekendCard ? '#FFE5E2' : '#EDEFF2',
           zIndex: isCenter ? 9999 : 9998,
           transform: [{ translateX: cardTranslateX }],
         },
@@ -130,7 +130,7 @@ const CarouselCard = React.memo(function CarouselCard({
           borderRadius: 16,
           borderCurve: 'continuous',
           overflow: 'hidden',
-          backgroundColor: isTodayCard ? '#00A3FF' : isWeekendCard ? '#FFE5E2' : '#EDEFF2',
+          backgroundColor: isTodayCard ? '#01B7FF' : isWeekendCard ? '#FFE5E2' : '#EDEFF2',
         }}
       >
         <Animated.View

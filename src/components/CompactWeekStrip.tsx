@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   cellNumToday: {
-    color: '#00A3FF',
+    color: '#01B7FF',
     fontWeight: '800',
   },
   cellNumSelected: {
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   cellLabelToday: {
-    color: '#00A3FF',
+    color: '#01B7FF',
     fontWeight: '800',
   },
   cellLabelSelected: {

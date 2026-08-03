@@ -1020,8 +1020,8 @@ function MonthGrid({
                     bottom: -5,
                     borderRadius: 16,
                     borderWidth: 1.5,
-                    borderColor: '#2F7DF270',
-                    backgroundColor: '#2F7DF206',
+                    borderColor: '#01B7FF70',
+                    backgroundColor: '#01B7FF06',
                     zIndex: 10,
                   }}
                 />
