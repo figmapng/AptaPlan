@@ -31,7 +31,7 @@ export const colors = {
   todayDark: '#2164CD',
   weekend: '#FF4B3E',
   capsule: '#F1F3F6',
-  control: '#EAEAEE',
+  control: '#EDEFF2',
   danger: '#FF4B3E',
   time: '#D9FFB6',
 } as const;

@@ -562,30 +562,21 @@ export default function Home() {
             })()}
           </View>
 
-          {/* Right Mode Picker & Settings Control Group */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, position: 'relative', zIndex: 20 }}>
-            <AnimatedPressable
-              accessibilityRole="button"
-              onPress={() => { collapseWeek(); setModePickerOpen((o) => !o); }}
-              activeScale={0.94}
-              style={{ height: 38, borderRadius: 19, paddingHorizontal: 12, gap: 6, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.control }}
-            >
-              <CalendarIcon />
-              <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>{modeLabels[mode]}</Text>
-            </AnimatedPressable>
-
-            
-{modePickerOpen && (
-              <View style={{ position: 'absolute', right: 0, top: 44, width: 126, padding: 4, gap: 2, backgroundColor: colors.card, borderRadius: 14, borderCurve: 'continuous', boxShadow: '0 6px 16px rgba(31,32,38,0.14)' }}>
-                {(Object.keys(modeLabels) as ViewMode[]).map((item) => (
-                  <AnimatedPressable key={item} accessibilityRole="button" onPress={() => selectMode(item)} activeScale={0.96}
-                    style={{ minHeight: 38, borderRadius: 10, paddingHorizontal: 12, justifyContent: 'center', backgroundColor: mode === item ? colors.control : 'transparent' }}>
-                    <Text style={{ color: colors.text, fontSize: 14, fontWeight: mode === item ? '700' : '500' }}>{modeLabels[item]}</Text>
-                  </AnimatedPressable>
-                ))}
-              </View>
-            )}
-          </View>
+          {/* Toggle: Апта ↔ Ай */}
+          <AnimatedPressable
+            accessibilityRole="button"
+            onPress={() => {
+              const next: ViewMode = mode === 'week' ? 'month' : 'week';
+              collapseWeek();
+              setMode(next);
+              setModePickerOpen(false);
+            }}
+            activeScale={0.94}
+            style={{ height: 38, borderRadius: 19, paddingHorizontal: 12, gap: 6, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.control }}
+          >
+            <CalendarIcon />
+            <Text style={{ color: '#333C4E', fontSize: 14, fontWeight: '600' }}>{modeLabels[mode]}</Text>
+          </AnimatedPressable>
 
           <AnimatedPressable accessibilityRole="button" onPress={() => { collapseWeek(); router.push('/settings'); }} activeScale={0.92}
             style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.control, alignItems: 'center', justifyContent: 'center' }}>
@@ -729,8 +720,8 @@ function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Tas
 function CalendarIcon() {
   return (
     <Svg width={19} height={19} viewBox="0 0 24 24" fill="none">
-      <Rect x="3" y="5" width="18" height="16" rx="3" stroke="#30323A" strokeWidth="1.8" />
-      <Path d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" stroke="#30323A" strokeWidth="1.8" strokeLinecap="round" />
+      <Rect x="3" y="5" width="18" height="16" rx="3" stroke="#333C4E" strokeWidth="1.8" />
+      <Path d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" stroke="#333C4E" strokeWidth="1.8" strokeLinecap="round" />
     </Svg>
   );
 }
