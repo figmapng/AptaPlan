@@ -16,14 +16,18 @@ const occursOn = (task: Task, date: string) => {
 };
 export async function getTasksForRange(db: SQLiteDatabase, start: string, end: string) {
   const rows = (await db.getAllAsync<Row>(`SELECT * FROM tasks WHERE deletedAt IS NULL AND date <= ? AND (repeatType != 'none' OR date >= ?)`, end, start)).map(map);
-  const overrides = await db.getAllAsync<{taskId:string;occurrenceDate:string;isCompleted:number}>(`SELECT taskId, occurrenceDate, isCompleted FROM task_occurrences WHERE occurrenceDate BETWEEN ? AND ?`, start, end);
+  const overrides = await db.getAllAsync<{taskId:string;occurrenceDate:string;isCompleted:number;isDeleted:number}>(`SELECT taskId, occurrenceDate, isCompleted, COALESCE(isDeleted, 0) AS isDeleted FROM task_occurrences WHERE occurrenceDate BETWEEN ? AND ?`, start, end);
   const overrideMap = new Map(overrides.map(o => [`${o.taskId}:${o.occurrenceDate}`, !!o.isCompleted]));
+  const deletedSet = new Set(overrides.filter(o => o.isDeleted === 1).map(o => `${o.taskId}:${o.occurrenceDate}`));
   const result: Task[] = [];
   for (let cursor = start; cursor <= end; cursor = toDateKey(addDays(fromDateKey(cursor), 1))) {
-    for (const task of rows) if (occursOn(task, cursor)) result.push({ ...task, date: cursor, occurrenceDate: cursor, isCompleted: overrideMap.get(`${task.id}:${cursor}`) ?? task.isCompleted });
+    for (const task of rows) {
+      if (occursOn(task, cursor)) {
+        if (deletedSet.has(`${task.id}:${cursor}`)) continue;
+        result.push({ ...task, date: cursor, occurrenceDate: cursor, isCompleted: overrideMap.get(`${task.id}:${cursor}`) ?? task.isCompleted });
+      }
+    }
   }
-  // The list order is user-controlled. Completion only breaks a tie, so a
-  // checked item does not jump away after a drag-and-drop reorder.
   return result.sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || Number(a.isCompleted)-Number(b.isCompleted));
 }
 export const getTasksForDate = (db: SQLiteDatabase, date: string) => getTasksForRange(db, date, date);
@@ -36,7 +40,16 @@ export async function createTask(db: SQLiteDatabase, input: TaskInput) {
 export async function updateTask(db: SQLiteDatabase, id: string, input: TaskInput) {
   await db.runAsync(`UPDATE tasks SET title=?,note=?,date=?,time=?,priority=?,repeatType=?,notificationOffset=?,updatedAt=? WHERE id=?`, input.title.trim(),input.note||null,input.date,input.time||null,input.priority || 'normal',input.repeatType || 'none',input.notificationOffset || null,new Date().toISOString(),id);
 }
-export async function deleteTask(db: SQLiteDatabase, id: string) { await db.runAsync('UPDATE tasks SET deletedAt=?,updatedAt=? WHERE id=?', new Date().toISOString(),new Date().toISOString(),id); }
+export async function deleteTask(db: SQLiteDatabase, id: string) {
+  await db.runAsync('UPDATE tasks SET deletedAt=?,updatedAt=? WHERE id=?', new Date().toISOString(),new Date().toISOString(),id);
+}
+export async function deleteTaskOccurrence(db: SQLiteDatabase, taskId: string, occurrenceDate: string) {
+  const id = createId();
+  await db.runAsync(
+    `INSERT INTO task_occurrences(id, taskId, occurrenceDate, isCompleted, isDeleted) VALUES(?,?,?,0,1) ON CONFLICT(taskId, occurrenceDate) DO UPDATE SET isDeleted=1`,
+    id, taskId, occurrenceDate
+  );
+}
 export async function toggleTaskCompletion(db: SQLiteDatabase, task: Task) {
   const next = !task.isCompleted;
   if (task.repeatType === 'none') await db.runAsync('UPDATE tasks SET isCompleted=?,updatedAt=? WHERE id=?', Number(next),new Date().toISOString(),task.id);

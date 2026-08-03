@@ -13,9 +13,17 @@ export async function migrate(db: SQLiteDatabase) {
     CREATE TABLE IF NOT EXISTS task_occurrences (
       id TEXT PRIMARY KEY, taskId TEXT NOT NULL, occurrenceDate TEXT NOT NULL,
       isCompleted INTEGER NOT NULL DEFAULT 0, completedAt TEXT,
+      isDeleted INTEGER NOT NULL DEFAULT 0,
       UNIQUE(taskId, occurrenceDate), FOREIGN KEY(taskId) REFERENCES tasks(id) ON DELETE CASCADE
     );
     CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS idx_tasks_date ON tasks(date);`);
+
+  try {
+    await db.execAsync(`ALTER TABLE task_occurrences ADD COLUMN isDeleted INTEGER NOT NULL DEFAULT 0;`);
+  } catch {
+    // Column may already exist
+  }
+
   await db.runAsync('INSERT OR IGNORE INTO migrations(version) VALUES (1)');
 }

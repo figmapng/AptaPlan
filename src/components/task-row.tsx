@@ -32,7 +32,7 @@ export const TaskRow = React.memo(function TaskRow({
   onScrollEnabledChange?: (enabled: boolean) => void;
   cardBg?: string;
 }) {
-  const { toggle, settings } = usePlanner();
+  const { toggle, remove, settings } = usePlanner();
   const { progress: transitionProgress, activeDate } = useCardTransition();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -47,45 +47,6 @@ export const TaskRow = React.memo(function TaskRow({
   const rowOpacityAnim = useRef(new Animated.Value(1)).current;
   const pressScale = useRef(new Animated.Value(1)).current;
 
-  useEffect(() => {
-    onSwipeX?.(swipeX, executeDeleteAction);
-  }, [onSwipeX, swipeX]);
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.sequence([
-        Animated.timing(boxScale, {
-          toValue: task.isCompleted ? 1.22 : 0.88,
-          duration: 100,
-          useNativeDriver: false,
-        }),
-        Animated.spring(boxScale, {
-          toValue: 1,
-          stiffness: 300,
-          damping: 24,
-          useNativeDriver: false,
-        }),
-      ]),
-      Animated.timing(checkScale, {
-        toValue: task.isCompleted ? 1 : 0,
-        duration: 160,
-        easing: Easing.out(Easing.back(1.5)),
-        useNativeDriver: false,
-      }),
-      Animated.timing(rowOpacity, {
-        toValue: task.isCompleted ? 0.55 : 1,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  }, [task.isCompleted, boxScale, checkScale, rowOpacity]);
-
-  const triggerHaptic = async (style: Haptics.ImpactFeedbackStyle) => {
-    if (process.env.EXPO_OS === 'ios' && settings.haptics) {
-      await Haptics.impactAsync(style);
-    }
-  };
-
   const onToggle = async () => {
     onInteraction?.();
     await triggerHaptic(
@@ -96,53 +57,106 @@ export const TaskRow = React.memo(function TaskRow({
     await toggle(task);
   };
 
+  const triggerHaptic = async (style: Haptics.ImpactFeedbackStyle) => {
+    if (process.env.EXPO_OS === 'ios' && settings.haptics) {
+      await Haptics.impactAsync(style);
+    }
+  };
+
+  const resetSwipe = () => {
+    Animated.spring(swipeX, {
+      toValue: 0,
+      stiffness: 340,
+      damping: 28,
+      mass: 0.8,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const animateDeleteAndRemove = (mode: 'single' | 'all') => {
+    setIsDeleting(true);
+    Animated.parallel([
+      Animated.timing(rowHeightAnim, {
+        toValue: 0,
+        duration: 240,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+      Animated.timing(rowOpacityAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+    ]).start(() => {
+      if (mode === 'all') {
+        if (onPendingDelete) {
+          onPendingDelete(task);
+        } else {
+          void remove(task.id, task.occurrenceDate || task.date, 'all');
+        }
+      } else {
+        void remove(task.id, task.occurrenceDate || task.date, 'single');
+      }
+    });
+  };
+
   const executeDeleteAction = () => {
     onInteraction?.();
     void triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
 
-    Alert.alert(
-      'Тапсырманы өшіру',
-      'Бұл тапсырманы жоюды растайсыз ба? Өшірілген тапсырманы қайта қалпына келтіру мүмкін емес!',
-      [
-        {
-          text: 'Бас тарту',
-          style: 'cancel',
-          onPress: () => {
-            Animated.spring(swipeX, {
-              toValue: 0,
-              stiffness: 340,
-              damping: 28,
-              mass: 0.8,
-              useNativeDriver: false,
-            }).start();
+    const isRecurring = task.repeatType && task.repeatType !== 'none';
+
+    if (isRecurring) {
+      Alert.alert(
+        'Қайталанатын тапсырма',
+        'Осы қайталанатын тапсырманы қалай өшіргіңіз келеді?',
+        [
+          {
+            text: 'Тек осы күнгіні өшіру',
+            style: 'destructive',
+            onPress: async () => {
+              await triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
+              animateDeleteAndRemove('single');
+            },
           },
-        },
-        {
-          text: 'Өшіру',
-          style: 'destructive',
-          onPress: async () => {
-            await triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
-            setIsDeleting(true);
-            Animated.parallel([
-              Animated.timing(rowHeightAnim, {
-                toValue: 0,
-                duration: 240,
-                easing: Easing.out(Easing.cubic),
-                useNativeDriver: false,
-              }),
-              Animated.timing(rowOpacityAnim, {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: false,
-              }),
-            ]).start(() => {
-              onPendingDelete?.(task);
-            });
+          {
+            text: 'Барлық қайталануларды өшіру',
+            style: 'destructive',
+            onPress: async () => {
+              await triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
+              animateDeleteAndRemove('all');
+            },
           },
-        },
-      ],
-      { cancelable: true }
-    );
+          {
+            text: 'Болдырмау',
+            style: 'cancel',
+            onPress: resetSwipe,
+          },
+        ],
+        { cancelable: true }
+      );
+    } else {
+      Alert.alert(
+        'Тапсырманы өшіру',
+        'Бұл тапсырманы жоюды растайсыз ба?',
+        [
+          {
+            text: 'Өшіру',
+            style: 'destructive',
+            onPress: async () => {
+              await triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
+              animateDeleteAndRemove('all');
+            },
+          },
+          {
+            text: 'Болдырмау',
+            style: 'cancel',
+            onPress: resetSwipe,
+          },
+        ],
+        { cancelable: true }
+      );
+    }
   };
 
   const handlePressIn = () => {

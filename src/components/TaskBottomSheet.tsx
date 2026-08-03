@@ -264,6 +264,58 @@ export function TaskBottomSheet({
     ? lastKeyboardHeight.current + 12
     : Animated.add(keyboardHeightAnim, 12);
 
+  const handleDelete = () => {
+    if (!editingTask) return;
+    const isRecurring = editingTask.repeatType && editingTask.repeatType !== 'none';
+    if (isRecurring) {
+      Alert.alert(
+        'Қайталанатын тапсырма',
+        'Осы қайталанатын тапсырманы қалай өшіргіңіз келеді?',
+        [
+          {
+            text: 'Тек осы күнгіні өшіру',
+            style: 'destructive',
+            onPress: async () => {
+              await planner.remove(editingTask.id, editingTask.date, 'single');
+              onClose();
+            },
+          },
+          {
+            text: 'Барлық қайталануларды өшіру',
+            style: 'destructive',
+            onPress: async () => {
+              await planner.remove(editingTask.id, editingTask.date, 'all');
+              onClose();
+            },
+          },
+          {
+            text: 'Болдырмау',
+            style: 'cancel',
+          },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Тапсырманы өшіру',
+        'Бұл тапсырманы өшіруді растайсыз ба?',
+        [
+          {
+            text: 'Өшіру',
+            style: 'destructive',
+            onPress: async () => {
+              await planner.remove(editingTask.id, editingTask.date, 'all');
+              onClose();
+            },
+          },
+          {
+            text: 'Болдырмау',
+            style: 'cancel',
+          },
+        ]
+      );
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -337,6 +389,24 @@ export function TaskBottomSheet({
               repeat={selectedRepeat}
               onPress={openRepeatSheet}
             />
+            {editingTask && (
+              <Pressable
+                onPress={handleDelete}
+                style={{
+                  height: 34,
+                  borderRadius: 17,
+                  backgroundColor: '#FF3B3014',
+                  paddingHorizontal: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  gap: 5,
+                }}
+              >
+                <TrashIcon color="#FF3B30" />
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#FF3B30' }}>Өшіру</Text>
+              </Pressable>
+            )}
           </ScrollView>
         </Animated.View>
 
@@ -467,3 +537,17 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
 });
+
+function TrashIcon({ color = '#FF3B30', size = 16 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}

@@ -19,7 +19,8 @@ type Store = {
   toggle: (t: Task) => Promise<void>;
   create: (i: TaskInput) => Promise<string>;
   update: (id: string, i: TaskInput) => Promise<void>;
-  remove: (id: string) => Promise<void>;
+  remove: (id: string, date?: string, mode?: 'single' | 'all') => Promise<void>;
+  removeOccurrence: (taskId: string, occurrenceDate: string) => Promise<void>;
   get: (id: string) => Promise<Task | null>;
   setPref: <K extends keyof PlannerSettings>(k: K, v: PlannerSettings[K]) => Promise<void>;
   clearAll: () => Promise<void>;
@@ -126,8 +127,16 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
         await repo.updateTask(await getDatabase(), id, i);
         await refresh();
       },
-      remove: async (id) => {
-        await repo.deleteTask(await getDatabase(), id);
+      remove: async (id, date, mode = 'all') => {
+        if (mode === 'single' && date) {
+          await repo.deleteTaskOccurrence(await getDatabase(), id, date);
+        } else {
+          await repo.deleteTask(await getDatabase(), id);
+        }
+        await refresh();
+      },
+      removeOccurrence: async (taskId, date) => {
+        await repo.deleteTaskOccurrence(await getDatabase(), taskId, date);
         await refresh();
       },
       get: async (id) => repo.getTask(await getDatabase(), id),
