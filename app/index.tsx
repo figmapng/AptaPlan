@@ -317,7 +317,7 @@ export default function Home() {
 
   const monthGestureHandlers = {
     onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (isMonthAnimatingRef.current) return;
+      if (isMonthAnimatingRef.current || isSwipingRef.current) return;
       monthTouchStartX.current = e.nativeEvent.pageX;
       monthTouchStartY.current = e.nativeEvent.pageY;
       isMonthHorizontal.current = false;
@@ -325,7 +325,7 @@ export default function Home() {
       monthCarouselAnim.stopAnimation();
     },
     onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (isMonthAnimatingRef.current) return;
+      if (isMonthAnimatingRef.current || isSwipingRef.current) return;
       const dx = e.nativeEvent.pageX - monthTouchStartX.current;
       const dy = e.nativeEvent.pageY - monthTouchStartY.current;
       if (!monthHasDetermined.current) {
@@ -350,7 +350,7 @@ export default function Home() {
       }
     },
     onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (!monthHasDetermined.current || isMonthAnimatingRef.current) return;
+      if (!monthHasDetermined.current || isMonthAnimatingRef.current || isSwipingRef.current) return;
       if (isMonthHorizontal.current) {
         const dx = e.nativeEvent.pageX - monthTouchStartX.current;
         const threshold = screenWidth * 0.1;
@@ -380,7 +380,7 @@ export default function Home() {
       }
     },
     onTouchCancel: () => {
-      if (monthHasDetermined.current) {
+      if (monthHasDetermined.current && !isSwipingRef.current) {
         if (isMonthHorizontal.current) {
           isMonthAnimatingRef.current = true;
           Animated.spring(monthCarouselAnim, {
@@ -396,16 +396,15 @@ export default function Home() {
 
   const gestureHandlers = {
     onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (modeRef.current !== 'week' || isAnimatingRef.current) return;
+      if (modeRef.current !== 'week' || isAnimatingRef.current || isSwipingRef.current) return;
       touchStartX.current = e.nativeEvent.pageX;
       touchStartY.current = e.nativeEvent.pageY;
       isHorizontalGesture.current = false;
       hasDetermined.current = false;
-      isSwipingRef.current = false;
       carouselAnim.stopAnimation();
     },
     onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (modeRef.current !== 'week' || isAnimatingRef.current) return;
+      if (modeRef.current !== 'week' || isAnimatingRef.current || isSwipingRef.current) return;
       const dx = e.nativeEvent.pageX - touchStartX.current;
       const dy = e.nativeEvent.pageY - touchStartY.current;
 
@@ -414,8 +413,6 @@ export default function Home() {
         isHorizontalGesture.current = Math.abs(dx) > Math.abs(dy) * 1.1;
         hasDetermined.current = true;
       }
-
-      isSwipingRef.current = true;
 
       if (isHorizontalGesture.current) {
         carouselAnim.setValue(dx);
@@ -444,10 +441,10 @@ export default function Home() {
       }
     },
     onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (modeRef.current !== 'week' || !hasDetermined.current || isAnimatingRef.current) return;
+      if (modeRef.current !== 'week' || !hasDetermined.current || isAnimatingRef.current || isSwipingRef.current) return;
       if (isHorizontalGesture.current) {
         const dx = e.nativeEvent.pageX - touchStartX.current;
-        const threshold = screenWidth * 0.1;
+        const threshold = screenWidth * 0.22;
 
         if (Math.abs(dx) > threshold) {
           const direction = dx < 0 ? -1 : 1;
@@ -461,9 +458,6 @@ export default function Home() {
             useNativeDriver: true,
           }).start(() => {
             isAnimatingRef.current = false;
-            setTimeout(() => {
-              isSwipingRef.current = false;
-            }, 180);
           });
         }
       } else {
