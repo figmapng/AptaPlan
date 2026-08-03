@@ -136,45 +136,60 @@ const CarouselCard = React.memo(function CarouselCard({
           style={{
             height: progress.interpolate({
               inputRange: [0, 1],
-              outputRange: [32, 44],
+              outputRange: [29, 44],
             }),
             paddingHorizontal: progress.interpolate({
               inputRange: [0, 1],
-              outputRange: [6, 14],
+              outputRange: [10, 14],
             }),
             flexDirection: 'row',
             alignItems: 'center',
           }}
         >
+          {/* Weekday Name */}
+          <Animated.Text
+            style={{
+              fontSize: progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [12, 17],
+              }),
+              fontWeight: '600',
+              color: isTodayCard ? '#FFFFFF' : isWeekendCard ? colors.sundayText : '#333C4E',
+            }}
+          >
+            {(weekdays[cardDate.getDay()] ?? '').toUpperCase()}
+          </Animated.Text>
+
           {/* Outer badge */}
           <Animated.View
             style={{
+              marginLeft: progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [6, 8],
+              }),
               minWidth: progress.interpolate({
                 inputRange: [0, 1],
-                outputRange: [22, 26],
+                outputRange: [20, 24],
               }),
               minHeight: progress.interpolate({
                 inputRange: [0, 1],
-                outputRange: [20, 24],
+                outputRange: [17, 21],
               }),
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: isTodayCard
-                ? '#008ADB'
+                ? '#FFFFFF'
                 : isWeekendCard
-                ? '#FAB9B3'
-                : '#C4CAD7',
+                ? colors.weekendNumBg
+                : colors.dateNumBg,
               borderRadius: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [6, 7],
-              }),
-              paddingTop: progress.interpolate({
                 inputRange: [0, 1],
                 outputRange: [5, 6],
               }),
-              paddingRight: 1,
-              paddingBottom: 1,
-              paddingLeft: 1,
+              paddingTop: 0,
+              paddingRight: 4,
+              paddingBottom: 0,
+              paddingLeft: 4,
             }}
           >
             {/* Inner frame */}
@@ -183,15 +198,17 @@ const CarouselCard = React.memo(function CarouselCard({
                 alignSelf: 'stretch',
                 borderRadius: progress.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [5, 6],
+                  outputRange: [4, 5],
                 }),
-                paddingHorizontal: progress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [3, 4],
-                }),
+                paddingHorizontal: 0,
+                paddingVertical: 0,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: isTodayCard
+                  ? '#FFFFFF'
+                  : isWeekendCard
+                  ? colors.weekendNumBg
+                  : colors.dateNumBg,
               }}
             >
               <Animated.Text
@@ -202,14 +219,14 @@ const CarouselCard = React.memo(function CarouselCard({
                   }),
                   lineHeight: progress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [14, 18],
+                    outputRange: [13, 17],
                   }),
                   fontWeight: isTodayCard ? '700' : '600',
                   color: isTodayCard
                     ? '#049BD6'
                     : isWeekendCard
-                    ? colors.sundayText
-                    : '#333C4E',
+                    ? colors.weekendNumText
+                    : colors.dateNumText,
                   fontVariant: ['tabular-nums'],
                 }}
               >
@@ -217,24 +234,6 @@ const CarouselCard = React.memo(function CarouselCard({
               </Animated.Text>
             </Animated.View>
           </Animated.View>
-
-          {/* Weekday Name */}
-          <Animated.Text
-            style={{
-              marginLeft: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [6, 10],
-              }),
-              fontSize: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [12, 17],
-              }),
-              fontWeight: '600',
-              color: isTodayCard ? '#FFFFFF' : isWeekendCard ? colors.sundayText : '#333C4E',
-            }}
-          >
-            {weekdays[cardDate.getDay()]}
-          </Animated.Text>
 
           <Animated.View
             style={{
@@ -244,28 +243,6 @@ const CarouselCard = React.memo(function CarouselCard({
               opacity: progress,
             }}
           >
-            <View
-              style={{
-                width: 14,
-                height: 14,
-                marginRight: 6,
-                borderRadius: 4,
-                borderWidth: 1.25,
-                borderColor: isTodayCard ? '#FFFFFF' : isWeekendCard ? '#7B4545' : '#333C4E',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M20 6L9 17l-5-5"
-                  stroke={isTodayCard ? '#FFFFFF' : isWeekendCard ? '#7B4545' : '#333C4E'}
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-            </View>
             <Animated.Text
               style={{
                 fontSize: 12,

@@ -124,14 +124,13 @@ export const DayCard = memo(function DayCardComponent({
   const cardBorderColor = today ? '#00A3FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
   const cardBorderWidth = 0;
 
-  const numOuterBg = today ? '#008ADB' : isWeekend ? '#FAB9B3' : '#C4CAD7';
-  const numInnerBg = '#FFFFFF';
-  const numTextColor = today ? '#049BD6' : isWeekend ? colors.sundayText : '#333C4E';
+  const numOuterBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
+  const numInnerBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
+  const numTextColor = today ? '#049BD6' : isWeekend ? colors.weekendNumText : colors.dateNumText;
 
   const dayNameColor = today ? '#FFFFFF' : isWeekend ? colors.sundayText : '#333C4E';
   const progressCountColor = today ? '#FFFFFF' : isWeekend ? '#7B4545' : '#333C4E';
   const progressTotalColor = today ? 'rgba(255, 255, 255, 0.8)' : isWeekend ? 'rgba(123, 69, 69, 0.7)' : '#707684';
-  const progressIconBorder = today ? '#FFFFFF' : isWeekend ? '#7B4545' : '#333C4E';
 
   const dayName = weekdays[date.getDay()] ?? '';
   const cardHeader = (
@@ -139,36 +138,49 @@ export const DayCard = memo(function DayCardComponent({
       onPress={open}
       activeScale={0.98}
       style={{
-        height: 32,
-        paddingVertical: 6,
+        height: 29,
+        paddingVertical: 0,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        paddingHorizontal: 6,
+        gap: 6,
+        paddingHorizontal: 10,
         backgroundColor: headerBg,
       }}
     >
+      <Text
+        numberOfLines={1}
+        style={{
+          fontSize: 12,
+          fontWeight: '600',
+          letterSpacing: 0.2,
+          color: dayNameColor,
+        }}
+      >
+        {dayName.toUpperCase()}
+      </Text>
+
       {/* Outer badge */}
       <View
         style={{
-          minWidth: 22,
-          minHeight: 20,
+          minWidth: 20,
+          minHeight: 17,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: numOuterBg,
-          borderRadius: 6,
-          paddingTop: 5,
-          paddingRight: 1,
-          paddingBottom: 1,
-          paddingLeft: 1,
+          borderRadius: 5,
+          paddingTop: 0,
+          paddingRight: 4,
+          paddingBottom: 0,
+          paddingLeft: 4,
         }}
       >
         {/* Inner frame */}
         <View
           style={{
             alignSelf: 'stretch',
-            borderRadius: 5,
-            paddingHorizontal: 3,
+            borderRadius: 4,
+            paddingHorizontal: 0,
+            paddingVertical: 0,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: numInnerBg,
@@ -177,7 +189,7 @@ export const DayCard = memo(function DayCardComponent({
           <Text
             style={{
               fontSize: 12,
-              lineHeight: 14,
+              lineHeight: 13,
               fontWeight: today ? '700' : '600',
               color: numTextColor,
               fontVariant: ['tabular-nums'],
@@ -188,24 +200,7 @@ export const DayCard = memo(function DayCardComponent({
         </View>
       </View>
 
-      <Text
-        numberOfLines={1}
-        style={{
-          fontSize: 12,
-          fontWeight: '600',
-          letterSpacing: 0.2,
-          color: dayNameColor,
-          flex: 1,
-        }}
-      >
-        {dayName}
-      </Text>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-        <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-          <Rect x="2.5" y="2.5" width="19" height="19" rx="4" stroke={progressIconBorder} strokeWidth="2.5" />
-          <Path d="M7 12l3.5 3.5L17 8" stroke={progressIconBorder} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </Svg>
+      <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center' }}>
         <Text
           style={{
             fontSize: 11,
@@ -223,9 +218,9 @@ export const DayCard = memo(function DayCardComponent({
   const wideBodyHeight = progress
     ? progress.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, Math.max(80, expandedSundayHeight - 34)],
+        outputRange: [0, Math.max(80, expandedSundayHeight - 31)],
       })
-    : Math.max(80, expandedSundayHeight - 34);
+    : Math.max(80, expandedSundayHeight - 31);
 
   const cardBodyContent = (
     <Animated.View
@@ -237,8 +232,9 @@ export const DayCard = memo(function DayCardComponent({
           borderCurve: 'continuous',
           marginHorizontal: 2,
           marginBottom: 2,
+          flex: wide ? 1 : undefined,
         },
-        wide ? { height: wideBodyHeight } : { height: bodyHeight },
+        wide ? undefined : { height: bodyHeight },
       ]}
     >
       <Pressable

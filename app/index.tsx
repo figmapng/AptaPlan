@@ -411,8 +411,8 @@ export default function Home() {
   const headerSpace = insets.top + 68;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 60;
   const availableHeight = screenHeight - headerSpace - bottomBarSpace;
-  const collapsedBodyHeight = Math.max(120, Math.floor((availableHeight - 16 - 3 * 34) / 3));
-  const expandedBodyHeight = Math.max(70, Math.floor((availableHeight - 24 - 156 - 3 * 34) / 3));
+  const collapsedBodyHeight = Math.max(120, Math.floor((availableHeight - 16 - 3 * 31) / 3));
+  const expandedBodyHeight = Math.max(70, Math.floor((availableHeight - 24 - 156 - 3 * 31) / 3));
   const expandedSundayHeight = 156;
   const cardGridBottomPadding = bottomBarSpace;
   const title = derivedWeekData.headerTitle;
@@ -735,7 +735,7 @@ function CalendarIcon() {
   );
 }
 
-const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 156, expandedBodyHeight = 98, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef }: {
+const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 138, expandedBodyHeight = 88, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef }: {
   days: DayDataItem[]; progress: Animated.Value;
   onInteraction?: () => void; collapsedBodyHeight?: number; expandedBodyHeight?: number;
   expandedSundayHeight?: number; onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
@@ -743,7 +743,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
 }) {
   return (
     <View style={{ gap: 8 }}>
-      <View style={{ flexDirection: 'row', gap: 10, position: 'relative' }}>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1, gap: 8 }}>
           {days.slice(0, 3).map((day) => (
             <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
@@ -754,7 +754,6 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
             <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
           ))}
         </View>
-        <BookSpine progress={progress} collapsedHeight={3 * (collapsedBodyHeight + 34) + 16} expandedHeight={3 * (expandedBodyHeight + 34) + 16} />
       </View>
       {days[6] && (
         <DayCard key={days[6].dateKey} date={days[6].date} tasks={days[6].tasks} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
@@ -762,46 +761,6 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
     </View>
   );
 });
-
-function BookSpine({ progress, collapsedHeight = 540, expandedHeight = 382 }: { progress: Animated.Value; collapsedHeight?: number; expandedHeight?: number }) {
-  const h = progress ? progress.interpolate({ inputRange: [0, 1], outputRange: [collapsedHeight, expandedHeight] }) : collapsedHeight;
-  return (
-    <Animated.View pointerEvents="none" style={{ position: 'absolute', left: '50%', top: 0, width: 14, transform: [{ translateX: -7 }], overflow: 'hidden', height: h, zIndex: 5 }}>
-      <Svg width={14} height="100%">
-        <Defs>
-          {/* Realistic 3D Book Crease Horizontal Shadow Gradient */}
-          <LinearGradient id="bookSpineGrad" x1="0" y1="0" x2="100%" y2="0">
-            <Stop offset="0%" stopColor="#8E95A5" stopOpacity="0.06" />
-            <Stop offset="30%" stopColor="#8E95A5" stopOpacity="0.02" />
-            <Stop offset="45%" stopColor="#646C7F" stopOpacity="0.08" />
-            <Stop offset="50%" stopColor="#474E5D" stopOpacity="0.14" />
-            <Stop offset="55%" stopColor="#646C7F" stopOpacity="0.08" />
-            <Stop offset="70%" stopColor="#8E95A5" stopOpacity="0.02" />
-            <Stop offset="100%" stopColor="#8E95A5" stopOpacity="0.06" />
-          </LinearGradient>
-
-          {/* Smooth Vertical Fade for Top & Bottom Ends */}
-          <LinearGradient id="bookSpineFade" x1="0" y1="0" x2="0" y2="100%">
-            <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0" />
-            <Stop offset="4%" stopColor="#FFFFFF" stopOpacity="1" />
-            <Stop offset="96%" stopColor="#FFFFFF" stopOpacity="1" />
-            <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-          </LinearGradient>
-
-          <Mask id="bookSpineMask" x="0" y="0" width="100%" height="100%">
-            <Rect width="100%" height="100%" fill="url(#bookSpineFade)" />
-          </Mask>
-        </Defs>
-
-        {/* 3D Soft Shadow Base */}
-        <Rect width="14" height="100%" fill="url(#bookSpineGrad)" mask="url(#bookSpineMask)" />
-
-        {/* Center Precise 1px Deep Crease Line */}
-        <Rect x="6.5" y="0" width="1" height="100%" fill="#788194" fillOpacity="0.12" mask="url(#bookSpineMask)" />
-      </Svg>
-    </Animated.View>
-  );
-}
 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
   return (
