@@ -46,9 +46,29 @@ export const DayCard = memo(function DayCardComponent({
   const isTransitioning = activeDate === key;
 
   const measuredFrameRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
 
-  const open = () => {
+  const handlePressIn = (e: any) => {
+    if (e?.nativeEvent) {
+      touchStartPos.current = {
+        x: e.nativeEvent.pageX,
+        y: e.nativeEvent.pageY,
+      };
+    }
+  };
+
+  const open = (e?: any) => {
     if (isSwipingRef?.current) return;
+
+    // Prevent accidental click during drag/swipe gesture (if finger moved > 8px)
+    if (e?.nativeEvent && touchStartPos.current) {
+      const dx = Math.abs(e.nativeEvent.pageX - touchStartPos.current.x);
+      const dy = Math.abs(e.nativeEvent.pageY - touchStartPos.current.y);
+      if (dx > 8 || dy > 8) {
+        return;
+      }
+    }
+
     onInteraction?.();
 
     const maxGridH = wide ? expandedSundayHeight + 34 : collapsedBodyHeight + 34;
@@ -135,6 +155,7 @@ export const DayCard = memo(function DayCardComponent({
   const dayName = weekdays[date.getDay()] ?? '';
   const cardHeader = (
     <AnimatedPressable
+      onPressIn={handlePressIn}
       onPress={open}
       activeScale={0.98}
       style={{
@@ -238,6 +259,7 @@ export const DayCard = memo(function DayCardComponent({
       ]}
     >
       <Pressable
+        onPressIn={handlePressIn}
         onPress={open}
         style={{
           flex: 1,
