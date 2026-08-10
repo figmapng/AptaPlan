@@ -416,15 +416,18 @@ export function CustomRepeatModal({
               <View style={[styles.groupedCard, { marginTop: 14 }]}>
                 <View style={styles.formRow}>
                   <Text style={styles.rowLabel}>Апта күндері</Text>
-                  <Switch
-                    value={yearlyEnableWeekdays}
-                    onValueChange={(v) => {
-                      triggerHaptic();
-                      setYearlyEnableWeekdays(v);
-                    }}
-                    trackColor={{ false: '#E5E5EA', true: '#01B7FF' }}
-                    ios_backgroundColor="#E5E5EA"
-                  />
+                  <View style={styles.switchWrapper}>
+                    <Switch
+                      value={yearlyEnableWeekdays}
+                      onValueChange={(v) => {
+                        triggerHaptic();
+                        setYearlyEnableWeekdays(v);
+                      }}
+                      trackColor={{ false: '#E5E5EA', true: '#01B7FF' }}
+                      ios_backgroundColor="#E5E5EA"
+                      style={{ transform: [{ scaleX: 0.88 }, { scaleY: 0.88 }] }}
+                    />
+                  </View>
                 </View>
 
                 {yearlyEnableWeekdays && (
@@ -642,6 +645,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+  },
+  switchWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingRight: 4,
   },
   rowLabel: {
     fontSize: 16,
