@@ -11,14 +11,14 @@ interface RepeatChipProps {
 }
 
 export const repeatLabels: Record<TaskRepeat, string> = {
-  none: 'Қайталау',
+  none: 'Қайталанбайды',
   daily: 'Күн сайын',
   weekdays: 'Жұмыс күндері',
   weekends: 'Демалыс күндері',
   weekly: 'Апта сайын',
   monthly: 'Ай сайын',
   yearly: 'Жыл сайын',
-  custom: 'Жеке',
+  custom: 'Арнайы',
 };
 
 export function RepeatChip({ repeat, onPress, hapticsEnabled = true }: RepeatChipProps) {
