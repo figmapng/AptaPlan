@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingHorizontal: 16,
     paddingVertical: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
   },
   sendBtn: {
