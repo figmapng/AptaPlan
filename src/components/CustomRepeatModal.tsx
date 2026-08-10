@@ -553,12 +553,19 @@ export function CustomRepeatModal({
           <Pressable style={styles.popoverOverlay} onPress={() => setShowUnitMenu(false)}>
             <View style={styles.popoverMenu}>
               <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
-                {(['hourly', 'daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u) => {
+                {(['hourly', 'daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u, idx, arr) => {
                   const isSelected = unit === u;
+                  const isFirst = idx === 0;
+                  const isLast = idx === arr.length - 1;
                   return (
                     <Pressable
                       key={u}
-                      style={[styles.menuItem, isSelected && styles.menuItemActive]}
+                      style={[
+                        styles.menuItem,
+                        isSelected && styles.menuItemActive,
+                        isFirst && styles.menuItemFirst,
+                        isLast && styles.menuItemLast,
+                      ]}
                       onPress={() => {
                         triggerHaptic();
                         setUnit(u);
@@ -887,7 +894,7 @@ const styles = StyleSheet.create({
     width: 190,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    paddingVertical: 6,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
@@ -900,8 +907,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    paddingVertical: 11,
     paddingHorizontal: 14,
+  },
+  menuItemFirst: {
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+  },
+  menuItemLast: {
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
   },
   menuItemActive: {
     backgroundColor: '#F2F2F7',
