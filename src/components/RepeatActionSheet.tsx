@@ -3,7 +3,7 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
-import { repeatLabels } from './RepeatChip';
+import { getShortRepeatLabel, repeatLabels } from './RepeatChip';
 import { AnimatedPressable } from './AnimatedPressable';
 import { CustomRepeatModal } from './CustomRepeatModal';
 
@@ -105,9 +105,10 @@ export function RepeatActionSheet({
           <View style={styles.optionsList}>
             {repeatOptions.map((opt) => {
               const isSelected = current === opt;
+              const shortCustomLabel = getShortRepeatLabel('custom', selectedRepeatInterval);
               const labelText =
-                opt === 'custom' && isSelected && selectedRepeatInterval > 1
-                  ? `Арнайы (Әр ${selectedRepeatInterval} күнде)`
+                opt === 'custom' && isSelected && shortCustomLabel
+                  ? `Арнайы (${shortCustomLabel})`
                   : repeatLabels[opt];
 
               return (

@@ -148,8 +148,7 @@ export function CustomRepeatModal({
 
   const handleConfirm = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    const targetRepeat: TaskRepeat = unit === 'daily' ? 'custom' : unit;
-    onConfirm(targetRepeat, interval);
+    onConfirm('custom', interval);
     handleClose();
   };
 
