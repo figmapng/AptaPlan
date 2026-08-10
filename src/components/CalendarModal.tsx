@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { fromDateKey, getNextWeekKey, getTodayKey, getTomorrowKey, kzMonthsFull, kzWeekdaysShort, toDateKey } from '@/utils/dateHelpers';
 import { AnimatedPressable } from './AnimatedPressable';
+import { MonthPickerModal } from './MonthPickerModal';
 
 interface CalendarModalProps {
   visible: boolean;
@@ -35,6 +36,7 @@ export function CalendarModal({
   const [currentMonthDate, setCurrentMonthDate] = useState<Date>(() => {
     return selectedDate ? fromDateKey(selectedDate) : new Date();
   });
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (process.env.EXPO_OS === 'ios') {
@@ -50,7 +52,7 @@ export function CalendarModal({
     ]).start(() => onCloseRef.current());
   };
 
-  // Sheet PanResponder for vertical swipe down to dismiss sheet
+  // Sheet PanResponder for vertical swipe down to dismiss sheet (Must be declared before any conditional return)
   const sheetPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
@@ -79,6 +81,7 @@ export function CalendarModal({
     } else {
       translateY.setValue(420);
       backdropOpacity.setValue(0);
+      setShowMonthPicker(false);
     }
   }, [visible, selectedDate, translateY, backdropOpacity]);
 
@@ -132,157 +135,182 @@ export function CalendarModal({
   const capitalizedMonthTitle = `${monthName[0].toUpperCase()}${monthName.slice(1)} ${currYear}`;
 
   return (
-    <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
-      <Pressable style={styles.backdrop} onPress={handleClose} />
-      <Animated.View
-        style={[styles.sheet, { transform: [{ translateY }] }]}
-        {...sheetPanResponder.panHandlers}
-      >
-        <View style={styles.dragPill} />
-
-        {/* Top Sheet Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Күнді таңдау</Text>
-          <AnimatedPressable
-            activeScale={0.88}
-            style={styles.closeBtn}
-            onPress={handleClose}
-            accessibilityRole="button"
-            accessibilityLabel="Жабу"
-          >
-            <CloseXIcon color="#6B7280" />
-          </AnimatedPressable>
-        </View>
-
-        {/* Quick Date Pills */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.quickRow}
+    <>
+      <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
+        <Pressable style={styles.backdrop} onPress={handleClose} />
+        <Animated.View
+          style={[styles.sheet, { transform: [{ translateY }] }]}
+          {...sheetPanResponder.panHandlers}
         >
-          {quickOptions.map((opt) => {
-            const isSelected = selectedDate === opt.key;
-            const IconComp = opt.icon;
-            const iconColor = isSelected ? '#FFFFFF' : '#01B7FF';
+          <View style={styles.dragPill} />
 
-            return (
-              <AnimatedPressable
-                key={opt.label}
-                activeScale={0.92}
-                style={[
-                  styles.quickBtn,
-                  isSelected && styles.quickBtnActive,
-                ]}
-                onPress={() => handleQuickSelect(opt.key)}
-              >
-                <IconComp color={iconColor} />
-                <Text style={[styles.quickText, isSelected && styles.quickTextActive]}>
-                  {opt.label}
-                </Text>
-              </AnimatedPressable>
-            );
-          })}
-        </ScrollView>
-
-        {/* Calendar Card Container */}
-        <View style={styles.calendarCard}>
-          {/* 1. FIXED STATIC MONTH HEADER (Does NOT slide when swiping) */}
-          <View style={styles.monthHeader}>
-            <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handlePrevMonth}>
-              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                <Path d="M15 18l-6-6 6-6" stroke="#01B7FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-            </AnimatedPressable>
-
-            <Text style={styles.monthTitle}>{capitalizedMonthTitle}</Text>
-
-            <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handleNextMonth}>
-              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                <Path d="M9 18l6-6-6-6" stroke="#01B7FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+          {/* Top Sheet Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Күнді таңдау</Text>
+            <AnimatedPressable
+              activeScale={0.88}
+              style={styles.closeBtn}
+              onPress={handleClose}
+              accessibilityRole="button"
+              accessibilityLabel="Жабу"
+            >
+              <CloseXIcon color="#6B7280" />
             </AnimatedPressable>
           </View>
 
-          {/* 2. FIXED STATIC WEEKDAY TITLES ROW (Does NOT slide when swiping) */}
-          <View style={styles.weekHeader}>
-            {kzWeekdaysShort.map((w, idx) => (
-              <Text key={`${w}-${idx}`} style={styles.weekTitle}>
-                {w}
-              </Text>
-            ))}
-          </View>
-
-          {/* 3. HORIZONTAL DAYS GRID CAROUSEL (ONLY the date grid cells slide!) */}
+          {/* Quick Date Pills */}
           <ScrollView
-            ref={scrollViewRef}
             horizontal
-            pagingEnabled
             showsHorizontalScrollIndicator={false}
-            decelerationRate="fast"
-            snapToInterval={ITEM_WIDTH}
-            snapToAlignment="center"
-            contentOffset={{ x: ITEM_WIDTH, y: 0 }}
-            scrollEventThrottle={16}
-            onMomentumScrollEnd={(e) => {
-              const page = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
-              if (page === 0) {
-                triggerHaptic();
-                setCurrentMonthDate((prev) => addMonths(prev, -1));
-              } else if (page === 2) {
-                triggerHaptic();
-                setCurrentMonthDate((prev) => addMonths(prev, 1));
-              }
-            }}
-            style={{ width: ITEM_WIDTH, height: 240 }}
+            contentContainerStyle={styles.quickRow}
           >
-            <View style={{ width: ITEM_WIDTH, height: 240 }}>
-              <DaysGridMatrix
-                monthDate={prevMonthDate}
-                selectedDate={selectedDate}
-                todayKey={todayKey}
-                onSelectDay={handleSelectDay}
-              />
-            </View>
+            {quickOptions.map((opt) => {
+              const isSelected = selectedDate === opt.key;
+              const IconComp = opt.icon;
+              const iconColor = isSelected ? '#FFFFFF' : '#01B7FF';
 
-            <View style={{ width: ITEM_WIDTH, height: 240 }}>
-              <DaysGridMatrix
-                monthDate={currentMonthDate}
-                selectedDate={selectedDate}
-                todayKey={todayKey}
-                onSelectDay={handleSelectDay}
-              />
-            </View>
-
-            <View style={{ width: ITEM_WIDTH, height: 240 }}>
-              <DaysGridMatrix
-                monthDate={nextMonthDate}
-                selectedDate={selectedDate}
-                todayKey={todayKey}
-                onSelectDay={handleSelectDay}
-              />
-            </View>
+              return (
+                <AnimatedPressable
+                  key={opt.label}
+                  activeScale={0.92}
+                  style={[
+                    styles.quickBtn,
+                    isSelected && styles.quickBtnActive,
+                  ]}
+                  onPress={() => handleQuickSelect(opt.key)}
+                >
+                  <IconComp color={iconColor} />
+                  <Text style={[styles.quickText, isSelected && styles.quickTextActive]}>
+                    {opt.label}
+                  </Text>
+                </AnimatedPressable>
+              );
+            })}
           </ScrollView>
-        </View>
 
-        {/* Footer Remove Button */}
-        {onRemoveDate && (
-          <AnimatedPressable
-            activeScale={0.94}
-            style={[styles.removeBtn, !selectedDate && styles.removeBtnDisabled]}
-            onPress={() => {
-              triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-              onRemoveDate();
-              handleClose();
-            }}
-          >
-            <TrashIcon color={selectedDate ? '#FF4B3E' : '#A0A5B1'} />
-            <Text style={[styles.removeText, !selectedDate && styles.removeTextDisabled]}>
-              Күнді өшіру
-            </Text>
-          </AnimatedPressable>
-        )}
+          {/* Calendar Card Container */}
+          <View style={styles.calendarCard}>
+            {/* 1. FIXED STATIC MONTH HEADER (Clickable to open Month & Year Picker) */}
+            <View style={styles.monthHeader}>
+              <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handlePrevMonth}>
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                  <Path d="M15 18l-6-6 6-6" stroke="#01B7FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              </AnimatedPressable>
+
+              <AnimatedPressable
+                activeScale={0.93}
+                style={styles.monthTitleBtn}
+                onPress={() => {
+                  triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+                  setShowMonthPicker(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Ай мен жылды таңдау"
+              >
+                <Text style={styles.monthTitle}>{capitalizedMonthTitle}</Text>
+                <ChevronDownIcon color="#01B7FF" />
+              </AnimatedPressable>
+
+              <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handleNextMonth}>
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                  <Path d="M9 18l6-6-6-6" stroke="#01B7FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              </AnimatedPressable>
+            </View>
+
+            {/* 2. FIXED STATIC WEEKDAY TITLES ROW */}
+            <View style={styles.weekHeader}>
+              {kzWeekdaysShort.map((w, idx) => (
+                <Text key={`${w}-${idx}`} style={styles.weekTitle}>
+                  {w}
+                </Text>
+              ))}
+            </View>
+
+            {/* 3. HORIZONTAL DAYS GRID CAROUSEL */}
+            <ScrollView
+              ref={scrollViewRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              decelerationRate="fast"
+              snapToInterval={ITEM_WIDTH}
+              snapToAlignment="center"
+              contentOffset={{ x: ITEM_WIDTH, y: 0 }}
+              scrollEventThrottle={16}
+              onMomentumScrollEnd={(e) => {
+                const page = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
+                if (page === 0) {
+                  triggerHaptic();
+                  setCurrentMonthDate((prev) => addMonths(prev, -1));
+                } else if (page === 2) {
+                  triggerHaptic();
+                  setCurrentMonthDate((prev) => addMonths(prev, 1));
+                }
+              }}
+              style={{ width: ITEM_WIDTH, height: 240 }}
+            >
+              <View style={{ width: ITEM_WIDTH, height: 240 }}>
+                <DaysGridMatrix
+                  monthDate={prevMonthDate}
+                  selectedDate={selectedDate}
+                  todayKey={todayKey}
+                  onSelectDay={handleSelectDay}
+                />
+              </View>
+
+              <View style={{ width: ITEM_WIDTH, height: 240 }}>
+                <DaysGridMatrix
+                  monthDate={currentMonthDate}
+                  selectedDate={selectedDate}
+                  todayKey={todayKey}
+                  onSelectDay={handleSelectDay}
+                />
+              </View>
+
+              <View style={{ width: ITEM_WIDTH, height: 240 }}>
+                <DaysGridMatrix
+                  monthDate={nextMonthDate}
+                  selectedDate={selectedDate}
+                  todayKey={todayKey}
+                  onSelectDay={handleSelectDay}
+                />
+              </View>
+            </ScrollView>
+          </View>
+
+          {/* Footer Remove Button */}
+          {onRemoveDate && (
+            <AnimatedPressable
+              activeScale={0.94}
+              style={[styles.removeBtn, !selectedDate && styles.removeBtnDisabled]}
+              onPress={() => {
+                triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+                onRemoveDate();
+                handleClose();
+              }}
+            >
+              <TrashIcon color={selectedDate ? '#FF4B3E' : '#A0A5B1'} />
+              <Text style={[styles.removeText, !selectedDate && styles.removeTextDisabled]}>
+                Күнді өшіру
+              </Text>
+            </AnimatedPressable>
+          )}
+        </Animated.View>
       </Animated.View>
-    </Animated.View>
+
+      {/* Month & Year Picker Modal */}
+      <MonthPickerModal
+        visible={showMonthPicker}
+        currentDate={currentMonthDate}
+        onSelectMonth={(targetDate) => {
+          setCurrentMonthDate(targetDate);
+          setShowMonthPicker(false);
+        }}
+        onClose={() => setShowMonthPicker(false)}
+      />
+    </>
   );
 }
 
@@ -442,6 +470,14 @@ function CloseXIcon({ color }: { color: string }) {
   );
 }
 
+function ChevronDownIcon({ color = '#01B7FF' }: { color?: string }) {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+      <Path d="M6 9l6 6 6-6" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -549,10 +585,19 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     marginBottom: 8,
   },
+  monthTitleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#01B7FF12',
+  },
   monthTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: '#01B7FF',
   },
   arrowBtn: {
     width: 32,
