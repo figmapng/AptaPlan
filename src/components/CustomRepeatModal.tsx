@@ -49,6 +49,21 @@ const kzMonthsShort = [
   'желт.',
 ];
 
+const kzMonthsFull = [
+  'қаңтар',
+  'ақпан',
+  'наурыз',
+  'сәуір',
+  'мамыр',
+  'маусым',
+  'шілде',
+  'тамыз',
+  'қыркүйек',
+  'қазан',
+  'қараша',
+  'желтоқсан',
+];
+
 const weekPositions = ['бірінші', 'екінші', 'үшінші', 'төртінші', 'соңғы'];
 
 export function CustomRepeatModal({
@@ -156,32 +171,48 @@ export function CustomRepeatModal({
         ? 'Тапсырма сағат сайын қайталанып отырады.'
         : `Тапсырма әр ${interval} сағат сайын қайталанып отырады.`;
     }
+
     if (unit === 'daily') {
       return interval === 1
         ? 'Тапсырма күн сайын қайталанып отырады.'
         : `Тапсырма әр ${interval} күн сайын қайталанып отырады.`;
     }
+
     if (unit === 'weekly') {
+      const selectedNames = selectedWeekdays
+        .sort((a, b) => a - b)
+        .map((i) => kzWeekdaysFull[i].toLowerCase())
+        .join(', ');
       return interval === 1
-        ? 'Тапсырма апта сайын қайталанып отырады.'
-        : `Тапсырма әр ${interval} апта сайын қайталанып отырады.`;
+        ? `Тапсырма апта сайын, келесі күндері қайталанады: ${selectedNames}.`
+        : `Тапсырма әр ${interval} апта сайын, келесі күндері қайталанады: ${selectedNames}.`;
     }
+
     if (unit === 'monthly') {
+      if (monthlyMode === 'dates') {
+        return interval === 1
+          ? `Тапсырма ай сайын ${selectedMonthDate}-күні қайталанып отырады.`
+          : `Тапсырма әр ${interval} ай сайын ${selectedMonthDate}-күні қайталанып отырады.`;
+      }
+      const posText = weekPositions[selectedPosIdx];
+      const dayText = kzWeekdaysFull[selectedDayIdx].toLowerCase();
       return interval === 1
-        ? 'Тапсырма ай сайын қайталанып отырады.'
-        : `Тапсырма әр ${interval} ай сайын қайталанып отырады.`;
+        ? `Тапсырма ай сайын (${posText} ${dayText}) қайталанып отырады.`
+        : `Тапсырма әр ${interval} ай сайын (${posText} ${dayText}) қайталанып отырады.`;
     }
-    const monthNameFull = kzMonthsShort[selectedYearlyMonth];
+
+    // yearly
+    const monthNameFull = kzMonthsFull[selectedYearlyMonth];
     if (yearlyEnableWeekdays) {
       const posText = weekPositions[selectedPosIdx];
       const dayText = kzWeekdaysFull[selectedDayIdx].toLowerCase();
       return interval === 1
-        ? `Тапсырма жыл сайын таңдалған уақытта (${posText} ${dayText}) келесі айда қайталанады: ${monthNameFull}.`
-        : `Тапсырма әр ${interval} жыл сайын таңдалған уақытта (${posText} ${dayText}) келесі айда қайталанады: ${monthNameFull}.`;
+        ? `Тапсырма жыл сайын (${posText} ${dayText}) таңдалған айда қайталанады: ${monthNameFull}.`
+        : `Тапсырма әр ${interval} жыл сайын (${posText} ${dayText}) таңдалған айда қайталанады: ${monthNameFull}.`;
     }
     return interval === 1
-      ? `Тапсырма жыл сайын келесі айда қайталанады: ${monthNameFull}.`
-      : `Тапсырма әр ${interval} жыл сайын келесі айда қайталанады: ${monthNameFull}.`;
+      ? `Тапсырма жыл сайын таңдалған айда қайталанады: ${monthNameFull}.`
+      : `Тапсырма әр ${interval} жыл сайын таңдалған айда қайталанады: ${monthNameFull}.`;
   };
 
   return (
@@ -391,7 +422,8 @@ export function CustomRepeatModal({
                       triggerHaptic();
                       setYearlyEnableWeekdays(v);
                     }}
-                    trackColor={{ false: '#E5E5EA', true: '#34C759' }}
+                    trackColor={{ false: '#E5E5EA', true: '#01B7FF' }}
+                    ios_backgroundColor="#E5E5EA"
                   />
                 </View>
 
