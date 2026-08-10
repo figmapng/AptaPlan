@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Modal, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
@@ -26,6 +26,24 @@ export function MonthPickerModal({
   const today = new Date();
   const currentMonthIdx = currentDate.getMonth();
   const isCurrentYear = selectedYear === currentDate.getFullYear();
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -40 || gestureState.vx < -0.3) {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setSelectedYear((y) => y + 1);
+        } else if (gestureState.dx > 40 || gestureState.vx > 0.3) {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setSelectedYear((y) => y - 1);
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     if (visible) {
@@ -69,7 +87,7 @@ export function MonthPickerModal({
           <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         </Animated.View>
 
-        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
+        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]} {...panResponder.panHandlers}>
           <View style={styles.dragPill} />
           
           {/* Header */}
