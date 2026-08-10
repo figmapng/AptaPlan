@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Modal, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Animated, Dimensions, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
@@ -13,6 +13,9 @@ interface MonthPickerModalProps {
   onClose: () => void;
 }
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const ITEM_WIDTH = SCREEN_WIDTH - 40; // 20px paddingHorizontal on sheet
+
 export function MonthPickerModal({
   visible,
   currentDate,
@@ -22,28 +25,14 @@ export function MonthPickerModal({
   const [selectedYear, setSelectedYear] = useState(() => currentDate.getFullYear());
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const today = new Date();
-  const currentMonthIdx = currentDate.getMonth();
-  const isCurrentYear = selectedYear === currentDate.getFullYear();
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx < -40 || gestureState.vx < -0.3) {
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          setSelectedYear((y) => y + 1);
-        } else if (gestureState.dx > 40 || gestureState.vx > 0.3) {
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          setSelectedYear((y) => y - 1);
-        }
-      },
-    })
-  ).current;
+  // Synchronously reset scroll position to index 1 BEFORE screen paint to prevent flickering (like CalendarModal)
+  useLayoutEffect(() => {
+    scrollViewRef.current?.scrollTo({ x: ITEM_WIDTH, animated: false });
+  }, [selectedYear]);
 
   useEffect(() => {
     if (visible) {
@@ -67,13 +56,6 @@ export function MonthPickerModal({
     ]).start(() => onClose());
   };
 
-  const handleMonthClick = (monthIdx: number) => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const targetDate = new Date(selectedYear, monthIdx, 1);
-    onSelectMonth(targetDate);
-    handleClose();
-  };
-
   const handleTodayClick = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onSelectMonth(new Date());
@@ -87,7 +69,7 @@ export function MonthPickerModal({
           <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         </Animated.View>
 
-        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]} {...panResponder.panHandlers}>
+        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
           <View style={styles.dragPill} />
           
           {/* Header */}
@@ -105,7 +87,7 @@ export function MonthPickerModal({
               style={styles.arrowBtn}
               onPress={() => {
                 void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelectedYear((y) => y - 1);
+                scrollViewRef.current?.scrollTo({ x: 0, animated: true });
               }}
             >
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -120,7 +102,7 @@ export function MonthPickerModal({
               style={styles.arrowBtn}
               onPress={() => {
                 void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelectedYear((y) => y + 1);
+                scrollViewRef.current?.scrollTo({ x: ITEM_WIDTH * 2, animated: true });
               }}
             >
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -129,43 +111,119 @@ export function MonthPickerModal({
             </AnimatedPressable>
           </View>
 
-          {/* Months 3x4 Grid */}
-          <View style={styles.grid}>
-            {months.map((monthName, idx) => {
-              const isSelected = isCurrentYear && idx === currentMonthIdx;
-              const isActualTodayMonth = today.getFullYear() === selectedYear && today.getMonth() === idx;
+          {/* Horizontal Months Grid Carousel for Years (Paging ScrollView like CalendarModal) */}
+          <ScrollView
+            ref={scrollViewRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            decelerationRate="fast"
+            snapToInterval={ITEM_WIDTH}
+            snapToAlignment="center"
+            contentOffset={{ x: ITEM_WIDTH, y: 0 }}
+            scrollEventThrottle={16}
+            onMomentumScrollEnd={(e) => {
+              const page = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
+              if (page === 0) {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedYear((prev) => prev - 1);
+              } else if (page === 2) {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedYear((prev) => prev + 1);
+              }
+            }}
+            style={{ width: ITEM_WIDTH, height: 260 }}
+          >
+            <View style={{ width: ITEM_WIDTH, height: 260 }}>
+              <MonthGridMatrix
+                year={selectedYear - 1}
+                currentDate={currentDate}
+                today={today}
+                onSelectMonth={(targetDate) => {
+                  onSelectMonth(targetDate);
+                  handleClose();
+                }}
+              />
+            </View>
 
-              return (
-                <AnimatedPressable
-                  key={monthName}
-                  activeScale={0.94}
-                  style={[
-                    styles.monthCard,
-                    isSelected && styles.monthCardSelected,
-                    isActualTodayMonth && !isSelected && styles.monthCardToday,
-                  ]}
-                  onPress={() => handleMonthClick(idx)}
-                >
-                  <Text
-                    style={[
-                      styles.monthText,
-                      isSelected && styles.monthTextSelected,
-                      isActualTodayMonth && !isSelected && styles.monthTextToday,
-                    ]}
-                  >
-                    {monthName[0].toUpperCase() + monthName.slice(1)}
-                  </Text>
+            <View style={{ width: ITEM_WIDTH, height: 260 }}>
+              <MonthGridMatrix
+                year={selectedYear}
+                currentDate={currentDate}
+                today={today}
+                onSelectMonth={(targetDate) => {
+                  onSelectMonth(targetDate);
+                  handleClose();
+                }}
+              />
+            </View>
 
-                  {isActualTodayMonth && (
-                    <View style={[styles.todayDot, isSelected && styles.todayDotSelected]} />
-                  )}
-                </AnimatedPressable>
-              );
-            })}
-          </View>
+            <View style={{ width: ITEM_WIDTH, height: 260 }}>
+              <MonthGridMatrix
+                year={selectedYear + 1}
+                currentDate={currentDate}
+                today={today}
+                onSelectMonth={(targetDate) => {
+                  onSelectMonth(targetDate);
+                  handleClose();
+                }}
+              />
+            </View>
+          </ScrollView>
         </Animated.View>
       </View>
     </Modal>
+  );
+}
+
+function MonthGridMatrix({
+  year,
+  currentDate,
+  today,
+  onSelectMonth,
+}: {
+  year: number;
+  currentDate: Date;
+  today: Date;
+  onSelectMonth: (date: Date) => void;
+}) {
+  const currentMonthIdx = currentDate.getMonth();
+  const isCurrentYear = year === currentDate.getFullYear();
+
+  return (
+    <View style={styles.grid}>
+      {months.map((monthName, idx) => {
+        const isSelected = isCurrentYear && idx === currentMonthIdx;
+        const isActualTodayMonth = today.getFullYear() === year && today.getMonth() === idx;
+
+        return (
+          <AnimatedPressable
+            key={monthName}
+            activeScale={0.94}
+            style={[
+              styles.monthCard,
+              isSelected && styles.monthCardSelected,
+              isActualTodayMonth && !isSelected && styles.monthCardToday,
+            ]}
+            onPress={() => onSelectMonth(new Date(year, idx, 1))}
+          >
+            <Text
+              style={[
+                styles.monthText,
+                isSelected && styles.monthTextSelected,
+                isActualTodayMonth && !isSelected && styles.monthTextToday,
+              ]}
+            >
+              {monthName[0].toUpperCase() + monthName.slice(1)}
+            </Text>
+
+            {isActualTodayMonth && (
+              <View style={[styles.todayDot, isSelected && styles.todayDotSelected]} />
+            )}
+          </AnimatedPressable>
+        );
+      })}
+    </View>
   );
 }
 
