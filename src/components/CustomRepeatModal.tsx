@@ -171,9 +171,17 @@ export function CustomRepeatModal({
         ? 'Тапсырма ай сайын қайталанып отырады.'
         : `Тапсырма әр ${interval} ай сайын қайталанып отырады.`;
     }
+    const monthNameFull = kzMonthsShort[selectedYearlyMonth];
+    if (yearlyEnableWeekdays) {
+      const posText = weekPositions[selectedPosIdx];
+      const dayText = kzWeekdaysFull[selectedDayIdx].toLowerCase();
+      return interval === 1
+        ? `Тапсырма жыл сайын таңдалған уақытта (${posText} ${dayText}) келесі айда қайталанады: ${monthNameFull}.`
+        : `Тапсырма әр ${interval} жыл сайын таңдалған уақытта (${posText} ${dayText}) келесі айда қайталанады: ${monthNameFull}.`;
+    }
     return interval === 1
-      ? 'Тапсырма жыл сайын қайталанып отырады.'
-      : `Тапсырма әр ${interval} жыл сайын қайталанып отырады.`;
+      ? `Тапсырма жыл сайын келесі айда қайталанады: ${monthNameFull}.`
+      : `Тапсырма әр ${interval} жыл сайын келесі айда қайталанады: ${monthNameFull}.`;
   };
 
   return (
@@ -349,7 +357,7 @@ export function CustomRepeatModal({
             </View>
           )}
 
-          {/* YEARLY: 12-Month Grid + Weekdays Switch */}
+          {/* YEARLY: 12-Month Grid + Weekdays Switch & Picker Wheel */}
           {unit === 'yearly' && (
             <>
               <View style={[styles.groupedCard, { marginTop: 16 }]}>
@@ -376,7 +384,7 @@ export function CustomRepeatModal({
 
               <View style={[styles.groupedCard, { marginTop: 14 }]}>
                 <View style={styles.formRow}>
-                  <Text style={styles.rowLabel}>Дни недели / Апта күндері</Text>
+                  <Text style={styles.rowLabel}>Апта күндері</Text>
                   <Switch
                     value={yearlyEnableWeekdays}
                     onValueChange={(v) => {
@@ -386,6 +394,43 @@ export function CustomRepeatModal({
                     trackColor={{ false: '#E5E5EA', true: '#34C759' }}
                   />
                 </View>
+
+                {yearlyEnableWeekdays && (
+                  <View style={styles.pickerWheelBox}>
+                    <ScrollView style={{ height: 110 }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                      {weekPositions.map((pos, pIdx) => (
+                        <Pressable
+                          key={pos}
+                          style={[styles.pickerWheelRow, selectedPosIdx === pIdx && styles.pickerWheelRowActive]}
+                          onPress={() => {
+                            triggerHaptic();
+                            setSelectedPosIdx(pIdx);
+                          }}
+                        >
+                          <Text style={[styles.pickerWheelText, selectedPosIdx === pIdx && styles.pickerWheelTextActive]}>
+                            {pos}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                    <ScrollView style={{ height: 110 }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+                      {kzWeekdaysFull.map((wName, wIdx) => (
+                        <Pressable
+                          key={wName}
+                          style={[styles.pickerWheelRow, selectedDayIdx === wIdx && styles.pickerWheelRowActive]}
+                          onPress={() => {
+                            triggerHaptic();
+                            setSelectedDayIdx(wIdx);
+                          }}
+                        >
+                          <Text style={[styles.pickerWheelText, selectedDayIdx === wIdx && styles.pickerWheelTextActive]}>
+                            {wName.toLowerCase()}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
             </>
           )}
