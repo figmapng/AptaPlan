@@ -9,7 +9,6 @@ import { colors } from '@/constants/colors';
 import { fromDateKey, months, toDateKey, weekdays } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from '@/components/task-row';
-import { BackToListIcon } from '@/components/back-to-list-icon';
 import { useCardTransition } from '@/components/card-transition-provider';
 import { TaskBottomSheet } from '@/components/TaskBottomSheet';
 import { SortableTaskList } from '@/components/SortableTaskList';
@@ -23,7 +22,7 @@ export default function DayScreen() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { date, add } = useLocalSearchParams<{ date: string; add?: string }>();
-  const { tasks, settings, loadRange, create, update, remove } = usePlanner();
+  const { tasks, settings, loadRange, refresh, create, update, remove } = usePlanner();
   const { closeCard, beginInteractiveClose, updateInteractiveClose, endInteractiveClose } = useCardTransition();
   const [isAdding, setIsAdding] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -83,8 +82,8 @@ export default function DayScreen() {
         );
       }
     });
-    await loadRange(date, date);
-  }, [date, loadRange]);
+    await refresh();
+  }, [refresh]);
 
   useEffect(() => {
     if (date) void loadRange(date, date);

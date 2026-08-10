@@ -1,20 +1,43 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import type { RepeatType, Task, TaskInput } from '@/types/task';
+import type { RepeatType, Task, TaskInput, TaskRepeat } from '@/types/task';
 import { addDays, fromDateKey, toDateKey } from '@/services/date-service';
 import { createId } from '@/utils/id';
 
 type Row = Omit<Task, 'isCompleted'> & { isCompleted: number };
-const map = (r: Row): Task => ({ ...r, isCompleted: !!r.isCompleted, completed: !!r.isCompleted, repeatInterval: r.repeatInterval ?? 1, sortOrder: r.sortOrder ?? 0, order: r.order ?? r.sortOrder ?? 0 });
+const map = (r: Row): Task => ({ ...r, isCompleted: !!r.isCompleted, completed: !!r.isCompleted, repeat: (r.repeatType as TaskRepeat) || 'none', repeatInterval: r.repeatInterval ?? 1, sortOrder: r.sortOrder ?? 0, order: r.order ?? r.sortOrder ?? 0 });
 const occursOn = (task: Task, date: string) => {
   if (task.date > date) return false;
-  if (task.repeatType === 'none') return task.date === date;
+  if (task.repeatType === 'none' || task.repeatType === 'custom') return task.date === date;
   const start = fromDateKey(task.date); const target = fromDateKey(date);
   const interval = task.repeatInterval ?? 1;
+  const dayOfWeek = target.getDay();
   if (task.repeatType === 'daily') return Math.round((target.getTime() - start.getTime()) / 86400000) % interval === 0;
-  if (task.repeatType === 'weekly') return Math.round((target.getTime() - start.getTime()) / 604800000) % interval === 0;
+  if (task.repeatType === 'weekdays') return dayOfWeek >= 1 && dayOfWeek <= 5;
+  if (task.repeatType === 'weekends') return dayOfWeek === 0 || dayOfWeek === 6;
+  if (task.repeatType === 'weekly') return start.getDay() === dayOfWeek && Math.round((target.getTime() - start.getTime()) / 604800000) % interval === 0;
+  if (task.repeatType === 'yearly') return start.getMonth() === target.getMonth() && start.getDate() === target.getDate();
   return start.getDate() === target.getDate() && ((target.getFullYear()-start.getFullYear())*12+target.getMonth()-start.getMonth()) % interval === 0;
 };
-export async function getTasksForRange(db: SQLiteDatabase, start: string, end: string) {
+
+export type TaskSortOptions = { sortMode?: 'time' | 'manual'; completedPlacement?: 'keep' | 'bottom' };
+const sortTasksForRange = (tasks: Task[], opts?: TaskSortOptions) => {
+  const sortMode = opts?.sortMode ?? 'manual';
+  const placement = opts?.completedPlacement ?? 'bottom';
+  return [...tasks].sort((a, b) => {
+    if (placement === 'bottom') {
+      const aDone = Number(a.isCompleted); const bDone = Number(b.isCompleted);
+      if (aDone !== bDone) return aDone - bDone;
+    }
+    if (sortMode === 'time') {
+      const aHas = !!a.time; const bHas = !!b.time;
+      if (aHas !== bHas) return aHas ? -1 : 1;
+      if (aHas && a.time !== b.time) return a.time!.localeCompare(b.time!);
+    }
+    return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+  });
+};
+
+export async function getTasksForRange(db: SQLiteDatabase, start: string, end: string, sortOptions?: TaskSortOptions) {
   const rows = (await db.getAllAsync<Row>(`SELECT * FROM tasks WHERE deletedAt IS NULL AND date <= ? AND (repeatType != 'none' OR date >= ?)`, end, start)).map(map);
   const overrides = await db.getAllAsync<{taskId:string;occurrenceDate:string;isCompleted:number;isDeleted:number}>(`SELECT taskId, occurrenceDate, isCompleted, COALESCE(isDeleted, 0) AS isDeleted FROM task_occurrences WHERE occurrenceDate BETWEEN ? AND ?`, start, end);
   const overrideMap = new Map(overrides.map(o => [`${o.taskId}:${o.occurrenceDate}`, !!o.isCompleted]));
@@ -28,7 +51,7 @@ export async function getTasksForRange(db: SQLiteDatabase, start: string, end: s
       }
     }
   }
-  return result.sort((a,b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || Number(a.isCompleted)-Number(b.isCompleted));
+  return sortTasksForRange(result, sortOptions);
 }
 export const getTasksForDate = (db: SQLiteDatabase, date: string) => getTasksForRange(db, date, date);
 export async function createTask(db: SQLiteDatabase, input: TaskInput) {
@@ -56,4 +79,3 @@ export async function toggleTaskCompletion(db: SQLiteDatabase, task: Task) {
   else await db.runAsync(`INSERT INTO task_occurrences(id,taskId,occurrenceDate,isCompleted,completedAt) VALUES(?,?,?,?,?) ON CONFLICT(taskId,occurrenceDate) DO UPDATE SET isCompleted=excluded.isCompleted,completedAt=excluded.completedAt`,createId(),task.id,task.occurrenceDate??task.date,Number(next),next?new Date().toISOString():null);
 }
 export async function getTask(db: SQLiteDatabase, id: string) { const r=await db.getFirstAsync<Row>('SELECT * FROM tasks WHERE id=? AND deletedAt IS NULL',id); return r?map(r):null; }
-export async function moveTask(db:SQLiteDatabase,id:string,direction:-1|1){ const t=await db.getFirstAsync<Row>('SELECT * FROM tasks WHERE id=?',id); if(!t)return; const other=await db.getFirstAsync<Row>(`SELECT * FROM tasks WHERE date=? AND deletedAt IS NULL AND sortOrder ${direction<0?'<':'>'} ? ORDER BY sortOrder ${direction<0?'DESC':'ASC'} LIMIT 1`,t.date,t.sortOrder ?? 0); if(!other)return; await db.withTransactionAsync(async()=>{await db.runAsync('UPDATE tasks SET sortOrder=? WHERE id=?',other.sortOrder ?? 0,t.id);await db.runAsync('UPDATE tasks SET sortOrder=? WHERE id=?',t.sortOrder ?? 0,other.id);}); }

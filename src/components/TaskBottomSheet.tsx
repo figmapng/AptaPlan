@@ -17,7 +17,6 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { Task, TaskRepeat } from '@/types/task';
-import { useTaskStore } from '@/store/taskStore';
 import { usePlanner } from '@/store/planner-store';
 import { getTodayKey } from '@/utils/dateHelpers';
 import { TaskInput } from './TaskInput';
@@ -43,7 +42,6 @@ export function TaskBottomSheet({
   onClose,
   onTaskSaved,
 }: TaskBottomSheetProps) {
-  const { createTask, updateTask } = useTaskStore();
   const planner = usePlanner();
 
   const [title, setTitle] = useState('');
@@ -65,7 +63,7 @@ export function TaskBottomSheet({
         setTitle(editingTask.title);
         setSelectedDate(editingTask.date);
         setSelectedTime(editingTask.time || null);
-        setSelectedRepeat(editingTask.repeat || 'none');
+        setSelectedRepeat(((editingTask.repeat as TaskRepeat) || (editingTask.repeatType as TaskRepeat) || 'none'));
       } else {
         setTitle('');
         setSelectedDate(initialDate || null);
@@ -192,32 +190,48 @@ export function TaskBottomSheet({
 
     const targetDate = selectedDate || getTodayKey();
     if (editingTask) {
-      updateTask(editingTask.id, {
-        title: trimmed,
-        date: targetDate,
-        time: selectedTime,
-        repeat: selectedRepeat,
-      });
       await planner.update(editingTask.id, {
         title: trimmed,
         date: targetDate,
         time: selectedTime,
-        repeatType: (selectedRepeat === 'none' ? 'none' : selectedRepeat === 'daily' ? 'daily' : selectedRepeat === 'weekly' ? 'weekly' : selectedRepeat === 'monthly' ? 'monthly' : 'none') as any,
+        repeatType: selectedRepeat as TaskRepeat,
+        repeat: selectedRepeat as TaskRepeat,
+      });
+      onTaskSaved?.({
+        ...editingTask,
+        title: trimmed,
+        date: targetDate,
+        time: selectedTime,
+        repeat: selectedRepeat as TaskRepeat,
+        repeatType: selectedRepeat as TaskRepeat,
       });
     } else {
-      const created = createTask({
+      const id = await planner.create({
         title: trimmed,
         date: targetDate,
         time: selectedTime,
-        repeat: selectedRepeat,
+        repeatType: selectedRepeat as TaskRepeat,
+        repeat: selectedRepeat as TaskRepeat,
       });
-      await planner.create({
+      onTaskSaved?.({
+        id,
         title: trimmed,
+        isCompleted: false,
+        completed: false,
         date: targetDate,
         time: selectedTime,
-        repeatType: (selectedRepeat === 'none' ? 'none' : selectedRepeat === 'daily' ? 'daily' : selectedRepeat === 'weekly' ? 'weekly' : selectedRepeat === 'monthly' ? 'monthly' : 'none') as any,
+        repeat: selectedRepeat as TaskRepeat,
+        repeatType: selectedRepeat as TaskRepeat,
+        repeatInterval: 1,
+        note: null,
+        priority: 'normal',
+        notificationOffset: null,
+        notificationId: null,
+        sortOrder: 0,
+        order: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
-      onTaskSaved?.(created);
     }
 
     setTitle('');
@@ -515,9 +529,9 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#6CC400',
+    backgroundColor: '#01B7FF',
     borderWidth: 2,
-    borderColor: '#78DA02',
+    borderColor: '#01B7FF',
     alignItems: 'center',
     justifyContent: 'center',
   },

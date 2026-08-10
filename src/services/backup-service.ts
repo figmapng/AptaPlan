@@ -180,9 +180,9 @@ export async function importBackup(
                     for (const o of payload.occurrences) {
                       await db.runAsync(
                         `INSERT OR REPLACE INTO task_occurrences (
-                          id, taskId, occurrenceDate, isCompleted, completedAt
-                        ) VALUES (?, ?, ?, ?, ?)`,
-                        [o.id, o.taskId, o.occurrenceDate, o.isCompleted ?? 0, o.completedAt ?? null]
+                          id, taskId, occurrenceDate, isCompleted, completedAt, isDeleted
+                        ) VALUES (?, ?, ?, ?, ?, ?)`,
+                        [o.id, o.taskId, o.occurrenceDate, o.isCompleted ?? 0, o.completedAt ?? null, o.isDeleted ?? 0]
                       );
                     }
                   }

@@ -17,13 +17,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
-import { useWeek } from '@/hooks/use-week';
 import {
   addDays,
-  formatWeekRange,
   getMonthGrid,
   getStartOfWeek,
-  getWeekDates,
   isSameMonth,
   months,
   toDateKey,

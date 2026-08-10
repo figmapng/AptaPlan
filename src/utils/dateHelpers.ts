@@ -34,6 +34,14 @@ export function getNextWeekKey(): string {
   return toDateKey(addDays(new Date(), 7));
 }
 
+export function getNextSaturdayKey(): string {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = (6 - day + 7) % 7 || 7;
+  return toDateKey(addDays(d, diff));
+}
+
+
 export const kzWeekdaysShort = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
 
 export function formatChipDate(dateStr: string): string {

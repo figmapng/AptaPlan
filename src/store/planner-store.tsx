@@ -24,7 +24,6 @@ type Store = {
   get: (id: string) => Promise<Task | null>;
   setPref: <K extends keyof PlannerSettings>(k: K, v: PlannerSettings[K]) => Promise<void>;
   clearAll: () => Promise<void>;
-  move: (id: string, d: -1 | 1) => Promise<void>;
 };
 
 const Context = createContext<Store | null>(null);
@@ -39,19 +38,22 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
   const rangeRef = useRef<[string, string] | null>(null);
   const tasksRef = useRef<Task[]>([]);
   tasksRef.current = tasks;
+  const settingsRef = useRef<PlannerSettings>(defaultSettings);
+  settingsRef.current = settings;
 
   const init = useCallback(async () => {
     try {
       const db = await getDatabase();
       await seedDemoData(db);
-      setSettings(await getSettings(db));
-      
+      const loadedSettings = await getSettings(db);
+      setSettings(loadedSettings);
+
       const today = new Date();
       const s = toDateKey(addDays(today, -60));
       const e = toDateKey(addDays(today, 60));
       rangeRef.current = [s, e];
       setRange([s, e]);
-      const loaded = await repo.getTasksForRange(db, s, e);
+      const loaded = await repo.getTasksForRange(db, s, e, { sortMode: loadedSettings.sortMode, completedPlacement: loadedSettings.completedPlacement });
       tasksRef.current = loaded;
       setTasks(loaded);
 
@@ -79,13 +81,13 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
       const bufferEnd = toDateKey(addDays(endDate, 60));
       rangeRef.current = [bufferStart, bufferEnd];
       setRange([bufferStart, bufferEnd]);
-      const loaded = await repo.getTasksForRange(db, bufferStart, bufferEnd);
+      const loaded = await repo.getTasksForRange(db, bufferStart, bufferEnd, { sortMode: settingsRef.current.sortMode, completedPlacement: settingsRef.current.completedPlacement });
       tasksRef.current = loaded;
       setTasks(loaded);
       return loaded;
     } catch {
       const db = await getDatabase();
-      const loaded = await repo.getTasksForRange(db, s, e);
+      const loaded = await repo.getTasksForRange(db, s, e, { sortMode: settingsRef.current.sortMode, completedPlacement: settingsRef.current.completedPlacement });
       tasksRef.current = loaded;
       setTasks(loaded);
       return loaded;
@@ -95,7 +97,7 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     if (rangeRef.current) {
       const db = await getDatabase();
-      const loaded = await repo.getTasksForRange(db, rangeRef.current[0], rangeRef.current[1]);
+      const loaded = await repo.getTasksForRange(db, rangeRef.current[0], rangeRef.current[1], { sortMode: settingsRef.current.sortMode, completedPlacement: settingsRef.current.completedPlacement });
       tasksRef.current = loaded;
       setTasks(loaded);
     }
@@ -142,15 +144,15 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
       get: async (id) => repo.getTask(await getDatabase(), id),
       setPref: async (k, v) => {
         await setSetting(await getDatabase(), k, v);
+        settingsRef.current = { ...settingsRef.current, [k]: v };
         setSettings((x) => ({ ...x, [k]: v }));
+        if (k === 'sortMode' || k === 'completedPlacement') {
+          await refresh();
+        }
       },
       clearAll: async () => {
         const db = await getDatabase();
         await db.execAsync('DELETE FROM task_occurrences; DELETE FROM tasks;');
-        await refresh();
-      },
-      move: async (id, d) => {
-        await repo.moveTask(await getDatabase(), id, d);
         await refresh();
       },
     }),
