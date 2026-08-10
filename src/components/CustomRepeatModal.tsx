@@ -261,30 +261,6 @@ export function CustomRepeatModal({
 
           {/* Card 2 (Conditional per unit) */}
 
-          {/* DAILY: Interval Presets */}
-          {unit === 'daily' && (
-            <View style={[styles.groupedCard, { marginTop: 16 }]}>
-              {[2, 3, 5, 7, 10, 14, 30].map((val, idx) => {
-                const isSelected = interval === val;
-                return (
-                  <View key={val}>
-                    {idx > 0 && <View style={styles.divider} />}
-                    <Pressable
-                      style={styles.formRow}
-                      onPress={() => {
-                        triggerHaptic();
-                        setIntervalVal(val);
-                      }}
-                    >
-                      <Text style={styles.rowLabel}>Әр {val} күнде 1 рет</Text>
-                      {isSelected && <CheckIcon color="#01B7FF" />}
-                    </Pressable>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
           {/* WEEKLY: Weekdays Picker List */}
           {unit === 'weekly' && (
             <View style={[styles.groupedCard, { marginTop: 16 }]}>
