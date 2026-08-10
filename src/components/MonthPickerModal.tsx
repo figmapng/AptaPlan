@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 16,
     paddingBottom: 36,
     gap: 16,
     boxShadow: '0 -4px 20px rgba(0,0,0,0.12)',
@@ -176,12 +176,13 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
     backgroundColor: '#D1D5DB',
     alignSelf: 'center',
+    marginBottom: 4,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 4,
+    marginTop: 6,
   },
   title: {
     fontSize: 20,
@@ -206,7 +207,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: 'transparent',
     paddingHorizontal: 4,
-    paddingVertical: 0,
+    paddingVertical: 2,
+    marginTop: 4,
   },
   arrowBtn: {
     width: 36,
