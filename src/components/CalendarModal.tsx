@@ -209,7 +209,7 @@ export function CalendarModal({
                 accessibilityLabel="Ай мен жылды таңдау"
               >
                 <Text style={styles.monthTitle}>{capitalizedMonthTitle}</Text>
-                <ChevronDownIcon color="#01B7FF" />
+                <ChevronDownIcon color="#1C1C1E" />
               </AnimatedPressable>
 
               <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handleNextMonth}>
@@ -470,7 +470,7 @@ function CloseXIcon({ color }: { color: string }) {
   );
 }
 
-function ChevronDownIcon({ color = '#01B7FF' }: { color?: string }) {
+function ChevronDownIcon({ color = '#1C1C1E' }: { color?: string }) {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
       <Path d="M6 9l6 6 6-6" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -589,15 +589,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: '#01B7FF12',
+    borderRadius: 8,
   },
   monthTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#01B7FF',
+    color: '#1C1C1E',
   },
   arrowBtn: {
     width: 32,
