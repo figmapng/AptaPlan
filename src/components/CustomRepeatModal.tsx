@@ -265,7 +265,7 @@ export function CustomRepeatModal({
               <Text style={styles.rowLabel}>Жиілігі</Text>
               <View style={styles.selectorBtn}>
                 <Text style={styles.selectorText}>{unitLabels[unit]}</Text>
-                <SelectorChevronIcon color="#8E8E93" />
+                <SelectorChevronIcon color="#01B7FF" />
               </View>
             </Pressable>
 
@@ -495,10 +495,10 @@ function CheckIcon({ color }: { color: string }) {
   );
 }
 
-function SelectorChevronIcon({ color }: { color: string }) {
+function SelectorChevronIcon({ color = '#01B7FF' }: { color?: string }) {
   return (
-    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-      <Path d="M7 10l5-5 5 5M7 14l5 5 5-5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+      <Path d="M6 9l6 6 6-6" stroke={color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
@@ -629,15 +629,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#F2F2F7',
+    borderRadius: 10,
+    backgroundColor: '#E6F7FF',
   },
   selectorText: {
     fontSize: 15,
-    fontWeight: '500',
-    color: '#8E8E93',
+    fontWeight: '600',
+    color: '#01B7FF',
   },
   divider: {
     height: 1,
@@ -647,25 +647,32 @@ const styles = StyleSheet.create({
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: '#F2F2F7',
+    padding: 3,
+    borderRadius: 12,
   },
   stepBtn: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F2F2F7',
+    borderRadius: 9,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
   },
   stepBtnDisabled: {
-    backgroundColor: '#F8F8FA',
+    backgroundColor: 'transparent',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   numBox: {
-    minWidth: 36,
+    minWidth: 40,
     height: 32,
     paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: '#E5E5EA',
     alignItems: 'center',
     justifyContent: 'center',
   },
