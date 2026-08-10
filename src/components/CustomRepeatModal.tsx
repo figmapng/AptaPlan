@@ -357,32 +357,18 @@ export function CustomRepeatModal({
 
               {monthlyMode === 'dayOfWeek' && (
                 <View style={styles.pickerWheelBox}>
-                  <ScrollView style={{ height: 110 }} nestedScrollEnabled>
-                    {weekPositions.map((pos, pIdx) => (
-                      <Pressable
-                        key={pos}
-                        style={[styles.pickerWheelRow, selectedPosIdx === pIdx && styles.pickerWheelRowActive]}
-                        onPress={() => { triggerHaptic(); setSelectedPosIdx(pIdx); }}
-                      >
-                        <Text style={[styles.pickerWheelText, selectedPosIdx === pIdx && styles.pickerWheelTextActive]}>
-                          {pos}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                  <ScrollView style={{ height: 110 }} nestedScrollEnabled>
-                    {kzWeekdaysFull.map((wName, wIdx) => (
-                      <Pressable
-                        key={wName}
-                        style={[styles.pickerWheelRow, selectedDayIdx === wIdx && styles.pickerWheelRowActive]}
-                        onPress={() => { triggerHaptic(); setSelectedDayIdx(wIdx); }}
-                      >
-                        <Text style={[styles.pickerWheelText, selectedDayIdx === wIdx && styles.pickerWheelTextActive]}>
-                          {wName.toLowerCase()}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
+                  <WheelPickerColumn
+                    data={weekPositions}
+                    selectedIndex={selectedPosIdx}
+                    onSelect={(idx) => setSelectedPosIdx(idx)}
+                    getLabel={(item) => item}
+                  />
+                  <WheelPickerColumn
+                    data={kzWeekdaysFull}
+                    selectedIndex={selectedDayIdx}
+                    onSelect={(idx) => setSelectedDayIdx(idx)}
+                    getLabel={(item) => item.toLowerCase()}
+                  />
                 </View>
               )}
             </View>
@@ -432,38 +418,18 @@ export function CustomRepeatModal({
 
                 {yearlyEnableWeekdays && (
                   <View style={styles.pickerWheelBox}>
-                    <ScrollView style={{ height: 110 }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-                      {weekPositions.map((pos, pIdx) => (
-                        <Pressable
-                          key={pos}
-                          style={[styles.pickerWheelRow, selectedPosIdx === pIdx && styles.pickerWheelRowActive]}
-                          onPress={() => {
-                            triggerHaptic();
-                            setSelectedPosIdx(pIdx);
-                          }}
-                        >
-                          <Text style={[styles.pickerWheelText, selectedPosIdx === pIdx && styles.pickerWheelTextActive]}>
-                            {pos}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-                    <ScrollView style={{ height: 110 }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-                      {kzWeekdaysFull.map((wName, wIdx) => (
-                        <Pressable
-                          key={wName}
-                          style={[styles.pickerWheelRow, selectedDayIdx === wIdx && styles.pickerWheelRowActive]}
-                          onPress={() => {
-                            triggerHaptic();
-                            setSelectedDayIdx(wIdx);
-                          }}
-                        >
-                          <Text style={[styles.pickerWheelText, selectedDayIdx === wIdx && styles.pickerWheelTextActive]}>
-                            {wName.toLowerCase()}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
+                    <WheelPickerColumn
+                      data={weekPositions}
+                      selectedIndex={selectedPosIdx}
+                      onSelect={(idx) => setSelectedPosIdx(idx)}
+                      getLabel={(item) => item}
+                    />
+                    <WheelPickerColumn
+                      data={kzWeekdaysFull}
+                      selectedIndex={selectedDayIdx}
+                      onSelect={(idx) => setSelectedDayIdx(idx)}
+                      getLabel={(item) => item.toLowerCase()}
+                    />
                   </View>
                 )}
               </View>
@@ -831,4 +797,101 @@ const styles = StyleSheet.create({
     color: '#01B7FF',
     fontWeight: '600',
   },
+  wheelColumnContainer: {
+    flex: 1,
+    height: 114,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  wheelCenterHighlight: {
+    position: 'absolute',
+    top: 38,
+    left: 4,
+    right: 4,
+    height: 38,
+    backgroundColor: '#E5E5EA80',
+    borderRadius: 8,
+    zIndex: 0,
+  },
+  wheelItemRow: {
+    height: 38,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wheelItemText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#8E8E93',
+    opacity: 0.6,
+  },
+  wheelItemTextSelected: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#01B7FF',
+    opacity: 1,
+  },
 });
+
+interface WheelPickerColumnProps<T> {
+  data: T[];
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+  getLabel: (item: T) => string;
+}
+
+const WHEEL_ITEM_HEIGHT = 38;
+
+function WheelPickerColumn<T>({
+  data,
+  selectedIndex,
+  onSelect,
+  getLabel,
+}: WheelPickerColumnProps<T>) {
+  const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: selectedIndex * WHEEL_ITEM_HEIGHT, animated: false });
+  }, [selectedIndex]);
+
+  return (
+    <View style={styles.wheelColumnContainer}>
+      <View pointerEvents="none" style={styles.wheelCenterHighlight} />
+
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={WHEEL_ITEM_HEIGHT}
+        decelerationRate="fast"
+        contentContainerStyle={{ paddingVertical: WHEEL_ITEM_HEIGHT }}
+        nestedScrollEnabled
+        onMomentumScrollEnd={(e) => {
+          const idx = Math.round(e.nativeEvent.contentOffset.y / WHEEL_ITEM_HEIGHT);
+          const clamped = Math.max(0, Math.min(idx, data.length - 1));
+          if (clamped !== selectedIndex) {
+            void Haptics.selectionAsync();
+            onSelect(clamped);
+          }
+        }}
+      >
+        {data.map((item, idx) => {
+          const isSelected = idx === selectedIndex;
+          return (
+            <Pressable
+              key={`${getLabel(item)}-${idx}`}
+              style={styles.wheelItemRow}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                onSelect(idx);
+                scrollRef.current?.scrollTo({ y: idx * WHEEL_ITEM_HEIGHT, animated: true });
+              }}
+            >
+              <Text style={[styles.wheelItemText, isSelected && styles.wheelItemTextSelected]}>
+                {getLabel(item)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
