@@ -475,25 +475,27 @@ export function CustomRepeatModal({
         {showUnitMenu && (
           <Pressable style={styles.popoverOverlay} onPress={() => setShowUnitMenu(false)}>
             <View style={styles.popoverMenu}>
-              {(['hourly', 'daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u) => {
-                const isSelected = unit === u;
-                return (
-                  <Pressable
-                    key={u}
-                    style={[styles.menuItem, isSelected && styles.menuItemActive]}
-                    onPress={() => {
-                      triggerHaptic();
-                      setUnit(u);
-                      setShowUnitMenu(false);
-                    }}
-                  >
-                    <Text style={[styles.menuItemText, isSelected && styles.menuItemTextActive]}>
-                      {unitLabels[u]}
-                    </Text>
-                    {isSelected && <CheckIcon color="#01B7FF" />}
-                  </Pressable>
-                );
-              })}
+              <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
+                {(['hourly', 'daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u) => {
+                  const isSelected = unit === u;
+                  return (
+                    <Pressable
+                      key={u}
+                      style={[styles.menuItem, isSelected && styles.menuItemActive]}
+                      onPress={() => {
+                        triggerHaptic();
+                        setUnit(u);
+                        setShowUnitMenu(false);
+                      }}
+                    >
+                      <Text style={[styles.menuItemText, isSelected && styles.menuItemTextActive]}>
+                        {unitLabels[u]}
+                      </Text>
+                      {isSelected && <CheckIcon color="#01B7FF" />}
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
             </View>
           </Pressable>
         )}
@@ -575,7 +577,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 16,
     elevation: 20,
-    maxHeight: '85%',
+    minHeight: 380,
+    maxHeight: '88%',
   },
   dragPill: {
     width: 38,
