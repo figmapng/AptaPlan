@@ -13,10 +13,11 @@ interface CustomRepeatModalProps {
   onClose: () => void;
 }
 
-type CustomUnit = 'daily' | 'weekly' | 'monthly' | 'yearly';
+type CustomUnit = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 type MonthlyMode = 'dates' | 'dayOfWeek';
 
 const unitLabels: Record<CustomUnit, string> = {
+  hourly: 'Сағат сайын',
   daily: 'Күн сайын',
   weekly: 'Апта сайын',
   monthly: 'Ай сайын',
@@ -150,6 +151,11 @@ export function CustomRepeatModal({
 
   // Human readable Kazakh summary sentence
   const getSummarySentence = () => {
+    if (unit === 'hourly') {
+      return interval === 1
+        ? 'Тапсырма сағат сайын қайталанып отырады.'
+        : `Тапсырма әр ${interval} сағат сайын қайталанып отырады.`;
+    }
     if (unit === 'daily') {
       return interval === 1
         ? 'Тапсырма күн сайын қайталанып отырады.'
@@ -413,7 +419,7 @@ export function CustomRepeatModal({
         {showUnitMenu && (
           <Pressable style={styles.popoverOverlay} onPress={() => setShowUnitMenu(false)}>
             <View style={styles.popoverMenu}>
-              {(['daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u) => {
+              {(['hourly', 'daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u) => {
                 const isSelected = unit === u;
                 return (
                   <Pressable

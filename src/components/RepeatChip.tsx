@@ -12,6 +12,7 @@ interface RepeatChipProps {
 
 export const repeatLabels: Record<TaskRepeat, string> = {
   none: 'Қайталанбайды',
+  hourly: 'Сағат сайын',
   daily: 'Күн сайын',
   weekdays: 'Жұмыс күндері',
   weekends: 'Демалыс күндері',

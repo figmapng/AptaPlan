@@ -22,7 +22,7 @@ const occursOn = (task: Task, date: string) => {
   const interval = Math.max(1, task.repeatInterval ?? 1);
   const dayOfWeek = target.getDay();
 
-  if (task.repeatType === 'daily' || task.repeatType === 'custom') {
+  if (task.repeatType === 'hourly' || task.repeatType === 'daily' || task.repeatType === 'custom') {
     const diffDays = Math.round((target.getTime() - start.getTime()) / 86400000);
     return diffDays >= 0 && diffDays % interval === 0;
   }

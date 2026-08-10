@@ -1,5 +1,5 @@
 export type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly';
-export type TaskRepeat = 'none' | 'daily' | 'weekdays' | 'weekends' | 'weekly' | 'monthly' | 'yearly' | 'custom';
+export type TaskRepeat = 'none' | 'hourly' | 'daily' | 'weekdays' | 'weekends' | 'weekly' | 'monthly' | 'yearly' | 'custom';
 export type Priority = 'normal' | 'important';
 
 export type Task = {
