@@ -3,10 +3,17 @@ import { Animated, Easing, Pressable, ScrollView, StyleSheet, Switch, Text, View
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
+import { usePlanner } from '@/store/planner-store';
 import { AnimatedPressable } from './AnimatedPressable';
 
 export type CustomUnit = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 export type MonthlyMode = 'dates' | 'dayOfWeek';
+
+export const getOrderedWeekdayIndices = (firstDay: 'mon' | 'sat' | 'sun' = 'mon'): number[] => {
+  if (firstDay === 'sun') return [0, 1, 2, 3, 4, 5, 6];
+  if (firstDay === 'sat') return [6, 0, 1, 2, 3, 4, 5];
+  return [1, 2, 3, 4, 5, 6, 0]; // default 'mon'
+};
 
 export interface CustomRepeatConfig {
   unit: CustomUnit;
@@ -95,6 +102,10 @@ export function CustomRepeatModal({
   onConfirm,
   onClose,
 }: CustomRepeatModalProps) {
+  const planner = usePlanner();
+  const firstDayOfWeek = planner.settings?.firstDayOfWeek || 'mon';
+  const orderedWeekdayIndices = getOrderedWeekdayIndices(firstDayOfWeek);
+
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const onCloseRef = useRef(onClose);
@@ -414,12 +425,13 @@ export function CustomRepeatModal({
           {/* WEEKLY: Weekdays Picker List */}
           {unit === 'weekly' && (
             <View style={[styles.groupedCard, { marginTop: 16 }]}>
-              {kzWeekdaysFull.map((dayName, idx) => {
-                const isSelected = selectedWeekdays.includes(idx);
+              {orderedWeekdayIndices.map((dayIdx, i) => {
+                const dayName = kzWeekdaysFull[dayIdx];
+                const isSelected = selectedWeekdays.includes(dayIdx);
                 return (
                   <View key={dayName}>
-                    {idx > 0 && <View style={styles.divider} />}
-                    <Pressable style={styles.formRow} onPress={() => toggleWeekday(idx)}>
+                    {i > 0 && <View style={styles.divider} />}
+                    <Pressable style={styles.formRow} onPress={() => toggleWeekday(dayIdx)}>
                       <Text style={styles.rowLabel}>{dayName}</Text>
                       {isSelected && <CheckIcon color="#01B7FF" />}
                     </Pressable>
@@ -475,10 +487,10 @@ export function CustomRepeatModal({
                     getLabel={(item) => item}
                   />
                   <WheelPickerColumn
-                    data={kzWeekdaysFull}
-                    selectedIndex={selectedDayIdx}
-                    onSelect={(idx) => setSelectedDayIdx(idx)}
-                    getLabel={(item) => item.toLowerCase()}
+                    data={orderedWeekdayIndices}
+                    selectedIndex={Math.max(0, orderedWeekdayIndices.indexOf(selectedDayIdx))}
+                    onSelect={(orderIdx) => setSelectedDayIdx(orderedWeekdayIndices[orderIdx])}
+                    getLabel={(dayIdx) => kzWeekdaysFull[dayIdx].toLowerCase()}
                   />
                 </View>
               )}
@@ -536,10 +548,10 @@ export function CustomRepeatModal({
                       getLabel={(item) => item}
                     />
                     <WheelPickerColumn
-                      data={kzWeekdaysFull}
-                      selectedIndex={selectedDayIdx}
-                      onSelect={(idx) => setSelectedDayIdx(idx)}
-                      getLabel={(item) => item.toLowerCase()}
+                      data={orderedWeekdayIndices}
+                      selectedIndex={Math.max(0, orderedWeekdayIndices.indexOf(selectedDayIdx))}
+                      onSelect={(orderIdx) => setSelectedDayIdx(orderedWeekdayIndices[orderIdx])}
+                      getLabel={(dayIdx) => kzWeekdaysFull[dayIdx].toLowerCase()}
                     />
                   </View>
                 )}
