@@ -405,6 +405,7 @@ export function TaskBottomSheet({
             />
             <RepeatChip
               repeat={selectedRepeat}
+              interval={selectedRepeatInterval}
               onPress={openRepeatSheet}
             />
             {editingTask && (
