@@ -165,9 +165,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 14,
     paddingBottom: 36,
-    gap: 16,
+    gap: 0,
     boxShadow: '0 -4px 20px rgba(0,0,0,0.12)',
   },
   dragPill: {
@@ -176,13 +176,14 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
     backgroundColor: '#D1D5DB',
     alignSelf: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 6,
+    marginTop: 4,
+    marginBottom: 16,
   },
   title: {
     fontSize: 20,
@@ -208,7 +209,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     paddingHorizontal: 4,
     paddingVertical: 2,
-    marginTop: 4,
+    marginTop: 8,
+    marginBottom: 20,
   },
   arrowBtn: {
     width: 36,
