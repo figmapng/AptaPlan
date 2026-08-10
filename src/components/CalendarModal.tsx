@@ -194,7 +194,7 @@ export function CalendarModal({
             <View style={styles.monthHeader}>
               <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handlePrevMonth}>
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                  <Path d="M15 18l-6-6 6-6" stroke="#01B7FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M15 18l-6-6 6-6" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </AnimatedPressable>
 
@@ -214,7 +214,7 @@ export function CalendarModal({
 
               <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handleNextMonth}>
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                  <Path d="M9 18l6-6-6-6" stroke="#01B7FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M9 18l6-6-6-6" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </AnimatedPressable>
             </View>
@@ -599,17 +599,12 @@ const styles = StyleSheet.create({
     color: '#1C1C1E',
   },
   arrowBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#E5E5EA',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
   },
   weekHeader: {
     width: '100%',
