@@ -608,8 +608,9 @@ function CheckIcon({ color }: { color: string }) {
 
 function SelectorChevronIcon({ color = '#01B7FF' }: { color?: string }) {
   return (
-    <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-      <Path d="M6 9l6 6 6-6" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    <Svg width={12} height={16} viewBox="0 0 24 24" fill="none">
+      <Path d="M7 9l5-5 5 5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7 15l5 5 5-5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
