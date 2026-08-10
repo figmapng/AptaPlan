@@ -126,6 +126,8 @@ export function RepeatActionSheet({
                   ? `Арнайы (${shortCustomLabel})`
                   : repeatLabels[opt];
 
+              const iconColor = isSelected ? '#01B7FF' : '#8E8E93';
+
               return (
                 <AnimatedPressable
                   key={opt}
@@ -133,9 +135,12 @@ export function RepeatActionSheet({
                   style={[styles.optionItem, isSelected && styles.optionItemActive]}
                   onPress={() => handleOptionClick(opt)}
                 >
-                  <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>
-                    {labelText}
-                  </Text>
+                  <View style={styles.optionLeftContent}>
+                    <OptionIcon opt={opt} color={iconColor} />
+                    <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>
+                      {labelText}
+                    </Text>
+                  </View>
                   {isSelected && (
                     <View style={styles.checkmarkBadge}>
                       <CheckIcon color="#01B7FF" />
@@ -164,6 +169,108 @@ export function RepeatActionSheet({
       />
     </>
   );
+}
+
+function OptionIcon({ opt, color }: { opt: TaskRepeat; color: string }) {
+  switch (opt) {
+    case 'none':
+      return (
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M18.364 5.636A9 9 0 105.636 18.364 9 9 0 0018.364 5.636zM4.93 4.93l14.14 14.14"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </Svg>
+      );
+    case 'daily':
+      return (
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M12 3v2m0 14v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M3 12h2m14 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41M12 7a5 5 0 100 10 5 5 0 000-10z"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'weekdays':
+      return (
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'weekends':
+      return (
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'weekly':
+      return (
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM7 14h2M11 14h2M15 14h2"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'monthly':
+      return (
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM7 14h2v2H7v-2zM11 14h2v2h-2v-2zM15 14h2v2h-2v-2z"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'yearly':
+      return (
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    case 'custom':
+      return (
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"
+            stroke={color}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+    default:
+      return null;
+  }
 }
 
 function CheckIcon({ color }: { color: string }) {
@@ -255,6 +362,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#EAEFF5',
+  },
+  optionLeftContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
   },
   optionItemActive: {
     backgroundColor: '#01B7FF12',
