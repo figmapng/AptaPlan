@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
@@ -14,6 +14,7 @@ interface CustomRepeatModalProps {
 }
 
 type CustomUnit = 'daily' | 'weekly' | 'monthly' | 'yearly';
+type MonthlyMode = 'dates' | 'dayOfWeek';
 
 const unitLabels: Record<CustomUnit, string> = {
   daily: 'Күн сайын',
@@ -21,6 +22,33 @@ const unitLabels: Record<CustomUnit, string> = {
   monthly: 'Ай сайын',
   yearly: 'Жыл сайын',
 };
+
+const kzWeekdaysFull = [
+  'Жексенбі',
+  'Дүйсенбі',
+  'Сейсенбі',
+  'Сәрсенбі',
+  'Бейсенбі',
+  'Жұма',
+  'Сенбі',
+];
+
+const kzMonthsShort = [
+  'қаңт.',
+  'ақп.',
+  'наур.',
+  'сәу.',
+  'мам.',
+  'маус.',
+  'шіл.',
+  'там.',
+  'қырк.',
+  'қаз.',
+  'қар.',
+  'желт.',
+];
+
+const weekPositions = ['бірінші', 'екінші', 'үшінші', 'төртінші', 'соңғы'];
 
 export function CustomRepeatModal({
   visible,
@@ -42,6 +70,19 @@ export function CustomRepeatModal({
   });
   const [interval, setIntervalVal] = useState<number>(() => Math.max(1, currentInterval));
   const [showUnitMenu, setShowUnitMenu] = useState(false);
+
+  // Weekly state: selected weekdays (index 0..6)
+  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([1]); // default Mon
+
+  // Monthly state: mode ('dates' | 'dayOfWeek'), selected date numbers (1..31)
+  const [monthlyMode, setMonthlyMode] = useState<MonthlyMode>('dates');
+  const [selectedMonthDate, setSelectedMonthDate] = useState<number>(1);
+  const [selectedPosIdx, setSelectedPosIdx] = useState<number>(0); // 0=бірінші
+  const [selectedDayIdx, setSelectedDayIdx] = useState<number>(1); // 1=Дүйсенбі
+
+  // Yearly state: selected month (0..11), enableWeekdays toggle
+  const [selectedYearlyMonth, setSelectedYearlyMonth] = useState<number>(7); // Aug default
+  const [yearlyEnableWeekdays, setYearlyEnableWeekdays] = useState(false);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (process.env.EXPO_OS === 'ios') {
@@ -96,7 +137,18 @@ export function CustomRepeatModal({
     handleClose();
   };
 
-  // Human readable Kazakh sentence
+  const toggleWeekday = (idx: number) => {
+    triggerHaptic();
+    setSelectedWeekdays((prev) => {
+      if (prev.includes(idx)) {
+        if (prev.length === 1) return prev; // keep at least one
+        return prev.filter((i) => i !== idx);
+      }
+      return [...prev, idx];
+    });
+  };
+
+  // Human readable Kazakh summary sentence
   const getSummarySentence = () => {
     if (unit === 'daily') {
       return interval === 1
@@ -139,51 +191,188 @@ export function CustomRepeatModal({
           </AnimatedPressable>
         </View>
 
-        {/* iOS Grouped Form Card */}
-        <View style={styles.groupedCard}>
-          {/* Row 1: Frequency Dropdown */}
-          <Pressable
-            style={styles.formRow}
-            onPress={() => {
-              triggerHaptic();
-              setShowUnitMenu((prev) => !prev);
-            }}
-          >
-            <Text style={styles.rowLabel}>Жиілігі</Text>
-            <View style={styles.selectorBtn}>
-              <Text style={styles.selectorText}>{unitLabels[unit]}</Text>
-              <SelectorChevronIcon color="#8E8E93" />
-            </View>
-          </Pressable>
-
-          <View style={styles.divider} />
-
-          {/* Row 2: Every / Interval Counter */}
-          <View style={styles.formRow}>
-            <Text style={styles.rowLabel}>Әрбір</Text>
-            <View style={styles.stepperContainer}>
-              <AnimatedPressable
-                activeScale={0.85}
-                style={[styles.stepBtn, interval <= 1 && styles.stepBtnDisabled]}
-                onPress={handleDecrement}
-                disabled={interval <= 1}
-              >
-                <MinusIcon color={interval <= 1 ? '#C7C7CC' : '#01B7FF'} />
-              </AnimatedPressable>
-
-              <View style={styles.numBox}>
-                <Text style={styles.numText}>{interval}</Text>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          style={{ width: '100%' }}
+        >
+          {/* Card 1: Frequency & Every Stepper */}
+          <View style={styles.groupedCard}>
+            {/* Frequency Dropdown Row */}
+            <Pressable
+              style={styles.formRow}
+              onPress={() => {
+                triggerHaptic();
+                setShowUnitMenu((prev) => !prev);
+              }}
+            >
+              <Text style={styles.rowLabel}>Жиілігі</Text>
+              <View style={styles.selectorBtn}>
+                <Text style={styles.selectorText}>{unitLabels[unit]}</Text>
+                <SelectorChevronIcon color="#8E8E93" />
               </View>
+            </Pressable>
 
-              <AnimatedPressable activeScale={0.85} style={styles.stepBtn} onPress={handleIncrement}>
-                <PlusIcon color="#01B7FF" />
-              </AnimatedPressable>
+            <View style={styles.divider} />
+
+            {/* Every Stepper Row */}
+            <View style={styles.formRow}>
+              <Text style={styles.rowLabel}>Әрбір</Text>
+              <View style={styles.stepperContainer}>
+                <AnimatedPressable
+                  activeScale={0.85}
+                  style={[styles.stepBtn, interval <= 1 && styles.stepBtnDisabled]}
+                  onPress={handleDecrement}
+                  disabled={interval <= 1}
+                >
+                  <MinusIcon color={interval <= 1 ? '#C7C7CC' : '#01B7FF'} />
+                </AnimatedPressable>
+
+                <View style={styles.numBox}>
+                  <Text style={styles.numText}>{interval}</Text>
+                </View>
+
+                <AnimatedPressable activeScale={0.85} style={styles.stepBtn} onPress={handleIncrement}>
+                  <PlusIcon color="#01B7FF" />
+                </AnimatedPressable>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Footer Summary Sentence */}
-        <Text style={styles.summaryText}>{getSummarySentence()}</Text>
+          {/* Footer Summary Sentence */}
+          <Text style={styles.summaryText}>{getSummarySentence()}</Text>
+
+          {/* Card 2 (Conditional per unit) */}
+
+          {/* WEEKLY: Weekdays Picker List */}
+          {unit === 'weekly' && (
+            <View style={[styles.groupedCard, { marginTop: 16 }]}>
+              {kzWeekdaysFull.map((dayName, idx) => {
+                const isSelected = selectedWeekdays.includes(idx);
+                return (
+                  <View key={dayName}>
+                    {idx > 0 && <View style={styles.divider} />}
+                    <Pressable style={styles.formRow} onPress={() => toggleWeekday(idx)}>
+                      <Text style={styles.rowLabel}>{dayName}</Text>
+                      {isSelected && <CheckIcon color="#01B7FF" />}
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {/* MONTHLY: Dates Grid or Day of Week Mode */}
+          {unit === 'monthly' && (
+            <View style={[styles.groupedCard, { marginTop: 16 }]}>
+              <Pressable style={styles.formRow} onPress={() => { triggerHaptic(); setMonthlyMode('dates'); }}>
+                <Text style={styles.rowLabel}>Даталарды таңдау</Text>
+                {monthlyMode === 'dates' && <CheckIcon color="#01B7FF" />}
+              </Pressable>
+
+              <View style={styles.divider} />
+
+              <Pressable style={styles.formRow} onPress={() => { triggerHaptic(); setMonthlyMode('dayOfWeek'); }}>
+                <Text style={styles.rowLabel}>Апта күнін таңдау</Text>
+                {monthlyMode === 'dayOfWeek' && <CheckIcon color="#01B7FF" />}
+              </Pressable>
+
+              {monthlyMode === 'dates' && (
+                <View style={styles.daysGridContainer}>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
+                    const isSelected = selectedMonthDate === d;
+                    return (
+                      <Pressable
+                        key={d}
+                        style={[styles.dayGridCell, isSelected && styles.dayGridCellSelected]}
+                        onPress={() => {
+                          triggerHaptic();
+                          setSelectedMonthDate(d);
+                        }}
+                      >
+                        <Text style={[styles.dayGridText, isSelected && styles.dayGridTextSelected]}>
+                          {d}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
+
+              {monthlyMode === 'dayOfWeek' && (
+                <View style={styles.pickerWheelBox}>
+                  <ScrollView style={{ height: 110 }} nestedScrollEnabled>
+                    {weekPositions.map((pos, pIdx) => (
+                      <Pressable
+                        key={pos}
+                        style={[styles.pickerWheelRow, selectedPosIdx === pIdx && styles.pickerWheelRowActive]}
+                        onPress={() => { triggerHaptic(); setSelectedPosIdx(pIdx); }}
+                      >
+                        <Text style={[styles.pickerWheelText, selectedPosIdx === pIdx && styles.pickerWheelTextActive]}>
+                          {pos}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                  <ScrollView style={{ height: 110 }} nestedScrollEnabled>
+                    {kzWeekdaysFull.map((wName, wIdx) => (
+                      <Pressable
+                        key={wName}
+                        style={[styles.pickerWheelRow, selectedDayIdx === wIdx && styles.pickerWheelRowActive]}
+                        onPress={() => { triggerHaptic(); setSelectedDayIdx(wIdx); }}
+                      >
+                        <Text style={[styles.pickerWheelText, selectedDayIdx === wIdx && styles.pickerWheelTextActive]}>
+                          {wName.toLowerCase()}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* YEARLY: 12-Month Grid + Weekdays Switch */}
+          {unit === 'yearly' && (
+            <>
+              <View style={[styles.groupedCard, { marginTop: 16 }]}>
+                <View style={styles.monthsGridContainer}>
+                  {kzMonthsShort.map((mShort, mIdx) => {
+                    const isSelected = selectedYearlyMonth === mIdx;
+                    return (
+                      <Pressable
+                        key={mShort}
+                        style={[styles.monthGridCell, isSelected && styles.monthGridCellSelected]}
+                        onPress={() => {
+                          triggerHaptic();
+                          setSelectedYearlyMonth(mIdx);
+                        }}
+                      >
+                        <Text style={[styles.monthGridText, isSelected && styles.monthGridTextSelected]}>
+                          {mShort}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={[styles.groupedCard, { marginTop: 14 }]}>
+                <View style={styles.formRow}>
+                  <Text style={styles.rowLabel}>Дни недели / Апта күндері</Text>
+                  <Switch
+                    value={yearlyEnableWeekdays}
+                    onValueChange={(v) => {
+                      triggerHaptic();
+                      setYearlyEnableWeekdays(v);
+                    }}
+                    trackColor={{ false: '#E5E5EA', true: '#34C759' }}
+                  />
+                </View>
+              </View>
+            </>
+          )}
+        </ScrollView>
 
         {/* iOS Popover Dropdown Menu */}
         {showUnitMenu && (
@@ -272,14 +461,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 40,
+    paddingBottom: 32,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
     elevation: 20,
-    minHeight: 280,
+    maxHeight: '85%',
   },
   dragPill: {
     width: 38,
@@ -294,7 +483,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   title: {
     fontSize: 18,
@@ -317,6 +506,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  scrollContent: {
+    paddingBottom: 20,
+  },
   groupedCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
@@ -324,7 +516,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     overflow: 'hidden',
-    marginBottom: 10,
   },
   formRow: {
     width: '100%',
@@ -395,6 +586,80 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#8E8E93',
     lineHeight: 18,
+    marginTop: 6,
+  },
+  daysGridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  dayGridCell: {
+    width: `${100 / 7}%`,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayGridCellSelected: {
+    backgroundColor: '#01B7FF',
+    borderRadius: 4,
+  },
+  dayGridText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+  },
+  dayGridTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  monthsGridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  monthGridCell: {
+    width: '25%',
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 0.5,
+    borderColor: '#E5E7EB',
+  },
+  monthGridCellSelected: {
+    backgroundColor: '#01B7FF',
+  },
+  monthGridText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000000',
+  },
+  monthGridTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  pickerWheelBox: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 4,
+  },
+  pickerWheelRow: {
+    height: 36,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  pickerWheelRowActive: {
+    backgroundColor: '#F2F2F7',
+  },
+  pickerWheelText: {
+    fontSize: 15,
+    color: '#8E8E93',
+  },
+  pickerWheelTextActive: {
+    color: '#01B7FF',
+    fontWeight: '700',
   },
   popoverMenu: {
     position: 'absolute',
