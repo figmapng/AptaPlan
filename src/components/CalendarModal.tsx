@@ -17,7 +17,7 @@ interface CalendarModalProps {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_WIDTH = SCREEN_WIDTH - 40; // 20px horizontal padding on sheet
-const ITEM_WIDTH = CARD_WIDTH - 14; // exact internal container width for each month slide
+const ITEM_WIDTH = CARD_WIDTH - 14; // exact internal container width for each month grid
 
 export function CalendarModal({
   visible,
@@ -50,7 +50,7 @@ export function CalendarModal({
     ]).start(() => onCloseRef.current());
   };
 
-  // Sheet PanResponder for vertical swipe down to dismiss sheet (Must be declared before any conditional return)
+  // Sheet PanResponder for vertical swipe down to dismiss sheet
   const sheetPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
@@ -95,6 +95,22 @@ export function CalendarModal({
     handleClose();
   };
 
+  const handleSelectDay = (dateStr: string) => {
+    triggerHaptic();
+    onSelectDate(dateStr);
+    handleClose();
+  };
+
+  const handlePrevMonth = () => {
+    triggerHaptic();
+    scrollViewRef.current?.scrollTo({ x: 0, animated: true });
+  };
+
+  const handleNextMonth = () => {
+    triggerHaptic();
+    scrollViewRef.current?.scrollTo({ x: ITEM_WIDTH * 2, animated: true });
+  };
+
   const todayKey = getTodayKey();
   const tomorrowKey = getTomorrowKey();
   const nextWeekKey = getNextWeekKey();
@@ -109,6 +125,12 @@ export function CalendarModal({
     { key: nextWeekKey, label: 'Келесі апта', icon: NextWeekIcon },
   ];
 
+  // Capitalized Month Title
+  const currYear = currentMonthDate.getFullYear();
+  const currMonthIdx = currentMonthDate.getMonth();
+  const monthName = kzMonthsFull[currMonthIdx];
+  const capitalizedMonthTitle = `${monthName[0].toUpperCase()}${monthName.slice(1)} ${currYear}`;
+
   return (
     <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
       <Pressable style={styles.backdrop} onPress={handleClose} />
@@ -118,7 +140,7 @@ export function CalendarModal({
       >
         <View style={styles.dragPill} />
 
-        {/* Header */}
+        {/* Top Sheet Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Күнді таңдау</Text>
           <AnimatedPressable
@@ -162,8 +184,35 @@ export function CalendarModal({
           })}
         </ScrollView>
 
-        {/* True Continuous Horizontal ScrollView Carousel */}
+        {/* Calendar Card Container */}
         <View style={styles.calendarCard}>
+          {/* 1. FIXED STATIC MONTH HEADER (Does NOT slide when swiping) */}
+          <View style={styles.monthHeader}>
+            <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handlePrevMonth}>
+              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                <Path d="M15 18l-6-6 6-6" stroke="#01B7FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            </AnimatedPressable>
+
+            <Text style={styles.monthTitle}>{capitalizedMonthTitle}</Text>
+
+            <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handleNextMonth}>
+              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                <Path d="M9 18l6-6-6-6" stroke="#01B7FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            </AnimatedPressable>
+          </View>
+
+          {/* 2. FIXED STATIC WEEKDAY TITLES ROW (Does NOT slide when swiping) */}
+          <View style={styles.weekHeader}>
+            {kzWeekdaysShort.map((w, idx) => (
+              <Text key={`${w}-${idx}`} style={styles.weekTitle}>
+                {w}
+              </Text>
+            ))}
+          </View>
+
+          {/* 3. HORIZONTAL DAYS GRID CAROUSEL (ONLY the date grid cells slide!) */}
           <ScrollView
             ref={scrollViewRef}
             horizontal
@@ -184,68 +233,32 @@ export function CalendarModal({
                 setCurrentMonthDate((prev) => addMonths(prev, 1));
               }
             }}
-            style={{ width: ITEM_WIDTH, height: 308 }}
+            style={{ width: ITEM_WIDTH, height: 240 }}
           >
-            <View style={{ width: ITEM_WIDTH, height: 308 }}>
-              <MonthGrid
+            <View style={{ width: ITEM_WIDTH, height: 240 }}>
+              <DaysGridMatrix
                 monthDate={prevMonthDate}
                 selectedDate={selectedDate}
                 todayKey={todayKey}
-                onSelectDay={(dateStr) => {
-                  triggerHaptic();
-                  onSelectDate(dateStr);
-                  handleClose();
-                }}
-                onPrevMonth={() => {
-                  triggerHaptic();
-                  scrollViewRef.current?.scrollTo({ x: 0, animated: true });
-                }}
-                onNextMonth={() => {
-                  triggerHaptic();
-                  scrollViewRef.current?.scrollTo({ x: ITEM_WIDTH * 2, animated: true });
-                }}
+                onSelectDay={handleSelectDay}
               />
             </View>
 
-            <View style={{ width: ITEM_WIDTH, height: 308 }}>
-              <MonthGrid
+            <View style={{ width: ITEM_WIDTH, height: 240 }}>
+              <DaysGridMatrix
                 monthDate={currentMonthDate}
                 selectedDate={selectedDate}
                 todayKey={todayKey}
-                onSelectDay={(dateStr) => {
-                  triggerHaptic();
-                  onSelectDate(dateStr);
-                  handleClose();
-                }}
-                onPrevMonth={() => {
-                  triggerHaptic();
-                  scrollViewRef.current?.scrollTo({ x: 0, animated: true });
-                }}
-                onNextMonth={() => {
-                  triggerHaptic();
-                  scrollViewRef.current?.scrollTo({ x: ITEM_WIDTH * 2, animated: true });
-                }}
+                onSelectDay={handleSelectDay}
               />
             </View>
 
-            <View style={{ width: ITEM_WIDTH, height: 308 }}>
-              <MonthGrid
+            <View style={{ width: ITEM_WIDTH, height: 240 }}>
+              <DaysGridMatrix
                 monthDate={nextMonthDate}
                 selectedDate={selectedDate}
                 todayKey={todayKey}
-                onSelectDay={(dateStr) => {
-                  triggerHaptic();
-                  onSelectDate(dateStr);
-                  handleClose();
-                }}
-                onPrevMonth={() => {
-                  triggerHaptic();
-                  scrollViewRef.current?.scrollTo({ x: 0, animated: true });
-                }}
-                onNextMonth={() => {
-                  triggerHaptic();
-                  scrollViewRef.current?.scrollTo({ x: ITEM_WIDTH * 2, animated: true });
-                }}
+                onSelectDay={handleSelectDay}
               />
             </View>
           </ScrollView>
@@ -273,30 +286,24 @@ export function CalendarModal({
   );
 }
 
-// Custom Single Month Grid Component
-interface MonthGridProps {
+// Pure Days Grid Component (Only renders the 42 day cells matrix)
+interface DaysGridMatrixProps {
   monthDate: Date;
   selectedDate: string | null;
   todayKey: string;
   onSelectDay: (dateStr: string) => void;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
 }
 
-function MonthGrid({
+function DaysGridMatrix({
   monthDate,
   selectedDate,
   todayKey,
   onSelectDay,
-  onPrevMonth,
-  onNextMonth,
-}: MonthGridProps) {
+}: DaysGridMatrixProps) {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
-  const monthName = kzMonthsFull[month];
-  const capitalizedMonth = monthName[0].toUpperCase() + monthName.slice(1);
 
-  // Generate days for fixed 6-week matrix (42 cells) to maintain constant 100% stable card height
+  // Generate days for fixed 6-week matrix (42 cells)
   const firstDay = new Date(year, month, 1);
   const startDayOfWeek = firstDay.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -327,68 +334,39 @@ function MonthGrid({
   }
 
   return (
-    <View style={{ width: ITEM_WIDTH, height: 308, paddingVertical: 4 }}>
-      {/* Month Navigator Header */}
-      <View style={styles.monthHeader}>
-        <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={onPrevMonth}>
-          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-            <Path d="M15 18l-6-6 6-6" stroke="#01B7FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
-        </AnimatedPressable>
+    <View style={styles.daysGrid}>
+      {days.map((item, idx) => {
+        const isSelected = selectedDate === item.dateStr;
+        const isToday = todayKey === item.dateStr;
 
-        <Text style={styles.monthTitle}>{capitalizedMonth} {year}</Text>
-
-        <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={onNextMonth}>
-          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-            <Path d="M9 18l6-6-6-6" stroke="#01B7FF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
-        </AnimatedPressable>
-      </View>
-
-      {/* Weekday Titles Row */}
-      <View style={styles.weekHeader}>
-        {kzWeekdaysShort.map((w, idx) => (
-          <Text key={`${w}-${idx}`} style={styles.weekTitle}>
-            {w}
-          </Text>
-        ))}
-      </View>
-
-      {/* Days Grid (6 rows x 7 days) */}
-      <View style={styles.daysGrid}>
-        {days.map((item, idx) => {
-          const isSelected = selectedDate === item.dateStr;
-          const isToday = todayKey === item.dateStr;
-
-          return (
-            <AnimatedPressable
-              key={`${item.dateStr}-${idx}`}
-              activeScale={0.9}
-              style={styles.dayCell}
-              onPress={() => onSelectDay(item.dateStr)}
+        return (
+          <AnimatedPressable
+            key={`${item.dateStr}-${idx}`}
+            activeScale={0.9}
+            style={styles.dayCell}
+            onPress={() => onSelectDay(item.dateStr)}
+          >
+            <View
+              style={[
+                styles.dayBadge,
+                isSelected && styles.dayBadgeSelected,
+                isToday && !isSelected && styles.dayBadgeToday,
+              ]}
             >
-              <View
+              <Text
                 style={[
-                  styles.dayBadge,
-                  isSelected && styles.dayBadgeSelected,
-                  isToday && !isSelected && styles.dayBadgeToday,
+                  styles.dayText,
+                  !item.isCurrentMonth && styles.dayTextOtherMonth,
+                  isToday && !isSelected && styles.dayTextToday,
+                  isSelected && styles.dayTextSelected,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.dayText,
-                    !item.isCurrentMonth && styles.dayTextOtherMonth,
-                    isToday && !isSelected && styles.dayTextToday,
-                    isSelected && styles.dayTextSelected,
-                  ]}
-                >
-                  {item.dayNum}
-                </Text>
-              </View>
-            </AnimatedPressable>
-          );
-        })}
-      </View>
+                {item.dayNum}
+              </Text>
+            </View>
+          </AnimatedPressable>
+        );
+      })}
     </View>
   );
 }
@@ -553,18 +531,17 @@ const styles = StyleSheet.create({
   },
   calendarCard: {
     width: '100%',
-    height: 320,
     backgroundColor: '#F8FAFC',
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#EAEFF5',
-    padding: 6,
+    padding: 8,
     marginBottom: 14,
     alignItems: 'center',
-    justifyContent: 'center',
     overflow: 'hidden',
   },
   monthHeader: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -591,6 +568,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   weekHeader: {
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 4,
@@ -604,6 +582,7 @@ const styles = StyleSheet.create({
     color: '#707684',
   },
   daysGrid: {
+    width: '100%',
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
