@@ -315,7 +315,7 @@ export function CustomRepeatModal({
               <Text style={styles.rowLabel}>Жиілігі</Text>
               <View style={styles.selectorBtn}>
                 <Text style={styles.selectorText}>{unitLabels[unit]}</Text>
-                <SelectorChevronIcon color="#8E8E93" />
+                <SelectorChevronIcon color="#000000" />
               </View>
             </Pressable>
 
@@ -545,7 +545,7 @@ function CheckIcon({ color }: { color: string }) {
   );
 }
 
-function SelectorChevronIcon({ color = '#8E8E93' }: { color?: string }) {
+function SelectorChevronIcon({ color = '#000000' }: { color?: string }) {
   return (
     <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
       <Path d="M6 9l6 6 6-6" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -682,12 +682,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#E5E5EA',
   },
   selectorText: {
     fontSize: 15,
-    fontWeight: '500',
-    color: '#8E8E93',
+    fontWeight: '600',
+    color: '#000000',
   },
   divider: {
     height: 1,
