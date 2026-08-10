@@ -63,10 +63,10 @@ export function CustomRepeatModal({
   onCloseRef.current = onClose;
 
   const [unit, setUnit] = useState<CustomUnit>(() => {
-    if (currentRepeat === 'weekly') return 'weekly';
     if (currentRepeat === 'monthly') return 'monthly';
     if (currentRepeat === 'yearly') return 'yearly';
-    return 'daily';
+    if (currentRepeat === 'daily') return 'daily';
+    return 'weekly';
   });
   const [interval, setIntervalVal] = useState<number>(() => Math.max(1, currentInterval));
   const [showUnitMenu, setShowUnitMenu] = useState(false);
@@ -100,10 +100,10 @@ export function CustomRepeatModal({
 
   useEffect(() => {
     if (visible) {
-      if (currentRepeat === 'weekly') setUnit('weekly');
-      else if (currentRepeat === 'monthly') setUnit('monthly');
+      if (currentRepeat === 'monthly') setUnit('monthly');
       else if (currentRepeat === 'yearly') setUnit('yearly');
-      else setUnit('daily');
+      else if (currentRepeat === 'daily') setUnit('daily');
+      else setUnit('weekly');
 
       setIntervalVal(Math.max(1, currentInterval));
       setShowUnitMenu(false);
@@ -243,6 +243,30 @@ export function CustomRepeatModal({
           <Text style={styles.summaryText}>{getSummarySentence()}</Text>
 
           {/* Card 2 (Conditional per unit) */}
+
+          {/* DAILY: Interval Presets */}
+          {unit === 'daily' && (
+            <View style={[styles.groupedCard, { marginTop: 16 }]}>
+              {[2, 3, 5, 7, 10, 14, 30].map((val, idx) => {
+                const isSelected = interval === val;
+                return (
+                  <View key={val}>
+                    {idx > 0 && <View style={styles.divider} />}
+                    <Pressable
+                      style={styles.formRow}
+                      onPress={() => {
+                        triggerHaptic();
+                        setIntervalVal(val);
+                      }}
+                    >
+                      <Text style={styles.rowLabel}>Әр {val} күнде 1 рет</Text>
+                      {isSelected && <CheckIcon color="#01B7FF" />}
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+          )}
 
           {/* WEEKLY: Weekdays Picker List */}
           {unit === 'weekly' && (
