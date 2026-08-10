@@ -91,7 +91,7 @@ export function MonthPickerModal({
               }}
             >
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                <Path d="M15 18l-6-6 6-6" stroke={colors.text} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M15 18l-6-6 6-6" stroke="#01B7FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </AnimatedPressable>
 
@@ -106,7 +106,7 @@ export function MonthPickerModal({
               }}
             >
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                <Path d="M9 18l6-6-6-6" stroke={colors.text} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M9 18l6-6-6-6" stroke="#01B7FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </AnimatedPressable>
           </View>
@@ -204,27 +204,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F6F8FB',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 4,
+    paddingVertical: 0,
   },
   arrowBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#E6F7FF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
   },
   yearText: {
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#1C1C1E',
     fontVariant: ['tabular-nums'],
   },
