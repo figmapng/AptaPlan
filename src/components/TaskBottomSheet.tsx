@@ -26,13 +26,15 @@ import { RepeatChip } from './RepeatChip';
 import { CalendarModal } from './CalendarModal';
 import { TimeModal } from './TimeModal';
 import { RepeatActionSheet } from './RepeatActionSheet';
+import { CustomUnit } from './CustomRepeatModal';
 
 interface TaskBottomSheetProps {
   visible: boolean;
   editingTask?: Task | null;
-  initialDate?: string;
+  initialDate?: string | null;
   onClose: () => void;
   onTaskSaved?: (task: Task) => void;
+  onTaskDeleted?: (taskId: string) => void;
 }
 
 export function TaskBottomSheet({
@@ -41,6 +43,7 @@ export function TaskBottomSheet({
   initialDate,
   onClose,
   onTaskSaved,
+  onTaskDeleted,
 }: TaskBottomSheetProps) {
   const planner = usePlanner();
 
@@ -50,6 +53,7 @@ export function TaskBottomSheet({
   const [selectedRepeat, setSelectedRepeat] = useState<TaskRepeat | null>('none');
   const [selectedRepeatInterval, setSelectedRepeatInterval] = useState<number>(1);
   const [selectedCustomLabel, setSelectedCustomLabel] = useState<string | undefined>();
+  const [selectedCustomUnit, setSelectedCustomUnit] = useState<CustomUnit | undefined>();
 
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -68,6 +72,7 @@ export function TaskBottomSheet({
         setSelectedRepeat(((editingTask.repeat as TaskRepeat) || (editingTask.repeatType as TaskRepeat) || 'none'));
         setSelectedRepeatInterval(editingTask.repeatInterval || 1);
         setSelectedCustomLabel(undefined);
+        setSelectedCustomUnit(undefined);
       } else {
         setTitle('');
         setSelectedDate(initialDate || null);
@@ -75,6 +80,7 @@ export function TaskBottomSheet({
         setSelectedRepeat('none');
         setSelectedRepeatInterval(1);
         setSelectedCustomLabel(undefined);
+        setSelectedCustomUnit(undefined);
       }
       Animated.spring(translateY, {
         toValue: 0,
@@ -467,10 +473,12 @@ export function TaskBottomSheet({
           selectedRepeat={selectedRepeat}
           selectedRepeatInterval={selectedRepeatInterval}
           selectedCustomLabel={selectedCustomLabel}
-          onSelectRepeat={(r, interval = 1, customLabel) => {
+          selectedCustomUnit={selectedCustomUnit}
+          onSelectRepeat={(r, interval = 1, customLabel, customUnit) => {
             setSelectedRepeat(r);
             setSelectedRepeatInterval(interval);
             setSelectedCustomLabel(customLabel);
+            setSelectedCustomUnit(customUnit);
             closeRepeatSheet();
           }}
           onClose={closeRepeatSheet}

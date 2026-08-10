@@ -5,14 +5,15 @@ import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
 import { getShortRepeatLabel, repeatLabels } from './RepeatChip';
 import { AnimatedPressable } from './AnimatedPressable';
-import { CustomRepeatModal } from './CustomRepeatModal';
+import { CustomRepeatModal, CustomUnit } from './CustomRepeatModal';
 
 interface RepeatActionSheetProps {
   visible: boolean;
   selectedRepeat: TaskRepeat | null;
   selectedRepeatInterval?: number;
   selectedCustomLabel?: string;
-  onSelectRepeat: (repeat: TaskRepeat, interval?: number, customLabel?: string) => void;
+  selectedCustomUnit?: CustomUnit | null;
+  onSelectRepeat: (repeat: TaskRepeat, interval?: number, customLabel?: string, customUnit?: CustomUnit) => void;
   onClose: () => void;
 }
 
@@ -32,6 +33,7 @@ export function RepeatActionSheet({
   selectedRepeat,
   selectedRepeatInterval = 1,
   selectedCustomLabel,
+  selectedCustomUnit,
   onSelectRepeat,
   onClose,
 }: RepeatActionSheetProps) {
@@ -78,7 +80,7 @@ export function RepeatActionSheet({
     if (opt === 'custom') {
       setShowCustomModal(true);
     } else {
-      onSelectRepeat(opt, 1, undefined);
+      onSelectRepeat(opt, 1, undefined, undefined);
       handleClose();
     }
   };
@@ -140,8 +142,9 @@ export function RepeatActionSheet({
         visible={showCustomModal}
         currentRepeat={selectedRepeat}
         currentInterval={selectedRepeatInterval}
-        onConfirm={(targetRepeat, interval, customLabel) => {
-          onSelectRepeat(targetRepeat, interval, customLabel);
+        currentCustomUnit={selectedCustomUnit}
+        onConfirm={(targetRepeat, interval, customLabel, customUnit) => {
+          onSelectRepeat(targetRepeat, interval, customLabel, customUnit);
           setShowCustomModal(false);
           handleClose();
         }}

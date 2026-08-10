@@ -5,15 +5,16 @@ import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
 import { AnimatedPressable } from './AnimatedPressable';
 
+export type CustomUnit = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+
 interface CustomRepeatModalProps {
   visible: boolean;
   currentRepeat?: TaskRepeat | null;
   currentInterval?: number;
-  onConfirm: (repeatType: TaskRepeat, interval: number, customLabel?: string) => void;
+  currentCustomUnit?: CustomUnit | null;
+  onConfirm: (repeatType: TaskRepeat, interval: number, customLabel?: string, customUnit?: CustomUnit) => void;
   onClose: () => void;
 }
-
-type CustomUnit = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 type MonthlyMode = 'dates' | 'dayOfWeek';
 
 const unitLabels: Record<CustomUnit, string> = {
@@ -70,6 +71,7 @@ export function CustomRepeatModal({
   visible,
   currentRepeat,
   currentInterval = 1,
+  currentCustomUnit,
   onConfirm,
   onClose,
 }: CustomRepeatModalProps) {
@@ -79,9 +81,11 @@ export function CustomRepeatModal({
   onCloseRef.current = onClose;
 
   const [unit, setUnit] = useState<CustomUnit>(() => {
+    if (currentCustomUnit) return currentCustomUnit;
     if (currentRepeat === 'monthly') return 'monthly';
     if (currentRepeat === 'yearly') return 'yearly';
     if (currentRepeat === 'daily') return 'daily';
+    if (currentRepeat === 'hourly') return 'hourly';
     return 'weekly';
   });
   const [interval, setIntervalVal] = useState<number>(() => Math.max(1, currentInterval));
@@ -116,9 +120,11 @@ export function CustomRepeatModal({
 
   useEffect(() => {
     if (visible) {
-      if (currentRepeat === 'monthly') setUnit('monthly');
+      if (currentCustomUnit) setUnit(currentCustomUnit);
+      else if (currentRepeat === 'monthly') setUnit('monthly');
       else if (currentRepeat === 'yearly') setUnit('yearly');
       else if (currentRepeat === 'daily') setUnit('daily');
+      else if (currentRepeat === 'hourly') setUnit('hourly');
       else setUnit('weekly');
 
       setIntervalVal(Math.max(1, currentInterval));
@@ -132,7 +138,7 @@ export function CustomRepeatModal({
       translateY.setValue(420);
       backdropOpacity.setValue(0);
     }
-  }, [visible, currentRepeat, currentInterval, translateY, backdropOpacity]);
+  }, [visible, currentRepeat, currentInterval, currentCustomUnit, translateY, backdropOpacity]);
 
   if (!visible) return null;
 
