@@ -423,7 +423,7 @@ export function CustomRepeatModal({
                         triggerHaptic();
                         setYearlyEnableWeekdays(v);
                       }}
-                      trackColor={{ false: '#E5E5EA', true: '#01B7FF' }}
+                      trackColor={{ false: '#E5E5EA', true: '#34C759' }}
                       ios_backgroundColor="#E5E5EA"
                       style={{ transform: [{ scaleX: 0.88 }, { scaleY: 0.88 }] }}
                     />
