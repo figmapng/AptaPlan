@@ -376,27 +376,29 @@ export function CustomRepeatModal({
 
         {/* iOS Popover Dropdown Menu */}
         {showUnitMenu && (
-          <View style={styles.popoverMenu}>
-            {(['daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u) => {
-              const isSelected = unit === u;
-              return (
-                <Pressable
-                  key={u}
-                  style={[styles.menuItem, isSelected && styles.menuItemActive]}
-                  onPress={() => {
-                    triggerHaptic();
-                    setUnit(u);
-                    setShowUnitMenu(false);
-                  }}
-                >
-                  <Text style={[styles.menuItemText, isSelected && styles.menuItemTextActive]}>
-                    {unitLabels[u]}
-                  </Text>
-                  {isSelected && <CheckIcon color="#01B7FF" />}
-                </Pressable>
-              );
-            })}
-          </View>
+          <Pressable style={styles.popoverOverlay} onPress={() => setShowUnitMenu(false)}>
+            <View style={styles.popoverMenu}>
+              {(['daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u) => {
+                const isSelected = unit === u;
+                return (
+                  <Pressable
+                    key={u}
+                    style={[styles.menuItem, isSelected && styles.menuItemActive]}
+                    onPress={() => {
+                      triggerHaptic();
+                      setUnit(u);
+                      setShowUnitMenu(false);
+                    }}
+                  >
+                    <Text style={[styles.menuItemText, isSelected && styles.menuItemTextActive]}>
+                      {unitLabels[u]}
+                    </Text>
+                    {isSelected && <CheckIcon color="#01B7FF" />}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
         )}
       </Animated.View>
     </Animated.View>
@@ -661,20 +663,25 @@ const styles = StyleSheet.create({
     color: '#01B7FF',
     fontWeight: '700',
   },
+  popoverOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+    elevation: 9999,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
   popoverMenu: {
     position: 'absolute',
-    top: 110,
+    top: 92,
     right: 20,
-    width: 180,
+    width: 190,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     paddingVertical: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.16,
+    shadowOpacity: 0.2,
     shadowRadius: 16,
-    elevation: 12,
-    zIndex: 2000,
+    elevation: 20,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
