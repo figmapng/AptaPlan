@@ -763,9 +763,9 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   width: 48,
                   height: 48,
                   borderRadius: 24,
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: '#E5E5EA',
                   borderWidth: 1,
-                  borderColor: '#E2E8F0',
+                  borderColor: '#E5E8EB',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -773,7 +773,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M15 18l-6-6 6-6"
-                    stroke="#475569"
+                    stroke="#000000"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -791,8 +791,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   height: 48,
                   borderRadius: 24,
                   borderWidth: 1,
-                  borderColor: '#E2E8F0',
-                  backgroundColor: '#FFFFFF',
+                  borderColor: '#E5E8EB',
+                  backgroundColor: '#F3F4F6',
                   flexDirection: 'row',
                   alignItems: 'center',
                   paddingHorizontal: 16,
