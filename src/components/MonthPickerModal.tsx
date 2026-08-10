@@ -91,7 +91,7 @@ export function MonthPickerModal({
               }}
             >
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                <Path d="M15 18l-6-6 6-6" stroke="#01B7FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M15 18l-6-6 6-6" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </AnimatedPressable>
 
@@ -106,7 +106,7 @@ export function MonthPickerModal({
               }}
             >
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                <Path d="M9 18l6-6-6-6" stroke="#01B7FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M9 18l6-6-6-6" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </AnimatedPressable>
           </View>
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#E6F7FF',
+    backgroundColor: '#E5E5EA',
     alignItems: 'center',
     justifyContent: 'center',
   },
