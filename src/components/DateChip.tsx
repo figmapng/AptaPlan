@@ -40,7 +40,7 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
 
 function CalendarIcon({ color = '#23262D' }: { color?: string }) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+    <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
       <Path
         d="M1.6665 10C1.6665 6.85734 1.6665 5.286 2.64281 4.30968C3.61913 3.33337 5.19047 3.33337 8.33317 3.33337H11.6665C14.8092 3.33337 16.3806 3.33337 17.3568 4.30968C18.3332 5.286 18.3332 6.85734 18.3332 10V11.6667C18.3332 14.8094 18.3332 16.3808 17.3568 17.357C16.3806 18.3334 14.8092 18.3334 11.6665 18.3334H8.33317C5.19047 18.3334 3.61913 18.3334 2.64281 17.357C1.6665 16.3808 1.6665 14.8094 1.6665 11.6667V10Z"
         stroke={color}
@@ -61,16 +61,16 @@ function CalendarIcon({ color = '#23262D' }: { color?: string }) {
 
 const styles = StyleSheet.create({
   chip: {
-    height: 38,
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    height: 34,
+    borderRadius: 10,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: '#F3F4F6',
   },
   iconOnly: {
-    width: 38,
+    width: 34,
     paddingHorizontal: 0,
     justifyContent: 'center',
   },

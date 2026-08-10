@@ -69,7 +69,7 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
 
 function RepeatIcon({ color = '#23262D' }: { color?: string }) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+    <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
       <Path
         d="M15.3035 6.70851L14.7142 6.11925C12.1107 3.51576 7.88961 3.51576 5.28612 6.11925C2.68262 8.72271 2.68262 12.9439 5.28612 15.5474C7.88961 18.1509 12.1107 18.1509 14.7142 15.5474C16.2282 14.0333 16.8618 11.9723 16.6149 10.0004M15.3035 3.17297V6.70851H11.7679"
         stroke={color}
@@ -83,16 +83,16 @@ function RepeatIcon({ color = '#23262D' }: { color?: string }) {
 
 const styles = StyleSheet.create({
   chip: {
-    height: 38,
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    height: 34,
+    borderRadius: 10,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: '#F3F4F6',
   },
   iconOnly: {
-    width: 38,
+    width: 34,
     paddingHorizontal: 0,
     justifyContent: 'center',
   },

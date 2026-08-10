@@ -37,7 +37,7 @@ export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps
 
 function ClockIcon({ color = '#23262D' }: { color?: string }) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+    <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
       <Path
         d="M10 18.3334C14.1421 18.3334 17.5 14.9755 17.5 10.8334C17.5 6.69124 14.1421 3.33337 10 3.33337C5.85786 3.33337 2.5 6.69124 2.5 10.8334C2.5 14.9755 5.85786 18.3334 10 18.3334Z"
         stroke={color}
@@ -70,16 +70,16 @@ function ClockIcon({ color = '#23262D' }: { color?: string }) {
 
 const styles = StyleSheet.create({
   chip: {
-    height: 38,
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    height: 34,
+    borderRadius: 10,
+    paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: '#F3F4F6',
   },
   iconOnly: {
-    width: 38,
+    width: 34,
     paddingHorizontal: 0,
     justifyContent: 'center',
   },

@@ -427,10 +427,10 @@ export function TaskBottomSheet({
               <Pressable
                 onPress={handleDelete}
                 style={{
-                  height: 38,
-                  borderRadius: 12,
+                  height: 34,
+                  borderRadius: 10,
                   backgroundColor: '#FF3B3014',
-                  paddingHorizontal: 12,
+                  paddingHorizontal: 10,
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexDirection: 'row',
