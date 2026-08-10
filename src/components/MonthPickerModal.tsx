@@ -132,9 +132,9 @@ export function MonthPickerModal({
                 setSelectedYear((prev) => prev + 1);
               }
             }}
-            style={{ width: ITEM_WIDTH, height: 260 }}
+            style={{ width: ITEM_WIDTH, height: 274 }}
           >
-            <View style={{ width: ITEM_WIDTH, height: 260 }}>
+            <View style={{ width: ITEM_WIDTH, height: 274 }}>
               <MonthGridMatrix
                 year={selectedYear - 1}
                 currentDate={currentDate}
@@ -146,7 +146,7 @@ export function MonthPickerModal({
               />
             </View>
 
-            <View style={{ width: ITEM_WIDTH, height: 260 }}>
+            <View style={{ width: ITEM_WIDTH, height: 274 }}>
               <MonthGridMatrix
                 year={selectedYear}
                 currentDate={currentDate}
@@ -158,7 +158,7 @@ export function MonthPickerModal({
               />
             </View>
 
-            <View style={{ width: ITEM_WIDTH, height: 260 }}>
+            <View style={{ width: ITEM_WIDTH, height: 274 }}>
               <MonthGridMatrix
                 year={selectedYear + 1}
                 currentDate={currentDate}
