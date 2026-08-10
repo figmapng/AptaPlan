@@ -7,6 +7,7 @@ import { AnimatedPressable } from './AnimatedPressable';
 interface RepeatChipProps {
   repeat: TaskRepeat | null;
   interval?: number;
+  customLabel?: string;
   onPress: () => void;
   hapticsEnabled?: boolean;
 }
@@ -37,7 +38,7 @@ export function getShortRepeatLabel(repeat: TaskRepeat | null, interval = 1): st
   return repeatLabels[repeat] || 'Арнайы';
 }
 
-export function RepeatChip({ repeat, interval = 1, onPress, hapticsEnabled = true }: RepeatChipProps) {
+export function RepeatChip({ repeat, interval = 1, customLabel, onPress, hapticsEnabled = true }: RepeatChipProps) {
   const handlePress = async () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -46,7 +47,7 @@ export function RepeatChip({ repeat, interval = 1, onPress, hapticsEnabled = tru
   };
 
   const isActive = repeat && repeat !== 'none';
-  const label = getShortRepeatLabel(repeat, interval);
+  const label = (repeat === 'custom' && customLabel) ? customLabel : getShortRepeatLabel(repeat, interval);
 
   return (
     <AnimatedPressable

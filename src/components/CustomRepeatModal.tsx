@@ -9,7 +9,7 @@ interface CustomRepeatModalProps {
   visible: boolean;
   currentRepeat?: TaskRepeat | null;
   currentInterval?: number;
-  onConfirm: (repeatType: TaskRepeat, interval: number) => void;
+  onConfirm: (repeatType: TaskRepeat, interval: number, customLabel?: string) => void;
   onClose: () => void;
 }
 
@@ -146,9 +146,54 @@ export function CustomRepeatModal({
     setIntervalVal((prev) => Math.max(prev - 1, 1));
   };
 
+  const getShortCustomLabel = (): string => {
+    if (unit === 'hourly') {
+      return interval === 1 ? 'Сағат сайын' : `Әр ${interval} сағатта`;
+    }
+
+    if (unit === 'daily') {
+      return interval === 1 ? 'Күн сайын' : `Әр ${interval} күнде`;
+    }
+
+    if (unit === 'weekly') {
+      const shortDays = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
+      const sorted = [...selectedWeekdays].sort((a, b) => a - b);
+      const daysText = sorted.map((i) => shortDays[i]).join(', ');
+      const isAllDays = sorted.length === 7;
+      if (interval === 1) {
+        return isAllDays ? 'Апта сайын' : `Апта сайын (${daysText})`;
+      }
+      return isAllDays ? `Әр ${interval} аптада` : `Әр ${interval} аптада (${daysText})`;
+    }
+
+    if (unit === 'monthly') {
+      if (monthlyMode === 'dates') {
+        return interval === 1
+          ? `Ай сайын (${selectedMonthDate}-күні)`
+          : `Әр ${interval} айда (${selectedMonthDate}-күні)`;
+      }
+      const posShort = ['1-ші', '2-ші', '3-ші', '4-ші', 'соңғы'][selectedPosIdx];
+      const dayText = kzWeekdaysFull[selectedDayIdx].toLowerCase();
+      return interval === 1
+        ? `Ай сайын (${posShort} ${dayText})`
+        : `Әр ${interval} айда (${posShort} ${dayText})`;
+    }
+
+    // yearly
+    const mShort = kzMonthsShort[selectedYearlyMonth];
+    if (yearlyEnableWeekdays) {
+      const posShort = ['1-ші', '2-ші', '3-ші', '4-ші', 'соңғы'][selectedPosIdx];
+      const dayText = kzWeekdaysFull[selectedDayIdx].toLowerCase();
+      return interval === 1
+        ? `Жыл сайын (${posShort} ${dayText}, ${mShort})`
+        : `Әр ${interval} жылда (${posShort} ${dayText}, ${mShort})`;
+    }
+    return interval === 1 ? `Жыл сайын (${mShort})` : `Әр ${interval} жылда (${mShort})`;
+  };
+
   const handleConfirm = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    onConfirm('custom', interval);
+    onConfirm('custom', interval, getShortCustomLabel());
     handleClose();
   };
 

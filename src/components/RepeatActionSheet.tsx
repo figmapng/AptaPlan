@@ -11,7 +11,8 @@ interface RepeatActionSheetProps {
   visible: boolean;
   selectedRepeat: TaskRepeat | null;
   selectedRepeatInterval?: number;
-  onSelectRepeat: (repeat: TaskRepeat, interval?: number) => void;
+  selectedCustomLabel?: string;
+  onSelectRepeat: (repeat: TaskRepeat, interval?: number, customLabel?: string) => void;
   onClose: () => void;
 }
 
@@ -30,6 +31,7 @@ export function RepeatActionSheet({
   visible,
   selectedRepeat,
   selectedRepeatInterval = 1,
+  selectedCustomLabel,
   onSelectRepeat,
   onClose,
 }: RepeatActionSheetProps) {
@@ -76,7 +78,7 @@ export function RepeatActionSheet({
     if (opt === 'custom') {
       setShowCustomModal(true);
     } else {
-      onSelectRepeat(opt, 1);
+      onSelectRepeat(opt, 1, undefined);
       handleClose();
     }
   };
@@ -105,7 +107,7 @@ export function RepeatActionSheet({
           <View style={styles.optionsList}>
             {repeatOptions.map((opt) => {
               const isSelected = current === opt;
-              const shortCustomLabel = getShortRepeatLabel('custom', selectedRepeatInterval);
+              const shortCustomLabel = selectedCustomLabel || getShortRepeatLabel('custom', selectedRepeatInterval);
               const labelText =
                 opt === 'custom' && isSelected && shortCustomLabel
                   ? `Арнайы (${shortCustomLabel})`
@@ -138,8 +140,8 @@ export function RepeatActionSheet({
         visible={showCustomModal}
         currentRepeat={selectedRepeat}
         currentInterval={selectedRepeatInterval}
-        onConfirm={(targetRepeat, interval) => {
-          onSelectRepeat(targetRepeat, interval);
+        onConfirm={(targetRepeat, interval, customLabel) => {
+          onSelectRepeat(targetRepeat, interval, customLabel);
           setShowCustomModal(false);
           handleClose();
         }}

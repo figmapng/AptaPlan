@@ -49,6 +49,7 @@ export function TaskBottomSheet({
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedRepeat, setSelectedRepeat] = useState<TaskRepeat | null>('none');
   const [selectedRepeatInterval, setSelectedRepeatInterval] = useState<number>(1);
+  const [selectedCustomLabel, setSelectedCustomLabel] = useState<string | undefined>();
 
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -65,11 +66,15 @@ export function TaskBottomSheet({
         setSelectedDate(editingTask.date);
         setSelectedTime(editingTask.time || null);
         setSelectedRepeat(((editingTask.repeat as TaskRepeat) || (editingTask.repeatType as TaskRepeat) || 'none'));
+        setSelectedRepeatInterval(editingTask.repeatInterval || 1);
+        setSelectedCustomLabel(undefined);
       } else {
         setTitle('');
         setSelectedDate(initialDate || null);
         setSelectedTime(null);
         setSelectedRepeat('none');
+        setSelectedRepeatInterval(1);
+        setSelectedCustomLabel(undefined);
       }
       Animated.spring(translateY, {
         toValue: 0,
@@ -406,6 +411,7 @@ export function TaskBottomSheet({
             <RepeatChip
               repeat={selectedRepeat}
               interval={selectedRepeatInterval}
+              customLabel={selectedCustomLabel}
               onPress={openRepeatSheet}
             />
             {editingTask && (
@@ -460,9 +466,11 @@ export function TaskBottomSheet({
           visible={showRepeatSheet}
           selectedRepeat={selectedRepeat}
           selectedRepeatInterval={selectedRepeatInterval}
-          onSelectRepeat={(r, interval = 1) => {
+          selectedCustomLabel={selectedCustomLabel}
+          onSelectRepeat={(r, interval = 1, customLabel) => {
             setSelectedRepeat(r);
             setSelectedRepeatInterval(interval);
+            setSelectedCustomLabel(customLabel);
             closeRepeatSheet();
           }}
           onClose={closeRepeatSheet}
