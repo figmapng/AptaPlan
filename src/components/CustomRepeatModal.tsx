@@ -82,11 +82,12 @@ export function CustomRepeatModal({
 
   const [unit, setUnit] = useState<CustomUnit>(() => {
     if (currentCustomUnit) return currentCustomUnit;
+    if (currentRepeat === 'hourly') return 'hourly';
+    if (currentRepeat === 'daily') return 'daily';
+    if (currentRepeat === 'weekly') return 'weekly';
     if (currentRepeat === 'monthly') return 'monthly';
     if (currentRepeat === 'yearly') return 'yearly';
-    if (currentRepeat === 'daily') return 'daily';
-    if (currentRepeat === 'hourly') return 'hourly';
-    return 'weekly';
+    return 'hourly';
   });
   const [interval, setIntervalVal] = useState<number>(() => Math.max(1, currentInterval));
   const [showUnitMenu, setShowUnitMenu] = useState(false);
@@ -126,7 +127,7 @@ export function CustomRepeatModal({
       else if (currentRepeat === 'weekly') setUnit('weekly');
       else if (currentRepeat === 'monthly') setUnit('monthly');
       else if (currentRepeat === 'yearly') setUnit('yearly');
-      else setUnit('daily');
+      else setUnit('hourly');
 
       setIntervalVal(Math.max(1, currentInterval));
       setShowUnitMenu(false);
