@@ -352,8 +352,7 @@ export function CustomRepeatModal({
             accessibilityRole="button"
             accessibilityLabel="Артқа қайту"
           >
-            <BackChevronIcon color="#01B7FF" />
-            <Text style={styles.backBtnText}>Артқа</Text>
+            <BackChevronIcon color="#000000" />
           </AnimatedPressable>
 
           <Text style={styles.title}>Реттеу</Text>
@@ -601,10 +600,10 @@ export function CustomRepeatModal({
 }
 
 // Icons
-function BackChevronIcon({ color = '#01B7FF' }: { color?: string }) {
+function BackChevronIcon({ color = '#000000' }: { color?: string }) {
   return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
@@ -697,14 +696,8 @@ const styles = StyleSheet.create({
     left: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
     paddingVertical: 4,
-    paddingRight: 8,
-  },
-  backBtnText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#01B7FF',
+    paddingRight: 12,
   },
   title: {
     fontSize: 18,
