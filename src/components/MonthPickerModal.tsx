@@ -215,8 +215,8 @@ const styles = StyleSheet.create({
   arrowBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E5E5EA',
+    borderRadius: 8,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
