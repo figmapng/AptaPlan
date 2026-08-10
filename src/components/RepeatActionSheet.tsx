@@ -135,9 +135,10 @@ export function RepeatActionSheet({
       {/* Custom Interval Picker Modal */}
       <CustomRepeatModal
         visible={showCustomModal}
+        currentRepeat={selectedRepeat}
         currentInterval={selectedRepeatInterval}
-        onConfirm={(interval) => {
-          onSelectRepeat('custom', interval);
+        onConfirm={(targetRepeat, interval) => {
+          onSelectRepeat(targetRepeat, interval);
           setShowCustomModal(false);
           handleClose();
         }}
