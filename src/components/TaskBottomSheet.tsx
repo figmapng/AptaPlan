@@ -48,6 +48,7 @@ export function TaskBottomSheet({
   const [selectedDate, setSelectedDate] = useState<string | null>(initialDate || null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedRepeat, setSelectedRepeat] = useState<TaskRepeat | null>('none');
+  const [selectedRepeatInterval, setSelectedRepeatInterval] = useState<number>(1);
 
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -196,6 +197,7 @@ export function TaskBottomSheet({
         time: selectedTime,
         repeatType: selectedRepeat as TaskRepeat,
         repeat: selectedRepeat as TaskRepeat,
+        repeatInterval: selectedRepeatInterval,
       });
       onTaskSaved?.({
         ...editingTask,
@@ -204,6 +206,7 @@ export function TaskBottomSheet({
         time: selectedTime,
         repeat: selectedRepeat as TaskRepeat,
         repeatType: selectedRepeat as TaskRepeat,
+        repeatInterval: selectedRepeatInterval,
       });
     } else {
       const id = await planner.create({
@@ -212,6 +215,7 @@ export function TaskBottomSheet({
         time: selectedTime,
         repeatType: selectedRepeat as TaskRepeat,
         repeat: selectedRepeat as TaskRepeat,
+        repeatInterval: selectedRepeatInterval,
       });
       onTaskSaved?.({
         id,
@@ -222,7 +226,7 @@ export function TaskBottomSheet({
         time: selectedTime,
         repeat: selectedRepeat as TaskRepeat,
         repeatType: selectedRepeat as TaskRepeat,
-        repeatInterval: 1,
+        repeatInterval: selectedRepeatInterval,
         note: null,
         priority: 'normal',
         notificationOffset: null,
@@ -454,8 +458,10 @@ export function TaskBottomSheet({
         <RepeatActionSheet
           visible={showRepeatSheet}
           selectedRepeat={selectedRepeat}
-          onSelectRepeat={(r) => {
+          selectedRepeatInterval={selectedRepeatInterval}
+          onSelectRepeat={(r, interval = 1) => {
             setSelectedRepeat(r);
+            setSelectedRepeatInterval(interval);
             closeRepeatSheet();
           }}
           onClose={closeRepeatSheet}

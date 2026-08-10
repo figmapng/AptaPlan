@@ -1,15 +1,17 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
 import { repeatLabels } from './RepeatChip';
 import { AnimatedPressable } from './AnimatedPressable';
+import { CustomRepeatModal } from './CustomRepeatModal';
 
 interface RepeatActionSheetProps {
   visible: boolean;
   selectedRepeat: TaskRepeat | null;
-  onSelectRepeat: (repeat: TaskRepeat) => void;
+  selectedRepeatInterval?: number;
+  onSelectRepeat: (repeat: TaskRepeat, interval?: number) => void;
   onClose: () => void;
 }
 
@@ -27,6 +29,7 @@ const repeatOptions: TaskRepeat[] = [
 export function RepeatActionSheet({
   visible,
   selectedRepeat,
+  selectedRepeatInterval = 1,
   onSelectRepeat,
   onClose,
 }: RepeatActionSheetProps) {
@@ -34,6 +37,8 @@ export function RepeatActionSheet({
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+
+  const [showCustomModal, setShowCustomModal] = useState(false);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
     if (process.env.EXPO_OS === 'ios') {
@@ -58,6 +63,7 @@ export function RepeatActionSheet({
     } else {
       translateY.setValue(420);
       backdropOpacity.setValue(0);
+      setShowCustomModal(false);
     }
   }, [visible, translateY, backdropOpacity]);
 
@@ -65,54 +71,79 @@ export function RepeatActionSheet({
 
   const current = selectedRepeat || 'none';
 
+  const handleOptionClick = (opt: TaskRepeat) => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    if (opt === 'custom') {
+      setShowCustomModal(true);
+    } else {
+      onSelectRepeat(opt, 1);
+      handleClose();
+    }
+  };
+
   return (
-    <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
-      <Pressable style={styles.backdrop} onPress={handleClose} />
-      <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-        <View style={styles.dragPill} />
+    <>
+      <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
+        <Pressable style={styles.backdrop} onPress={handleClose} />
+        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
+          <View style={styles.dragPill} />
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Қайталау жиілігі</Text>
-          <AnimatedPressable
-            activeScale={0.88}
-            style={styles.closeBtn}
-            onPress={handleClose}
-            accessibilityRole="button"
-            accessibilityLabel="Жабу"
-          >
-            <CloseXIcon color="#6B7280" />
-          </AnimatedPressable>
-        </View>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Қайталау жиілігі</Text>
+            <AnimatedPressable
+              activeScale={0.88}
+              style={styles.closeBtn}
+              onPress={handleClose}
+              accessibilityRole="button"
+              accessibilityLabel="Жабу"
+            >
+              <CloseXIcon color="#6B7280" />
+            </AnimatedPressable>
+          </View>
 
-        <View style={styles.optionsList}>
-          {repeatOptions.map((opt) => {
-            const isSelected = current === opt;
-            return (
-              <AnimatedPressable
-                key={opt}
-                activeScale={0.97}
-                style={[styles.optionItem, isSelected && styles.optionItemActive]}
-                onPress={() => {
-                  triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-                  onSelectRepeat(opt);
-                  handleClose();
-                }}
-              >
-                <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>
-                  {repeatLabels[opt]}
-                </Text>
-                {isSelected && (
-                  <View style={styles.checkmarkBadge}>
-                    <CheckIcon color="#01B7FF" />
-                  </View>
-                )}
-              </AnimatedPressable>
-            );
-          })}
-        </View>
+          <View style={styles.optionsList}>
+            {repeatOptions.map((opt) => {
+              const isSelected = current === opt;
+              const labelText =
+                opt === 'custom' && isSelected && selectedRepeatInterval > 1
+                  ? `Арнайы (Әр ${selectedRepeatInterval} күнде)`
+                  : repeatLabels[opt];
+
+              return (
+                <AnimatedPressable
+                  key={opt}
+                  activeScale={0.97}
+                  style={[styles.optionItem, isSelected && styles.optionItemActive]}
+                  onPress={() => handleOptionClick(opt)}
+                >
+                  <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>
+                    {labelText}
+                  </Text>
+                  {isSelected && (
+                    <View style={styles.checkmarkBadge}>
+                      <CheckIcon color="#01B7FF" />
+                    </View>
+                  )}
+                </AnimatedPressable>
+              );
+            })}
+          </View>
+        </Animated.View>
       </Animated.View>
-    </Animated.View>
+
+      {/* Custom Interval Picker Modal */}
+      <CustomRepeatModal
+        visible={showCustomModal}
+        currentInterval={selectedRepeatInterval}
+        onConfirm={(interval) => {
+          onSelectRepeat('custom', interval);
+          setShowCustomModal(false);
+          handleClose();
+        }}
+        onClose={() => setShowCustomModal(false)}
+      />
+    </>
   );
 }
 

@@ -28,6 +28,7 @@ export type TaskInput = {
   date: string;
   time?: string | null;
   repeat?: TaskRepeat | null;
+  repeatInterval?: number;
   note?: string | null;
   priority?: Priority;
   repeatType?: RepeatType | string;
