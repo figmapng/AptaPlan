@@ -71,8 +71,8 @@ function ClockIcon({ color = '#23262D' }: { color?: string }) {
 const styles = StyleSheet.create({
   chip: {
     height: 38,
-    borderRadius: 19,
-    paddingHorizontal: 14,
+    borderRadius: 12,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
