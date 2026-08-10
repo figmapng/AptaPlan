@@ -121,11 +121,12 @@ export function CustomRepeatModal({
   useEffect(() => {
     if (visible) {
       if (currentCustomUnit) setUnit(currentCustomUnit);
+      else if (currentRepeat === 'hourly') setUnit('hourly');
+      else if (currentRepeat === 'daily') setUnit('daily');
+      else if (currentRepeat === 'weekly') setUnit('weekly');
       else if (currentRepeat === 'monthly') setUnit('monthly');
       else if (currentRepeat === 'yearly') setUnit('yearly');
-      else if (currentRepeat === 'daily') setUnit('daily');
-      else if (currentRepeat === 'hourly') setUnit('hourly');
-      else setUnit('weekly');
+      else setUnit('daily');
 
       setIntervalVal(Math.max(1, currentInterval));
       setShowUnitMenu(false);
@@ -199,7 +200,7 @@ export function CustomRepeatModal({
 
   const handleConfirm = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    onConfirm('custom', interval, getShortCustomLabel());
+    onConfirm(unit, interval, getShortCustomLabel(), unit);
     handleClose();
   };
 

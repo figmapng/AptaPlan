@@ -108,8 +108,11 @@ export function RepeatActionSheet({
 
           <View style={styles.optionsList}>
             {repeatOptions.map((opt) => {
-              const isSelected = current === opt;
-              const shortCustomLabel = selectedCustomLabel || getShortRepeatLabel('custom', selectedRepeatInterval);
+              const isCustomSelected = (selectedRepeatInterval > 1 || current === 'custom') && opt === 'custom';
+              const isStandardSelected = selectedRepeatInterval <= 1 && current !== 'custom' && current === opt;
+              const isSelected = isCustomSelected || isStandardSelected;
+
+              const shortCustomLabel = selectedCustomLabel || getShortRepeatLabel(current, selectedRepeatInterval);
               const labelText =
                 opt === 'custom' && isSelected && shortCustomLabel
                   ? `Арнайы (${shortCustomLabel})`
