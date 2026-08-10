@@ -75,7 +75,7 @@ export default function SettingsScreen() {
           style={styles.backButton}
           accessibilityLabel="Артқа қайту"
         >
-          <Ionicons name="chevron-back" size={24} color="#000000" />
+          <Ionicons name="chevron-back" size={20} color="#000000" style={{ marginLeft: -1 }} />
         </AnimatedPressable>
 
         <Text style={styles.headerTitle}>Баптаулар</Text>
@@ -417,11 +417,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButton: {
-    flexDirection: 'row',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E5E5EA',
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingRight: 8,
-    minWidth: 40,
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 17,
@@ -430,7 +431,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerSpacer: {
-    minWidth: 40,
+    width: 36,
   },
   scrollContent: {
     paddingHorizontal: 16,

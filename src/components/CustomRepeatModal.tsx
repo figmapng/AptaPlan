@@ -602,7 +602,7 @@ export function CustomRepeatModal({
 // Icons
 function BackChevronIcon({ color = '#000000' }: { color?: string }) {
   return (
-    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" style={{ marginLeft: -1 }}>
       <Path d="M15 18l-6-6 6-6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
@@ -694,10 +694,12 @@ const styles = StyleSheet.create({
   backBtn: {
     position: 'absolute',
     left: 0,
-    flexDirection: 'row',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#E5E5EA',
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingRight: 12,
+    justifyContent: 'center',
   },
   title: {
     fontSize: 18,
