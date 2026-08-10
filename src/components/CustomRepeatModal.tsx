@@ -6,16 +6,35 @@ import type { TaskRepeat } from '@/types/task';
 import { AnimatedPressable } from './AnimatedPressable';
 
 export type CustomUnit = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+export type MonthlyMode = 'dates' | 'dayOfWeek';
+
+export interface CustomRepeatConfig {
+  unit: CustomUnit;
+  interval: number;
+  selectedWeekdays?: number[];
+  monthlyMode?: MonthlyMode;
+  selectedMonthDate?: number;
+  selectedPosIdx?: number;
+  selectedDayIdx?: number;
+  selectedYearlyMonth?: number;
+  yearlyEnableWeekdays?: boolean;
+}
 
 interface CustomRepeatModalProps {
   visible: boolean;
   currentRepeat?: TaskRepeat | null;
   currentInterval?: number;
   currentCustomUnit?: CustomUnit | null;
-  onConfirm: (repeatType: TaskRepeat, interval: number, customLabel?: string, customUnit?: CustomUnit) => void;
+  currentCustomConfig?: CustomRepeatConfig | null;
+  onConfirm: (
+    repeatType: TaskRepeat,
+    interval: number,
+    customLabel?: string,
+    customUnit?: CustomUnit,
+    customConfig?: CustomRepeatConfig
+  ) => void;
   onClose: () => void;
 }
-type MonthlyMode = 'dates' | 'dayOfWeek';
 
 const unitLabels: Record<CustomUnit, string> = {
   hourly: 'Сағат сайын',
@@ -72,6 +91,7 @@ export function CustomRepeatModal({
   currentRepeat,
   currentInterval = 1,
   currentCustomUnit,
+  currentCustomConfig,
   onConfirm,
   onClose,
 }: CustomRepeatModalProps) {
@@ -81,6 +101,7 @@ export function CustomRepeatModal({
   onCloseRef.current = onClose;
 
   const [unit, setUnit] = useState<CustomUnit>(() => {
+    if (currentCustomConfig) return currentCustomConfig.unit;
     if (currentCustomUnit) return currentCustomUnit;
     if (currentRepeat === 'hourly') return 'hourly';
     if (currentRepeat === 'daily') return 'daily';
@@ -121,15 +142,42 @@ export function CustomRepeatModal({
 
   useEffect(() => {
     if (visible) {
-      if (currentCustomUnit) setUnit(currentCustomUnit);
-      else if (currentRepeat === 'hourly') setUnit('hourly');
-      else if (currentRepeat === 'daily') setUnit('daily');
-      else if (currentRepeat === 'weekly') setUnit('weekly');
-      else if (currentRepeat === 'monthly') setUnit('monthly');
-      else if (currentRepeat === 'yearly') setUnit('yearly');
-      else setUnit('hourly');
+      if (currentCustomConfig) {
+        setUnit(currentCustomConfig.unit);
+        setIntervalVal(currentCustomConfig.interval);
+        if (currentCustomConfig.selectedWeekdays) {
+          setSelectedWeekdays(currentCustomConfig.selectedWeekdays);
+        }
+        if (currentCustomConfig.monthlyMode) {
+          setMonthlyMode(currentCustomConfig.monthlyMode);
+        }
+        if (currentCustomConfig.selectedMonthDate !== undefined) {
+          setSelectedMonthDate(currentCustomConfig.selectedMonthDate);
+        }
+        if (currentCustomConfig.selectedPosIdx !== undefined) {
+          setSelectedPosIdx(currentCustomConfig.selectedPosIdx);
+        }
+        if (currentCustomConfig.selectedDayIdx !== undefined) {
+          setSelectedDayIdx(currentCustomConfig.selectedDayIdx);
+        }
+        if (currentCustomConfig.selectedYearlyMonth !== undefined) {
+          setSelectedYearlyMonth(currentCustomConfig.selectedYearlyMonth);
+        }
+        if (currentCustomConfig.yearlyEnableWeekdays !== undefined) {
+          setYearlyEnableWeekdays(currentCustomConfig.yearlyEnableWeekdays);
+        }
+      } else {
+        if (currentCustomUnit) setUnit(currentCustomUnit);
+        else if (currentRepeat === 'hourly') setUnit('hourly');
+        else if (currentRepeat === 'daily') setUnit('daily');
+        else if (currentRepeat === 'weekly') setUnit('weekly');
+        else if (currentRepeat === 'monthly') setUnit('monthly');
+        else if (currentRepeat === 'yearly') setUnit('yearly');
+        else setUnit('hourly');
 
-      setIntervalVal(Math.max(1, currentInterval));
+        setIntervalVal(Math.max(1, currentInterval));
+      }
+
       setShowUnitMenu(false);
 
       Animated.parallel([
@@ -140,7 +188,7 @@ export function CustomRepeatModal({
       translateY.setValue(420);
       backdropOpacity.setValue(0);
     }
-  }, [visible, currentRepeat, currentInterval, currentCustomUnit, translateY, backdropOpacity]);
+  }, [visible, currentRepeat, currentInterval, currentCustomUnit, currentCustomConfig, translateY, backdropOpacity]);
 
   if (!visible) return null;
 
@@ -201,7 +249,18 @@ export function CustomRepeatModal({
 
   const handleConfirm = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    onConfirm(unit, interval, getShortCustomLabel(), unit);
+    const config: CustomRepeatConfig = {
+      unit,
+      interval,
+      selectedWeekdays,
+      monthlyMode,
+      selectedMonthDate,
+      selectedPosIdx,
+      selectedDayIdx,
+      selectedYearlyMonth,
+      yearlyEnableWeekdays,
+    };
+    onConfirm(unit, interval, getShortCustomLabel(), unit, config);
     handleClose();
   };
 

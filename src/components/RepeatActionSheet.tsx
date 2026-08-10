@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
 import { getShortRepeatLabel, repeatLabels } from './RepeatChip';
 import { AnimatedPressable } from './AnimatedPressable';
-import { CustomRepeatModal, CustomUnit } from './CustomRepeatModal';
+import { CustomRepeatConfig, CustomRepeatModal, CustomUnit } from './CustomRepeatModal';
 
 interface RepeatActionSheetProps {
   visible: boolean;
@@ -13,7 +13,14 @@ interface RepeatActionSheetProps {
   selectedRepeatInterval?: number;
   selectedCustomLabel?: string;
   selectedCustomUnit?: CustomUnit | null;
-  onSelectRepeat: (repeat: TaskRepeat, interval?: number, customLabel?: string, customUnit?: CustomUnit) => void;
+  selectedCustomConfig?: CustomRepeatConfig | null;
+  onSelectRepeat: (
+    repeat: TaskRepeat,
+    interval?: number,
+    customLabel?: string,
+    customUnit?: CustomUnit,
+    customConfig?: CustomRepeatConfig
+  ) => void;
   onClose: () => void;
 }
 
@@ -34,6 +41,7 @@ export function RepeatActionSheet({
   selectedRepeatInterval = 1,
   selectedCustomLabel,
   selectedCustomUnit,
+  selectedCustomConfig,
   onSelectRepeat,
   onClose,
 }: RepeatActionSheetProps) {
@@ -80,7 +88,7 @@ export function RepeatActionSheet({
     if (opt === 'custom') {
       setShowCustomModal(true);
     } else {
-      onSelectRepeat(opt, 1, undefined, undefined);
+      onSelectRepeat(opt, 1, undefined, undefined, undefined);
       handleClose();
     }
   };
@@ -146,8 +154,9 @@ export function RepeatActionSheet({
         currentRepeat={selectedRepeat}
         currentInterval={selectedRepeatInterval}
         currentCustomUnit={selectedCustomUnit}
-        onConfirm={(targetRepeat, interval, customLabel, customUnit) => {
-          onSelectRepeat(targetRepeat, interval, customLabel, customUnit);
+        currentCustomConfig={selectedCustomConfig}
+        onConfirm={(targetRepeat, interval, customLabel, customUnit, customConfig) => {
+          onSelectRepeat(targetRepeat, interval, customLabel, customUnit, customConfig);
           setShowCustomModal(false);
           handleClose();
         }}
