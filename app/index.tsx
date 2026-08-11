@@ -8,12 +8,14 @@ import {
   Keyboard,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
@@ -784,47 +786,73 @@ export default function Home() {
         </ScrollView>
       )}
 
-      {/* ── Floating input ───────────────────────────────────────── */}
+      {/* ── Floating input & Pure White Gradient Overlay ─────────── */}
       {(mode === 'week' || mode === 'month') && (
-        <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
+        <>
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: Math.max(insets.bottom + 8, 16) + 54,
+              zIndex: 25,
+            }}
+          >
+            <Svg width="100%" height="100%">
+              <Defs>
+                <LinearGradient id="bottomFadeGradientIndex" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0" />
+                  <Stop offset="0.2" stopColor="#FFFFFF" stopOpacity="0.7" />
+                  <Stop offset="0.45" stopColor="#FFFFFF" stopOpacity="1" />
+                  <Stop offset="1" stopColor="#FFFFFF" stopOpacity="1" />
+                </LinearGradient>
+              </Defs>
+              <Rect x="0" y="0" width="100%" height="100%" fill="url(#bottomFadeGradientIndex)" />
+            </Svg>
           </View>
-          {(isFutureWeek || isPastWeek) && (
-            <AnimatedPressable
-              accessibilityRole="button"
-              accessibilityLabel="Бүгінгі күнге қайту"
-              onPress={resetToCurrentWeek}
-              activeScale={0.93}
-              style={{
-                height: 48,
-                borderRadius: 24,
-                paddingHorizontal: 14,
-                backgroundColor: colors.today,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 6,
-              }}
-            >
-              {isFutureWeek && (
-                <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-                  <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
-              )}
-              <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
-                {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
-              </Text>
-              {isPastWeek && (
-                <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-                  <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
-              )}
-            </AnimatedPressable>
-          )}
-        </View>
+
+          <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
+            </View>
+            {(isFutureWeek || isPastWeek) && (
+              <AnimatedPressable
+                accessibilityRole="button"
+                accessibilityLabel="Бүгінгі күнге қайту"
+                onPress={resetToCurrentWeek}
+                activeScale={0.93}
+                style={{
+                  height: 48,
+                  borderRadius: 24,
+                  paddingHorizontal: 14,
+                  backgroundColor: colors.today,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  gap: 6,
+                }}
+              >
+                {isFutureWeek && (
+                  <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+                    <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                )}
+                <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
+                  {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
+                </Text>
+                {isPastWeek && (
+                  <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+                    <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                )}
+              </AnimatedPressable>
+            )}
+          </View>
+        </>
       )}
       </Animated.View>
 
@@ -909,8 +937,23 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
   return (
-    <AnimatedPressable accessibilityRole="button" accessibilityLabel="Жаңа тапсырма қосу" onPress={() => { onInteraction?.(); onAddTask(); }} activeScale={0.97}
-      style={{ height: 48, borderRadius: 24, borderWidth: 1, borderColor: colors.inputBorder, backgroundColor: colors.inputBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 10 }}>
+    <AnimatedPressable
+      accessibilityRole="button"
+      accessibilityLabel="Жаңа тапсырма қосу"
+      onPress={() => { onInteraction?.(); onAddTask(); }}
+      activeScale={0.97}
+      style={{
+        height: 48,
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: colors.inputBorder,
+        backgroundColor: colors.inputBg,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        gap: 10,
+      }}
+    >
       <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>
       <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>Тапсырма қосу</Text>
     </AnimatedPressable>

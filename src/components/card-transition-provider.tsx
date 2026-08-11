@@ -1,7 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { addDays, format, isToday } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
@@ -774,6 +775,31 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
             </Animated.View>
 
             <Animated.View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: Math.max(insets.bottom + 8, 12) + 54,
+                zIndex: 10000,
+                opacity: progress,
+              }}
+            >
+              <Svg width="100%" height="100%">
+                <Defs>
+                  <LinearGradient id="bottomFadeGradientCard" x1="0" y1="0" x2="0" y2="1">
+                    <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0" />
+                    <Stop offset="0.2" stopColor="#FFFFFF" stopOpacity="0.7" />
+                    <Stop offset="0.45" stopColor="#FFFFFF" stopOpacity="1" />
+                    <Stop offset="1" stopColor="#FFFFFF" stopOpacity="1" />
+                  </LinearGradient>
+                </Defs>
+                <Rect x="0" y="0" width="100%" height="100%" fill="url(#bottomFadeGradientCard)" />
+              </Svg>
+            </Animated.View>
+
+            <Animated.View
               pointerEvents="box-none"
               style={{
                 position: 'absolute',
@@ -825,16 +851,16 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   height: 48,
                   borderRadius: 24,
                   borderWidth: 1,
-                  borderColor: '#E5E8EB',
-                  backgroundColor: '#F3F4F6',
+                  borderColor: colors.inputBorder,
+                  backgroundColor: colors.inputBg,
                   flexDirection: 'row',
                   alignItems: 'center',
                   paddingHorizontal: 16,
-                  gap: 8,
+                  gap: 10,
                 }}
               >
-                <Text style={{ color: '#64748B', fontSize: 18, lineHeight: 20, fontWeight: '400' }}>+</Text>
-                <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: '#94A3B8' }}>
+                <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>
+                <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>
                   Тапсырма қосу
                 </Text>
               </AnimatedPressable>
