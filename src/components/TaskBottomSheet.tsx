@@ -376,30 +376,32 @@ export function TaskBottomSheet({
             <View style={styles.dragPill} />
           </View>
 
-          {/* Input & Send Button Row */}
+          {/* Input & Send Button Row (Send button inside input) */}
           <View style={styles.inputRow}>
             <View style={styles.inputWrapper}>
-              <TaskInput
-                ref={inputRef}
-                value={title}
-                onChangeText={setTitle}
-                onSubmit={handleSend}
-              />
-            </View>
+              <View style={{ flex: 1, justifyContent: 'center' }}>
+                <TaskInput
+                  ref={inputRef}
+                  value={title}
+                  onChangeText={setTitle}
+                  onSubmit={handleSend}
+                />
+              </View>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Тапсырманы сақтау"
-              disabled={!isEnabled}
-              onPress={handleSend}
-              style={({ pressed }) => [
-                styles.sendBtn,
-                !isEnabled && styles.sendBtnDisabled,
-                pressed && isEnabled && styles.sendBtnPressed,
-              ]}
-            >
-              <ArrowUpIcon color={isEnabled ? '#FFFFFF' : '#9CA3AF'} />
-            </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Тапсырманы сақтау"
+                disabled={!isEnabled}
+                onPress={handleSend}
+                style={({ pressed }) => [
+                  styles.sendBtn,
+                  !isEnabled && styles.sendBtnDisabled,
+                  pressed && isEnabled && styles.sendBtnPressed,
+                ]}
+              >
+                <ArrowUpIcon color={isEnabled ? '#FFFFFF' : '#9CA3AF'} />
+              </Pressable>
+            </View>
           </View>
 
           {/* Chips Row */}
@@ -535,37 +537,34 @@ const styles = StyleSheet.create({
     backgroundColor: '#D1D5DB',
   },
   inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
     marginTop: 4,
     marginBottom: 12,
   },
   inputWrapper: {
-    flex: 1,
-    minHeight: 50,
-    maxHeight: 120,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 52,
     borderWidth: 1,
     borderColor: '#E5E8EB',
-    borderRadius: 25,
-    paddingHorizontal: 16,
-    paddingVertical: 0,
+    borderRadius: 26,
+    paddingLeft: 16,
+    paddingRight: 5,
     backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
   },
   sendBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#01B7FF',
-    borderWidth: 2,
-    borderColor: '#01B7FF',
+    borderWidth: 1.5,
+    borderColor: '#40C9FF',
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: 6,
+    alignSelf: 'center',
   },
   sendBtnDisabled: {
     backgroundColor: '#E5E7EB',
-    borderWidth: 0,
     borderColor: 'transparent',
     opacity: 1,
   },

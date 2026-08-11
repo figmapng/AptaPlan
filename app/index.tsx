@@ -8,12 +8,14 @@ import {
   Keyboard,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
@@ -35,6 +37,7 @@ import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { MotivationalHeader } from '@/components/MotivationalHeader';
 import { useCardTransition } from '@/components/card-transition-provider';
 import { MonthPickerModal } from '@/components/MonthPickerModal';
+import { ViewModeModal } from '@/components/ViewModeModal';
 import type { Task } from '@/types/task';
 
 type ViewMode = 'week' | 'month' | 'year';
@@ -99,6 +102,11 @@ export default function Home() {
   const monthTouchStartY = useRef(0);
   const isMonthHorizontal = useRef(false);
   const monthHasDetermined = useRef(false);
+
+  // ── Year carousel ───────────────────────────────────────────────
+  const yearCarouselAnim = useRef(new Animated.Value(0)).current;
+  const isYearAnimatingRef = useRef(false);
+  const pendingYearResetRef = useRef(false);
 
   const derivedWeekData = useMemo<DerivedWeekData>(() => {
     const currDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -172,8 +180,8 @@ export default function Home() {
     }
     Animated.spring(motivationalAnim, {
       toValue: 1,
-      tension: 200,
-      friction: 20,
+      tension: 175,
+      friction: 17,
       useNativeDriver: false,
     }).start();
   }, [motivationalAnim]);
@@ -186,8 +194,8 @@ export default function Home() {
     }
     Animated.spring(motivationalAnim, {
       toValue: 0,
-      tension: 220,
-      friction: 22,
+      tension: 195,
+      friction: 20,
       useNativeDriver: false,
     }).start();
   }, [motivationalAnim]);
@@ -227,6 +235,16 @@ export default function Home() {
     void loadRange(toDateKey(from), toDateKey(to));
   }, [ready, month, mode, loadRange]);
 
+  // The year carousel renders the previous and next year as well, so keep
+  // all three years in memory. This also makes task markers appear after a
+  // direct switch to the year view.
+  useEffect(() => {
+    if (!ready || mode !== 'year') return;
+    const from = new Date(year - 1, 0, 1);
+    const to = new Date(year + 2, 0, 0);
+    void loadRange(toDateKey(from), toDateKey(to));
+  }, [ready, year, mode, loadRange]);
+
   const collapseWeek = useCallback(() => {
     userSundayStateRef.current = 'collapsed';
     isExpandedRef.current = false;
@@ -242,6 +260,10 @@ export default function Home() {
   // ── Touch handlers ───────────────────────────────────────────────
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+  const yearTouchStartX = useRef(0);
+  const yearTouchStartY = useRef(0);
+  const isYearHorizontal = useRef(false);
+  const yearHasDetermined = useRef(false);
   const isHorizontalGesture = useRef(false);
   const hasDetermined = useRef(false);
   const isSwipingRef = useRef(false);
@@ -269,6 +291,14 @@ export default function Home() {
       isMonthAnimatingRef.current = false;
     }
   }, [month, monthCarouselAnim]);
+
+  useEffect(() => {
+    if (pendingYearResetRef.current) {
+      yearCarouselAnim.setValue(0);
+      pendingYearResetRef.current = false;
+      isYearAnimatingRef.current = false;
+    }
+  }, [year, yearCarouselAnim]);
 
   const onSwipeComplete = useCallback((direction: -1 | 1) => {
     isAnimatingRef.current = true;
@@ -362,13 +392,13 @@ export default function Home() {
       } else {
         const dy = e.nativeEvent.pageY - monthTouchStartY.current;
         if (isMotivationalOpenRef.current) {
-          if (dy < -25) {
+          if (dy < -15) {
             closeMotivationalHeader();
           } else {
             openMotivationalHeader();
           }
         } else {
-          if (dy > 35) {
+          if (dy > 15) {
             openMotivationalHeader();
           } else {
             closeMotivationalHeader();
@@ -387,6 +417,70 @@ export default function Home() {
           if (isMotivationalOpenRef.current) openMotivationalHeader();
           else closeMotivationalHeader();
         }
+      }
+    },
+  };
+
+  // ── Year swipe complete ──────────────────────────────────────────
+  const onYearSwipeComplete = useCallback((direction: -1 | 1) => {
+    isYearAnimatingRef.current = true;
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    Animated.timing(yearCarouselAnim, {
+      toValue: direction * screenWidth,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      pendingYearResetRef.current = true;
+      setYear((y) => y - direction);
+    });
+  }, [yearCarouselAnim, screenWidth]);
+
+  const yearGestureHandlers = {
+    onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (isYearAnimatingRef.current) return;
+      yearTouchStartX.current = e.nativeEvent.pageX;
+      yearTouchStartY.current = e.nativeEvent.pageY;
+      isYearHorizontal.current = false;
+      yearHasDetermined.current = false;
+      yearCarouselAnim.stopAnimation();
+    },
+    onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (isYearAnimatingRef.current) return;
+      const dx = e.nativeEvent.pageX - yearTouchStartX.current;
+      const dy = e.nativeEvent.pageY - yearTouchStartY.current;
+      if (!yearHasDetermined.current) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        isYearHorizontal.current = Math.abs(dx) > Math.abs(dy) * 1.2;
+        yearHasDetermined.current = true;
+      }
+      if (isYearHorizontal.current) {
+        yearCarouselAnim.setValue(dx);
+      }
+    },
+    onTouchEnd: (e: { nativeEvent: { pageX: number } }) => {
+      if (!yearHasDetermined.current || isYearAnimatingRef.current) return;
+      if (isYearHorizontal.current) {
+        const dx = e.nativeEvent.pageX - yearTouchStartX.current;
+        const threshold = screenWidth * 0.15;
+        if (Math.abs(dx) > threshold) {
+          onYearSwipeComplete(dx < 0 ? -1 : 1);
+        } else {
+          isYearAnimatingRef.current = true;
+          Animated.timing(yearCarouselAnim, {
+            toValue: 0, duration: 120, easing: Easing.out(Easing.cubic), useNativeDriver: true,
+          }).start(() => { isYearAnimatingRef.current = false; });
+        }
+      }
+    },
+    onTouchCancel: () => {
+      if (yearHasDetermined.current && isYearHorizontal.current) {
+        isYearAnimatingRef.current = true;
+        Animated.timing(yearCarouselAnim, {
+          toValue: 0, duration: 120, easing: Easing.out(Easing.cubic), useNativeDriver: true,
+        }).start(() => { isYearAnimatingRef.current = false; });
       }
     },
   };
@@ -461,7 +555,7 @@ export default function Home() {
         const dy = e.nativeEvent.pageY - touchStartY.current;
 
         if (isMotivationalOpenRef.current) {
-          if (dy < -25) {
+          if (dy < -15) {
             closeMotivationalHeader();
           } else {
             openMotivationalHeader();
@@ -473,11 +567,13 @@ export default function Home() {
             expandWeek();
           }
         } else {
-          if (dy > 40) {
+          if (dy > 15) {
             openMotivationalHeader();
           } else if (dy < -25) {
+            closeMotivationalHeader();
             expandWeek();
           } else {
+            closeMotivationalHeader();
             collapseWeek();
           }
         }
@@ -503,6 +599,11 @@ export default function Home() {
           }, 180);
         });
       } else {
+        if (isMotivationalOpenRef.current) {
+          openMotivationalHeader();
+        } else {
+          closeMotivationalHeader();
+        }
         if (isExpandedRef.current) expandWeek();
         else collapseWeek();
         setTimeout(() => {
@@ -551,6 +652,10 @@ export default function Home() {
 
   const selectMode = (nextMode: ViewMode) => {
     collapseWeek();
+    if (nextMode === 'year') {
+      const nextYear = mode === 'month' ? month.getFullYear() : derivedWeekData.activeHeaderDate.getFullYear();
+      setYear(nextYear);
+    }
     setMode(nextMode);
     setModePickerOpen(false);
   };
@@ -581,18 +686,7 @@ export default function Home() {
             inputRange: [0, 1],
             outputRange: [0, 360],
           }),
-          opacity: motivationalAnim.interpolate({
-            inputRange: [0, 0.15, 1],
-            outputRange: [0, 1, 1],
-          }),
-          transform: [
-            {
-              translateY: motivationalAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [-25, 0],
-              }),
-            },
-          ],
+          opacity: motivationalAnim,
           zIndex: 30,
         }}
       >
@@ -600,6 +694,7 @@ export default function Home() {
           tasks={tasks}
           insetsTop={insets.top}
           onClose={closeMotivationalHeader}
+          anim={motivationalAnim}
         />
       </Animated.View>
 
@@ -637,15 +732,21 @@ export default function Home() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             {/* Left Title & Metrics Column */}
             <View style={{ flex: 1 }}>
-              <Pressable onPress={() => setMonthPickerOpen(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                {/* Month & Year Title */}
-                <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
-                  {title}
+              {mode === 'year' ? (
+                <Text style={{ fontSize: screenWidth < 380 ? 32 : 38, fontWeight: '800', letterSpacing: -1.5, color: colors.today }}>
+                  {year}
                 </Text>
-                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-                  <Path d="M6 9l6 6 6-6" stroke={colors.secondary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
-              </Pressable>
+              ) : (
+                <Pressable onPress={() => setMonthPickerOpen(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  {/* Month & Year Title */}
+                  <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
+                    {title}
+                  </Text>
+                  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+                    <Path d="M6 9l6 6 6-6" stroke={colors.secondary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                </Pressable>
+              )}
 
             {mode === 'week' && (() => {
               const wTasks = derivedWeekData.currSlotDays.flatMap((d) => d.tasks);
@@ -696,21 +797,24 @@ export default function Home() {
           <AnimatedPressable
             accessibilityRole="button"
             onPress={() => {
-              const next: ViewMode = mode === 'week' ? 'month' : 'week';
               collapseWeek();
-              setMode(next);
-              setModePickerOpen(false);
+              setModePickerOpen(true);
             }}
-            activeScale={0.94}
-            style={{ height: 38, borderRadius: 19, paddingHorizontal: 12, gap: 6, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.control }}
+            activeScale={0.92}
+            style={{ height: 38, paddingHorizontal: 6, gap: 5, flexDirection: 'row', alignItems: 'center', backgroundColor: 'transparent' }}
           >
-            <CalendarIcon />
-            <Text style={{ color: '#333C4E', fontSize: 14, fontWeight: '600' }}>{modeLabels[mode]}</Text>
+            <CalendarIcon color={colors.text} />
+            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }}>{modeLabels[mode]}</Text>
+            <SelectorChevronIcon color={colors.inputPlusIcon} />
           </AnimatedPressable>
 
-          <AnimatedPressable accessibilityRole="button" onPress={() => { collapseWeek(); router.push('/settings'); }} activeScale={0.92}
-            style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.control, alignItems: 'center', justifyContent: 'center' }}>
-            <SettingsIcon />
+          <AnimatedPressable
+            accessibilityRole="button"
+            onPress={() => { collapseWeek(); router.push('/settings'); }}
+            activeScale={0.90}
+            style={{ width: 38, height: 38, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <SettingsIcon color={colors.text} />
           </AnimatedPressable>
         </View>
       </Animated.View>
@@ -779,60 +883,101 @@ export default function Home() {
           })}
         </View>
       ) : (
-        <ScrollView
-          contentInsetAdjustmentBehavior="never"
-          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingBottom: insets.bottom + 24, gap: 4 }}
-        >
-          <YearView year={year} tasks={tasks} onSelect={(i) => { setMonth(new Date(year, i, 1)); setMode('month'); }} />
-        </ScrollView>
+        <View style={{ flex: 1, overflow: 'hidden' }} {...yearGestureHandlers}>
+          {([-1, 0, 1] as const).map((offset) => {
+            const slotYear = year + offset;
+            const baseX = offset * screenWidth;
+            const translateX = yearCarouselAnim.interpolate({
+              inputRange: [-screenWidth, 0, screenWidth],
+              outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
+            });
+            return (
+              <Animated.View
+                key={offset}
+                pointerEvents={offset === 0 ? 'auto' : 'none'}
+                style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  transform: [{ translateX }],
+                }}
+              >
+                <YearView
+                  year={slotYear}
+                  tasks={tasks}
+                  onSelect={(i) => { setMonth(new Date(slotYear, i, 1)); setMode('month'); }}
+                />
+              </Animated.View>
+            );
+          })}
+        </View>
       )}
 
-      {/* ── Floating input ───────────────────────────────────────── */}
-      {(mode === 'week' || mode === 'month') && (
-        <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
+      {/* ── Floating input & Pure White Gradient Overlay ─────────── */}
+      {(mode === 'week' || mode === 'month' || mode === 'year') && (
+        <>
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: Math.max(insets.bottom + 8, 16) + 54,
+              zIndex: 25,
+            }}
+          >
+            <Svg width="100%" height="100%">
+              <Defs>
+                <LinearGradient id="bottomFadeGradientIndex" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0" />
+                  <Stop offset="0.2" stopColor="#FFFFFF" stopOpacity="0.7" />
+                  <Stop offset="0.45" stopColor="#FFFFFF" stopOpacity="1" />
+                  <Stop offset="1" stopColor="#FFFFFF" stopOpacity="1" />
+                </LinearGradient>
+              </Defs>
+              <Rect x="0" y="0" width="100%" height="100%" fill="url(#bottomFadeGradientIndex)" />
+            </Svg>
           </View>
-          {(isFutureWeek || isPastWeek) && (
-            <AnimatedPressable
-              accessibilityRole="button"
-              accessibilityLabel="Бүгінгі күнге қайту"
-              onPress={resetToCurrentWeek}
-              activeScale={0.93}
-              style={{
-                height: 48,
-                borderRadius: 24,
-                paddingHorizontal: 14,
-                backgroundColor: colors.today,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 6,
-                shadowColor: colors.today,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.28,
-                shadowRadius: 8,
-                elevation: 4,
-              }}
-            >
-              {isFutureWeek && (
-                <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-                  <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
-              )}
-              <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
-                {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
-              </Text>
-              {isPastWeek && (
-                <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-                  <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
-              )}
-            </AnimatedPressable>
-          )}
-        </View>
+
+          <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
+            </View>
+            {(isFutureWeek || isPastWeek) && (
+              <AnimatedPressable
+                accessibilityRole="button"
+                accessibilityLabel="Бүгінгі күнге қайту"
+                onPress={resetToCurrentWeek}
+                activeScale={0.93}
+                style={{
+                  height: 48,
+                  borderRadius: 24,
+                  paddingHorizontal: 14,
+                  backgroundColor: colors.today,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  gap: 6,
+                }}
+              >
+                {isFutureWeek && (
+                  <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+                    <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                )}
+                <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
+                  {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
+                </Text>
+                {isPastWeek && (
+                  <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+                    <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                )}
+              </AnimatedPressable>
+            )}
+          </View>
+        </>
       )}
       </Animated.View>
 
@@ -840,9 +985,19 @@ export default function Home() {
       <FlyingTaskOverlay flyingTask={flyingTask} onComplete={() => setFlyingTask(null)} />
       <MonthPickerModal
         visible={monthPickerOpen}
-        currentDate={mode === 'week' ? derivedWeekData.activeHeaderDate : mode === 'month' ? month : new Date(year, 0, 1)}
+        currentDate={mode === 'month' ? month : weekStart}
         onSelectMonth={handleMonthPickerSelect}
         onClose={() => setMonthPickerOpen(false)}
+      />
+
+      <ViewModeModal
+        visible={modePickerOpen}
+        currentMode={mode === 'month' ? 'month' : 'week'}
+        onSelectMode={(selectedMode) => {
+          setMode(selectedMode);
+        }}
+        onClose={() => setModePickerOpen(false)}
+        topOffset={insets.top + 46}
       />
     </View>
   );
@@ -879,11 +1034,21 @@ function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Tas
   );
 }
 
-function CalendarIcon() {
+function CalendarIcon({ color = colors.text }: { color?: string }) {
   return (
-    <Svg width={19} height={19} viewBox="0 0 24 24" fill="none">
-      <Rect x="3" y="5" width="18" height="16" rx="3" stroke="#333C4E" strokeWidth="1.8" />
-      <Path d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" stroke="#333C4E" strokeWidth="1.8" strokeLinecap="round" />
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Rect x="3" y="4" width="18" height="17" rx="3" stroke={color} strokeWidth="2" />
+      <Path d="M3 9h18M8 2v4M16 2v4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Path d="M7 14h2M11 14h2M15 14h2" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function SelectorChevronIcon({ color = colors.today }: { color?: string }) {
+  return (
+    <Svg width={12} height={16} viewBox="0 0 24 24" fill="none">
+      <Path d="M7 9l5-5 5 5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7 15l5 5 5-5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
@@ -917,8 +1082,23 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
   return (
-    <AnimatedPressable accessibilityRole="button" accessibilityLabel="Жаңа тапсырма қосу" onPress={() => { onInteraction?.(); onAddTask(); }} activeScale={0.97}
-      style={{ height: 48, borderRadius: 24, borderWidth: 1, borderColor: colors.inputBorder, backgroundColor: colors.inputBg, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 10 }}>
+    <AnimatedPressable
+      accessibilityRole="button"
+      accessibilityLabel="Жаңа тапсырма қосу"
+      onPress={() => { onInteraction?.(); onAddTask(); }}
+      activeScale={0.97}
+      style={{
+        height: 48,
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: colors.inputBorder,
+        backgroundColor: colors.inputBg,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        gap: 10,
+      }}
+    >
       <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>
       <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>Тапсырма қосу</Text>
     </AnimatedPressable>
@@ -1155,28 +1335,279 @@ function MonthDayCell({
 }
 
 function YearView({ year, tasks, onSelect }: { year: number; tasks: ReturnType<typeof usePlanner>['tasks']; onSelect: (i: number) => void }) {
+  const today = new Date();
+  const todayKey = toDateKey(today);
+
+  // Build task set for quick lookup
+  const taskDateSet = useMemo(() => {
+    const s = new Set<string>();
+    tasks.forEach((t) => s.add(t.date));
+    return s;
+  }, [tasks]);
+
+  const MONTH_COLS = 3;
+  const rows: number[][] = [];
+  for (let i = 0; i < 12; i += MONTH_COLS) {
+    rows.push([i, i + 1, i + 2].filter((x) => x < 12));
+  }
+
+  // Day-of-week header abbreviated (Пн,Сс,Ср,Бс,Жм,Сн,Жс)
+  const DOW_LABELS = ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сн', 'Жс'];
+
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-      {months.map((m, i) => {
-        const prefix = `${year}-${String(i + 1).padStart(2, '0')}`;
-        const all = tasks.filter((t) => t.date.startsWith(prefix));
-        const done = all.filter((t) => t.isCompleted).length;
-        return (
-          <Pressable key={m} onPress={() => onSelect(i)} style={{ width: '48%', backgroundColor: 'white', borderRadius: 18, borderCurve: 'continuous', padding: 16, minHeight: 108 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700' }}>{m[0].toUpperCase() + m.slice(1)}</Text>
-            <Text style={{ color: colors.secondary, marginTop: 14 }}>{all.length} тапсырма</Text>
-            <Text style={{ color: colors.todayDark, marginTop: 3 }}>{done} орындалды</Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    <ScrollView
+      scrollEnabled={false}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 8 }}
+    >
+
+      {rows.map((row) => (
+        <View key={row[0]} style={yearStyles.row}>
+          {row.map((monthIndex) => {
+            const isCurrentMonth =
+              today.getFullYear() === year && today.getMonth() === monthIndex;
+
+            // Build grid: 7 columns (Mon–Sun), up to 6 rows
+            // Week starts Monday
+            const firstDay = new Date(year, monthIndex, 1);
+            const lastDay = new Date(year, monthIndex + 1, 0);
+            const startDow = (firstDay.getDay() + 6) % 7; // 0=Mon
+            const totalDays = lastDay.getDate();
+
+            // Fill cells: leading empty + days
+            const cells: (number | null)[] = [];
+            for (let e = 0; e < startDow; e++) cells.push(null);
+            for (let d = 1; d <= totalDays; d++) cells.push(d);
+            // Pad to full weeks
+            while (cells.length % 7 !== 0) cells.push(null);
+
+            const weeks: (number | null)[][] = [];
+            for (let i = 0; i < cells.length; i += 7) {
+              weeks.push(cells.slice(i, i + 7));
+            }
+
+            return (
+              <Pressable
+                key={monthIndex}
+                style={yearStyles.monthBlock}
+                onPress={() => onSelect(monthIndex)}
+              >
+                {/* Month name */}
+                <Text style={[yearStyles.monthName, isCurrentMonth && yearStyles.monthNameActive]}>
+                  {months[monthIndex][0].toUpperCase() + months[monthIndex].slice(1)}
+                </Text>
+
+                {/* DOW header */}
+                <View style={yearStyles.dowRow}>
+                  {DOW_LABELS.map((d) => (
+                    <Text key={d} style={yearStyles.dowLabel}>{d}</Text>
+                  ))}
+                </View>
+
+                {/* Weeks */}
+                {weeks.map((week, wi) => (
+                  <View key={wi} style={yearStyles.weekRow}>
+                    {week.map((day, di) => {
+                      if (!day) return <View key={di} style={yearStyles.dayCell} />;
+                      const dateKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                      const isT = dateKey === todayKey;
+                      const hasTasks = taskDateSet.has(dateKey);
+                      return (
+                        <View key={di} style={yearStyles.dayCell}>
+                          <View style={[
+                            yearStyles.dayInner,
+                            isT && yearStyles.todayCircle,
+                            hasTasks && !isT && yearStyles.hasTasksCircle,
+                          ]}>
+                            <Text style={[
+                              yearStyles.dayNum,
+                              isT && yearStyles.todayNum,
+                              hasTasks && !isT && yearStyles.hasTasksNum,
+                            ]}>
+                              {day}
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                ))}
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+    </ScrollView>
   );
 }
+
+const yearStyles = StyleSheet.create({
+  yearTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: colors.today,
+    letterSpacing: -1,
+    marginBottom: 16,
+    marginTop: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 20,
+  },
+  monthBlock: {
+    flex: 1,
+  },
+  monthName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+    letterSpacing: 0.1,
+  },
+  monthNameActive: {
+    color: colors.today,
+  },
+  dowRow: {
+    flexDirection: 'row',
+    marginBottom: 2,
+  },
+  dowLabel: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 7,
+    fontWeight: '600',
+    color: colors.inputPlusIcon,
+  },
+  weekRow: {
+    flexDirection: 'row',
+  },
+  dayCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 1,
+  },
+  dayInner: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  todayCircle: {
+    backgroundColor: colors.today,
+  },
+  dayNum: {
+    fontSize: 8,
+    fontWeight: '500',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  todayNum: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  hasTasksCircle: {},
+  hasTasksNum: {
+    color: colors.today,
+    fontWeight: '700',
+  },
+});
+
 
 function Center({ children }: { children: React.ReactNode }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: colors.background, padding: 24 }}>
       {children}
+    </View>
+  );
+}
+
+function AnimatedYearTitle({
+  year,
+  carouselAnim,
+  screenWidth,
+  small,
+}: {
+  year: number;
+  carouselAnim: Animated.Value;
+  screenWidth: number;
+  small: boolean;
+}) {
+  const fontSize = small ? 32 : 38;
+  const lineHeight = small ? 38 : 44;
+  const digitWidth = small ? 21 : 25;
+  const currentText = String(year);
+  const nextText = String(year + 1);
+  const previousText = String(year - 1);
+  const changedDigits = (from: string, to: string) => {
+    let common = 0;
+    while (common < from.length - 1 && from[common] === to[common]) common += 1;
+    return Math.max(1, from.length - common);
+  };
+  const suffixLength = Math.max(
+    changedDigits(currentText, nextText),
+    changedDigits(currentText, previousText),
+  );
+  const prefix = currentText.slice(0, -suffixLength);
+  const currentSuffix = currentText.slice(-suffixLength);
+  const nextSuffix = nextText.slice(-suffixLength);
+  const previousSuffix = previousText.slice(-suffixLength);
+  const digitOffset = carouselAnim.interpolate({
+    inputRange: [-screenWidth, screenWidth],
+    outputRange: [-digitWidth, digitWidth],
+    extrapolate: 'clamp',
+  });
+  const nextDigitOffset = carouselAnim.interpolate({
+    inputRange: [-screenWidth, 0],
+    outputRange: [0, digitWidth],
+    extrapolate: 'clamp',
+  });
+  const previousDigitOffset = carouselAnim.interpolate({
+    inputRange: [0, screenWidth],
+    outputRange: [-digitWidth, 0],
+    extrapolate: 'clamp',
+  });
+  const nextOpacity = carouselAnim.interpolate({
+    inputRange: [-screenWidth, -1, 0],
+    outputRange: [1, 1, 0],
+    extrapolate: 'clamp',
+  });
+  const previousOpacity = carouselAnim.interpolate({
+    inputRange: [0, 1, screenWidth],
+    outputRange: [0, 1, 1],
+    extrapolate: 'clamp',
+  });
+
+  const textStyle = {
+    fontSize,
+    lineHeight,
+    fontWeight: '800' as const,
+    letterSpacing: -1.5,
+    color: colors.today,
+    fontVariant: ['tabular-nums' as const],
+  };
+
+  return (
+    <View style={{ height: lineHeight, flexDirection: 'row', alignItems: 'flex-start' }}>
+      <Text style={textStyle}>{prefix}</Text>
+      <View style={{ width: digitWidth * suffixLength, height: lineHeight, overflow: 'hidden' }}>
+        <Animated.Text
+          style={[textStyle, { transform: [{ translateX: digitOffset }] }]}
+        >
+          {currentSuffix}
+        </Animated.Text>
+        <Animated.Text
+          style={[textStyle, { position: 'absolute', left: 0, opacity: nextOpacity, transform: [{ translateX: nextDigitOffset }] }]}
+        >
+          {nextSuffix}
+        </Animated.Text>
+        <Animated.Text
+          style={[textStyle, { position: 'absolute', left: 0, opacity: previousOpacity, transform: [{ translateX: previousDigitOffset }] }]}
+        >
+          {previousSuffix}
+        </Animated.Text>
+      </View>
     </View>
   );
 }
