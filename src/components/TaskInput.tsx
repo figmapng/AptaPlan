@@ -8,18 +8,25 @@ interface TaskInputProps extends TextInputProps {
 }
 
 export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChangeText, onSubmit, style, ...props }, ref) => {
+  const handleChangeText = (text: string) => {
+    const cleanText = text.replace(/[\r\n]+/g, ' ');
+    onChangeText(cleanText);
+  };
+
   return (
     <TextInput
       ref={ref}
       value={value}
-      onChangeText={onChangeText}
+      onChangeText={handleChangeText}
       placeholder="Не істеуіңіз керек?"
       placeholderTextColor="#8E95A2"
-      multiline
+      multiline={false}
       autoFocus
       returnKeyType="done"
       blurOnSubmit={false}
       onSubmitEditing={onSubmit}
+      selectionColor="#01B7FF"
+      cursorColor="#01B7FF"
       style={[styles.input, style]}
       {...props}
     />
@@ -38,8 +45,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     paddingBottom: 0,
     paddingHorizontal: 0,
-    minHeight: 24,
-    maxHeight: 100,
+    height: 24,
     backgroundColor: 'transparent',
     textAlignVertical: 'center',
   },

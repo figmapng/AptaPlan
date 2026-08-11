@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { AnimatedPressable } from './AnimatedPressable';
@@ -23,7 +24,7 @@ const parseTime = (timeStr: string | null): Date => {
   return d;
 };
 
-const quickTimePresets = ['09:00', '12:00', '15:00', '18:00', '21:00'];
+const quickTimePresets = ['08:00', '09:00', '10:00', '12:00', '14:00', '15:00', '18:00', '20:00', '21:00'];
 
 export function TimeModal({
   visible,
@@ -100,15 +101,16 @@ export function TimeModal({
             accessibilityRole="button"
             accessibilityLabel="Жабу"
           >
-            <CloseXIcon color="#6B7280" />
+            <CloseXIcon color={colors.inputPlusIcon} />
           </AnimatedPressable>
         </View>
 
-        {/* Quick Time Presets */}
+        {/* Quick Time Presets (Horizontal Scrollable Strip) */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.quickRow}
+          style={styles.quickScrollView}
+          contentContainerStyle={styles.quickRowContent}
         >
           {quickTimePresets.map((t) => {
             const isSelected = selectedTime === t || currentHHMM === t;
@@ -263,42 +265,45 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F3F4F6',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.inputBg,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingBottom: 14,
+  quickScrollView: {
+    width: '100%',
+    marginBottom: 14,
   },
-  quickBtn: {
-    height: 34,
-    borderRadius: 10,
-    paddingHorizontal: 12,
+  quickRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#F3F4F6',
+    gap: 8,
+    paddingHorizontal: 2,
+  },
+  quickBtn: {
+    height: 38,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: colors.inputBg,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.inputBorder,
   },
   quickBtnActive: {
-    backgroundColor: '#01B7FF',
-    borderColor: '#01B7FF',
-    shadowColor: '#01B7FF',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    backgroundColor: colors.today,
+    borderColor: colors.today,
   },
   quickText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: colors.text,
   },
   quickTextActive: {
     color: '#FFFFFF',
@@ -306,10 +311,10 @@ const styles = StyleSheet.create({
   },
   pickerCard: {
     width: '100%',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.inputBg,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#EAEFF5',
+    borderColor: colors.inputBorder,
     paddingVertical: 6,
     marginBottom: 16,
     alignItems: 'center',
@@ -360,11 +365,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#01B7FF',
     borderWidth: 1,
     borderColor: '#01B7FF',
-    shadowColor: '#01B7FF',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
   },
   confirmBtnFull: {
     flex: 1,

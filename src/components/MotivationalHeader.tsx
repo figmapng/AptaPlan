@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { format } from 'date-fns';
@@ -27,9 +27,38 @@ interface MotivationalHeaderProps {
   tasks: Task[];
   insetsTop: number;
   onClose?: () => void;
+  anim?: Animated.Value;
 }
 
-export function MotivationalHeader({ tasks, insetsTop, onClose }: MotivationalHeaderProps) {
+export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: MotivationalHeaderProps) {
+  const fallbackAnim = useRef(new Animated.Value(1)).current;
+  const progressAnim = anim || fallbackAnim;
+
+  // Sequential Staggered Fade-In (Бірінен соң бірі біртіндеп мөлдірлікпен пайда болу)
+  const topRowOpacity = progressAnim.interpolate({
+    inputRange: [0, 0.1, 0.35],
+    outputRange: [0, 0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const textOpacity = progressAnim.interpolate({
+    inputRange: [0.25, 0.7],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const statsOpacity = progressAnim.interpolate({
+    inputRange: [0.55, 0.95],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const indicatorOpacity = progressAnim.interpolate({
+    inputRange: [0.75, 1],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
   const today = new Date();
   const dayNum = format(today, 'dd');
   const monthFull = months[today.getMonth()][0].toUpperCase() + months[today.getMonth()].slice(1);
@@ -120,8 +149,8 @@ export function MotivationalHeader({ tasks, insetsTop, onClose }: MotivationalHe
 
   return (
     <View style={[styles.container, { paddingTop: Math.max(insetsTop, 12) + 8 }]}>
-      {/* Top Header Row: Date & Close Button */}
-      <View style={styles.topRow}>
+      {/* 1. Top Header Row: Date & Close Button (First Sequential Fade-In) */}
+      <Animated.View style={[styles.topRow, { opacity: topRowOpacity }]}>
         <View style={styles.dateGroup}>
           <View style={styles.dateCardBadgeOuter}>
             <View style={styles.dateCardBadgeInner}>
@@ -145,10 +174,10 @@ export function MotivationalHeader({ tasks, insetsTop, onClose }: MotivationalHe
             </Svg>
           </Pressable>
         )}
-      </View>
+      </Animated.View>
 
-      {/* Motivational Text & Daily Summary */}
-      <View style={styles.contentSection}>
+      {/* 2. Motivational Text & Daily Summary (Second Sequential Fade-In) */}
+      <Animated.View style={[styles.contentSection, { opacity: textOpacity }]}>
         <Text style={styles.greetingText}>{greeting}.</Text>
         
         <Text style={styles.bodyText}>
@@ -158,10 +187,10 @@ export function MotivationalHeader({ tasks, insetsTop, onClose }: MotivationalHe
           ) : null}
           . {quote}
         </Text>
-      </View>
+      </Animated.View>
 
-      {/* Metrics Row: Weather, Sunrise/Sunset & Year Countdown */}
-      <View style={styles.statsRow}>
+      {/* 3. Metrics Row: Weather, Sunrise/Sunset & Year Countdown (Third Sequential Fade-In) */}
+      <Animated.View style={[styles.statsRow, { opacity: statsOpacity }]}>
         {/* Weather Badge */}
         <View style={styles.statBadge}>
           <Text style={styles.statText}>
@@ -183,12 +212,14 @@ export function MotivationalHeader({ tasks, insetsTop, onClose }: MotivationalHe
             {`${totalDaysLeft} күн қалды (яғни ~${monthsLeft} ай)`}
           </Text>
         </View>
-      </View>
+      </Animated.View>
 
-      {/* Pull Indicator Pill */}
-      <Pressable onPress={onClose} style={styles.pullIndicatorWrapper} hitSlop={16}>
-        <View style={styles.dragIndicator} />
-      </Pressable>
+      {/* 4. Pull Indicator Pill (Fourth Sequential Fade-In) */}
+      <Animated.View style={{ opacity: indicatorOpacity }}>
+        <Pressable onPress={onClose} style={styles.pullIndicatorWrapper} hitSlop={16}>
+          <View style={styles.dragIndicator} />
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
