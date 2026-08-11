@@ -34,49 +34,10 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
   const fallbackAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = anim || fallbackAnim;
 
-  // Staggered Awsmd-Style Vapor / Evaporation interpolations
-  const topRowOpacity = progressAnim.interpolate({
-    inputRange: [0, 0.15, 0.85, 1],
-    outputRange: [0, 0, 0.9, 1],
-  });
-  const topRowTranslateY = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-24, 0],
-  });
-  const topRowScale = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.94, 1],
-  });
-
+  // Simple clean smooth fade-in
   const contentOpacity = progressAnim.interpolate({
-    inputRange: [0, 0.25, 0.9, 1],
-    outputRange: [0, 0, 0.95, 1],
-  });
-  const contentTranslateY = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [28, 0],
-  });
-  const contentScale = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.91, 1],
-  });
-
-  const statsOpacity = progressAnim.interpolate({
-    inputRange: [0, 0.38, 1],
-    outputRange: [0, 0, 1],
-  });
-  const statsTranslateY = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [36, 0],
-  });
-  const statsScale = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.86, 1],
-  });
-
-  const indicatorOpacity = progressAnim.interpolate({
-    inputRange: [0, 0.4, 1],
-    outputRange: [0, 0.6, 1],
+    inputRange: [0, 0.1, 1],
+    outputRange: [0, 0.2, 1],
   });
 
   const today = new Date();
@@ -168,17 +129,9 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
   }, []);
 
   return (
-    <View style={[styles.container, { paddingTop: Math.max(insetsTop, 12) + 8 }]}>
+    <Animated.View style={[styles.container, { paddingTop: Math.max(insetsTop, 12) + 8, opacity: contentOpacity }]}>
       {/* Top Header Row: Date & Close Button */}
-      <Animated.View
-        style={[
-          styles.topRow,
-          {
-            opacity: topRowOpacity,
-            transform: [{ translateY: topRowTranslateY }, { scale: topRowScale }],
-          },
-        ]}
-      >
+      <View style={styles.topRow}>
         <View style={styles.dateGroup}>
           <View style={styles.dateCardBadgeOuter}>
             <View style={styles.dateCardBadgeInner}>
@@ -202,18 +155,10 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
             </Svg>
           </Pressable>
         )}
-      </Animated.View>
+      </View>
 
       {/* Motivational Text & Daily Summary */}
-      <Animated.View
-        style={[
-          styles.contentSection,
-          {
-            opacity: contentOpacity,
-            transform: [{ translateY: contentTranslateY }, { scale: contentScale }],
-          },
-        ]}
-      >
+      <View style={styles.contentSection}>
         <Text style={styles.greetingText}>{greeting}.</Text>
         
         <Text style={styles.bodyText}>
@@ -223,18 +168,10 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
           ) : null}
           . {quote}
         </Text>
-      </Animated.View>
+      </View>
 
       {/* Metrics Row: Weather, Sunrise/Sunset & Year Countdown */}
-      <Animated.View
-        style={[
-          styles.statsRow,
-          {
-            opacity: statsOpacity,
-            transform: [{ translateY: statsTranslateY }, { scale: statsScale }],
-          },
-        ]}
-      >
+      <View style={styles.statsRow}>
         {/* Weather Badge */}
         <View style={styles.statBadge}>
           <Text style={styles.statText}>
@@ -256,15 +193,13 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
             {`${totalDaysLeft} күн қалды (яғни ~${monthsLeft} ай)`}
           </Text>
         </View>
-      </Animated.View>
+      </View>
 
       {/* Pull Indicator Pill */}
-      <Animated.View style={{ opacity: indicatorOpacity }}>
-        <Pressable onPress={onClose} style={styles.pullIndicatorWrapper} hitSlop={16}>
-          <View style={styles.dragIndicator} />
-        </Pressable>
-      </Animated.View>
-    </View>
+      <Pressable onPress={onClose} style={styles.pullIndicatorWrapper} hitSlop={16}>
+        <View style={styles.dragIndicator} />
+      </Pressable>
+    </Animated.View>
   );
 }
 

@@ -588,18 +588,7 @@ export default function Home() {
             inputRange: [0, 1],
             outputRange: [0, 360],
           }),
-          opacity: motivationalAnim.interpolate({
-            inputRange: [0, 0.15, 1],
-            outputRange: [0, 1, 1],
-          }),
-          transform: [
-            {
-              translateY: motivationalAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [-25, 0],
-              }),
-            },
-          ],
+          opacity: motivationalAnim,
           zIndex: 30,
         }}
       >
@@ -624,14 +613,6 @@ export default function Home() {
             inputRange: [0, 1],
             outputRange: [0, 32],
           }),
-          transform: [
-            {
-              scale: motivationalAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [1, 0.985],
-              }),
-            },
-          ],
           borderCurve: 'continuous',
           overflow: 'hidden',
         }}
