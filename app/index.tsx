@@ -106,7 +106,6 @@ export default function Home() {
   // ── Year carousel ───────────────────────────────────────────────
   const yearCarouselAnim = useRef(new Animated.Value(0)).current;
   const isYearAnimatingRef = useRef(false);
-  const pendingYearResetRef = useRef(false);
 
   const derivedWeekData = useMemo<DerivedWeekData>(() => {
     const currDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -292,14 +291,6 @@ export default function Home() {
     }
   }, [month, monthCarouselAnim]);
 
-  useEffect(() => {
-    if (pendingYearResetRef.current) {
-      yearCarouselAnim.setValue(0);
-      pendingYearResetRef.current = false;
-      isYearAnimatingRef.current = false;
-    }
-  }, [year, yearCarouselAnim]);
-
   const onSwipeComplete = useCallback((direction: -1 | 1) => {
     isAnimatingRef.current = true;
     isSwipingRef.current = true;
@@ -422,21 +413,30 @@ export default function Home() {
   };
 
   // ── Year swipe complete ──────────────────────────────────────────
-  const onYearSwipeComplete = useCallback((direction: -1 | 1) => {
+  const onYearSwipeComplete = useCallback((direction: -1 | 1, dragOffset: number) => {
     isYearAnimatingRef.current = true;
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    Animated.timing(yearCarouselAnim, {
-      toValue: direction * screenWidth,
-      duration: 180,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start(() => {
-      pendingYearResetRef.current = true;
-      setYear((y) => y - direction);
+    // Rebase the already-dragged destination page as the new center page.
+    // This prevents a frame where the old year is rendered again at the end
+    // of the swipe.
+    const rebasedOffset = -direction * screenWidth + dragOffset;
+    yearCarouselAnim.stopAnimation();
+    setYear((y) => y - direction);
+    requestAnimationFrame(() => {
+      if (!isYearAnimatingRef.current) return;
+      yearCarouselAnim.setValue(rebasedOffset);
+      Animated.timing(yearCarouselAnim, {
+        toValue: 0,
+        duration: 160,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start(() => {
+        isYearAnimatingRef.current = false;
+      });
     });
-  }, [yearCarouselAnim, screenWidth]);
+  }, [screenWidth, yearCarouselAnim]);
 
   const yearGestureHandlers = {
     onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
@@ -466,7 +466,7 @@ export default function Home() {
         const dx = e.nativeEvent.pageX - yearTouchStartX.current;
         const threshold = screenWidth * 0.15;
         if (Math.abs(dx) > threshold) {
-          onYearSwipeComplete(dx < 0 ? -1 : 1);
+          onYearSwipeComplete(dx < 0 ? -1 : 1, dx);
         } else {
           isYearAnimatingRef.current = true;
           Animated.timing(yearCarouselAnim, {
@@ -660,6 +660,35 @@ export default function Home() {
     setModePickerOpen(false);
   };
 
+  const resetYearToCurrent = useCallback(() => {
+    const currentYear = new Date().getFullYear();
+    yearCarouselAnim.stopAnimation();
+    if (year === currentYear) {
+      yearCarouselAnim.setValue(0);
+      isYearAnimatingRef.current = false;
+      return;
+    }
+
+    // Use one deterministic transition to the current year. Stepping through
+    // every intermediate year caused stale calendar data and visible pauses.
+    const direction: -1 | 1 = currentYear > year ? 1 : -1;
+    const startOffset = -direction * screenWidth;
+    isYearAnimatingRef.current = true;
+    setYear(currentYear);
+    requestAnimationFrame(() => {
+      if (!isYearAnimatingRef.current) return;
+      yearCarouselAnim.setValue(startOffset);
+      Animated.timing(yearCarouselAnim, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start(() => {
+        isYearAnimatingRef.current = false;
+      });
+    });
+  }, [screenWidth, year, yearCarouselAnim]);
+
   if (error)
     return (
       <Center>
@@ -733,9 +762,11 @@ export default function Home() {
             {/* Left Title & Metrics Column */}
             <View style={{ flex: 1 }}>
               {mode === 'year' ? (
-                <Text style={{ fontSize: screenWidth < 380 ? 32 : 38, fontWeight: '800', letterSpacing: -1.5, color: colors.today }}>
-                  {year}
-                </Text>
+                <Pressable onPress={resetYearToCurrent} hitSlop={8}>
+                  <Text style={{ fontSize: screenWidth < 380 ? 32 : 38, fontWeight: '800', letterSpacing: -1.5, color: colors.today }}>
+                    {year}
+                  </Text>
+                </Pressable>
               ) : (
                 <Pressable onPress={() => setMonthPickerOpen(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   {/* Month & Year Title */}
@@ -903,6 +934,7 @@ export default function Home() {
                 <YearView
                   year={slotYear}
                   tasks={tasks}
+                  availableHeight={availableHeight}
                   onSelect={(i) => { setMonth(new Date(slotYear, i, 1)); setMode('month'); }}
                 />
               </Animated.View>
@@ -1334,7 +1366,7 @@ function MonthDayCell({
   );
 }
 
-function YearView({ year, tasks, onSelect }: { year: number; tasks: ReturnType<typeof usePlanner>['tasks']; onSelect: (i: number) => void }) {
+function YearView({ year, tasks, availableHeight, onSelect }: { year: number; tasks: ReturnType<typeof usePlanner>['tasks']; availableHeight: number; onSelect: (i: number) => void }) {
   const today = new Date();
   const todayKey = toDateKey(today);
 
@@ -1351,14 +1383,15 @@ function YearView({ year, tasks, onSelect }: { year: number; tasks: ReturnType<t
     rows.push([i, i + 1, i + 2].filter((x) => x < 12));
   }
 
-  // Day-of-week header abbreviated (Пн,Сс,Ср,Бс,Жм,Сн,Жс)
   const DOW_LABELS = ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сн', 'Жс'];
+  const monthBlockHeight = Math.max(110, Math.floor((availableHeight - 3 * 10 - 16) / 4));
 
   return (
     <ScrollView
       scrollEnabled={false}
+      style={{ height: availableHeight }}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, paddingTop: 8 }}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8, paddingTop: 8 }}
     >
 
       {rows.map((row) => (
@@ -1389,7 +1422,7 @@ function YearView({ year, tasks, onSelect }: { year: number; tasks: ReturnType<t
             return (
               <Pressable
                 key={monthIndex}
-                style={yearStyles.monthBlock}
+                style={[yearStyles.monthBlock, { height: monthBlockHeight }]}
                 onPress={() => onSelect(monthIndex)}
               >
                 {/* Month name */}
@@ -1397,7 +1430,6 @@ function YearView({ year, tasks, onSelect }: { year: number; tasks: ReturnType<t
                   {months[monthIndex][0].toUpperCase() + months[monthIndex].slice(1)}
                 </Text>
 
-                {/* DOW header */}
                 <View style={yearStyles.dowRow}>
                   {DOW_LABELS.map((d) => (
                     <Text key={d} style={yearStyles.dowLabel}>{d}</Text>
@@ -1453,16 +1485,22 @@ const yearStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   monthBlock: {
     flex: 1,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#E4EAF1',
+    borderRadius: 14,
+    backgroundColor: '#FBFCFE',
+    overflow: 'hidden',
   },
   monthName: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 5,
     letterSpacing: 0.1,
   },
   monthNameActive: {
@@ -1470,12 +1508,13 @@ const yearStyles = StyleSheet.create({
   },
   dowRow: {
     flexDirection: 'row',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   dowLabel: {
     flex: 1,
     textAlign: 'center',
     fontSize: 7,
+    lineHeight: 8,
     fontWeight: '600',
     color: colors.inputPlusIcon,
   },
@@ -1485,7 +1524,7 @@ const yearStyles = StyleSheet.create({
   dayCell: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 1,
+    paddingVertical: 0,
   },
   dayInner: {
     width: 16,
@@ -1499,6 +1538,7 @@ const yearStyles = StyleSheet.create({
   },
   dayNum: {
     fontSize: 8,
+    lineHeight: 10,
     fontWeight: '500',
     color: colors.text,
     textAlign: 'center',
