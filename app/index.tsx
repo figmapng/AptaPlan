@@ -362,13 +362,13 @@ export default function Home() {
       } else {
         const dy = e.nativeEvent.pageY - monthTouchStartY.current;
         if (isMotivationalOpenRef.current) {
-          if (dy < -25) {
+          if (dy < -15) {
             closeMotivationalHeader();
           } else {
             openMotivationalHeader();
           }
         } else {
-          if (dy > 35) {
+          if (dy > 15) {
             openMotivationalHeader();
           } else {
             closeMotivationalHeader();
@@ -461,7 +461,7 @@ export default function Home() {
         const dy = e.nativeEvent.pageY - touchStartY.current;
 
         if (isMotivationalOpenRef.current) {
-          if (dy < -25) {
+          if (dy < -15) {
             closeMotivationalHeader();
           } else {
             openMotivationalHeader();
@@ -473,11 +473,13 @@ export default function Home() {
             expandWeek();
           }
         } else {
-          if (dy > 40) {
+          if (dy > 15) {
             openMotivationalHeader();
           } else if (dy < -25) {
+            closeMotivationalHeader();
             expandWeek();
           } else {
+            closeMotivationalHeader();
             collapseWeek();
           }
         }
@@ -503,6 +505,11 @@ export default function Home() {
           }, 180);
         });
       } else {
+        if (isMotivationalOpenRef.current) {
+          openMotivationalHeader();
+        } else {
+          closeMotivationalHeader();
+        }
         if (isExpandedRef.current) expandWeek();
         else collapseWeek();
         setTimeout(() => {
