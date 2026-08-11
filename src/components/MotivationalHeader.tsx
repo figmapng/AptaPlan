@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { format } from 'date-fns';
@@ -27,9 +27,58 @@ interface MotivationalHeaderProps {
   tasks: Task[];
   insetsTop: number;
   onClose?: () => void;
+  anim?: Animated.Value;
 }
 
-export function MotivationalHeader({ tasks, insetsTop, onClose }: MotivationalHeaderProps) {
+export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: MotivationalHeaderProps) {
+  const fallbackAnim = useRef(new Animated.Value(1)).current;
+  const progressAnim = anim || fallbackAnim;
+
+  // Staggered Awsmd-Style Vapor / Evaporation interpolations
+  const topRowOpacity = progressAnim.interpolate({
+    inputRange: [0, 0.15, 0.85, 1],
+    outputRange: [0, 0, 0.9, 1],
+  });
+  const topRowTranslateY = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-24, 0],
+  });
+  const topRowScale = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.94, 1],
+  });
+
+  const contentOpacity = progressAnim.interpolate({
+    inputRange: [0, 0.25, 0.9, 1],
+    outputRange: [0, 0, 0.95, 1],
+  });
+  const contentTranslateY = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [28, 0],
+  });
+  const contentScale = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.91, 1],
+  });
+
+  const statsOpacity = progressAnim.interpolate({
+    inputRange: [0, 0.38, 1],
+    outputRange: [0, 0, 1],
+  });
+  const statsTranslateY = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [36, 0],
+  });
+  const statsScale = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.86, 1],
+  });
+
+  const indicatorOpacity = progressAnim.interpolate({
+    inputRange: [0, 0.4, 1],
+    outputRange: [0, 0.6, 1],
+  });
+
   const today = new Date();
   const dayNum = format(today, 'dd');
   const monthFull = months[today.getMonth()][0].toUpperCase() + months[today.getMonth()].slice(1);
@@ -121,7 +170,15 @@ export function MotivationalHeader({ tasks, insetsTop, onClose }: MotivationalHe
   return (
     <View style={[styles.container, { paddingTop: Math.max(insetsTop, 12) + 8 }]}>
       {/* Top Header Row: Date & Close Button */}
-      <View style={styles.topRow}>
+      <Animated.View
+        style={[
+          styles.topRow,
+          {
+            opacity: topRowOpacity,
+            transform: [{ translateY: topRowTranslateY }, { scale: topRowScale }],
+          },
+        ]}
+      >
         <View style={styles.dateGroup}>
           <View style={styles.dateCardBadgeOuter}>
             <View style={styles.dateCardBadgeInner}>
@@ -145,10 +202,18 @@ export function MotivationalHeader({ tasks, insetsTop, onClose }: MotivationalHe
             </Svg>
           </Pressable>
         )}
-      </View>
+      </Animated.View>
 
       {/* Motivational Text & Daily Summary */}
-      <View style={styles.contentSection}>
+      <Animated.View
+        style={[
+          styles.contentSection,
+          {
+            opacity: contentOpacity,
+            transform: [{ translateY: contentTranslateY }, { scale: contentScale }],
+          },
+        ]}
+      >
         <Text style={styles.greetingText}>{greeting}.</Text>
         
         <Text style={styles.bodyText}>
@@ -158,10 +223,18 @@ export function MotivationalHeader({ tasks, insetsTop, onClose }: MotivationalHe
           ) : null}
           . {quote}
         </Text>
-      </View>
+      </Animated.View>
 
       {/* Metrics Row: Weather, Sunrise/Sunset & Year Countdown */}
-      <View style={styles.statsRow}>
+      <Animated.View
+        style={[
+          styles.statsRow,
+          {
+            opacity: statsOpacity,
+            transform: [{ translateY: statsTranslateY }, { scale: statsScale }],
+          },
+        ]}
+      >
         {/* Weather Badge */}
         <View style={styles.statBadge}>
           <Text style={styles.statText}>
@@ -183,12 +256,14 @@ export function MotivationalHeader({ tasks, insetsTop, onClose }: MotivationalHe
             {`${totalDaysLeft} күн қалды (яғни ~${monthsLeft} ай)`}
           </Text>
         </View>
-      </View>
+      </Animated.View>
 
       {/* Pull Indicator Pill */}
-      <Pressable onPress={onClose} style={styles.pullIndicatorWrapper} hitSlop={16}>
-        <View style={styles.dragIndicator} />
-      </Pressable>
+      <Animated.View style={{ opacity: indicatorOpacity }}>
+        <Pressable onPress={onClose} style={styles.pullIndicatorWrapper} hitSlop={16}>
+          <View style={styles.dragIndicator} />
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }

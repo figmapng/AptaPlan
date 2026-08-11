@@ -172,8 +172,8 @@ export default function Home() {
     }
     Animated.spring(motivationalAnim, {
       toValue: 1,
-      tension: 200,
-      friction: 20,
+      tension: 175,
+      friction: 17,
       useNativeDriver: false,
     }).start();
   }, [motivationalAnim]);
@@ -186,8 +186,8 @@ export default function Home() {
     }
     Animated.spring(motivationalAnim, {
       toValue: 0,
-      tension: 220,
-      friction: 22,
+      tension: 195,
+      friction: 20,
       useNativeDriver: false,
     }).start();
   }, [motivationalAnim]);
@@ -607,6 +607,7 @@ export default function Home() {
           tasks={tasks}
           insetsTop={insets.top}
           onClose={closeMotivationalHeader}
+          anim={motivationalAnim}
         />
       </Animated.View>
 
@@ -623,6 +624,14 @@ export default function Home() {
             inputRange: [0, 1],
             outputRange: [0, 32],
           }),
+          transform: [
+            {
+              scale: motivationalAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [1, 0.985],
+              }),
+            },
+          ],
           borderCurve: 'continuous',
           overflow: 'hidden',
         }}
