@@ -3,6 +3,7 @@ import { Animated, Easing, Pressable, ScrollView, StyleSheet, Switch, Text, View
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
+import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -352,7 +353,7 @@ export function CustomRepeatModal({
             accessibilityRole="button"
             accessibilityLabel="Артқа қайту"
           >
-            <BackChevronIcon color="#000000" />
+            <BackChevronIcon color={colors.inputPlusIcon} />
           </AnimatedPressable>
 
           <Text style={styles.title}>Реттеу</Text>
@@ -402,7 +403,7 @@ export function CustomRepeatModal({
                   onPress={handleDecrement}
                   disabled={interval <= 1}
                 >
-                  <MinusIcon color={interval <= 1 ? '#C7C7CC' : '#01B7FF'} />
+                  <MinusIcon color={interval <= 1 ? colors.checkboxBorder : colors.today} />
                 </AnimatedPressable>
 
                 <View style={styles.numBox}>
@@ -410,7 +411,7 @@ export function CustomRepeatModal({
                 </View>
 
                 <AnimatedPressable activeScale={0.85} style={styles.stepBtn} onPress={handleIncrement}>
-                  <PlusIcon color="#01B7FF" />
+                  <PlusIcon color={colors.today} />
                 </AnimatedPressable>
               </View>
             </View>
@@ -661,7 +662,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: '#F2F2F7', // Native iOS grouped sheet background
+    backgroundColor: colors.background,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
@@ -680,7 +681,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#C7C7CC',
+    backgroundColor: colors.checkboxBorder,
     marginBottom: 10,
   },
   header: {
@@ -698,14 +699,16 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#E5E5EA',
+    backgroundColor: colors.inputBg,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#000000',
+    color: colors.text,
   },
   checkCircleBtn: {
     position: 'absolute',
@@ -713,7 +716,9 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#01B7FF',
+    backgroundColor: colors.today,
+    borderWidth: 1.5,
+    borderColor: '#40C9FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -722,10 +727,10 @@ const styles = StyleSheet.create({
   },
   groupedCard: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: colors.inputBg,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.inputBorder,
     overflow: 'hidden',
   },
   formRow: {
@@ -744,7 +749,7 @@ const styles = StyleSheet.create({
   rowLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: colors.text,
   },
   selectorBtn: {
     flexDirection: 'row',
@@ -757,7 +762,7 @@ const styles = StyleSheet.create({
   selectorText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#01B7FF',
+    color: colors.today,
   },
   divider: {
     height: 1,
@@ -767,15 +772,15 @@ const styles = StyleSheet.create({
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#E5E7EB',
     padding: 3,
-    borderRadius: 12,
+    borderRadius: 14,
   },
   stepBtn: {
     width: 32,
     height: 32,
-    borderRadius: 9,
-    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -783,16 +788,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   numBox: {
-    minWidth: 40,
+    minWidth: 36,
     height: 32,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
   numText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#000000',
+    color: colors.text,
   },
   summaryText: {
     width: '100%',

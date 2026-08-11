@@ -823,9 +823,9 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   width: 48,
                   height: 48,
                   borderRadius: 24,
-                  backgroundColor: '#E5E5EA',
+                  backgroundColor: colors.inputBg,
                   borderWidth: 1,
-                  borderColor: '#E5E8EB',
+                  borderColor: colors.inputBorder,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -833,8 +833,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M15 18l-6-6 6-6"
-                    stroke="#000000"
-                    strokeWidth="2.5"
+                    stroke={colors.inputPlusIcon}
+                    strokeWidth="2.2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />

@@ -154,7 +154,7 @@ export function CalendarModal({
               accessibilityRole="button"
               accessibilityLabel="Жабу"
             >
-              <CloseXIcon color="#6B7280" />
+              <CloseXIcon color={colors.inputPlusIcon} />
             </AnimatedPressable>
           </View>
 
@@ -520,10 +520,12 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F3F4F6',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.inputBg,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -561,10 +563,10 @@ const styles = StyleSheet.create({
   },
   calendarCard: {
     width: '100%',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.inputBg,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#EAEFF5',
+    borderColor: colors.inputBorder,
     padding: 8,
     marginBottom: 14,
     alignItems: 'center',

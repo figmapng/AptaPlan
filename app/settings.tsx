@@ -75,7 +75,7 @@ export default function SettingsScreen() {
           style={styles.backButton}
           accessibilityLabel="Артқа қайту"
         >
-          <Ionicons name="chevron-back" size={20} color="#000000" style={{ marginLeft: -1 }} />
+          <Ionicons name="chevron-back" size={20} color={colors.inputPlusIcon} style={{ marginLeft: -1 }} />
         </AnimatedPressable>
 
         <Text style={styles.headerTitle}>Баптаулар</Text>
@@ -420,7 +420,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#E5E5EA',
+    backgroundColor: colors.inputBg,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },

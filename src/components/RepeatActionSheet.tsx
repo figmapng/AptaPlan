@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
+import { colors } from '@/constants/colors';
 import { getShortRepeatLabel, repeatLabels } from './RepeatChip';
 import { AnimatedPressable } from './AnimatedPressable';
 import { CustomRepeatConfig, CustomRepeatModal, CustomUnit } from './CustomRepeatModal';
@@ -110,7 +111,7 @@ export function RepeatActionSheet({
               accessibilityRole="button"
               accessibilityLabel="Жабу"
             >
-              <CloseXIcon color="#6B7280" />
+              <CloseXIcon color="#1C1C1E" />
             </AnimatedPressable>
           </View>
 
@@ -223,32 +224,30 @@ function OptionIcon({ opt, color }: { opt: TaskRepeat; color: string }) {
     case 'weekly':
       return (
         <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-          <Path
-            d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM7 14h2M11 14h2M15 14h2"
-            stroke={color}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <Rect x="3" y="4" width="18" height="17" rx="3" stroke={color} strokeWidth="2" />
+          <Path d="M3 9h18M8 2v4M16 2v4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+          <Path d="M7 14h2M11 14h2M15 14h2" stroke={color} strokeWidth="2" strokeLinecap="round" />
         </Svg>
       );
     case 'monthly':
       return (
         <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-          <Path
-            d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM7 14h2v2H7v-2zM11 14h2v2h-2v-2zM15 14h2v2h-2v-2z"
-            stroke={color}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <Rect x="3" y="4" width="18" height="17" rx="3" stroke={color} strokeWidth="2" />
+          <Path d="M3 9h18M8 2v4M16 2v4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+          <Circle cx="8" cy="13" r="1.25" fill={color} />
+          <Circle cx="12" cy="13" r="1.25" fill={color} />
+          <Circle cx="16" cy="13" r="1.25" fill={color} />
+          <Circle cx="8" cy="17" r="1.25" fill={color} />
+          <Circle cx="12" cy="17" r="1.25" fill={color} />
+          <Circle cx="16" cy="17" r="1.25" fill={color} />
         </Svg>
       );
     case 'yearly':
       return (
         <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
           <Path
-            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+            d="M3.6 9h16.8M3.6 15h16.8M12 3a15.3 15.3 0 0 1 4 9 15.3 15.3 0 0 1-4 9 15.3 15.3 0 0 1-4-9 15.3 15.3 0 0 1 4-9z"
             stroke={color}
             strokeWidth="2"
             strokeLinecap="round"
@@ -307,7 +306,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
@@ -324,7 +323,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#C7C7CC',
+    backgroundColor: colors.checkboxBorder,
     marginBottom: 10,
   },
   header: {
@@ -338,13 +337,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#1C1C1E',
+    color: colors.text,
   },
   closeBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#E5E5EA',
+    backgroundColor: colors.inputBg,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -359,9 +360,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.inputBg,
     borderWidth: 1,
-    borderColor: '#EAEFF5',
+    borderColor: colors.inputBorder,
   },
   optionLeftContent: {
     flexDirection: 'row',

@@ -395,8 +395,8 @@ function ChevronLeftIcon() {
     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
       <Path
         d="M15 18l-6-6 6-6"
-        stroke="#4A5260"
-        strokeWidth="2"
+        stroke={colors.inputPlusIcon}
+        strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
