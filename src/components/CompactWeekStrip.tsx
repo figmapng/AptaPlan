@@ -81,44 +81,52 @@ export function CompactWeekStrip({
         const dayShort = (weekdaysShort[d.getDay()] || '').toUpperCase();
         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
+        // Optical center adjustment for 2-digit dates starting with '1' (10, 12..19)
+        // Digit '1' is narrower than 0, 2..9, shifting visual center of number slightly right.
+        const isTeenNumber = dayNum >= 10 && dayNum <= 19 && dayNum !== 11;
+        const opticalLabelStyle = isTeenNumber ? { transform: [{ translateX: 0.75 }] } : null;
+
         return (
           <Pressable
             key={d.toISOString()}
             onPress={() => onSelectDate(d)}
             style={styles.dayCell}
           >
-            <Text
-              style={[
-                styles.cellNum,
-                isDayToday
-                  ? styles.cellNumToday
-                  : isSelected
-                  ? isWeekend
-                    ? styles.cellNumSelectedWeekend
-                    : styles.cellNumSelected
-                  : isWeekend
-                  ? styles.cellNumWeekend
-                  : styles.cellNumUnselected,
-              ]}
-            >
-              {dayNum}
-            </Text>
-            <Text
-              style={[
-                styles.cellLabel,
-                isDayToday
-                  ? styles.cellLabelToday
-                  : isSelected
-                  ? isWeekend
-                    ? styles.cellLabelSelectedWeekend
-                    : styles.cellLabelSelected
-                  : isWeekend
-                  ? styles.cellLabelWeekend
-                  : styles.cellLabelUnselected,
-              ]}
-            >
-              {dayShort}
-            </Text>
+            <View style={styles.cellContent}>
+              <Text
+                style={[
+                  styles.cellNum,
+                  isDayToday
+                    ? styles.cellNumToday
+                    : isSelected
+                    ? isWeekend
+                      ? styles.cellNumSelectedWeekend
+                      : styles.cellNumSelected
+                    : isWeekend
+                    ? styles.cellNumWeekend
+                    : styles.cellNumUnselected,
+                ]}
+              >
+                {dayNum}
+              </Text>
+              <Text
+                style={[
+                  styles.cellLabel,
+                  isDayToday
+                    ? styles.cellLabelToday
+                    : isSelected
+                    ? isWeekend
+                      ? styles.cellLabelSelectedWeekend
+                      : styles.cellLabelSelected
+                    : isWeekend
+                    ? styles.cellLabelWeekend
+                    : styles.cellLabelUnselected,
+                  opticalLabelStyle,
+                ]}
+              >
+                {dayShort}
+              </Text>
+            </View>
           </Pressable>
         );
       })}
@@ -155,16 +163,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 14,
     marginHorizontal: 1.5,
-    paddingTop: 1,
-    gap: 0,
     position: 'relative',
     zIndex: 2,
+  },
+  cellContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1,
   },
   cellNum: {
     fontSize: 18,
     lineHeight: 20,
-    marginTop: -2,
-    fontVariant: ['tabular-nums'],
+    textAlign: 'center',
+    alignSelf: 'center',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   cellNumToday: {
     color: '#01B7FF',
@@ -188,7 +201,12 @@ const styles = StyleSheet.create({
   },
   cellLabel: {
     fontSize: 10,
-    letterSpacing: 0.3,
+    lineHeight: 12,
+    letterSpacing: 0,
+    textAlign: 'center',
+    alignSelf: 'center',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   cellLabelToday: {
     color: '#01B7FF',

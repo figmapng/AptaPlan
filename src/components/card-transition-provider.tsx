@@ -197,6 +197,7 @@ const CarouselCard = React.memo(function CarouselCard({
             <Animated.View
               style={{
                 alignSelf: 'stretch',
+                flexDirection: 'row',
                 borderRadius: progress.interpolate({
                   inputRange: [0, 1],
                   outputRange: [4, 5],
@@ -232,6 +233,34 @@ const CarouselCard = React.memo(function CarouselCard({
                 }}
               >
                 {format(cardDate, 'dd')}
+              </Animated.Text>
+              <Animated.Text
+                numberOfLines={1}
+                style={{
+                  fontSize: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [12, 15],
+                  }),
+                  lineHeight: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [13, 17],
+                  }),
+                  fontWeight: isTodayCard ? '700' : '600',
+                  color: isTodayCard
+                    ? '#049BD6'
+                    : isWeekendCard
+                    ? colors.weekendNumText
+                    : colors.dateNumText,
+                  fontVariant: ['tabular-nums'],
+                  opacity: progress,
+                  maxWidth: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 90],
+                  }),
+                  overflow: 'hidden',
+                }}
+              >
+                {' ' + months[cardDate.getMonth()]}
               </Animated.Text>
             </Animated.View>
           </Animated.View>
@@ -323,9 +352,10 @@ const CarouselCard = React.memo(function CarouselCard({
                 />
               </View>
             ) : (
-              <View
+              <Pressable
+                onPress={() => beginAdding(cardDate)}
                 style={{
-                  minHeight: Math.max(120, targetHeight - 120),
+                  minHeight: Math.max(140, targetHeight - 120),
                   justifyContent: 'center',
                   alignItems: 'center',
                 }}
@@ -340,7 +370,7 @@ const CarouselCard = React.memo(function CarouselCard({
                 >
                   Тапсырма жоқ
                 </Text>
-              </View>
+              </Pressable>
             )}
           </ScrollView>
         </Animated.View>

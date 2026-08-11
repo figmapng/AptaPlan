@@ -265,25 +265,34 @@ export default function DayScreen() {
           contentContainerStyle={{ paddingHorizontal: 4, paddingTop: 10, paddingBottom: 16 }}
         >
           {dayTasks.length ? (
-            <SortableTaskList
-              data={dayTasks}
-              keyExtractor={(task) => `${task.id}:${task.date}`}
-              onReorder={(newData) => void handleReorder(newData)}
-              onScrollEnabledChange={handleScrollEnabled}
-              onAutoScroll={handleAutoScroll}
-              gap={4}
-              renderItem={(task, isActive, index, totalCount) => (
-                <TaskRow
-                  task={task}
-                  isLast={index === totalCount - 1}
-                  onPress={() => beginEditing(task)}
-                  onPendingDelete={handlePendingDelete}
-                  isActive={isActive}
-                />
-              )}
-            />
+            <Pressable style={{ flexGrow: 1 }} onPress={beginAdding}>
+              <SortableTaskList
+                data={dayTasks}
+                keyExtractor={(task) => `${task.id}:${task.date}`}
+                onReorder={(newData) => void handleReorder(newData)}
+                onScrollEnabledChange={handleScrollEnabled}
+                onAutoScroll={handleAutoScroll}
+                gap={4}
+                renderItem={(task, isActive, index, totalCount) => (
+                  <TaskRow
+                    task={task}
+                    isLast={index === totalCount - 1}
+                    onPress={() => beginEditing(task)}
+                    onPendingDelete={handlePendingDelete}
+                    isActive={isActive}
+                  />
+                )}
+              />
+            </Pressable>
           ) : (
-            <Text style={{ color: colors.secondary, fontSize: 17, paddingVertical: 28, textAlign: 'center' }}>Тапсырма жоқ</Text>
+            <Pressable
+              onPress={beginAdding}
+              style={{ flex: 1, minHeight: 220, justifyContent: 'center', alignItems: 'center' }}
+            >
+              <Text style={{ color: colors.secondary, fontSize: 17, paddingVertical: 28, textAlign: 'center' }}>
+                Тапсырма жоқ
+              </Text>
+            </Pressable>
           )}
         </ScrollView>
       </View>
