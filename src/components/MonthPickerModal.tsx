@@ -58,8 +58,12 @@ export function MonthPickerModal({
 
   const handleTodayClick = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onSelectMonth(new Date());
-    handleClose();
+    if (selectedYear !== today.getFullYear()) {
+      setSelectedYear(today.getFullYear());
+    } else {
+      onSelectMonth(new Date());
+      handleClose();
+    }
   };
 
   return (
@@ -335,7 +339,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   monthTextToday: {
-    color: '#2F7DF2',
+    color: '#01B7FF',
     fontWeight: '700',
   },
   todayDot: {
@@ -345,7 +349,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#2F7DF2',
+    backgroundColor: '#01B7FF',
   },
   todayDotSelected: {
     backgroundColor: '#FFFFFF',

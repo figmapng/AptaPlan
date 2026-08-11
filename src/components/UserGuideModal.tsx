@@ -26,13 +26,13 @@ const SLIDES = [
       'Аптаның барлық 7 күні бірге көрсетіледі. Басқа апталарға өту үшін экранды солға немесе оңға свайп жасаңыз.',
     icon: (
       <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-        <Rect x="3" y="4" width="18" height="17" rx="4" stroke="#2F7DF2" strokeWidth="2" />
-        <Path d="M3 9h18M8 2v4M16 2v4" stroke="#2F7DF2" strokeWidth="2" strokeLinecap="round" />
-        <Circle cx="8" cy="13" r="1.5" fill="#2F7DF2" />
-        <Circle cx="12" cy="13" r="1.5" fill="#2F7DF2" />
-        <Circle cx="16" cy="13" r="1.5" fill="#2F7DF2" />
-        <Circle cx="8" cy="17" r="1.5" fill="#2F7DF2" />
-        <Circle cx="12" cy="17" r="1.5" fill="#2F7DF2" />
+        <Rect x="3" y="4" width="18" height="17" rx="4" stroke="#01B7FF" strokeWidth="2" />
+        <Path d="M3 9h18M8 2v4M16 2v4" stroke="#01B7FF" strokeWidth="2" strokeLinecap="round" />
+        <Circle cx="8" cy="13" r="1.5" fill="#01B7FF" />
+        <Circle cx="12" cy="13" r="1.5" fill="#01B7FF" />
+        <Circle cx="16" cy="13" r="1.5" fill="#01B7FF" />
+        <Circle cx="8" cy="17" r="1.5" fill="#01B7FF" />
+        <Circle cx="12" cy="17" r="1.5" fill="#01B7FF" />
       </Svg>
     ),
   },
@@ -44,9 +44,9 @@ const SLIDES = [
       'Кез келген күннің карточкасын басып, толық ашыңыз. Ашық күйде солға/оңға свайп жасап, басқа күндерге тез ауыса аласыз.',
     icon: (
       <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-        <Rect x="4" y="3" width="16" height="18" rx="4" stroke="#2F7DF2" strokeWidth="2" />
-        <Path d="M8 8h8M8 12h5" stroke="#2F7DF2" strokeWidth="2" strokeLinecap="round" />
-        <Path d="M12 16l-2-2m2 2l2-2" stroke="#2F7DF2" strokeWidth="2" strokeLinecap="round" />
+        <Rect x="4" y="3" width="16" height="18" rx="4" stroke="#01B7FF" strokeWidth="2" />
+        <Path d="M8 8h8M8 12h5" stroke="#01B7FF" strokeWidth="2" strokeLinecap="round" />
+        <Path d="M12 16l-2-2m2 2l2-2" stroke="#01B7FF" strokeWidth="2" strokeLinecap="round" />
       </Svg>
     ),
   },
@@ -58,8 +58,8 @@ const SLIDES = [
       'Төменгі инпут арқылы жылдам тапсырма қосыңыз. Тапсырмаларды жоғары-төмен жылжыту (Drag & Drop) арқылы реттеңіз.',
     icon: (
       <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-        <Rect x="4" y="4" width="16" height="16" rx="4" fill="#2F7DF2" fillOpacity="0.12" stroke="#2F7DF2" strokeWidth="2" />
-        <Path d="M8 12l2.5 2.5L16 9" stroke="#2F7DF2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <Rect x="4" y="4" width="16" height="16" rx="4" fill="#01B7FF" fillOpacity="0.12" stroke="#01B7FF" strokeWidth="2" />
+        <Path d="M8 12l2.5 2.5L16 9" stroke="#01B7FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       </Svg>
     ),
   },
@@ -71,9 +71,9 @@ const SLIDES = [
       'Басқа апталарға өтіп кетсеңіз, жоғарғы хэдердегі [↩ 30 шіл.] батырмасын басып, 1 секундта бүгінгі күнге оралыңыз.',
     icon: (
       <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-        <Circle cx="12" cy="12" r="9" stroke="#2F7DF2" strokeWidth="2" />
-        <Path d="M9 14L5 10l4-4" stroke="#2F7DF2" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        <Path d="M5 10h9a4 4 0 0 1 4 4v1" stroke="#2F7DF2" strokeWidth="2.5" strokeLinecap="round" />
+        <Circle cx="12" cy="12" r="9" stroke="#01B7FF" strokeWidth="2" />
+        <Path d="M9 14L5 10l4-4" stroke="#01B7FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d="M5 10h9a4 4 0 0 1 4 4v1" stroke="#01B7FF" strokeWidth="2.5" strokeLinecap="round" />
       </Svg>
     ),
   },
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   slideSubtitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2F7DF2',
+    color: '#01B7FF',
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     width: 24,
-    backgroundColor: '#2F7DF2',
+    backgroundColor: '#01B7FF',
   },
   inactiveDot: {
     width: 6,
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     color: colors.secondary,
   },
   nextBtn: {
-    backgroundColor: '#2F7DF2',
+    backgroundColor: '#01B7FF',
     paddingVertical: 12,
     paddingHorizontal: 22,
     borderRadius: 16,

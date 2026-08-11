@@ -716,11 +716,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#01B7FF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#01B7FF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
   },
   scrollContent: {
     paddingBottom: 20,
@@ -783,16 +778,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 1,
   },
   stepBtnDisabled: {
     backgroundColor: 'transparent',
-    shadowOpacity: 0,
-    elevation: 0,
   },
   numBox: {
     minWidth: 40,

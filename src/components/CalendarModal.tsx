@@ -159,11 +159,7 @@ export function CalendarModal({
           </View>
 
           {/* Quick Date Pills */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.quickRow}
-          >
+          <View style={styles.quickRow}>
             {quickOptions.map((opt) => {
               const isSelected = selectedDate === opt.key;
               const IconComp = opt.icon;
@@ -186,7 +182,7 @@ export function CalendarModal({
                 </AnimatedPressable>
               );
             })}
-          </ScrollView>
+          </View>
 
           {/* Calendar Card Container */}
           <View style={styles.calendarCard}>
@@ -532,16 +528,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   quickRow: {
+    width: '100%',
     flexDirection: 'row',
     gap: 8,
     paddingBottom: 14,
   },
   quickBtn: {
-    height: 34,
+    flex: 1,
+    height: 36,
     borderRadius: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 6,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 5,
     backgroundColor: '#F3F4F6',
     borderWidth: 1,
@@ -550,11 +549,6 @@ const styles = StyleSheet.create({
   quickBtnActive: {
     backgroundColor: '#01B7FF',
     borderColor: '#01B7FF',
-    shadowColor: '#01B7FF',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
   },
   quickText: {
     fontSize: 13,

@@ -350,7 +350,6 @@ export default function DayScreen() {
           backgroundColor: colors.inputBg,
           borderWidth: 1,
           borderColor: colors.inputBorder,
-          boxShadow: '0 2px 8px rgba(31,32,38,0.08)',
         }}
       >
         <ChevronLeftIcon />
@@ -371,7 +370,6 @@ export default function DayScreen() {
           alignItems: 'center',
           paddingHorizontal: 16,
           gap: 10,
-          boxShadow: '0 2px 8px rgba(31,32,38,0.08)',
         }}
       >
         <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>

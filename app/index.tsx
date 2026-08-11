@@ -808,11 +808,6 @@ export default function Home() {
                 justifyContent: 'center',
                 flexDirection: 'row',
                 gap: 6,
-                shadowColor: colors.today,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.28,
-                shadowRadius: 8,
-                elevation: 4,
               }}
             >
               {isFutureWeek && (

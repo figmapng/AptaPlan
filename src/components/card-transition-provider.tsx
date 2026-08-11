@@ -517,6 +517,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     carouselX.setValue(0);
     setTransition(transitionRef.current);
 
+    if (cardTasks.length === 0) {
+      beginAdding(date);
+    }
+
     progress.setValue(0);
     Animated.timing(progress, {
       toValue: 1,
