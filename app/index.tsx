@@ -37,6 +37,7 @@ import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { MotivationalHeader } from '@/components/MotivationalHeader';
 import { useCardTransition } from '@/components/card-transition-provider';
 import { MonthPickerModal } from '@/components/MonthPickerModal';
+import { ViewModeModal } from '@/components/ViewModeModal';
 import type { Task } from '@/types/task';
 
 type ViewMode = 'week' | 'month' | 'year';
@@ -101,6 +102,11 @@ export default function Home() {
   const monthTouchStartY = useRef(0);
   const isMonthHorizontal = useRef(false);
   const monthHasDetermined = useRef(false);
+
+  // ── Year carousel ───────────────────────────────────────────────
+  const yearCarouselAnim = useRef(new Animated.Value(0)).current;
+  const isYearAnimatingRef = useRef(false);
+  const pendingYearResetRef = useRef(false);
 
   const derivedWeekData = useMemo<DerivedWeekData>(() => {
     const currDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -229,6 +235,16 @@ export default function Home() {
     void loadRange(toDateKey(from), toDateKey(to));
   }, [ready, month, mode, loadRange]);
 
+  // The year carousel renders the previous and next year as well, so keep
+  // all three years in memory. This also makes task markers appear after a
+  // direct switch to the year view.
+  useEffect(() => {
+    if (!ready || mode !== 'year') return;
+    const from = new Date(year - 1, 0, 1);
+    const to = new Date(year + 2, 0, 0);
+    void loadRange(toDateKey(from), toDateKey(to));
+  }, [ready, year, mode, loadRange]);
+
   const collapseWeek = useCallback(() => {
     userSundayStateRef.current = 'collapsed';
     isExpandedRef.current = false;
@@ -244,6 +260,10 @@ export default function Home() {
   // ── Touch handlers ───────────────────────────────────────────────
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+  const yearTouchStartX = useRef(0);
+  const yearTouchStartY = useRef(0);
+  const isYearHorizontal = useRef(false);
+  const yearHasDetermined = useRef(false);
   const isHorizontalGesture = useRef(false);
   const hasDetermined = useRef(false);
   const isSwipingRef = useRef(false);
@@ -271,6 +291,15 @@ export default function Home() {
       isMonthAnimatingRef.current = false;
     }
   }, [month, monthCarouselAnim]);
+
+  // ── Year carousel reset ──────────────────────────────────────────
+  useEffect(() => {
+    if (pendingYearResetRef.current) {
+      yearCarouselAnim.setValue(0);
+      pendingYearResetRef.current = false;
+      isYearAnimatingRef.current = false;
+    }
+  }, [year, yearCarouselAnim]);
 
   const onSwipeComplete = useCallback((direction: -1 | 1) => {
     isAnimatingRef.current = true;
@@ -300,6 +329,7 @@ export default function Home() {
   // ── Month swipe complete ─────────────────────────────────────────
   const onMonthSwipeComplete = useCallback((direction: -1 | 1) => {
     isMonthAnimatingRef.current = true;
+    isSwipingRef.current = true;
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -311,12 +341,13 @@ export default function Home() {
     }).start(() => {
       pendingMonthResetRef.current = true;
       setMonth((m) => new Date(m.getFullYear(), m.getMonth() - direction, 1));
+      setTimeout(() => { isSwipingRef.current = false; }, 150);
     });
   }, [monthCarouselAnim, screenWidth]);
 
   const monthGestureHandlers = {
     onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (isMonthAnimatingRef.current || isSwipingRef.current) return;
+      if (isMonthAnimatingRef.current) return;
       monthTouchStartX.current = e.nativeEvent.pageX;
       monthTouchStartY.current = e.nativeEvent.pageY;
       isMonthHorizontal.current = false;
@@ -324,7 +355,7 @@ export default function Home() {
       monthCarouselAnim.stopAnimation();
     },
     onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (isMonthAnimatingRef.current || isSwipingRef.current) return;
+      if (isMonthAnimatingRef.current) return;
       const dx = e.nativeEvent.pageX - monthTouchStartX.current;
       const dy = e.nativeEvent.pageY - monthTouchStartY.current;
       if (!monthHasDetermined.current) {
@@ -333,6 +364,7 @@ export default function Home() {
         monthHasDetermined.current = true;
       }
       if (isMonthHorizontal.current) {
+        isSwipingRef.current = true;
         monthCarouselAnim.setValue(dx);
       } else {
         if (isMotivationalOpenRef.current) {
@@ -349,8 +381,9 @@ export default function Home() {
       }
     },
     onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (!monthHasDetermined.current || isMonthAnimatingRef.current || isSwipingRef.current) return;
+      if (!monthHasDetermined.current || isMonthAnimatingRef.current) return;
       if (isMonthHorizontal.current) {
+        isSwipingRef.current = true;
         const dx = e.nativeEvent.pageX - monthTouchStartX.current;
         const threshold = screenWidth * 0.1;
         if (Math.abs(dx) > threshold) {
@@ -359,7 +392,10 @@ export default function Home() {
           isMonthAnimatingRef.current = true;
           Animated.spring(monthCarouselAnim, {
             toValue: 0, tension: 420, friction: 30, useNativeDriver: true,
-          }).start(() => { isMonthAnimatingRef.current = false; });
+          }).start(() => {
+            isMonthAnimatingRef.current = false;
+            setTimeout(() => { isSwipingRef.current = false; }, 150);
+          });
         }
       } else {
         const dy = e.nativeEvent.pageY - monthTouchStartY.current;
@@ -376,18 +412,131 @@ export default function Home() {
             closeMotivationalHeader();
           }
         }
+        setTimeout(() => { isSwipingRef.current = false; }, 150);
       }
     },
     onTouchCancel: () => {
-      if (monthHasDetermined.current && !isSwipingRef.current) {
+      if (monthHasDetermined.current) {
         if (isMonthHorizontal.current) {
           isMonthAnimatingRef.current = true;
           Animated.spring(monthCarouselAnim, {
             toValue: 0, tension: 320, friction: 36, useNativeDriver: true,
-          }).start(() => { isMonthAnimatingRef.current = false; });
+          }).start(() => {
+            isMonthAnimatingRef.current = false;
+            setTimeout(() => { isSwipingRef.current = false; }, 150);
+          });
         } else {
           if (isMotivationalOpenRef.current) openMotivationalHeader();
           else closeMotivationalHeader();
+          setTimeout(() => { isSwipingRef.current = false; }, 150);
+        }
+      }
+    },
+  };
+
+  // ── Year swipe complete ──────────────────────────────────────────
+  const onYearSwipeComplete = useCallback((direction: -1 | 1) => {
+    isYearAnimatingRef.current = true;
+    isSwipingRef.current = true;
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    Animated.spring(yearCarouselAnim, {
+      toValue: direction * screenWidth,
+      tension: 450,
+      friction: 32,
+      useNativeDriver: true,
+    }).start(() => {
+      pendingYearResetRef.current = true;
+      setYear((y) => y - direction);
+      setTimeout(() => { isSwipingRef.current = false; }, 150);
+    });
+  }, [yearCarouselAnim, screenWidth]);
+
+  const yearGestureHandlers = {
+    onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (isYearAnimatingRef.current) return;
+      yearTouchStartX.current = e.nativeEvent.pageX;
+      yearTouchStartY.current = e.nativeEvent.pageY;
+      isYearHorizontal.current = false;
+      yearHasDetermined.current = false;
+      yearCarouselAnim.stopAnimation();
+    },
+    onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (isYearAnimatingRef.current) return;
+      const dx = e.nativeEvent.pageX - yearTouchStartX.current;
+      const dy = e.nativeEvent.pageY - yearTouchStartY.current;
+      if (!yearHasDetermined.current) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        isYearHorizontal.current = Math.abs(dx) > Math.abs(dy) * 1.2;
+        yearHasDetermined.current = true;
+      }
+      if (isYearHorizontal.current) {
+        isSwipingRef.current = true;
+        yearCarouselAnim.setValue(dx);
+      } else {
+        if (isMotivationalOpenRef.current) {
+          if (dy < 0) {
+            const val = Math.max(0, 1 + dy / 130);
+            motivationalAnim.setValue(val);
+          }
+        } else {
+          if (dy > 0) {
+            const val = Math.min(1, dy / 130);
+            motivationalAnim.setValue(val);
+          }
+        }
+      }
+    },
+    onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (!yearHasDetermined.current || isYearAnimatingRef.current) return;
+      if (isYearHorizontal.current) {
+        isSwipingRef.current = true;
+        const dx = e.nativeEvent.pageX - yearTouchStartX.current;
+        const threshold = screenWidth * 0.1;
+        if (Math.abs(dx) > threshold) {
+          onYearSwipeComplete(dx < 0 ? -1 : 1);
+        } else {
+          isYearAnimatingRef.current = true;
+          Animated.spring(yearCarouselAnim, {
+            toValue: 0, tension: 420, friction: 30, useNativeDriver: true,
+          }).start(() => {
+            isYearAnimatingRef.current = false;
+            setTimeout(() => { isSwipingRef.current = false; }, 150);
+          });
+        }
+      } else {
+        const dy = e.nativeEvent.pageY - monthTouchStartY.current;
+        if (isMotivationalOpenRef.current) {
+          if (dy < -15) {
+            closeMotivationalHeader();
+          } else {
+            openMotivationalHeader();
+          }
+        } else {
+          if (dy > 15) {
+            openMotivationalHeader();
+          } else {
+            closeMotivationalHeader();
+          }
+        }
+        setTimeout(() => { isSwipingRef.current = false; }, 150);
+      }
+    },
+    onTouchCancel: () => {
+      if (yearHasDetermined.current) {
+        if (isYearHorizontal.current) {
+          isYearAnimatingRef.current = true;
+          Animated.spring(yearCarouselAnim, {
+            toValue: 0, tension: 320, friction: 36, useNativeDriver: true,
+          }).start(() => {
+            isYearAnimatingRef.current = false;
+            setTimeout(() => { isSwipingRef.current = false; }, 150);
+          });
+        } else {
+          if (isMotivationalOpenRef.current) openMotivationalHeader();
+          else closeMotivationalHeader();
+          setTimeout(() => { isSwipingRef.current = false; }, 150);
         }
       }
     },
@@ -560,9 +709,58 @@ export default function Home() {
 
   const selectMode = (nextMode: ViewMode) => {
     collapseWeek();
+    if (nextMode === 'year') {
+      const nextYear = mode === 'month' ? month.getFullYear() : derivedWeekData.activeHeaderDate.getFullYear();
+      setYear(nextYear);
+    }
     setMode(nextMode);
     setModePickerOpen(false);
   };
+
+  const resetYearToCurrent = useCallback(() => {
+    const currentYear = new Date().getFullYear();
+    if (isYearAnimatingRef.current) return;
+
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    if (year === currentYear) {
+      yearCarouselAnim.stopAnimation();
+      Animated.sequence([
+        Animated.timing(yearCarouselAnim, {
+          toValue: 10,
+          duration: 80,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.spring(yearCarouselAnim, {
+          toValue: 0,
+          tension: 500,
+          friction: 24,
+          useNativeDriver: true,
+        }),
+      ]).start();
+      return;
+    }
+
+    const startOffset = currentYear > year ? screenWidth : -screenWidth;
+    isYearAnimatingRef.current = true;
+    yearCarouselAnim.stopAnimation();
+
+    setYear(currentYear);
+    requestAnimationFrame(() => {
+      yearCarouselAnim.setValue(startOffset);
+      Animated.spring(yearCarouselAnim, {
+        toValue: 0,
+        tension: 450,
+        friction: 32,
+        useNativeDriver: true,
+      }).start(() => {
+        isYearAnimatingRef.current = false;
+      });
+    });
+  }, [screenWidth, year, yearCarouselAnim]);
 
   if (error)
     return (
@@ -636,15 +834,26 @@ export default function Home() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             {/* Left Title & Metrics Column */}
             <View style={{ flex: 1 }}>
-              <Pressable onPress={() => setMonthPickerOpen(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                {/* Month & Year Title */}
-                <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
-                  {title}
-                </Text>
-                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-                  <Path d="M6 9l6 6 6-6" stroke={colors.secondary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
-              </Pressable>
+              {mode === 'year' ? (
+                <Pressable onPress={resetYearToCurrent} hitSlop={8}>
+                  <AnimatedYearTitle
+                    year={year}
+                    carouselAnim={yearCarouselAnim}
+                    screenWidth={screenWidth}
+                    small={screenWidth < 380}
+                  />
+                </Pressable>
+              ) : (
+                <Pressable onPress={() => setMonthPickerOpen(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  {/* Month & Year Title */}
+                  <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
+                    {title}
+                  </Text>
+                  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+                    <Path d="M6 9l6 6 6-6" stroke={colors.secondary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                </Pressable>
+              )}
 
             {mode === 'week' && (() => {
               const wTasks = derivedWeekData.currSlotDays.flatMap((d) => d.tasks);
@@ -695,21 +904,24 @@ export default function Home() {
           <AnimatedPressable
             accessibilityRole="button"
             onPress={() => {
-              const next: ViewMode = mode === 'week' ? 'month' : 'week';
               collapseWeek();
-              setMode(next);
-              setModePickerOpen(false);
+              setModePickerOpen(true);
             }}
-            activeScale={0.94}
-            style={{ height: 38, borderRadius: 19, paddingHorizontal: 12, gap: 6, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.control }}
+            activeScale={0.92}
+            style={{ height: 38, paddingHorizontal: 6, gap: 5, flexDirection: 'row', alignItems: 'center', backgroundColor: 'transparent' }}
           >
-            <CalendarIcon />
-            <Text style={{ color: '#333C4E', fontSize: 14, fontWeight: '600' }}>{modeLabels[mode]}</Text>
+            <CalendarIcon color={colors.text} />
+            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '600' }}>{modeLabels[mode]}</Text>
+            <SelectorChevronIcon color={colors.inputPlusIcon} />
           </AnimatedPressable>
 
-          <AnimatedPressable accessibilityRole="button" onPress={() => { collapseWeek(); router.push('/settings'); }} activeScale={0.92}
-            style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.control, alignItems: 'center', justifyContent: 'center' }}>
-            <SettingsIcon />
+          <AnimatedPressable
+            accessibilityRole="button"
+            onPress={() => { collapseWeek(); router.push('/settings'); }}
+            activeScale={0.90}
+            style={{ width: 38, height: 38, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <SettingsIcon color={colors.text} />
           </AnimatedPressable>
         </View>
       </Animated.View>
@@ -778,16 +990,38 @@ export default function Home() {
           })}
         </View>
       ) : (
-        <ScrollView
-          contentInsetAdjustmentBehavior="never"
-          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingBottom: insets.bottom + 24, gap: 4 }}
-        >
-          <YearView year={year} tasks={tasks} onSelect={(i) => { setMonth(new Date(year, i, 1)); setMode('month'); }} />
-        </ScrollView>
+        <View style={{ flex: 1, overflow: 'hidden' }} {...yearGestureHandlers}>
+          {([-1, 0, 1] as const).map((offset) => {
+            const slotYear = year + offset;
+            const baseX = offset * screenWidth;
+            const translateX = yearCarouselAnim.interpolate({
+              inputRange: [-screenWidth, 0, screenWidth],
+              outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
+            });
+            return (
+              <Animated.View
+                key={offset}
+                pointerEvents={offset === 0 ? 'auto' : 'none'}
+                style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  transform: [{ translateX }],
+                }}
+              >
+                <YearView
+                  year={slotYear}
+                  tasks={tasks}
+                  availableHeight={availableHeight}
+                  onSelect={(i) => { setMonth(new Date(slotYear, i, 1)); setMode('month'); }}
+                  isSwipingRef={isSwipingRef}
+                />
+              </Animated.View>
+            );
+          })}
+        </View>
       )}
 
       {/* ── Floating input & Pure White Gradient Overlay ─────────── */}
-      {(mode === 'week' || mode === 'month') && (
+      {(mode === 'week' || mode === 'month' || mode === 'year') && (
         <>
           <View
             pointerEvents="none"
@@ -860,9 +1094,19 @@ export default function Home() {
       <FlyingTaskOverlay flyingTask={flyingTask} onComplete={() => setFlyingTask(null)} />
       <MonthPickerModal
         visible={monthPickerOpen}
-        currentDate={mode === 'week' ? derivedWeekData.activeHeaderDate : mode === 'month' ? month : new Date(year, 0, 1)}
+        currentDate={mode === 'month' ? month : weekStart}
         onSelectMonth={handleMonthPickerSelect}
         onClose={() => setMonthPickerOpen(false)}
+      />
+
+      <ViewModeModal
+        visible={modePickerOpen}
+        currentMode={mode === 'month' ? 'month' : 'week'}
+        onSelectMode={(selectedMode) => {
+          setMode(selectedMode);
+        }}
+        onClose={() => setModePickerOpen(false)}
+        topOffset={insets.top + 46}
       />
     </View>
   );
@@ -899,11 +1143,21 @@ function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Tas
   );
 }
 
-function CalendarIcon() {
+function CalendarIcon({ color = colors.text }: { color?: string }) {
   return (
-    <Svg width={19} height={19} viewBox="0 0 24 24" fill="none">
-      <Rect x="3" y="5" width="18" height="16" rx="3" stroke="#333C4E" strokeWidth="1.8" />
-      <Path d="M7 3v4M17 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" stroke="#333C4E" strokeWidth="1.8" strokeLinecap="round" />
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Rect x="3" y="4" width="18" height="17" rx="3" stroke={color} strokeWidth="2" />
+      <Path d="M3 9h18M8 2v4M16 2v4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Path d="M7 14h2M11 14h2M15 14h2" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function SelectorChevronIcon({ color = colors.today }: { color?: string }) {
+  return (
+    <Svg width={12} height={16} viewBox="0 0 24 24" fill="none">
+      <Path d="M7 9l5-5 5 5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7 15l5 5 5-5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
@@ -1189,29 +1443,313 @@ function MonthDayCell({
   );
 }
 
-function YearView({ year, tasks, onSelect }: { year: number; tasks: ReturnType<typeof usePlanner>['tasks']; onSelect: (i: number) => void }) {
+function YearView({ year, tasks, availableHeight, onSelect, isSwipingRef }: { year: number; tasks: ReturnType<typeof usePlanner>['tasks']; availableHeight: number; onSelect: (i: number) => void; isSwipingRef?: React.RefObject<boolean> }) {
+  const today = new Date();
+  const todayKey = toDateKey(today);
+
+  // Build task set for quick lookup
+  const taskDateSet = useMemo(() => {
+    const s = new Set<string>();
+    tasks.forEach((t) => s.add(t.date));
+    return s;
+  }, [tasks]);
+
+  const MONTH_COLS = 3;
+  const rows: number[][] = [];
+  for (let i = 0; i < 12; i += MONTH_COLS) {
+    rows.push([i, i + 1, i + 2].filter((x) => x < 12));
+  }
+
+  const DOW_LABELS = ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сн', 'Жс'];
+  const monthBlockHeight = Math.max(110, Math.floor((availableHeight - 3 * 10 - 16) / 4));
+
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-      {months.map((m, i) => {
-        const prefix = `${year}-${String(i + 1).padStart(2, '0')}`;
-        const all = tasks.filter((t) => t.date.startsWith(prefix));
-        const done = all.filter((t) => t.isCompleted).length;
-        return (
-          <Pressable key={m} onPress={() => onSelect(i)} style={{ width: '48%', backgroundColor: 'white', borderRadius: 18, borderCurve: 'continuous', padding: 16, minHeight: 108 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700' }}>{m[0].toUpperCase() + m.slice(1)}</Text>
-            <Text style={{ color: colors.secondary, marginTop: 14 }}>{all.length} тапсырма</Text>
-            <Text style={{ color: colors.todayDark, marginTop: 3 }}>{done} орындалды</Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    <ScrollView
+      scrollEnabled={false}
+      style={{ height: availableHeight }}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8, paddingTop: 8 }}
+    >
+
+      {rows.map((row) => (
+        <View key={row[0]} style={yearStyles.row}>
+          {row.map((monthIndex) => {
+            const isCurrentMonth =
+              today.getFullYear() === year && today.getMonth() === monthIndex;
+
+            // Build grid: 7 columns (Mon–Sun), up to 6 rows
+            // Week starts Monday
+            const firstDay = new Date(year, monthIndex, 1);
+            const lastDay = new Date(year, monthIndex + 1, 0);
+            const startDow = (firstDay.getDay() + 6) % 7; // 0=Mon
+            const totalDays = lastDay.getDate();
+
+            // Fill cells: leading empty + days
+            const cells: (number | null)[] = [];
+            for (let e = 0; e < startDow; e++) cells.push(null);
+            for (let d = 1; d <= totalDays; d++) cells.push(d);
+            // Pad to full weeks
+            while (cells.length % 7 !== 0) cells.push(null);
+
+            const weeks: (number | null)[][] = [];
+            for (let i = 0; i < cells.length; i += 7) {
+              weeks.push(cells.slice(i, i + 7));
+            }
+
+            return (
+              <Pressable
+                key={monthIndex}
+                style={[yearStyles.monthBlock, { height: monthBlockHeight }]}
+                onPress={() => {
+                  if (isSwipingRef?.current) return;
+                  onSelect(monthIndex);
+                }}
+              >
+                {/* Month name */}
+                <Text style={[yearStyles.monthName, isCurrentMonth && yearStyles.monthNameActive]}>
+                  {months[monthIndex][0].toUpperCase() + months[monthIndex].slice(1)}
+                </Text>
+
+                <View style={yearStyles.dowRow}>
+                  {DOW_LABELS.map((d) => (
+                    <Text key={d} style={yearStyles.dowLabel}>{d}</Text>
+                  ))}
+                </View>
+
+                {/* Weeks */}
+                {weeks.map((week, wi) => (
+                  <View key={wi} style={yearStyles.weekRow}>
+                    {week.map((day, di) => {
+                      if (!day) return <View key={di} style={yearStyles.dayCell} />;
+                      const dateKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                      const isT = dateKey === todayKey;
+                      const hasTasks = taskDateSet.has(dateKey);
+                      return (
+                        <View key={di} style={yearStyles.dayCell}>
+                          <View style={[
+                            yearStyles.dayInner,
+                            isT && yearStyles.todayCircle,
+                            hasTasks && !isT && yearStyles.hasTasksCircle,
+                          ]}>
+                            <Text style={[
+                              yearStyles.dayNum,
+                              isT && yearStyles.todayNum,
+                              hasTasks && !isT && yearStyles.hasTasksNum,
+                            ]}>
+                              {day}
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                ))}
+              </Pressable>
+            );
+          })}
+        </View>
+      ))}
+    </ScrollView>
   );
 }
+
+const yearStyles = StyleSheet.create({
+  yearTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: colors.today,
+    letterSpacing: -1,
+    marginBottom: 16,
+    marginTop: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  monthBlock: {
+    flex: 1,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#E4EAF1',
+    borderRadius: 14,
+    backgroundColor: '#FBFCFE',
+    overflow: 'hidden',
+  },
+  monthName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 5,
+    letterSpacing: 0.1,
+  },
+  monthNameActive: {
+    color: colors.today,
+  },
+  dowRow: {
+    flexDirection: 'row',
+    marginBottom: 1,
+  },
+  dowLabel: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 7,
+    lineHeight: 8,
+    fontWeight: '600',
+    color: colors.inputPlusIcon,
+  },
+  weekRow: {
+    flexDirection: 'row',
+  },
+  dayCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 0,
+  },
+  dayInner: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  todayCircle: {
+    backgroundColor: colors.today,
+  },
+  dayNum: {
+    fontSize: 8,
+    lineHeight: 10,
+    fontWeight: '500',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  todayNum: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  hasTasksCircle: {},
+  hasTasksNum: {
+    color: colors.today,
+    fontWeight: '700',
+  },
+});
+
 
 function Center({ children }: { children: React.ReactNode }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: colors.background, padding: 24 }}>
       {children}
+    </View>
+  );
+}
+
+function AnimatedYearTitle({
+  year,
+  carouselAnim,
+  screenWidth,
+  small,
+}: {
+  year: number;
+  carouselAnim: Animated.Value;
+  screenWidth: number;
+  small: boolean;
+}) {
+  const fontSize = small ? 32 : 38;
+  const lineHeight = small ? 38 : 44;
+  const slideOffset = small ? 95 : 115;
+
+  const currentYearText = String(year);
+  const nextYearText = String(year + 1);
+  const prevYearText = String(year - 1);
+
+  // Current year (center)
+  const currentTranslateX = carouselAnim.interpolate({
+    inputRange: [-screenWidth, 0, screenWidth],
+    outputRange: [-slideOffset, 0, slideOffset],
+    extrapolate: 'clamp',
+  });
+  const currentOpacity = carouselAnim.interpolate({
+    inputRange: [-screenWidth, 0, screenWidth],
+    outputRange: [0, 1, 0],
+    extrapolate: 'clamp',
+  });
+
+  // Next year (slides in from right during left swipe)
+  const nextTranslateX = carouselAnim.interpolate({
+    inputRange: [-screenWidth, 0],
+    outputRange: [0, slideOffset],
+    extrapolate: 'clamp',
+  });
+  const nextOpacity = carouselAnim.interpolate({
+    inputRange: [-screenWidth, 0],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  // Previous year (slides in from left during right swipe)
+  const prevTranslateX = carouselAnim.interpolate({
+    inputRange: [0, screenWidth],
+    outputRange: [-slideOffset, 0],
+    extrapolate: 'clamp',
+  });
+  const prevOpacity = carouselAnim.interpolate({
+    inputRange: [0, screenWidth],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const textStyle = {
+    fontSize,
+    lineHeight,
+    fontWeight: '800' as const,
+    letterSpacing: -1.5,
+    color: colors.today,
+    fontVariant: ['tabular-nums' as const],
+  };
+
+  return (
+    <View style={{ height: lineHeight, width: slideOffset + 20, justifyContent: 'center' }}>
+      {/* Current Year */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          left: 0,
+          opacity: currentOpacity,
+          transform: [{ translateX: currentTranslateX }],
+        }}
+      >
+        <Text numberOfLines={1} style={textStyle}>
+          {currentYearText}
+        </Text>
+      </Animated.View>
+
+      {/* Next Year */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          left: 0,
+          opacity: nextOpacity,
+          transform: [{ translateX: nextTranslateX }],
+        }}
+      >
+        <Text numberOfLines={1} style={textStyle}>
+          {nextYearText}
+        </Text>
+      </Animated.View>
+
+      {/* Previous Year */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          left: 0,
+          opacity: prevOpacity,
+          transform: [{ translateX: prevTranslateX }],
+        }}
+      >
+        <Text numberOfLines={1} style={textStyle}>
+          {prevYearText}
+        </Text>
+      </Animated.View>
     </View>
   );
 }
