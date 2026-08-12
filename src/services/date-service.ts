@@ -7,6 +7,7 @@ export const weekdaysShort = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', '�
 export const toDateKey = (date: Date) => format(date, 'yyyy-MM-dd');
 export const fromDateKey = (key: string) => parseISO(`${key}T12:00:00`);
 export const getStartOfWeek = (date: Date) => startOfWeek(date, { weekStartsOn: 1 });
+export const getStartOfWeekWith = (date: Date, weekStartsOn: 0 | 1 | 6) => startOfWeek(date, { weekStartsOn });
 export const getWeekDates = (date: Date) => Array.from({ length: 7 }, (_, index) => addDays(getStartOfWeek(date), index));
 export const formatWeekRange = (start: Date, end = addDays(start, 6)) => {
   const d1 = format(start, 'dd'); const d2 = format(end, 'dd');

@@ -6,8 +6,7 @@ import { getDatabase } from '@/database/database';
 import * as repo from '@/database/task-repository';
 import { getSettings, setSetting } from '@/database/settings-repository';
 import { seedDemoData } from '@/database/demo-data';
-
-import { addDays, fromDateKey, toDateKey } from '@/services/date-service';
+import { cancelReminder, scheduleReminder } from '@/services/notification-service';
 
 type Store = {
   ready: boolean;
@@ -33,137 +32,165 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [settings, setSettings] = useState(defaultSettings);
-  const [range, setRange] = useState<[string, string] | null>(null);
 
   const rangeRef = useRef<[string, string] | null>(null);
   const tasksRef = useRef<Task[]>([]);
   tasksRef.current = tasks;
-  const settingsRef = useRef<PlannerSettings>(defaultSettings);
-  settingsRef.current = settings;
 
-  const init = useCallback(async () => {
+  const refresh = useCallback(async () => {
     try {
       const db = await getDatabase();
       await seedDemoData(db);
-      const loadedSettings = await getSettings(db);
-      setSettings(loadedSettings);
-
-      const today = new Date();
-      const s = toDateKey(addDays(today, -60));
-      const e = toDateKey(addDays(today, 60));
-      rangeRef.current = [s, e];
-      setRange([s, e]);
-      const loaded = await repo.getTasksForRange(db, s, e, { sortMode: loadedSettings.sortMode, completedPlacement: loadedSettings.completedPlacement });
-      tasksRef.current = loaded;
+      const loaded = rangeRef.current ? await repo.getTasksForRange(db, rangeRef.current[0], rangeRef.current[1]) : [];
       setTasks(loaded);
-
-      setReady(true);
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Деректер базасы ашылмады');
+      setError('Байланыс жоқ');
+      console.warn(e);
     }
   }, []);
-
-  useEffect(() => {
-    void init();
-  }, [init]);
 
   const loadRange = useCallback(async (s: string, e: string) => {
-    // If current loaded range already covers [s, e], use in-memory tasks without re-rendering or DB querying!
-    if (rangeRef.current && s >= rangeRef.current[0] && e <= rangeRef.current[1]) {
-      return tasksRef.current;
-    }
     try {
+      if (rangeRef.current && s >= rangeRef.current[0] && e <= rangeRef.current[1]) {
+        return tasksRef.current;
+      }
       const db = await getDatabase();
-      const startDate = fromDateKey(s);
-      const endDate = fromDateKey(e);
-      const bufferStart = toDateKey(addDays(startDate, -60));
-      const bufferEnd = toDateKey(addDays(endDate, 60));
-      rangeRef.current = [bufferStart, bufferEnd];
-      setRange([bufferStart, bufferEnd]);
-      const loaded = await repo.getTasksForRange(db, bufferStart, bufferEnd, { sortMode: settingsRef.current.sortMode, completedPlacement: settingsRef.current.completedPlacement });
-      tasksRef.current = loaded;
-      setTasks(loaded);
-      return loaded;
-    } catch {
-      const db = await getDatabase();
-      const loaded = await repo.getTasksForRange(db, s, e, { sortMode: settingsRef.current.sortMode, completedPlacement: settingsRef.current.completedPlacement });
-      tasksRef.current = loaded;
-      setTasks(loaded);
-      return loaded;
+      const result = await repo.getTasksForRange(db, s, e);
+      rangeRef.current = [s, e];
+      setTasks(result);
+      setError(null);
+      return result;
+    } catch (e) {
+      setError('Байланыс жоқ');
+      console.warn(e);
+      return [];
     }
   }, []);
 
-  const refresh = useCallback(async () => {
-    if (rangeRef.current) {
-      const db = await getDatabase();
-      const loaded = await repo.getTasksForRange(db, rangeRef.current[0], rangeRef.current[1], { sortMode: settingsRef.current.sortMode, completedPlacement: settingsRef.current.completedPlacement });
-      tasksRef.current = loaded;
-      setTasks(loaded);
-    }
+  const get = useCallback(async (id: string) => {
+    const db = await getDatabase();
+    return repo.getTask(db, id);
   }, []);
 
-  const value = useMemo<Store>(
-    () => ({
-      ready,
-      error,
-      tasks,
-      settings,
-      loadRange,
-      refresh,
-      toggle: async (t) => {
-        setTasks((x) => x.map((v) => (v.id === t.id && v.date === t.date ? { ...v, isCompleted: !v.isCompleted } : v)));
-        try {
-          await repo.toggleTaskCompletion(await getDatabase(), t);
-        } catch (e) {
-          await refresh();
-          throw e;
+  const toggle = useCallback(async (t: Task) => {
+    const db = await getDatabase();
+    setTasks((x) => {
+      const next = x.map((v) => {
+        if (v.id === t.id && v.date === t.date) {
+          return { ...v, isCompleted: !v.isCompleted, completed: !v.completed };
         }
-      },
-      create: async (i) => {
-        const id = await repo.createTask(await getDatabase(), i);
-        await refresh();
-        return id;
-      },
-      update: async (id, i) => {
-        await repo.updateTask(await getDatabase(), id, i);
-        await refresh();
-      },
-      remove: async (id, date, mode = 'all') => {
-        if (mode === 'single' && date) {
-          await repo.deleteTaskOccurrence(await getDatabase(), id, date);
-        } else {
-          await repo.deleteTask(await getDatabase(), id);
-        }
-        await refresh();
-      },
-      removeOccurrence: async (taskId, date) => {
-        await repo.deleteTaskOccurrence(await getDatabase(), taskId, date);
-        await refresh();
-      },
-      get: async (id) => repo.getTask(await getDatabase(), id),
-      setPref: async (k, v) => {
-        await setSetting(await getDatabase(), k, v);
-        settingsRef.current = { ...settingsRef.current, [k]: v };
-        setSettings((x) => ({ ...x, [k]: v }));
-        if (k === 'sortMode' || k === 'completedPlacement') {
-          await refresh();
-        }
-      },
-      clearAll: async () => {
-        const db = await getDatabase();
-        await db.execAsync('DELETE FROM task_occurrences; DELETE FROM tasks;');
-        await refresh();
-      },
-    }),
-    [ready, error, tasks, settings, loadRange, refresh]
+        return v;
+      });
+      tasksRef.current = next;
+      return next;
+    });
+    try {
+      await repo.toggleTaskCompletion(db, t);
+    } catch (e) {
+      await refresh();
+      console.warn(e);
+    }
+  }, [refresh]);
+
+  const create = useCallback(async (i: TaskInput) => {
+    const db = await getDatabase();
+    const id = await repo.createTask(db, i);
+    try {
+      const reminderId = await scheduleReminder(i);
+      if (reminderId) await repo.setNotificationId(db, id, reminderId);
+    } catch (e) {
+      console.warn('Reminder schedule failed', e);
+    }
+    await refresh();
+    return id;
+  }, [refresh]);
+
+  const update = useCallback(async (id: string, i: TaskInput) => {
+    const db = await getDatabase();
+    const prev = await repo.getTask(db, id);
+    try {
+      if (prev?.notificationId) await cancelReminder(prev.notificationId);
+      await repo.updateTask(db, id, i);
+      const reminderId = await scheduleReminder(i);
+      await repo.setNotificationId(db, id, reminderId);
+    } catch (e) {
+      console.warn('Reminder reschedule failed', e);
+      await repo.updateTask(db, id, i);
+      await repo.setNotificationId(db, id, null);
+    }
+    await refresh();
+  }, [refresh]);
+
+  const remove = useCallback(async (id: string, date?: string, mode?: 'single' | 'all') => {
+    const db = await getDatabase();
+    const prev = await repo.getTask(db, id);
+    if (date && mode === 'single') {
+      if (prev && prev.date === date && prev.notificationId) {
+        await cancelReminder(prev.notificationId);
+      }
+      await repo.deleteTaskOccurrence(db, id, date);
+    } else {
+      if (prev?.notificationId) await cancelReminder(prev.notificationId);
+      await repo.deleteTask(db, id);
+    }
+    await refresh();
+  }, [refresh]);
+
+  const removeOccurrence = useCallback(async (taskId: string, occurrenceDate: string) => {
+    const db = await getDatabase();
+    const prev = await repo.getTask(db, taskId);
+    if (prev && prev.date === occurrenceDate && prev.notificationId) {
+      await cancelReminder(prev.notificationId);
+    }
+    await repo.deleteTaskOccurrence(db, taskId, occurrenceDate);
+    await refresh();
+  }, [refresh]);
+
+  const setPref = useCallback(async (k: keyof PlannerSettings, v: PlannerSettings[keyof PlannerSettings]) => {
+    const db = await getDatabase();
+    await setSetting(db, k, v);
+    setSettings((prev) => ({ ...prev, [k]: v }));
+  }, []);
+
+  const clearAll = useCallback(async () => {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<{ notificationId: string | null }>(
+      `SELECT notificationId FROM tasks WHERE notificationId IS NOT NULL`
+    );
+    for (const r of rows) {
+      if (r.notificationId) await cancelReminder(r.notificationId);
+    }
+    await repo.deleteAllTasks(db);
+    await refresh();
+  }, [refresh]);
+
+  const value = useMemo(
+    () => ({ ready, error, tasks, settings, loadRange, refresh, toggle, create, update, remove, removeOccurrence, get, setPref, clearAll }),
+    [ready, error, tasks, settings, loadRange, refresh, toggle, create, update, remove, removeOccurrence, get, setPref, clearAll]
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const db = await getDatabase();
+        await seedDemoData(db);
+        await refresh();
+        if (!cancelled) setReady(true);
+      } catch (e) {
+        if (!cancelled) setError('Байланыс жоқ');
+        console.warn(e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [refresh]);
 
   return <Context value={value}>{children}</Context>;
 }
 
 export function usePlanner() {
-  const c = use(Context);
-  if (!c) throw new Error('PlannerProvider missing');
-  return c;
+  const ctx = use(Context);
+  if (!ctx) throw new Error('usePlanner must be used within PlannerProvider');
+  return ctx;
 }

@@ -26,7 +26,8 @@ import { RepeatChip } from './RepeatChip';
 import { CalendarModal } from './CalendarModal';
 import { TimeModal } from './TimeModal';
 import { RepeatActionSheet } from './RepeatActionSheet';
-import { CustomRepeatConfig, CustomUnit } from './CustomRepeatModal';
+import { CustomRepeatConfig, CustomUnit, describeCustomRepeat } from './CustomRepeatModal';
+import { REMINDER_DEFAULT_OFFSET_MINUTES } from '@/services/notification-service';
 
 interface TaskBottomSheetProps {
   visible: boolean;
@@ -72,9 +73,9 @@ export function TaskBottomSheet({
         setSelectedTime(editingTask.time || null);
         setSelectedRepeat(((editingTask.repeat as TaskRepeat) || (editingTask.repeatType as TaskRepeat) || 'none'));
         setSelectedRepeatInterval(editingTask.repeatInterval || 1);
-        setSelectedCustomLabel(undefined);
-        setSelectedCustomUnit(undefined);
-        setSelectedCustomConfig(undefined);
+        setSelectedCustomLabel(editingTask.repeatConfig ? describeCustomRepeat(editingTask.repeatConfig) : undefined);
+        setSelectedCustomUnit(editingTask.repeatConfig?.unit ?? undefined);
+        setSelectedCustomConfig(editingTask.repeatConfig ?? undefined);
       } else {
         setTitle('');
         setSelectedDate(initialDate || null);
@@ -204,46 +205,34 @@ export function TaskBottomSheet({
     }
 
     const targetDate = selectedDate || getTodayKey();
+    const base = {
+      title: trimmed,
+      date: targetDate,
+      time: selectedTime,
+      repeatType: (selectedRepeat ?? 'none') as TaskRepeat,
+      repeat: (selectedRepeat ?? 'none') as TaskRepeat,
+      repeatInterval: selectedRepeatInterval,
+      repeatConfig: selectedCustomConfig ?? null,
+      notificationOffset: selectedTime ? REMINDER_DEFAULT_OFFSET_MINUTES : null,
+    };
+
     if (editingTask) {
-      await planner.update(editingTask.id, {
-        title: trimmed,
-        date: targetDate,
-        time: selectedTime,
-        repeatType: selectedRepeat as TaskRepeat,
-        repeat: selectedRepeat as TaskRepeat,
-        repeatInterval: selectedRepeatInterval,
-      });
-      onTaskSaved?.({
-        ...editingTask,
-        title: trimmed,
-        date: targetDate,
-        time: selectedTime,
-        repeat: selectedRepeat as TaskRepeat,
-        repeatType: selectedRepeat as TaskRepeat,
-        repeatInterval: selectedRepeatInterval,
-      });
+      const next = {
+        ...base,
+        note: editingTask.note ?? null,
+        priority: editingTask.priority ?? 'normal',
+      };
+      await planner.update(editingTask.id, next);
+      onTaskSaved?.({ ...editingTask, ...next });
     } else {
-      const id = await planner.create({
-        title: trimmed,
-        date: targetDate,
-        time: selectedTime,
-        repeatType: selectedRepeat as TaskRepeat,
-        repeat: selectedRepeat as TaskRepeat,
-        repeatInterval: selectedRepeatInterval,
-      });
+      const id = await planner.create(base);
       onTaskSaved?.({
         id,
-        title: trimmed,
+        ...base,
         isCompleted: false,
         completed: false,
-        date: targetDate,
-        time: selectedTime,
-        repeat: selectedRepeat as TaskRepeat,
-        repeatType: selectedRepeat as TaskRepeat,
-        repeatInterval: selectedRepeatInterval,
         note: null,
         priority: 'normal',
-        notificationOffset: null,
         notificationId: null,
         sortOrder: 0,
         order: 0,

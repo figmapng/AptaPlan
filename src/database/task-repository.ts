@@ -1,18 +1,87 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import type { RepeatType, Task, TaskInput, TaskRepeat } from '@/types/task';
+import type { RepeatConfig, RepeatType, Task, TaskInput, TaskRepeat } from '@/types/task';
 import { addDays, fromDateKey, toDateKey } from '@/services/date-service';
 import { createId } from '@/utils/id';
 
-type Row = Omit<Task, 'isCompleted'> & { isCompleted: number };
+type Row = Omit<Task, 'isCompleted' | 'repeatConfig'> & {
+  isCompleted: number;
+  repeatConfig?: string | null;
+};
+
+const parseRepeatConfig = (raw: string | null | undefined): RepeatConfig | null => {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as RepeatConfig;
+  } catch {
+    return null;
+  }
+};
+
 const map = (r: Row): Task => ({
   ...r,
   isCompleted: !!r.isCompleted,
   completed: !!r.isCompleted,
   repeat: (r.repeatType as TaskRepeat) || 'none',
   repeatInterval: r.repeatInterval ?? 1,
+  repeatConfig: parseRepeatConfig(r.repeatConfig),
   sortOrder: r.sortOrder ?? 0,
   order: r.order ?? r.sortOrder ?? 0,
 });
+
+const daysBetween = (start: Date, target: Date) => Math.round((target.getTime() - start.getTime()) / 86400000);
+
+// Is `target` the `posIdx`-th weekday `dayIdx` of its month?
+// posIdx: 0=1st, 1=2nd, 2=3rd, 3=4th, 4=last
+const isNthWeekday = (target: Date, dayIdx: number, posIdx: number) => {
+  if (target.getDay() !== dayIdx) return false;
+  const ordinal = Math.floor((target.getDate() - 1) / 7);
+  if (posIdx === 4) {
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    return target.getDate() + 7 > lastDay;
+  }
+  return ordinal === posIdx;
+};
+
+const occursCustom = (task: Task, start: Date, target: Date, interval: number): boolean => {
+  const diffDays = daysBetween(start, target);
+  if (diffDays < 0) return false;
+
+  const cfg = task.repeatConfig;
+  if (!cfg) return diffDays % interval === 0;
+
+  const unit = cfg.unit;
+  if (unit === 'hourly' || unit === 'daily') return diffDays % interval === 0;
+
+  if (unit === 'weekly') {
+    if (!cfg.selectedWeekdays || cfg.selectedWeekdays.length === 0) {
+      return start.getDay() === target.getDay() && Math.floor(diffDays / 7) % interval === 0;
+    }
+    if (!cfg.selectedWeekdays.includes(target.getDay())) return false;
+    return Math.floor(diffDays / 7) % interval === 0;
+  }
+
+  if (unit === 'monthly') {
+    const monthsDiff = (target.getFullYear() - start.getFullYear()) * 12 + target.getMonth() - start.getMonth();
+    if (monthsDiff % interval !== 0) return false;
+    if (cfg.monthlyMode === 'dayOfWeek') {
+      const posIdx = cfg.selectedPosIdx ?? 0;
+      const dayIdx = cfg.selectedDayIdx ?? start.getDay();
+      return isNthWeekday(target, dayIdx, posIdx);
+    }
+    const day = cfg.selectedMonthDate ?? start.getDate();
+    return target.getDate() === day;
+  }
+
+  // yearly
+  const yearsDiff = target.getFullYear() - start.getFullYear();
+  if (yearsDiff < 0 || yearsDiff % interval !== 0) return false;
+  const month = cfg.selectedYearlyMonth ?? start.getMonth();
+  if (target.getMonth() !== month) return false;
+  if (cfg.yearlyEnableWeekdays) {
+    return isNthWeekday(target, cfg.selectedDayIdx ?? start.getDay(), cfg.selectedPosIdx ?? 0);
+  }
+  return target.getDate() === start.getDate();
+};
 
 const occursOn = (task: Task, date: string) => {
   if (task.date > date) return false;
@@ -22,19 +91,29 @@ const occursOn = (task: Task, date: string) => {
   const interval = Math.max(1, task.repeatInterval ?? 1);
   const dayOfWeek = target.getDay();
 
-  if (task.repeatType === 'hourly' || task.repeatType === 'daily' || task.repeatType === 'custom') {
-    const diffDays = Math.round((target.getTime() - start.getTime()) / 86400000);
+  if (task.repeatType === 'custom') {
+    return occursCustom(task, start, target, interval);
+  }
+  if (task.repeatType === 'hourly' || task.repeatType === 'daily') {
+    const diffDays = daysBetween(start, target);
     return diffDays >= 0 && diffDays % interval === 0;
   }
   if (task.repeatType === 'weekdays') return dayOfWeek >= 1 && dayOfWeek <= 5;
   if (task.repeatType === 'weekends') return dayOfWeek === 0 || dayOfWeek === 6;
   if (task.repeatType === 'weekly') {
-    const diffWeeks = Math.round((target.getTime() - start.getTime()) / 604800000);
+    const diffWeeks = Math.floor(daysBetween(start, target) / 7);
     return start.getDay() === dayOfWeek && diffWeeks % interval === 0;
   }
   if (task.repeatType === 'yearly') {
-    return start.getMonth() === target.getMonth() && start.getDate() === target.getDate();
+    const yearsDiff = target.getFullYear() - start.getFullYear();
+    return (
+      yearsDiff >= 0 &&
+      yearsDiff % interval === 0 &&
+      start.getMonth() === target.getMonth() &&
+      start.getDate() === target.getDate()
+    );
   }
+  // monthly
   return (
     start.getDate() === target.getDate() &&
     ((target.getFullYear() - start.getFullYear()) * 12 + target.getMonth() - start.getMonth()) % interval === 0
@@ -99,7 +178,7 @@ export async function createTask(db: SQLiteDatabase, input: TaskInput) {
   const id = createId();
   const row = await db.getFirstAsync<{ n: number }>('SELECT COALESCE(MAX(sortOrder), -1) + 1 AS n FROM tasks WHERE date=?', input.date);
   await db.runAsync(
-    `INSERT INTO tasks(id,title,note,date,time,priority,repeatType,repeatInterval,notificationOffset,sortOrder,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO tasks(id,title,note,date,time,priority,repeatType,repeatInterval,repeatConfig,notificationOffset,sortOrder,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     id,
     input.title.trim(),
     input.note || null,
@@ -108,6 +187,7 @@ export async function createTask(db: SQLiteDatabase, input: TaskInput) {
     input.priority || 'normal',
     input.repeatType || 'none',
     input.repeatInterval || 1,
+    input.repeatConfig ? JSON.stringify(input.repeatConfig) : null,
     input.notificationOffset || null,
     row?.n ?? 0,
     now,
@@ -118,7 +198,7 @@ export async function createTask(db: SQLiteDatabase, input: TaskInput) {
 
 export async function updateTask(db: SQLiteDatabase, id: string, input: TaskInput) {
   await db.runAsync(
-    `UPDATE tasks SET title=?,note=?,date=?,time=?,priority=?,repeatType=?,repeatInterval=?,notificationOffset=?,updatedAt=? WHERE id=?`,
+    `UPDATE tasks SET title=?,note=?,date=?,time=?,priority=?,repeatType=?,repeatInterval=?,repeatConfig=?,notificationOffset=?,updatedAt=? WHERE id=?`,
     input.title.trim(),
     input.note || null,
     input.date,
@@ -126,14 +206,28 @@ export async function updateTask(db: SQLiteDatabase, id: string, input: TaskInpu
     input.priority || 'normal',
     input.repeatType || 'none',
     input.repeatInterval || 1,
+    input.repeatConfig ? JSON.stringify(input.repeatConfig) : null,
     input.notificationOffset || null,
     new Date().toISOString(),
     id
   );
 }
 
+export async function setNotificationId(db: SQLiteDatabase, id: string, notificationId: string | null) {
+  await db.runAsync('UPDATE tasks SET notificationId=?,updatedAt=? WHERE id=?', notificationId, new Date().toISOString(), id);
+}
+
 export async function deleteTask(db: SQLiteDatabase, id: string) {
   await db.runAsync('UPDATE tasks SET deletedAt=?,updatedAt=? WHERE id=?', new Date().toISOString(), new Date().toISOString(), id);
+}
+
+export async function deleteAllTasks(db: SQLiteDatabase) {
+  await db.runAsync(
+    'UPDATE tasks SET deletedAt=?,updatedAt=? WHERE deletedAt IS NULL',
+    new Date().toISOString(),
+    new Date().toISOString()
+  );
+  await db.runAsync('DELETE FROM task_occurrences');
 }
 
 export async function deleteTaskOccurrence(db: SQLiteDatabase, taskId: string, occurrenceDate: string) {

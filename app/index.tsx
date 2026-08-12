@@ -1,5 +1,5 @@
 import { format, isToday } from 'date-fns';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  unstable_batchedUpdates,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -22,7 +23,7 @@ import { usePlanner } from '@/store/planner-store';
 import {
   addDays,
   getMonthGrid,
-  getStartOfWeek,
+  getStartOfWeekWith,
   isSameMonth,
   months,
   toDateKey,
@@ -69,8 +70,15 @@ type DerivedWeekData = {
 export default function Home() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { ready, error, tasks, loadRange, create } = usePlanner();
-  const [weekStart, setWeekStart] = useState(() => getStartOfWeek(new Date()));
+  const { ready, error, tasks, loadRange, create, settings } = usePlanner();
+  const firstDay = settings.firstDayOfWeek ?? 'mon';
+  const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
+  const [weekStart, setWeekStart] = useState(() => getStartOfWeekWith(new Date(), weekStartsOn));
+  const showLastDay = settings.lastDayVisibility !== 'hidden';
+
+  useEffect(() => {
+    setWeekStart((prev) => getStartOfWeekWith(prev, weekStartsOn));
+  }, [weekStartsOn]);
 
   const [mode, setMode] = useState<ViewMode>('week');
   const modeRef = useRef<ViewMode>('week');
@@ -86,7 +94,7 @@ export default function Home() {
   const handleMonthPickerSelect = useCallback((selectedDate: Date) => {
     setFromYearMode(false);
     if (modeRef.current === 'week') {
-      setWeekStart(getStartOfWeek(selectedDate));
+      setWeekStart(getStartOfWeekWith(selectedDate, weekStartsOn));
     } else if (modeRef.current === 'month') {
       setMonth(selectedDate);
     } else {
@@ -94,7 +102,7 @@ export default function Home() {
       setYear(selectedDate.getFullYear());
       setMode('month');
     }
-  }, []);
+  }, [weekStartsOn]);
 
   // ── Month carousel ──────────────────────────────────────────────
   const monthCarouselAnim = useRef(new Animated.Value(0)).current;
@@ -224,7 +232,9 @@ export default function Home() {
   useEffect(() => {
     const dates = derivedWeekData.slots[1].dates;
     if (ready && dates.length > 0) {
-      void loadRange(toDateKey(dates[0]), toDateKey(dates[6]));
+      // Load the surrounding weeks as well so adjacent carousel slots have
+      // data immediately and swiping never shows an empty/stale week.
+      void loadRange(toDateKey(addDays(dates[0], -7)), toDateKey(addDays(dates[6], 7)));
       const target =
         userSundayStateRef.current === 'expanded' ? 1
         : userSundayStateRef.current === 'collapsed' ? 0
@@ -289,6 +299,8 @@ export default function Home() {
   const hasDetermined = useRef(false);
   const isSwipingRef = useRef(false);
 
+
+
   const pendingResetRef = useRef(false);
 
   useEffect(() => {
@@ -303,24 +315,6 @@ export default function Home() {
       }, 50);
     }
   }, [weekStart, carouselAnim]);
-
-  // ── Month carousel reset ─────────────────────────────────────────
-  useEffect(() => {
-    if (pendingMonthResetRef.current) {
-      monthCarouselAnim.setValue(0);
-      pendingMonthResetRef.current = false;
-      isMonthAnimatingRef.current = false;
-    }
-  }, [month, monthCarouselAnim]);
-
-  // ── Year carousel reset ──────────────────────────────────────────
-  useEffect(() => {
-    if (pendingYearResetRef.current) {
-      yearCarouselAnim.setValue(0);
-      pendingYearResetRef.current = false;
-      isYearAnimatingRef.current = false;
-    }
-  }, [year, yearCarouselAnim]);
 
   const onSwipeComplete = useCallback((direction: -1 | 1) => {
     isAnimatingRef.current = true;
@@ -343,11 +337,21 @@ export default function Home() {
 
   const resetToCurrentWeek = useCallback(() => {
     if (isAnimatingRef.current) return;
-    setWeekStart(getStartOfWeek(new Date()));
+    setWeekStart(getStartOfWeekWith(new Date(), weekStartsOn));
     carouselAnim.setValue(0);
-  }, [carouselAnim]);
+  }, [carouselAnim, weekStartsOn]);
 
-  // ── Month swipe complete ─────────────────────────────────────────
+  useEffect(() => {
+    if (pendingMonthResetRef.current) {
+      monthCarouselAnim.setValue(0);
+      pendingMonthResetRef.current = false;
+      isMonthAnimatingRef.current = false;
+      setTimeout(() => {
+        isSwipingRef.current = false;
+      }, 50);
+    }
+  }, [month, monthCarouselAnim]);
+
   const onMonthSwipeComplete = useCallback((direction: -1 | 1) => {
     isMonthAnimatingRef.current = true;
     isSwipingRef.current = true;
@@ -362,7 +366,6 @@ export default function Home() {
     }).start(() => {
       pendingMonthResetRef.current = true;
       setMonth((m) => new Date(m.getFullYear(), m.getMonth() - direction, 1));
-      setTimeout(() => { isSwipingRef.current = false; }, 150);
     });
   }, [monthCarouselAnim, screenWidth]);
 
@@ -455,7 +458,17 @@ export default function Home() {
     },
   };
 
-  // ── Year swipe complete ──────────────────────────────────────────
+  useEffect(() => {
+    if (pendingYearResetRef.current) {
+      yearCarouselAnim.setValue(0);
+      pendingYearResetRef.current = false;
+      isYearAnimatingRef.current = false;
+      setTimeout(() => {
+        isSwipingRef.current = false;
+      }, 50);
+    }
+  }, [year, yearCarouselAnim]);
+
   const onYearSwipeComplete = useCallback((direction: -1 | 1) => {
     isYearAnimatingRef.current = true;
     isSwipingRef.current = true;
@@ -470,7 +483,6 @@ export default function Home() {
     }).start(() => {
       pendingYearResetRef.current = true;
       setYear((y) => y - direction);
-      setTimeout(() => { isSwipingRef.current = false; }, 150);
     });
   }, [yearCarouselAnim, screenWidth]);
 
@@ -527,7 +539,7 @@ export default function Home() {
           });
         }
       } else {
-        const dy = e.nativeEvent.pageY - monthTouchStartY.current;
+        const dy = e.nativeEvent.pageY - yearTouchStartY.current;
         if (isMotivationalOpenRef.current) {
           if (dy < -15) {
             closeMotivationalHeader();
@@ -1140,7 +1152,7 @@ export default function Home() {
             return (
               <Animated.View
                 key={slot.slotKey}
-                pointerEvents={slot.id === 1 ? 'auto' : 'none'}
+                pointerEvents={slot.baseX === 0 ? 'auto' : 'none'}
                 style={{
                   position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                   paddingHorizontal: 16,
@@ -1155,8 +1167,9 @@ export default function Home() {
                   collapsedBodyHeight={collapsedBodyHeight}
                   expandedBodyHeight={expandedBodyHeight}
                   expandedSundayHeight={expandedSundayHeight}
-                  onLayoutMeasured={slot.id === 1 ? handleCardLayoutMeasured : undefined}
+                  onLayoutMeasured={slot.baseX === 0 ? handleCardLayoutMeasured : undefined}
                   isSwipingRef={isSwipingRef}
+                  showLastDay={showLastDay}
                 />
               </Animated.View>
             );
@@ -1184,7 +1197,7 @@ export default function Home() {
                 });
                 return (
                   <Animated.View
-                    key={offset}
+                    key={slotYear}
                     pointerEvents={offset === 0 ? 'auto' : 'none'}
                     style={{
                       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -1229,6 +1242,7 @@ export default function Home() {
             >
               {([-1, 0, 1] as const).map((offset) => {
                 const slotDate = new Date(month.getFullYear(), month.getMonth() + offset, 1);
+                const slotKey = `${slotDate.getFullYear()}-${slotDate.getMonth()}`;
                 const baseX = offset * screenWidth;
                 const translateX = monthCarouselAnim.interpolate({
                   inputRange: [-screenWidth, 0, screenWidth],
@@ -1236,7 +1250,7 @@ export default function Home() {
                 });
                 return (
                   <Animated.View
-                    key={offset}
+                    key={slotKey}
                     pointerEvents={offset === 0 ? 'auto' : 'none'}
                     style={{
                       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -1439,11 +1453,12 @@ function SelectorChevronIcon({ color = colors.today }: { color?: string }) {
   );
 }
 
-const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 138, expandedBodyHeight = 88, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef }: {
+const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 138, expandedBodyHeight = 88, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef, showLastDay = true }: {
   days: DayDataItem[]; progress: Animated.Value;
   onInteraction?: () => void; collapsedBodyHeight?: number; expandedBodyHeight?: number;
   expandedSundayHeight?: number; onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
   isSwipingRef?: React.RefObject<boolean>;
+  showLastDay?: boolean;
 }) {
   return (
     <View style={{ gap: 8 }}>
@@ -1459,11 +1474,33 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
           ))}
         </View>
       </View>
-      {days[6] && (
+      {showLastDay && days[6] && (
         <DayCard key={days[6].dateKey} date={days[6].date} tasks={days[6].tasks} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
       )}
     </View>
   );
+}, (prev, next) => {
+  if (prev.days.length !== next.days.length) return false;
+  if (prev.progress !== next.progress) return false;
+  if (prev.showLastDay !== next.showLastDay) return false;
+  if (prev.collapsedBodyHeight !== next.collapsedBodyHeight) return false;
+  if (prev.expandedBodyHeight !== next.expandedBodyHeight) return false;
+  if (prev.expandedSundayHeight !== next.expandedSundayHeight) return false;
+
+  for (let i = 0; i < prev.days.length; i++) {
+    const pd = prev.days[i];
+    const nd = next.days[i];
+    if (pd.dateKey !== nd.dateKey) return false;
+    if (pd.tasks.length !== nd.tasks.length) return false;
+    for (let j = 0; j < pd.tasks.length; j++) {
+      const pt = pd.tasks[j];
+      const nt = nd.tasks[j];
+      if (pt.id !== nt.id || pt.isCompleted !== nt.isCompleted || pt.title !== nt.title || pt.date !== nt.date) {
+        return false;
+      }
+    }
+  }
+  return true;
 });
 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
@@ -1862,6 +1899,18 @@ const YearView = memo(function YearViewComponent({
       ))}
     </ScrollView>
   );
+}, (prev, next) => {
+  if (prev.year !== next.year) return false;
+  if (prev.availableHeight !== next.availableHeight) return false;
+  if (prev.tasks.length !== next.tasks.length) return false;
+  for (let i = 0; i < prev.tasks.length; i++) {
+    const p = prev.tasks[i];
+    const n = next.tasks[i];
+    if (p.id !== n.id || p.isCompleted !== n.isCompleted || p.title !== n.title || p.date !== n.date) {
+      return false;
+    }
+  }
+  return true;
 });
 
 const yearStyles = StyleSheet.create({

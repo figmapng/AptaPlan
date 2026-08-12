@@ -150,12 +150,18 @@ export async function importBackup(
                   await db.execAsync('DELETE FROM task_occurrences; DELETE FROM tasks; DELETE FROM settings;');
 
                   for (const t of payload.tasks) {
+                    const repeatConfig =
+                      typeof t.repeatConfig === 'string'
+                        ? t.repeatConfig
+                        : t.repeatConfig
+                        ? JSON.stringify(t.repeatConfig)
+                        : null;
                     await db.runAsync(
                       `INSERT OR REPLACE INTO tasks (
                         id, title, note, date, time, isCompleted, priority,
-                        repeatType, repeatInterval, notificationOffset, notificationId,
+                        repeatType, repeatInterval, repeatConfig, notificationOffset, notificationId,
                         sortOrder, createdAt, updatedAt, deletedAt
-                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                       [
                         t.id,
                         t.title,
@@ -166,6 +172,7 @@ export async function importBackup(
                         t.priority ?? 'normal',
                         t.repeatType ?? 'none',
                         t.repeatInterval ?? 1,
+                        repeatConfig,
                         t.notificationOffset ?? null,
                         t.notificationId ?? null,
                         t.sortOrder ?? 0,

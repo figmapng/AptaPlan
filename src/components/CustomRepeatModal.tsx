@@ -2,31 +2,20 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import type { TaskRepeat } from '@/types/task';
+import type { RepeatConfig, RepeatCustomUnit, RepeatMonthlyMode, TaskRepeat } from '@/types/task';
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { AnimatedPressable } from './AnimatedPressable';
 
-export type CustomUnit = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
-export type MonthlyMode = 'dates' | 'dayOfWeek';
+export type CustomUnit = RepeatCustomUnit;
+export type MonthlyMode = RepeatMonthlyMode;
+export type CustomRepeatConfig = RepeatConfig;
 
 export const getOrderedWeekdayIndices = (firstDay: 'mon' | 'sat' | 'sun' = 'mon'): number[] => {
   if (firstDay === 'sun') return [0, 1, 2, 3, 4, 5, 6];
   if (firstDay === 'sat') return [6, 0, 1, 2, 3, 4, 5];
   return [1, 2, 3, 4, 5, 6, 0]; // default 'mon'
 };
-
-export interface CustomRepeatConfig {
-  unit: CustomUnit;
-  interval: number;
-  selectedWeekdays?: number[];
-  monthlyMode?: MonthlyMode;
-  selectedMonthDate?: number;
-  selectedPosIdx?: number;
-  selectedDayIdx?: number;
-  selectedYearlyMonth?: number;
-  yearlyEnableWeekdays?: boolean;
-}
 
 interface CustomRepeatModalProps {
   visible: boolean;
@@ -94,6 +83,52 @@ const kzMonthsFull = [
 
 const weekPositions = ['бірінші', 'екінші', 'үшінші', 'төртінші', 'соңғы'];
 
+const shortWeekdays = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
+const posShort = ['1-ші', '2-ші', '3-ші', '4-ші', 'соңғы'];
+
+/** Rebuilds the human-readable short label from a persisted RepeatConfig. */
+export function describeCustomRepeat(config: RepeatConfig): string {
+  const interval = Math.max(1, config.interval || 1);
+  const unit = config.unit;
+
+  if (unit === 'daily') {
+    return interval === 1 ? 'Күн сайын' : `Әр ${interval} күнде`;
+  }
+
+  if (unit === 'weekly') {
+    const sorted = [...(config.selectedWeekdays ?? [])].sort((a, b) => a - b);
+    if (sorted.length === 0 || sorted.length === 7) {
+      return interval === 1 ? 'Апта сайын' : `Әр ${interval} аптада`;
+    }
+    const daysText = sorted.map((i) => shortWeekdays[i]).join(', ');
+    return interval === 1 ? `Апта сайын (${daysText})` : `Әр ${interval} аптада (${daysText})`;
+  }
+
+  if (unit === 'monthly') {
+    if (config.monthlyMode === 'dayOfWeek') {
+      const pos = posShort[config.selectedPosIdx ?? 0];
+      const dayText = kzWeekdaysFull[config.selectedDayIdx ?? 1].toLowerCase();
+      return interval === 1 ? `Ай сайын (${pos} ${dayText})` : `Әр ${interval} айда (${pos} ${dayText})`;
+    }
+    const d = config.selectedMonthDate ?? 1;
+    return interval === 1 ? `Ай сайын (${d}-күні)` : `Әр ${interval} айда (${d}-күні)`;
+  }
+
+  if (unit === 'yearly') {
+    const mShort = kzMonthsShort[config.selectedYearlyMonth ?? 0];
+    if (config.yearlyEnableWeekdays) {
+      const pos = posShort[config.selectedPosIdx ?? 0];
+      const dayText = kzWeekdaysFull[config.selectedDayIdx ?? 1].toLowerCase();
+      return interval === 1
+        ? `Жыл сайын (${pos} ${dayText}, ${mShort})`
+        : `Әр ${interval} жылда (${pos} ${dayText}, ${mShort})`;
+    }
+    return interval === 1 ? `Жыл сайын (${mShort})` : `Әр ${interval} жылда (${mShort})`;
+  }
+
+  return interval === 1 ? 'Күн сайын' : `Әр ${interval} күнде`;
+}
+
 export function CustomRepeatModal({
   visible,
   currentRepeat,
@@ -115,12 +150,12 @@ export function CustomRepeatModal({
   const [unit, setUnit] = useState<CustomUnit>(() => {
     if (currentCustomConfig) return currentCustomConfig.unit;
     if (currentCustomUnit) return currentCustomUnit;
-    if (currentRepeat === 'hourly') return 'hourly';
+    if (currentRepeat === 'hourly') return 'daily';
     if (currentRepeat === 'daily') return 'daily';
     if (currentRepeat === 'weekly') return 'weekly';
     if (currentRepeat === 'monthly') return 'monthly';
     if (currentRepeat === 'yearly') return 'yearly';
-    return 'hourly';
+    return 'daily';
   });
   const [interval, setIntervalVal] = useState<number>(() => Math.max(1, currentInterval));
   const [showUnitMenu, setShowUnitMenu] = useState(false);
@@ -214,50 +249,18 @@ export function CustomRepeatModal({
     setIntervalVal((prev) => Math.max(prev - 1, 1));
   };
 
-  const getShortCustomLabel = (): string => {
-    if (unit === 'hourly') {
-      return interval === 1 ? 'Сағат сайын' : `Әр ${interval} сағатта`;
-    }
-
-    if (unit === 'daily') {
-      return interval === 1 ? 'Күн сайын' : `Әр ${interval} күнде`;
-    }
-
-    if (unit === 'weekly') {
-      const shortDays = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
-      const sorted = [...selectedWeekdays].sort((a, b) => a - b);
-      const daysText = sorted.map((i) => shortDays[i]).join(', ');
-      const isAllDays = sorted.length === 7;
-      if (interval === 1) {
-        return isAllDays ? 'Апта сайын' : `Апта сайын (${daysText})`;
-      }
-      return isAllDays ? `Әр ${interval} аптада` : `Әр ${interval} аптада (${daysText})`;
-    }
-
-    if (unit === 'monthly') {
-      if (monthlyMode === 'dates') {
-        return interval === 1
-          ? `Ай сайын (${selectedMonthDate}-күні)`
-          : `Әр ${interval} айда (${selectedMonthDate}-күні)`;
-      }
-      const posShort = ['1-ші', '2-ші', '3-ші', '4-ші', 'соңғы'][selectedPosIdx];
-      const dayText = kzWeekdaysFull[selectedDayIdx].toLowerCase();
-      return interval === 1
-        ? `Ай сайын (${posShort} ${dayText})`
-        : `Әр ${interval} айда (${posShort} ${dayText})`;
-    }
-
-    // yearly
-    const mShort = kzMonthsShort[selectedYearlyMonth];
-    if (yearlyEnableWeekdays) {
-      const posShort = ['1-ші', '2-ші', '3-ші', '4-ші', 'соңғы'][selectedPosIdx];
-      const dayText = kzWeekdaysFull[selectedDayIdx].toLowerCase();
-      return interval === 1
-        ? `Жыл сайын (${posShort} ${dayText}, ${mShort})`
-        : `Әр ${interval} жылда (${posShort} ${dayText}, ${mShort})`;
-    }
-    return interval === 1 ? `Жыл сайын (${mShort})` : `Әр ${interval} жылда (${mShort})`;
-  };
+  const getShortCustomLabel = (): string =>
+    describeCustomRepeat({
+      unit,
+      interval,
+      selectedWeekdays,
+      monthlyMode,
+      selectedMonthDate,
+      selectedPosIdx,
+      selectedDayIdx,
+      selectedYearlyMonth,
+      yearlyEnableWeekdays,
+    });
 
   const handleConfirm = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -272,7 +275,7 @@ export function CustomRepeatModal({
       selectedYearlyMonth,
       yearlyEnableWeekdays,
     };
-    onConfirm(unit, interval, getShortCustomLabel(), unit, config);
+    onConfirm('custom', interval, getShortCustomLabel(), unit, config);
     handleClose();
   };
 
@@ -565,7 +568,7 @@ export function CustomRepeatModal({
           <Pressable style={styles.popoverOverlay} onPress={() => setShowUnitMenu(false)}>
             <View style={styles.popoverMenu}>
               <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
-                {(['hourly', 'daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u, idx, arr) => {
+                {(['daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u, idx, arr) => {
                   const isSelected = unit === u;
                   const isFirst = idx === 0;
                   const isLast = idx === arr.length - 1;
