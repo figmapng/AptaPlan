@@ -1055,9 +1055,6 @@ export default function Home() {
           </View>
 
           <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
-            </View>
             {fromYearMode && mode === 'month' && (
               <AnimatedPressable
                 accessibilityRole="button"
@@ -1089,6 +1086,9 @@ export default function Home() {
                 </Text>
               </AnimatedPressable>
             )}
+            <View style={{ flex: 1 }}>
+              <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
+            </View>
             {mode === 'week' && (isFutureWeek || isPastWeek) && (
               <AnimatedPressable
                 accessibilityRole="button"
