@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
@@ -12,6 +12,7 @@ interface ViewModeModalProps {
   currentMode: ViewMode;
   onSelectMode: (mode: ViewMode) => void;
   onClose: () => void;
+  buttonBounds?: { x: number; y: number; width: number; height: number } | null;
   topOffset?: number;
 }
 
@@ -20,8 +21,10 @@ export function ViewModeModal({
   currentMode,
   onSelectMode,
   onClose,
+  buttonBounds,
   topOffset = 60,
 }: ViewModeModalProps) {
+  const { width: screenWidth } = useWindowDimensions();
   const anim = useRef(new Animated.Value(0)).current;
 
   const triggerHaptic = () => {
@@ -66,18 +69,32 @@ export function ViewModeModal({
     outputRange: [-10, 0],
   });
 
+  const cardWidth = 175;
+  const arrowWidth = 30;
+
+  let top = topOffset;
+  let popoverLeft = screenWidth - cardWidth - 16;
+  let arrowLeft = cardWidth - 45;
+
+  if (buttonBounds && buttonBounds.width > 0 && buttonBounds.height > 0) {
+    top = buttonBounds.y + buttonBounds.height + 4;
+    const buttonCenterX = buttonBounds.x + buttonBounds.width / 2;
+    popoverLeft = Math.max(12, Math.min(buttonCenterX - cardWidth / 2, screenWidth - cardWidth - 12));
+    arrowLeft = Math.max(10, Math.min(buttonCenterX - popoverLeft - arrowWidth / 2, cardWidth - arrowWidth - 10));
+  }
+
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Animated.View
           style={[
             styles.dropdownWrapper,
-            { top: topOffset },
+            { top, left: popoverLeft, width: cardWidth },
             { opacity, transform: [{ scale }, { translateY }] },
           ]}
         >
           {/* Callout arrow pointing upward — SVG rounded */}
-          <View style={styles.arrowWrapper}>
+          <View style={[styles.arrowWrapper, { left: arrowLeft }]}>
             <CalloutArrow />
           </View>
           <View style={styles.dropdownCard}>
@@ -186,8 +203,6 @@ function CheckmarkIcon({ color }: { color: string }) {
 
 /** Rounded callout arrow — smooth bezier tip and base corners, like the reference */
 function CalloutArrow() {
-  // viewBox: 0 0 30 15  (width 30, height 15)
-  // Smooth V-shape: both sides curve inward, tip is a soft point
   return (
     <Svg width={30} height={15} viewBox="0 0 30 15">
       <Path
@@ -205,13 +220,10 @@ const styles = StyleSheet.create({
   },
   dropdownWrapper: {
     position: 'absolute',
-    right: 54,
-    width: 170,
   },
   arrowWrapper: {
-    alignSelf: 'flex-end',
-    marginRight: 55,
-    marginBottom: -2,
+    position: 'absolute',
+    top: -13,
     zIndex: 2,
   },
   dropdownCard: {

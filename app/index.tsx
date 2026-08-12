@@ -112,6 +112,9 @@ export default function Home() {
   const zoomAnim = useRef(new Animated.Value(0)).current;
   const bottomBarAnim = useRef(new Animated.Value(0)).current;
 
+  const modeButtonRef = useRef<View>(null);
+  const [modeButtonBounds, setModeButtonBounds] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+
   const derivedWeekData = useMemo<DerivedWeekData>(() => {
     const currDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
     const prevDates = currDates.map((d) => addDays(d, -7));
@@ -260,6 +263,20 @@ export default function Home() {
     isExpandedRef.current = true;
     Animated.spring(weekProgress, { toValue: 1, tension: 180, friction: 18, useNativeDriver: false }).start();
   }, [weekProgress]);
+
+  const openModePicker = useCallback(() => {
+    collapseWeek();
+    if (modeButtonRef.current) {
+      modeButtonRef.current.measureInWindow((x, y, width, height) => {
+        if (width > 0 && height > 0) {
+          setModeButtonBounds({ x, y, width, height });
+        }
+        setModePickerOpen(true);
+      });
+    } else {
+      setModePickerOpen(true);
+    }
+  }, [collapseWeek]);
 
   // ── Touch handlers ───────────────────────────────────────────────
   const touchStartX = useRef(0);
@@ -1060,35 +1077,34 @@ export default function Home() {
             }}
           >
             {/* View Mode Segment */}
-            <AnimatedPressable
-              accessibilityRole="button"
-              accessibilityLabel="Режим таңдау"
-              onPress={() => {
-                collapseWeek();
-                setModePickerOpen(true);
-              }}
-              activeScale={0.93}
-              style={{
-                height: 32,
-                paddingHorizontal: 10,
-                borderRadius: 16,
-                backgroundColor: colors.card,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.06,
-                shadowRadius: 2,
-                elevation: 1,
-              }}
-            >
-              <CalendarIcon color={colors.text} />
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', letterSpacing: -0.2 }}>
-                {modeLabels[mode]}
-              </Text>
-              <SelectorChevronIcon color={colors.secondary} />
-            </AnimatedPressable>
+            <View ref={modeButtonRef} collapsable={false}>
+              <AnimatedPressable
+                accessibilityRole="button"
+                accessibilityLabel="Режим таңдау"
+                onPress={openModePicker}
+                activeScale={0.93}
+                style={{
+                  height: 32,
+                  paddingHorizontal: 10,
+                  borderRadius: 16,
+                  backgroundColor: colors.card,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.06,
+                  shadowRadius: 2,
+                  elevation: 1,
+                }}
+              >
+                <CalendarIcon color={colors.text} />
+                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', letterSpacing: -0.2 }}>
+                  {modeLabels[mode]}
+                </Text>
+                <SelectorChevronIcon color={colors.secondary} />
+              </AnimatedPressable>
+            </View>
 
             {/* Divider */}
             <View style={{ width: 1, height: 16, backgroundColor: colors.inputBorder, marginHorizontal: 3 }} />
@@ -1366,6 +1382,7 @@ export default function Home() {
         currentMode={mode}
         onSelectMode={selectMode}
         onClose={() => setModePickerOpen(false)}
+        buttonBounds={modeButtonBounds}
         topOffset={insets.top + 46}
       />
     </View>
