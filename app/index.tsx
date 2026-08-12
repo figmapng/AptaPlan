@@ -81,8 +81,10 @@ export default function Home() {
   const [month, setMonth] = useState(new Date());
   const [year, setYear] = useState(new Date().getFullYear());
   const [showBottomSheet, setShowBottomSheet] = useState(false);
+  const [fromYearMode, setFromYearMode] = useState(false);
 
   const handleMonthPickerSelect = useCallback((selectedDate: Date) => {
+    setFromYearMode(false);
     if (modeRef.current === 'week') {
       setWeekStart(getStartOfWeek(selectedDate));
     } else if (modeRef.current === 'month') {
@@ -709,6 +711,7 @@ export default function Home() {
 
   const selectMode = (nextMode: ViewMode) => {
     collapseWeek();
+    setFromYearMode(false);
     if (nextMode === 'year') {
       const nextYear = mode === 'month' ? month.getFullYear() : derivedWeekData.activeHeaderDate.getFullYear();
       setYear(nextYear);
@@ -1011,7 +1014,11 @@ export default function Home() {
                   year={slotYear}
                   tasks={tasks}
                   availableHeight={availableHeight}
-                  onSelect={(i) => { setMonth(new Date(slotYear, i, 1)); setMode('month'); }}
+                  onSelect={(i) => {
+                    setMonth(new Date(slotYear, i, 1));
+                    setFromYearMode(true);
+                    setMode('month');
+                  }}
                   isSwipingRef={isSwipingRef}
                 />
               </Animated.View>
@@ -1051,7 +1058,38 @@ export default function Home() {
             <View style={{ flex: 1 }}>
               <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
             </View>
-            {(isFutureWeek || isPastWeek) && (
+            {fromYearMode && mode === 'month' && (
+              <AnimatedPressable
+                accessibilityRole="button"
+                accessibilityLabel="Жыл режиміне қайту"
+                onPress={() => {
+                  if (Platform.OS === 'ios' || Platform.OS === 'android') {
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  }
+                  setMode('year');
+                  setFromYearMode(false);
+                }}
+                activeScale={0.93}
+                style={{
+                  height: 48,
+                  borderRadius: 24,
+                  paddingHorizontal: 14,
+                  backgroundColor: colors.today,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  gap: 6,
+                }}
+              >
+                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+                  <Path d="M19 12H5M12 19l-7-7 7-7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+                <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
+                  Артқа
+                </Text>
+              </AnimatedPressable>
+            )}
+            {mode === 'week' && (isFutureWeek || isPastWeek) && (
               <AnimatedPressable
                 accessibilityRole="button"
                 accessibilityLabel="Бүгінгі күнге қайту"
