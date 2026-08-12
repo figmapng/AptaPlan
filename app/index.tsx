@@ -1101,10 +1101,8 @@ export default function Home() {
 
       <ViewModeModal
         visible={modePickerOpen}
-        currentMode={mode === 'month' ? 'month' : 'week'}
-        onSelectMode={(selectedMode) => {
-          setMode(selectedMode);
-        }}
+        currentMode={mode}
+        onSelectMode={selectMode}
         onClose={() => setModePickerOpen(false)}
         topOffset={insets.top + 46}
       />
