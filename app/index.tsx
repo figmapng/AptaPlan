@@ -39,11 +39,10 @@ import { BackButton } from '@/components/BackButton';
 import { MotivationalHeader } from '@/components/MotivationalHeader';
 import { useCardTransition } from '@/components/card-transition-provider';
 import { MonthPickerModal } from '@/components/MonthPickerModal';
-import { ViewModeModal } from '@/components/ViewModeModal';
+import { ViewModeModal, type ViewMode } from '@/components/ViewModeModal';
 import type { Task } from '@/types/task';
 
-type ViewMode = 'week' | 'month' | 'year';
-const modeLabels: Record<ViewMode, string> = { week: 'Апта', month: 'Ай', year: 'Жыл' };
+const modeLabels: Record<ViewMode, string> = { day: 'Күн', week: 'Апта', month: 'Ай', year: 'Жыл' };
 
 type DayDataItem = {
   date: Date;
@@ -71,6 +70,7 @@ type DerivedWeekData = {
 export default function Home() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { openCard } = useCardTransition();
   const { ready, error, tasks, loadRange, create, settings } = usePlanner();
   const firstDay = settings.firstDayOfWeek ?? 'mon';
   const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
@@ -810,6 +810,14 @@ export default function Home() {
     setFromYearMode(false);
     zoomAnim.setValue(0);
     bottomBarAnim.setValue(0);
+    if (nextMode === 'day') {
+      const targetDate = mode === 'month' ? month : derivedWeekData.activeHeaderDate;
+      const key = toDateKey(targetDate);
+      const dayTasks = tasks.filter((t) => t.date === key);
+      openCard(targetDate, dayTasks, { x: 16, y: 120, width: screenWidth - 32, height: availableHeight });
+      setModePickerOpen(false);
+      return;
+    }
     if (nextMode === 'year') {
       const nextYear = mode === 'month' ? month.getFullYear() : derivedWeekData.activeHeaderDate.getFullYear();
       setYear(nextYear);

@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { AnimatedPressable } from './AnimatedPressable';
 
-export type ViewMode = 'week' | 'month' | 'year';
+export type ViewMode = 'day' | 'week' | 'month' | 'year';
 
 interface ViewModeModalProps {
   visible: boolean;
@@ -100,6 +100,23 @@ export function ViewModeModal({
             <CalloutArrow />
           </View>
           <View style={styles.dropdownCard}>
+          {/* Option 0: Day */}
+          <AnimatedPressable
+            activeScale={0.96}
+            style={[styles.optionItem, currentMode === 'day' && styles.optionItemActive]}
+            onPress={() => handleSelect('day')}
+          >
+            <View style={styles.optionLeft}>
+              <DayViewIcon color={currentMode === 'day' ? colors.today : colors.text} />
+              <Text style={[styles.optionText, currentMode === 'day' && styles.optionTextActive]}>
+                Күн
+              </Text>
+            </View>
+            {currentMode === 'day' && <CheckmarkIcon color={colors.today} />}
+          </AnimatedPressable>
+
+          <View style={styles.divider} />
+
           {/* Option 1: Week */}
           <AnimatedPressable
             activeScale={0.96}
@@ -152,6 +169,16 @@ export function ViewModeModal({
         </Animated.View>
       </Pressable>
     </Modal>
+  );
+}
+
+function DayViewIcon({ color }: { color: string }) {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <Rect x="3" y="4" width="18" height="17" rx="3" stroke={color} strokeWidth="2" />
+      <Path d="M3 9h18M8 2v4M16 2v4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Circle cx="12" cy="14" r="2" fill={color} />
+    </Svg>
   );
 }
 
