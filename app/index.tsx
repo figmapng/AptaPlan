@@ -341,6 +341,12 @@ export default function Home() {
     carouselAnim.setValue(0);
   }, [carouselAnim, weekStartsOn]);
 
+  const resetToCurrentMonth = useCallback(() => {
+    if (isMonthAnimatingRef.current) return;
+    setMonth(new Date());
+    monthCarouselAnim.setValue(0);
+  }, [monthCarouselAnim]);
+
   useEffect(() => {
     if (pendingMonthResetRef.current) {
       monthCarouselAnim.setValue(0);
@@ -1242,7 +1248,6 @@ export default function Home() {
             >
               {([-1, 0, 1] as const).map((offset) => {
                 const slotDate = new Date(month.getFullYear(), month.getMonth() + offset, 1);
-                const slotKey = `${slotDate.getFullYear()}-${slotDate.getMonth()}`;
                 const baseX = offset * screenWidth;
                 const translateX = monthCarouselAnim.interpolate({
                   inputRange: [-screenWidth, 0, screenWidth],
@@ -1250,7 +1255,7 @@ export default function Home() {
                 });
                 return (
                   <Animated.View
-                    key={slotKey}
+                    key={offset}
                     pointerEvents={offset === 0 ? 'auto' : 'none'}
                     style={{
                       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -1293,7 +1298,7 @@ export default function Home() {
             </Svg>
           </View>
 
-          <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {fromYearMode && (
               <Animated.View
                 style={{
@@ -1343,11 +1348,11 @@ export default function Home() {
             <View style={{ flex: 1 }}>
               <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
             </View>
-            {mode === 'week' && (isFutureWeek || isPastWeek) && (
+            {((mode === 'week' && (isFutureWeek || isPastWeek)) || (mode === 'month' && !isSameMonth(month, new Date()))) && (
               <AnimatedPressable
                 accessibilityRole="button"
-                accessibilityLabel="Бүгінгі күнге қайту"
-                onPress={resetToCurrentWeek}
+                accessibilityLabel="Ағымдағы мезгілге қайту"
+                onPress={mode === 'month' ? resetToCurrentMonth : resetToCurrentWeek}
                 activeScale={0.93}
                 style={{
                   height: 48,
@@ -1360,7 +1365,7 @@ export default function Home() {
                   gap: 6,
                 }}
               >
-                {isFutureWeek && (
+                {((mode === 'week' && isFutureWeek) || (mode === 'month' && month > new Date())) && (
                   <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
                     <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
@@ -1369,7 +1374,7 @@ export default function Home() {
                 <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
                   {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
                 </Text>
-                {isPastWeek && (
+                {((mode === 'week' && isPastWeek) || (mode === 'month' && month < new Date())) && (
                   <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
                     <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />

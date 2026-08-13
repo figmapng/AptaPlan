@@ -368,38 +368,61 @@ function OptionModal({
   visible: boolean;
   title: string;
   onClose: () => void;
-  options: { label: string; selected: boolean; onSelect: () => void }[];
+  options: { label: string; sublabel?: string; selected: boolean; onSelect: () => void }[];
 }) {
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+
+  const activeIndex = options.findIndex((o) => o.selected);
+  const currentIdx = selectedIdx !== null ? selectedIdx : activeIndex >= 0 ? activeIndex : 0;
+
+  const handleConfirm = () => {
+    if (options[currentIdx]) {
+      options[currentIdx].onSelect();
+    }
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <AnimatedPressable activeScale={1} style={styles.modalContent}>
-          <Text style={styles.modalTitle}>{title}</Text>
-          {options.map((opt, i) => (
-            <AnimatedPressable
-              key={i}
-              activeScale={0.98}
-              style={[
-                styles.optionItem,
-                i < options.length - 1 && styles.optionBorder,
-              ]}
-              onPress={opt.onSelect}
-            >
-              <Text
-                style={[
-                  styles.optionText,
-                  opt.selected && styles.optionTextSelected,
-                ]}
-              >
-                {opt.label}
-              </Text>
-              {opt.selected && (
-                <Ionicons name="checkmark" size={20} color="#1C1C1E" />
-              )}
-            </AnimatedPressable>
-          ))}
-        </AnimatedPressable>
-      </Pressable>
+      <View style={styles.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={styles.modalContentCard}>
+          {/* Header with Title and Close X button */}
+          <View style={styles.modalHeaderRow}>
+            <Text style={styles.modalHeaderTitle}>{title}</Text>
+            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
+              <Ionicons name="close" size={18} color={colors.secondary} />
+            </Pressable>
+          </View>
+
+          {/* Options List with Radio buttons */}
+          <View style={styles.optionsList}>
+            {options.map((opt, i) => {
+              const isChecked = i === currentIdx;
+              return (
+                <Pressable
+                  key={i}
+                  style={styles.optionRowItem}
+                  onPress={() => setSelectedIdx(i)}
+                >
+                  <View style={styles.optionRowLeft}>
+                    <Text style={[styles.optionRowTitle, isChecked && styles.optionRowTitleSelected]}>
+                      {opt.label}
+                    </Text>
+                  </View>
+                  <View style={[styles.radioButton, isChecked && styles.radioButtonSelected]}>
+                    {isChecked && <View style={styles.radioButtonInner} />}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Bottom Action Button */}
+          <Pressable style={styles.modalContinueButton} onPress={handleConfirm}>
+            <Text style={styles.modalContinueButtonText}>Растау</Text>
+          </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -504,51 +527,101 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.40)',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
-  modalContent: {
+  modalContentCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 32,
     borderCurve: 'continuous',
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 16,
+    paddingTop: 20,
+    paddingBottom: 20,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowRadius: 24,
+    elevation: 12,
   },
-  modalTitle: {
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  modalHeaderTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1C1C1E',
-    marginBottom: 18,
-    textAlign: 'center',
+    fontWeight: '700',
+    color: colors.text,
+    letterSpacing: -0.3,
   },
-  optionItem: {
+  closeButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.inputBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionsList: {
+    marginBottom: 20,
+    gap: 4,
+  },
+  optionRowItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 14,
     paddingHorizontal: 4,
-    minHeight: 52,
   },
-  optionBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#EBEBEF',
+  optionRowLeft: {
+    flex: 1,
+    marginRight: 12,
   },
-  optionText: {
+  optionRowTitle: {
     fontSize: 16,
-    fontWeight: '400',
-    color: '#1C1C1E',
+    fontWeight: '500',
+    color: colors.text,
   },
-  optionTextSelected: {
-    fontWeight: '600',
-    color: '#1C1C1E',
+  optionRowTitleSelected: {
+    fontWeight: '700',
+    color: colors.text,
+  },
+  radioButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  radioButtonSelected: {
+    borderColor: colors.today,
+    backgroundColor: '#FFFFFF',
+  },
+  radioButtonInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.today,
+  },
+  modalContinueButton: {
+    width: '100%',
+    height: 52,
+    borderRadius: 26,
+    borderCurve: 'continuous',
+    backgroundColor: colors.today,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalContinueButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
