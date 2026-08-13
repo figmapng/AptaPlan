@@ -221,20 +221,6 @@ export const DayCard = memo(function DayCardComponent({
           >
             {format(date, 'dd')}
           </Text>
-          {wide && (
-            <Text
-              numberOfLines={1}
-              style={{
-                fontSize: 15,
-                lineHeight: 17,
-                fontWeight: today ? '700' : '600',
-                color: numTextColor,
-                fontVariant: ['tabular-nums'],
-              }}
-            >
-              {' ' + months[date.getMonth()]}
-            </Text>
-          )}
         </View>
       </View>
 
