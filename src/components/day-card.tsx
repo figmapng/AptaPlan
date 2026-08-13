@@ -277,13 +277,26 @@ export const DayCard = memo(function DayCardComponent({
             <TaskRow
               key={`${task.id}:${task.date}`}
               task={task}
-              compact
+              compact={!wide}
               onPress={open}
               onInteraction={onInteraction}
               isSwipingRef={isSwipingRef}
               cardBg="#FFFFFF"
             />
           ))
+        ) : wide ? (
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 20,
+            }}
+          >
+            <Text style={{ color: colors.secondary, fontSize: 15, fontWeight: '500' }}>
+              Тапсырма жоқ
+            </Text>
+          </View>
         ) : (
           <View
             style={{
