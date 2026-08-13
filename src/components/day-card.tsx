@@ -173,7 +173,7 @@ export const DayCard = memo(function DayCardComponent({
       <Text
         numberOfLines={1}
         style={{
-          fontSize: wide ? 17 : 12,
+          fontSize: wide ? 15 : 12,
           fontWeight: '600',
           letterSpacing: 0.2,
           color: dayNameColor,
@@ -185,12 +185,12 @@ export const DayCard = memo(function DayCardComponent({
       {/* Outer badge */}
       <View
         style={{
-          minWidth: wide ? 24 : 20,
-          minHeight: wide ? 21 : 17,
+          minWidth: wide ? 22 : 20,
+          minHeight: wide ? 19 : 17,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: numOuterBg,
-          borderRadius: wide ? 6 : 5,
+          borderRadius: wide ? 5 : 5,
           paddingTop: 0,
           paddingRight: 4,
           paddingBottom: 0,
@@ -202,7 +202,7 @@ export const DayCard = memo(function DayCardComponent({
           style={{
             alignSelf: 'stretch',
             flexDirection: 'row',
-            borderRadius: wide ? 5 : 4,
+            borderRadius: wide ? 4 : 4,
             paddingHorizontal: 0,
             paddingVertical: 0,
             alignItems: 'center',
@@ -212,8 +212,8 @@ export const DayCard = memo(function DayCardComponent({
         >
           <Text
             style={{
-              fontSize: wide ? 15 : 12,
-              lineHeight: wide ? 17 : 13,
+              fontSize: wide ? 13 : 12,
+              lineHeight: wide ? 15 : 13,
               fontWeight: today ? '700' : '600',
               color: numTextColor,
               fontVariant: ['tabular-nums'],
