@@ -1294,6 +1294,7 @@ export default function Home() {
               inputRange: [-screenWidth, 0, screenWidth],
               outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
             });
+            const dayCardH = Math.max(260, availableHeight - bottomBarSpace - 16);
             return (
               <Animated.View
                 key={offset}
@@ -1301,7 +1302,6 @@ export default function Home() {
                 style={{
                   position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                   paddingHorizontal: 16,
-                  paddingBottom: cardGridBottomPadding,
                   transform: [{ translateX }],
                 }}
               >
@@ -1310,8 +1310,8 @@ export default function Home() {
                   tasks={slotTasks}
                   wide={true}
                   disableOpen={true}
-                  collapsedBodyHeight={availableHeight - 60}
-                  expandedSundayHeight={availableHeight - 60}
+                  collapsedBodyHeight={dayCardH - 48}
+                  expandedSundayHeight={dayCardH - 48}
                 />
               </Animated.View>
             );
