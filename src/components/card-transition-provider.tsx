@@ -14,6 +14,7 @@ import { SortableTaskList } from './SortableTaskList';
 import { CompactWeekStrip } from './CompactWeekStrip';
 import { getDatabase } from '@/database/database';
 import { AnimatedPressable } from './AnimatedPressable';
+import { BackButton } from './BackButton';
 import type { Task } from '@/types/task';
 
 type Frame = { x: number; y: number; width: number; height: number };
@@ -814,32 +815,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 opacity: progress,
               }}
             >
-              <AnimatedPressable
-                accessibilityRole="button"
-                accessibilityLabel="Артқа қайту"
-                onPress={closeCard}
-                activeScale={0.94}
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
-                  backgroundColor: colors.inputBg,
-                  borderWidth: 1,
-                  borderColor: colors.inputBorder,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M15 18l-6-6 6-6"
-                    stroke={colors.inputPlusIcon}
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-              </AnimatedPressable>
+              <BackButton onPress={closeCard} />
 
               <AnimatedPressable
                 accessibilityRole="button"

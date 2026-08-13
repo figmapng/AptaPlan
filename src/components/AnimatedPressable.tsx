@@ -12,7 +12,7 @@ interface AnimatedPressableProps extends Omit<PressableProps, 'style'> {
   hapticStyle?: Haptics.ImpactFeedbackStyle;
 }
 
-export function AnimatedPressable({
+export const AnimatedPressable = React.forwardRef<any, AnimatedPressableProps>(function AnimatedPressable({
   children,
   style,
   activeScale = 0.96,
@@ -23,7 +23,7 @@ export function AnimatedPressable({
   onPress,
   disabled,
   ...rest
-}: AnimatedPressableProps) {
+}: AnimatedPressableProps, ref) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const [isPressed, setIsPressed] = useState(false);
 
@@ -60,6 +60,7 @@ export function AnimatedPressable({
 
   return (
     <AnimatedPressableComponent
+      ref={ref}
       {...rest}
       disabled={disabled}
       onPressIn={handlePressIn}
@@ -73,4 +74,4 @@ export function AnimatedPressable({
       {children}
     </AnimatedPressableComponent>
   );
-}
+});

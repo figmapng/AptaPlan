@@ -35,6 +35,7 @@ import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { TaskBottomSheet } from '@/components/TaskBottomSheet';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { BackButton } from '@/components/BackButton';
 import { MotivationalHeader } from '@/components/MotivationalHeader';
 import { useCardTransition } from '@/components/card-transition-provider';
 import { MonthPickerModal } from '@/components/MonthPickerModal';
@@ -1084,6 +1085,8 @@ export default function Home() {
 
           {/* iOS-Grade Unified Pill Controls (View Mode & Settings) */}
           <View
+            ref={modeButtonRef}
+            collapsable={false}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -1095,34 +1098,32 @@ export default function Home() {
             }}
           >
             {/* View Mode Segment */}
-            <View ref={modeButtonRef} collapsable={false}>
-              <AnimatedPressable
-                accessibilityRole="button"
-                accessibilityLabel="Режим таңдау"
-                onPress={openModePicker}
-                activeScale={0.93}
-                style={{
-                  height: 32,
-                  paddingHorizontal: 10,
-                  borderRadius: 16,
-                  backgroundColor: colors.card,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.06,
-                  shadowRadius: 2,
-                  elevation: 1,
-                }}
-              >
-                <CalendarIcon color={colors.text} />
-                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', letterSpacing: -0.2 }}>
-                  {modeLabels[mode]}
-                </Text>
-                <SelectorChevronIcon color={colors.secondary} />
-              </AnimatedPressable>
-            </View>
+            <AnimatedPressable
+              accessibilityRole="button"
+              accessibilityLabel="Режим таңдау"
+              onPress={openModePicker}
+              activeScale={0.93}
+              style={{
+                height: 32,
+                paddingHorizontal: 10,
+                borderRadius: 16,
+                backgroundColor: colors.card,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.06,
+                shadowRadius: 2,
+                elevation: 1,
+              }}
+            >
+              <CalendarIcon color={colors.text} />
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', letterSpacing: -0.2 }}>
+                {modeLabels[mode]}
+              </Text>
+              <SelectorChevronIcon color={colors.secondary} />
+            </AnimatedPressable>
 
             {/* Divider */}
             <View style={{ width: 1, height: 16, backgroundColor: colors.inputBorder, marginHorizontal: 3 }} />
@@ -1299,56 +1300,16 @@ export default function Home() {
           </View>
 
           <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {fromYearMode && (
-              <Animated.View
-                style={{
-                  width: bottomBarAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 88],
-                    extrapolate: 'clamp',
-                  }),
-                  marginRight: bottomBarAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 10],
-                    extrapolate: 'clamp',
-                  }),
-                  opacity: bottomBarAnim,
-                  overflow: 'hidden',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-                pointerEvents={mode === 'month' ? 'auto' : 'none'}
-              >
-                <AnimatedPressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Жыл режиміне қайту"
-                  onPress={handleBackToYearFromMonth}
-                  activeScale={0.93}
-                  style={{
-                    height: 48,
-                    borderRadius: 24,
-                    paddingHorizontal: 14,
-                    backgroundColor: colors.today,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexDirection: 'row',
-                    gap: 6,
-                    width: 88,
-                  }}
-                >
-                  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-                    <Path d="M19 12H5M12 19l-7-7 7-7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
-                  <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
-                    Артқа
-                  </Text>
-                </AnimatedPressable>
-              </Animated.View>
+            {fromYearMode && mode === 'month' && (
+              <BackButton
+                accessibilityLabel="Жыл режиміне қайту"
+                onPress={handleBackToYearFromMonth}
+              />
             )}
             <View style={{ flex: 1 }}>
               <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
             </View>
-            {((mode === 'week' && (isFutureWeek || isPastWeek)) || (mode === 'month' && !isSameMonth(month, new Date()))) && (
+            {!fromYearMode && ((mode === 'week' && (isFutureWeek || isPastWeek)) || (mode === 'month' && !isSameMonth(month, new Date()))) && (
               <AnimatedPressable
                 accessibilityRole="button"
                 accessibilityLabel="Ағымдағы мезгілге қайту"

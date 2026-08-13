@@ -77,10 +77,12 @@ export function ViewModeModal({
   let arrowLeft = cardWidth - 45;
 
   if (buttonBounds && buttonBounds.width > 0 && buttonBounds.height > 0) {
-    top = buttonBounds.y + buttonBounds.height + 4;
+    top = buttonBounds.y + buttonBounds.height + 6;
+    // Center arrow on the whole mode button (buttonCenterX)
     const buttonCenterX = buttonBounds.x + buttonBounds.width / 2;
     popoverLeft = Math.max(12, Math.min(buttonCenterX - cardWidth / 2, screenWidth - cardWidth - 12));
-    arrowLeft = Math.max(10, Math.min(buttonCenterX - popoverLeft - arrowWidth / 2, cardWidth - arrowWidth - 10));
+    arrowLeft = buttonCenterX - popoverLeft - arrowWidth / 2;
+    arrowLeft = Math.max(12, Math.min(arrowLeft, cardWidth - arrowWidth - 12));
   }
 
   return (
