@@ -81,6 +81,7 @@ export default function Home() {
     setWeekStart((prev) => getStartOfWeekWith(prev, weekStartsOn));
   }, [weekStartsOn]);
 
+  const [dayDate, setDayDate] = useState(new Date());
   const [mode, setMode] = useState<ViewMode>('week');
   const modeRef = useRef<ViewMode>('week');
   modeRef.current = mode;
@@ -94,7 +95,9 @@ export default function Home() {
 
   const handleMonthPickerSelect = useCallback((selectedDate: Date) => {
     setFromYearMode(false);
-    if (modeRef.current === 'week') {
+    if (modeRef.current === 'day') {
+      setDayDate(selectedDate);
+    } else if (modeRef.current === 'week') {
       setWeekStart(getStartOfWeekWith(selectedDate, weekStartsOn));
     } else if (modeRef.current === 'month') {
       setMonth(selectedDate);
@@ -143,7 +146,9 @@ export default function Home() {
 
     const activeHeaderDate = currDates.find((d) => isToday(d)) ?? currDates[0];
     const headerTitle =
-      mode === 'week'
+      mode === 'day'
+        ? `${months[dayDate.getMonth()][0].toUpperCase()}${months[dayDate.getMonth()].slice(1)} ${dayDate.getFullYear()}`
+        : mode === 'week'
         ? `${months[activeHeaderDate.getMonth()][0].toUpperCase()}${months[activeHeaderDate.getMonth()].slice(1)} ${activeHeaderDate.getFullYear()}`
         : mode === 'month'
         ? `${months[month.getMonth()][0].toUpperCase()}${months[month.getMonth()].slice(1)} ${month.getFullYear()}`
@@ -171,7 +176,7 @@ export default function Home() {
       currSlotDays,
       slots,
     };
-  }, [weekStart, tasks, screenWidth, mode, month, year]);
+  }, [weekStart, tasks, screenWidth, mode, month, year, dayDate]);
 
   // ── Animated.Value for carousel translation ──────────────────────
   const carouselAnim = useRef(new Animated.Value(0)).current;
@@ -348,6 +353,43 @@ export default function Home() {
     monthCarouselAnim.setValue(0);
   }, [monthCarouselAnim]);
 
+  // ── Day carousel ────────────────────────────────────────────────
+  const dayCarouselAnim = useRef(new Animated.Value(0)).current;
+  const isDayAnimatingRef = useRef(false);
+  const pendingDayResetRef = useRef(false);
+  const dayTouchStartX = useRef(0);
+  const dayTouchStartY = useRef(0);
+  const isDayHorizontal = useRef(false);
+  const dayHasDetermined = useRef(false);
+
+  useEffect(() => {
+    if (pendingDayResetRef.current) {
+      dayCarouselAnim.setValue(0);
+      pendingDayResetRef.current = false;
+      isDayAnimatingRef.current = false;
+      setTimeout(() => {
+        isSwipingRef.current = false;
+      }, 50);
+    }
+  }, [dayDate, dayCarouselAnim]);
+
+  const onDaySwipeComplete = useCallback((direction: -1 | 1) => {
+    isDayAnimatingRef.current = true;
+    isSwipingRef.current = true;
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    Animated.spring(dayCarouselAnim, {
+      toValue: direction * screenWidth,
+      tension: 450,
+      friction: 32,
+      useNativeDriver: true,
+    }).start(() => {
+      pendingDayResetRef.current = true;
+      setDayDate((d) => addDays(d, -direction));
+    });
+  }, [dayCarouselAnim, screenWidth]);
+
   useEffect(() => {
     if (pendingMonthResetRef.current) {
       monthCarouselAnim.setValue(0);
@@ -375,6 +417,95 @@ export default function Home() {
       setMonth((m) => new Date(m.getFullYear(), m.getMonth() - direction, 1));
     });
   }, [monthCarouselAnim, screenWidth]);
+
+  const dayGestureHandlers = {
+    onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (isDayAnimatingRef.current) return;
+      dayTouchStartX.current = e.nativeEvent.pageX;
+      dayTouchStartY.current = e.nativeEvent.pageY;
+      isDayHorizontal.current = false;
+      dayHasDetermined.current = false;
+      dayCarouselAnim.stopAnimation();
+    },
+    onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (isDayAnimatingRef.current) return;
+      const dx = e.nativeEvent.pageX - dayTouchStartX.current;
+      const dy = e.nativeEvent.pageY - dayTouchStartY.current;
+      if (!dayHasDetermined.current) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        isDayHorizontal.current = Math.abs(dx) > Math.abs(dy) * 1.2;
+        dayHasDetermined.current = true;
+      }
+      if (isDayHorizontal.current) {
+        isSwipingRef.current = true;
+        dayCarouselAnim.setValue(dx);
+      } else {
+        if (isMotivationalOpenRef.current) {
+          if (dy < 0) {
+            const val = Math.max(0, 1 + dy / 130);
+            motivationalAnim.setValue(val);
+          }
+        } else {
+          if (dy > 0) {
+            const val = Math.min(1, dy / 130);
+            motivationalAnim.setValue(val);
+          }
+        }
+      }
+    },
+    onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
+      if (!dayHasDetermined.current || isDayAnimatingRef.current) return;
+      if (isDayHorizontal.current) {
+        isSwipingRef.current = true;
+        const dx = e.nativeEvent.pageX - dayTouchStartX.current;
+        const threshold = screenWidth * 0.15;
+        if (Math.abs(dx) > threshold) {
+          onDaySwipeComplete(dx < 0 ? -1 : 1);
+        } else {
+          isDayAnimatingRef.current = true;
+          Animated.spring(dayCarouselAnim, {
+            toValue: 0, tension: 420, friction: 30, useNativeDriver: true,
+          }).start(() => {
+            isDayAnimatingRef.current = false;
+            setTimeout(() => { isSwipingRef.current = false; }, 150);
+          });
+        }
+      } else {
+        const dy = e.nativeEvent.pageY - dayTouchStartY.current;
+        if (isMotivationalOpenRef.current) {
+          if (dy < -15) {
+            closeMotivationalHeader();
+          } else {
+            openMotivationalHeader();
+          }
+        } else {
+          if (dy > 15) {
+            openMotivationalHeader();
+          } else {
+            closeMotivationalHeader();
+          }
+        }
+        setTimeout(() => { isSwipingRef.current = false; }, 150);
+      }
+    },
+    onTouchCancel: () => {
+      if (dayHasDetermined.current) {
+        if (isDayHorizontal.current) {
+          isDayAnimatingRef.current = true;
+          Animated.spring(dayCarouselAnim, {
+            toValue: 0, tension: 420, friction: 30, useNativeDriver: true,
+          }).start(() => {
+            isDayAnimatingRef.current = false;
+            setTimeout(() => { isSwipingRef.current = false; }, 150);
+          });
+        } else {
+          if (isMotivationalOpenRef.current) openMotivationalHeader();
+          else closeMotivationalHeader();
+          setTimeout(() => { isSwipingRef.current = false; }, 150);
+        }
+      }
+    },
+  };
 
   const monthGestureHandlers = {
     onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
@@ -812,13 +943,8 @@ export default function Home() {
     bottomBarAnim.setValue(0);
     if (nextMode === 'day') {
       const targetDate = mode === 'month' ? month : derivedWeekData.activeHeaderDate;
-      const key = toDateKey(targetDate);
-      const dayTasks = tasks.filter((t) => t.date === key);
-      openCard(targetDate, dayTasks, { x: 16, y: 120, width: screenWidth - 32, height: availableHeight });
-      setModePickerOpen(false);
-      return;
-    }
-    if (nextMode === 'year') {
+      setDayDate(targetDate);
+    } else if (nextMode === 'year') {
       const nextYear = mode === 'month' ? month.getFullYear() : derivedWeekData.activeHeaderDate.getFullYear();
       setYear(nextYear);
     }
@@ -1156,8 +1282,41 @@ export default function Home() {
         </View>
       </Animated.View>
 
-      {/* ── Carousel or Month/Year ──────────────────────────────── */}
-      {mode === 'week' ? (
+      {/* ── Day / Week / Month / Year Views ──────────────────────────────── */}
+      {mode === 'day' ? (
+        <View style={{ flex: 1, overflow: 'hidden' }} {...dayGestureHandlers}>
+          {([-1, 0, 1] as const).map((offset) => {
+            const slotDate = addDays(dayDate, offset);
+            const slotKey = toDateKey(slotDate);
+            const slotTasks = tasks.filter((t) => t.date === slotKey);
+            const baseX = offset * screenWidth;
+            const translateX = dayCarouselAnim.interpolate({
+              inputRange: [-screenWidth, 0, screenWidth],
+              outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
+            });
+            return (
+              <Animated.View
+                key={offset}
+                pointerEvents={offset === 0 ? 'auto' : 'none'}
+                style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  paddingHorizontal: 16,
+                  paddingBottom: cardGridBottomPadding,
+                  transform: [{ translateX }],
+                }}
+              >
+                <DayCard
+                  date={slotDate}
+                  tasks={slotTasks}
+                  wide={true}
+                  collapsedBodyHeight={availableHeight - 60}
+                  expandedSundayHeight={availableHeight - 60}
+                />
+              </Animated.View>
+            );
+          })}
+        </View>
+      ) : mode === 'week' ? (
         <View style={{ flex: 1, overflow: 'hidden' }}>
           {derivedWeekData.slots.map((slot) => {
             const translateX = carouselAnim.interpolate({
@@ -1317,11 +1476,21 @@ export default function Home() {
             <View style={{ flex: 1 }}>
               <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
             </View>
-            {!fromYearMode && ((mode === 'week' && (isFutureWeek || isPastWeek)) || (mode === 'month' && !isSameMonth(month, new Date()))) && (
+            {!fromYearMode && (
+              ((mode as ViewMode) === 'day' && !isToday(dayDate)) ||
+              ((mode as ViewMode) === 'week' && (isFutureWeek || isPastWeek)) ||
+              ((mode as ViewMode) === 'month' && !isSameMonth(month, new Date()))
+            ) && (
               <AnimatedPressable
                 accessibilityRole="button"
                 accessibilityLabel="Ағымдағы мезгілге қайту"
-                onPress={mode === 'month' ? resetToCurrentMonth : resetToCurrentWeek}
+                onPress={
+                  (mode as ViewMode) === 'day'
+                    ? () => setDayDate(new Date())
+                    : (mode as ViewMode) === 'month'
+                    ? resetToCurrentMonth
+                    : resetToCurrentWeek
+                }
                 activeScale={0.93}
                 style={{
                   height: 48,
@@ -1334,7 +1503,7 @@ export default function Home() {
                   gap: 6,
                 }}
               >
-                {((mode === 'week' && isFutureWeek) || (mode === 'month' && month > new Date())) && (
+                {(((mode as ViewMode) === 'day' && dayDate > new Date()) || ((mode as ViewMode) === 'week' && isFutureWeek) || ((mode as ViewMode) === 'month' && month > new Date())) && (
                   <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
                     <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
@@ -1343,7 +1512,7 @@ export default function Home() {
                 <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
                   {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
                 </Text>
-                {((mode === 'week' && isPastWeek) || (mode === 'month' && month < new Date())) && (
+                {(((mode as ViewMode) === 'day' && dayDate < new Date()) || ((mode as ViewMode) === 'week' && isPastWeek) || ((mode as ViewMode) === 'month' && month < new Date())) && (
                   <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
                     <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
