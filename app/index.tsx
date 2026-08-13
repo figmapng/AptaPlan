@@ -1309,6 +1309,7 @@ export default function Home() {
                   date={slotDate}
                   tasks={slotTasks}
                   wide={true}
+                  disableOpen={true}
                   collapsedBodyHeight={availableHeight - 60}
                   expandedSundayHeight={availableHeight - 60}
                 />
@@ -1440,7 +1441,7 @@ export default function Home() {
       )}
 
       {/* ── Floating input & Pure White Gradient Overlay ─────────── */}
-      {(mode === 'week' || mode === 'month' || mode === 'year') && (
+      {(mode === 'day' || mode === 'week' || mode === 'month' || mode === 'year') && (
         <>
           <View
             pointerEvents="none"

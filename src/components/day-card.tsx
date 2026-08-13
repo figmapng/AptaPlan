@@ -20,6 +20,7 @@ type DayCardProps = {
   expandedSundayHeight?: number;
   onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
   isSwipingRef?: React.RefObject<boolean>;
+  disableOpen?: boolean;
 };
 
 export const DayCard = memo(function DayCardComponent({
@@ -33,6 +34,7 @@ export const DayCard = memo(function DayCardComponent({
   expandedSundayHeight = 156,
   onLayoutMeasured,
   isSwipingRef,
+  disableOpen = false,
 }: DayCardProps) {
   const key = toDateKey(date);
   const today = isToday(date);
@@ -58,7 +60,7 @@ export const DayCard = memo(function DayCardComponent({
   };
 
   const open = (e?: any) => {
-    if (isSwipingRef?.current) return;
+    if (disableOpen || isSwipingRef?.current) return;
 
     // Prevent accidental click during drag/swipe gesture (if finger moved > 8px)
     if (e?.nativeEvent && touchStartPos.current) {
