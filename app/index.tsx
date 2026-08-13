@@ -1286,53 +1286,37 @@ export default function Home() {
       {/* ── Day / Week / Month / Year Views ──────────────────────────────── */}
       {mode === 'day' ? (
         <View style={{ flex: 1, overflow: 'hidden' }} {...dayGestureHandlers}>
-          {/* Top Compact Week Strip */}
-          <View style={{ paddingTop: 2, paddingBottom: 4 }}>
-            <CompactWeekStrip
-              selectedDate={dayDate}
-              carouselX={dayCarouselAnim}
-              screenWidth={screenWidth}
-              pageIndex={0}
-              onSelectDate={(targetDate: Date) => {
-                setDayDate(targetDate);
-              }}
-            />
-          </View>
-
-          {/* Day Cards Carousel */}
-          <View style={{ flex: 1, overflow: 'hidden' }}>
-            {([-1, 0, 1] as const).map((offset) => {
-              const slotDate = addDays(dayDate, offset);
-              const slotKey = toDateKey(slotDate);
-              const slotTasks = tasks.filter((t) => t.date === slotKey);
-              const baseX = offset * screenWidth;
-              const translateX = dayCarouselAnim.interpolate({
-                inputRange: [-screenWidth, 0, screenWidth],
-                outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
-              });
-              const dayCardH = Math.max(260, availableHeight - 54 - bottomBarSpace - 16);
-              return (
-                <Animated.View
-                  key={offset}
-                  pointerEvents={offset === 0 ? 'auto' : 'none'}
-                  style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                    paddingHorizontal: 16,
-                    transform: [{ translateX }],
-                  }}
-                >
-                  <DayCard
-                    date={slotDate}
-                    tasks={slotTasks}
-                    wide={true}
-                    disableOpen={true}
-                    collapsedBodyHeight={dayCardH - 48}
-                    expandedSundayHeight={dayCardH - 48}
-                  />
-                </Animated.View>
-              );
-            })}
-          </View>
+          {([-1, 0, 1] as const).map((offset) => {
+            const slotDate = addDays(dayDate, offset);
+            const slotKey = toDateKey(slotDate);
+            const slotTasks = tasks.filter((t) => t.date === slotKey);
+            const baseX = offset * screenWidth;
+            const translateX = dayCarouselAnim.interpolate({
+              inputRange: [-screenWidth, 0, screenWidth],
+              outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
+            });
+            const dayCardH = Math.max(260, availableHeight - bottomBarSpace - 16);
+            return (
+              <Animated.View
+                key={offset}
+                pointerEvents={offset === 0 ? 'auto' : 'none'}
+                style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  paddingHorizontal: 16,
+                  transform: [{ translateX }],
+                }}
+              >
+                <DayCard
+                  date={slotDate}
+                  tasks={slotTasks}
+                  wide={true}
+                  disableOpen={true}
+                  collapsedBodyHeight={dayCardH - 48}
+                  expandedSundayHeight={dayCardH - 48}
+                />
+              </Animated.View>
+            );
+          })}
         </View>
       ) : mode === 'week' ? (
         <View style={{ flex: 1, overflow: 'hidden' }}>

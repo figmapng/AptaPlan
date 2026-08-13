@@ -161,19 +161,19 @@ export const DayCard = memo(function DayCardComponent({
       onPress={open}
       activeScale={0.98}
       style={{
-        height: 29,
+        height: wide ? 44 : 29,
         paddingVertical: 0,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 10,
+        gap: wide ? 8 : 6,
+        paddingHorizontal: wide ? 14 : 10,
         backgroundColor: headerBg,
       }}
     >
       <Text
         numberOfLines={1}
         style={{
-          fontSize: 12,
+          fontSize: wide ? 17 : 12,
           fontWeight: '600',
           letterSpacing: 0.2,
           color: dayNameColor,
@@ -185,12 +185,12 @@ export const DayCard = memo(function DayCardComponent({
       {/* Outer badge */}
       <View
         style={{
-          minWidth: 20,
-          minHeight: 17,
+          minWidth: wide ? 24 : 20,
+          minHeight: wide ? 21 : 17,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: numOuterBg,
-          borderRadius: 5,
+          borderRadius: wide ? 6 : 5,
           paddingTop: 0,
           paddingRight: 4,
           paddingBottom: 0,
@@ -201,7 +201,8 @@ export const DayCard = memo(function DayCardComponent({
         <View
           style={{
             alignSelf: 'stretch',
-            borderRadius: 4,
+            flexDirection: 'row',
+            borderRadius: wide ? 5 : 4,
             paddingHorizontal: 0,
             paddingVertical: 0,
             alignItems: 'center',
@@ -211,8 +212,8 @@ export const DayCard = memo(function DayCardComponent({
         >
           <Text
             style={{
-              fontSize: 12,
-              lineHeight: 13,
+              fontSize: wide ? 15 : 12,
+              lineHeight: wide ? 17 : 13,
               fontWeight: today ? '700' : '600',
               color: numTextColor,
               fontVariant: ['tabular-nums'],
@@ -220,13 +221,27 @@ export const DayCard = memo(function DayCardComponent({
           >
             {format(date, 'dd')}
           </Text>
+          {wide && (
+            <Text
+              numberOfLines={1}
+              style={{
+                fontSize: 15,
+                lineHeight: 17,
+                fontWeight: today ? '700' : '600',
+                color: numTextColor,
+                fontVariant: ['tabular-nums'],
+              }}
+            >
+              {' ' + months[date.getMonth()]}
+            </Text>
+          )}
         </View>
       </View>
 
       <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center' }}>
         <Text
           style={{
-            fontSize: 11,
+            fontSize: wide ? 12 : 11,
             fontWeight: '600',
             fontVariant: ['tabular-nums'],
           }}
