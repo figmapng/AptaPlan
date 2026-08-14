@@ -30,6 +30,7 @@ export type TaskContextMenuProps = {
   onChangeDate?: (task: Task) => void;
   onRepeat?: (task: Task) => void;
   onToggleComplete?: (task: Task) => void;
+  onPin?: (task: Task) => void;
 };
 
 export function TaskContextMenu({
@@ -43,6 +44,7 @@ export function TaskContextMenu({
   onChangeDate,
   onRepeat,
   onToggleComplete,
+  onPin,
 }: TaskContextMenuProps) {
   const insets = useSafeAreaInsets();
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -55,8 +57,8 @@ export function TaskContextMenu({
       setShowPrioritySubmenu(false);
       Animated.spring(anim, {
         toValue: 1,
-        tension: 280,
-        friction: 22,
+        tension: 300,
+        friction: 24,
         useNativeDriver: true,
       }).start();
     } else {
@@ -85,22 +87,22 @@ export function TaskContextMenu({
     }
   };
 
-  // Calculate position of menu relative to anchor
-  const anchorY = anchorLayout ? anchorLayout.y : screenHeight / 2;
+  // Safe coordinates
+  const anchorY = anchorLayout ? anchorLayout.y : screenHeight / 2 - 24;
   const anchorX = anchorLayout ? anchorLayout.x : 16;
   const anchorW = anchorLayout ? anchorLayout.width : screenWidth - 32;
   const anchorH = anchorLayout ? anchorLayout.height : 48;
 
   const menuWidth = Math.min(260, screenWidth - 32);
-  const estimatedMenuHeight = 220;
+  const estimatedMenuHeight = 240;
 
-  // Determine if menu should appear above or below the anchor
+  // Determine smart placement (above or below)
   const spaceBelow = screenHeight - insets.bottom - (anchorY + anchorH);
   const placeAbove = spaceBelow < estimatedMenuHeight + 20 && anchorY > estimatedMenuHeight + insets.top;
 
   const menuTop = placeAbove
-    ? Math.max(insets.top + 10, anchorY - estimatedMenuHeight - 8)
-    : Math.min(screenHeight - insets.bottom - estimatedMenuHeight - 10, anchorY + anchorH + 8);
+    ? Math.max(insets.top + 10, anchorY - estimatedMenuHeight - 10)
+    : Math.min(screenHeight - insets.bottom - estimatedMenuHeight - 10, anchorY + anchorH + 10);
 
   const menuLeft = Math.max(16, Math.min(screenWidth - menuWidth - 16, anchorX));
 
@@ -111,12 +113,12 @@ export function TaskContextMenu({
 
   const menuScale = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.88, 1],
+    outputRange: [0.92, 1],
   });
 
   const menuTranslateY = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [placeAbove ? 12 : -12, 0],
+    outputRange: [placeAbove ? 10 : -10, 0],
   });
 
   return (
@@ -130,14 +132,14 @@ export function TaskContextMenu({
       <TouchableWithoutFeedback onPress={onClose}>
         <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
           {Platform.OS === 'ios' ? (
-            <BlurView intensity={24} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={28} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.45)' }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} />
           )}
         </Animated.View>
       </TouchableWithoutFeedback>
 
-      {/* Floating Highlighted Task Preview */}
+      {/* Highlighted Selected Task Card Preview */}
       {anchorLayout && (
         <Animated.View
           pointerEvents="none"
@@ -187,6 +189,11 @@ export function TaskContextMenu({
             >
               {task.title}
             </Text>
+            {task.time && (
+              <View style={styles.timeChip}>
+                <Text style={styles.timeChipText}>{task.time}</Text>
+              </View>
+            )}
           </View>
         </Animated.View>
       )}
@@ -206,33 +213,43 @@ export function TaskContextMenu({
       >
         {!showPrioritySubmenu ? (
           <View style={styles.menuItemsContainer}>
-            {/* Edit Action */}
+            {/* ⇡ Бекіту / Pin */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.menuItem}
+              onPress={() => handleAction(() => onPin?.(task))}
+            >
+              <PinIcon color="#1F2937" />
+              <Text style={styles.menuItemText}>Бекіту</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            {/* 📅 Дата / Date */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.menuItem}
+              onPress={() => handleAction(() => onChangeDate?.(task) || onEdit(task))}
+            >
+              <CalendarIcon color="#1F2937" />
+              <Text style={styles.menuItemText}>Дата</Text>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            {/* ✏️ Өзгерту / Edit */}
             <TouchableOpacity
               activeOpacity={0.7}
               style={styles.menuItem}
               onPress={() => handleAction(() => onEdit(task))}
             >
               <EditIcon color="#1F2937" />
-              <Text style={styles.menuItemText}>Өңдеу</Text>
+              <Text style={styles.menuItemText}>Өзгерту</Text>
             </TouchableOpacity>
 
             <View style={styles.divider} />
 
-            {/* Toggle Status */}
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={styles.menuItem}
-              onPress={() => handleAction(() => onToggleComplete?.(task))}
-            >
-              <CheckIcon color={task.isCompleted ? '#6B7280' : '#10B981'} />
-              <Text style={styles.menuItemText}>
-                {task.isCompleted ? 'Орындалмады ету' : 'Орындалды деп белгілеу'}
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.divider} />
-
-            {/* Priority Picker Trigger */}
+            {/* ⚑ Приоритет / Priority */}
             <TouchableOpacity
               activeOpacity={0.7}
               style={styles.menuItem}
@@ -241,9 +258,9 @@ export function TaskContextMenu({
                 setShowPrioritySubmenu(true);
               }}
             >
-              <PriorityIcon color="#F59E0B" />
+              <FlagIcon color={task.priority === 'important' ? '#EF4444' : '#1F2937'} />
               <View style={styles.menuItemContent}>
-                <Text style={styles.menuItemText}>Басымдық</Text>
+                <Text style={styles.menuItemText}>Приоритет</Text>
                 <Text style={styles.menuItemSubtext}>
                   {task.priority === 'important' ? 'Маңызды' : 'Қалыпты'}
                 </Text>
@@ -251,22 +268,7 @@ export function TaskContextMenu({
               <ChevronRightIcon color="#9CA3AF" />
             </TouchableOpacity>
 
-            {/* Date Change Trigger */}
-            {onChangeDate && (
-              <>
-                <View style={styles.divider} />
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={styles.menuItem}
-                  onPress={() => handleAction(() => onChangeDate(task))}
-                >
-                  <CalendarIcon color="#01B7FF" />
-                  <Text style={styles.menuItemText}>Күнді өзгерту</Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {/* Repeat Trigger */}
+            {/* 🔁 Қайталау / Repeat */}
             {onRepeat && (
               <>
                 <View style={styles.divider} />
@@ -275,15 +277,15 @@ export function TaskContextMenu({
                   style={styles.menuItem}
                   onPress={() => handleAction(() => onRepeat(task))}
                 >
-                  <RepeatIcon color="#8B5CF6" />
-                  <Text style={styles.menuItemText}>Қайталау</Text>
+                  <RepeatIcon color="#1F2937" />
+                  <Text style={styles.menuItemText}>Повтор</Text>
                 </TouchableOpacity>
               </>
             )}
 
             <View style={styles.divider} />
 
-            {/* Delete Action (Destructive) */}
+            {/* 🗑️ Өшіру / Delete (Destructive) */}
             <TouchableOpacity
               activeOpacity={0.7}
               style={styles.menuItem}
@@ -294,7 +296,7 @@ export function TaskContextMenu({
               }}
             >
               <TrashIcon color="#EF4444" />
-              <Text style={[styles.menuItemText, styles.destructiveText]}>Өшіру</Text>
+              <Text style={[styles.menuItemText, styles.destructiveText]}>Удалить</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -319,7 +321,7 @@ export function TaskContextMenu({
               style={styles.menuItem}
               onPress={() => handleAction(() => onSetPriority?.(task, 'important'))}
             >
-              <View style={[styles.priorityDot, { backgroundColor: '#F59E0B' }]} />
+              <FlagIcon color="#EF4444" />
               <Text style={[styles.menuItemText, task.priority === 'important' && styles.selectedText]}>
                 Маңызды (Important)
               </Text>
@@ -332,7 +334,7 @@ export function TaskContextMenu({
               style={styles.menuItem}
               onPress={() => handleAction(() => onSetPriority?.(task, 'normal'))}
             >
-              <View style={[styles.priorityDot, { backgroundColor: '#3B82F6' }]} />
+              <FlagIcon color="#9CA3AF" />
               <Text style={[styles.menuItemText, (task.priority === 'normal' || !task.priority) && styles.selectedText]}>
                 Қалыпты (Normal)
               </Text>
@@ -345,6 +347,34 @@ export function TaskContextMenu({
 }
 
 // ── Icons ─────────────────────────────────────────────────────────
+
+function PinIcon({ color }: { color: string }) {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function CalendarIcon({ color }: { color: string }) {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M6.75 3v2.25M17.25 3v2.25M3 8.25h18M4.5 4.5h15a2.25 2.25 0 012.25 2.25v12a2.25 2.25 0 01-2.25 2.25h-15A2.25 2.25 0 012.25 18.75v-12A2.25 2.25 0 014.5 4.5z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 function EditIcon({ color }: { color: string }) {
   return (
@@ -360,39 +390,11 @@ function EditIcon({ color }: { color: string }) {
   );
 }
 
-function CheckIcon({ color }: { color: string }) {
+function FlagIcon({ color }: { color: string }) {
   return (
     <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        stroke={color}
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function PriorityIcon({ color }: { color: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M3.75 3v18m0-15.75h14.25a.75.75 0 01.6 1.2L16.5 9l2.1 2.55a.75.75 0 01-.6 1.2H3.75"
-        stroke={color}
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
-function CalendarIcon({ color }: { color: string }) {
-  return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M6.75 3v2.25M17.25 3v2.25M3 8.25h18M4.5 4.5h15a2.25 2.25 0 012.25 2.25v12a2.25 2.25 0 01-2.25 2.25h-15A2.25 2.25 0 012.25 18.75v-12A2.25 2.25 0 014.5 4.5z"
+        d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1v19"
         stroke={color}
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -451,7 +453,7 @@ function ChevronLeftIcon({ color }: { color: string }) {
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.38)',
   },
   highlightedRow: {
     position: 'absolute',
@@ -460,13 +462,13 @@ const styles = StyleSheet.create({
   previewCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.16,
+    shadowOpacity: 0.18,
     shadowRadius: 12,
     elevation: 8,
     gap: 10,
@@ -487,7 +489,7 @@ const styles = StyleSheet.create({
   },
   previewTitle: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     color: '#1F2937',
   },
@@ -495,13 +497,24 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     color: '#9CA3AF',
   },
+  timeChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: '#F3F4F6',
+  },
+  timeChipText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#4B5563',
+  },
   menuCard: {
     position: 'absolute',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.22,
+    shadowOpacity: 0.2,
     shadowRadius: 20,
     elevation: 16,
     zIndex: 10002,
@@ -513,7 +526,7 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 11,
     paddingHorizontal: 16,
     gap: 12,
   },
@@ -544,7 +557,7 @@ const styles = StyleSheet.create({
   divider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: '#E5E7EB',
-    marginLeft: 44,
+    marginLeft: 46,
   },
   submenuHeader: {
     backgroundColor: '#F9FAFB',
@@ -554,10 +567,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#4B5563',
-  },
-  priorityDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
   },
 });

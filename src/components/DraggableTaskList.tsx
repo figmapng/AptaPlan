@@ -1,11 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
-  Easing,
   PanResponder,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -33,10 +31,7 @@ export type DraggableTaskListProps = {
 type ItemLayout = {
   y: number;
   height: number;
-  pageY: number;
 };
-
-type GestureState = 'IDLE' | 'PRESSING' | 'LONG_PRESSED' | 'DRAGGING' | 'DROPPING';
 
 export function DraggableTaskList({
   data,
@@ -51,16 +46,18 @@ export function DraggableTaskList({
   scrollRef,
   gap = 4,
 }: DraggableTaskListProps) {
-  const containerRef = useRef<View>(null);
   const layoutsRef = useRef<Map<string, ItemLayout>>(new Map());
   const itemRefs = useRef<Map<string, View>>(new Map());
 
-  const gestureStateRef = useRef<GestureState>('IDLE');
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState<number>(-1);
 
-  const activeTaskRef = useRef<Task | null>(null);
-  activeTaskRef.current = activeTask;
+  const activeTaskIdRef = useRef<string | null>(null);
+  activeTaskIdRef.current = activeTaskId;
+
+  const isDraggingRef = useRef(false);
+  isDraggingRef.current = isDragging;
 
   const placeholderIndexRef = useRef<number>(-1);
   placeholderIndexRef.current = placeholderIndex;
@@ -70,11 +67,9 @@ export function DraggableTaskList({
   const dragShadow = useRef(new Animated.Value(0)).current;
 
   const startTouchY = useRef(0);
-  const startTouchX = useRef(0);
   const startItemY = useRef(0);
   const startItemHeight = useRef(48);
   const startItemIndex = useRef(0);
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const autoScrollAnimFrame = useRef<number | null>(null);
   const currentScrollY = useRef(0);
@@ -88,11 +83,7 @@ export function DraggableTaskList({
     }
   }, []);
 
-  const cleanupTimersAndScroll = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
+  const cleanupScroll = useCallback(() => {
     if (autoScrollAnimFrame.current) {
       cancelAnimationFrame(autoScrollAnimFrame.current);
       autoScrollAnimFrame.current = null;
@@ -100,35 +91,29 @@ export function DraggableTaskList({
   }, []);
 
   const resetDragState = useCallback(() => {
-    cleanupTimersAndScroll();
-    gestureStateRef.current = 'IDLE';
-    setActiveTask(null);
+    cleanupScroll();
+    setActiveTaskId(null);
+    setIsDragging(false);
     setPlaceholderIndex(-1);
     dragY.setValue(0);
     dragScale.setValue(1);
     dragShadow.setValue(0);
     onDragStateChange?.(false);
-  }, [cleanupTimersAndScroll, dragScale, dragShadow, dragY, onDragStateChange]);
+  }, [cleanupScroll, dragScale, dragShadow, dragY, onDragStateChange]);
 
   useEffect(() => {
     return () => {
-      cleanupTimersAndScroll();
+      cleanupScroll();
     };
-  }, [cleanupTimersAndScroll]);
+  }, [cleanupScroll]);
 
-  // Track layout of each row
   const handleItemLayout = useCallback((id: string, y: number, height: number) => {
-    const existing = layoutsRef.current.get(id);
-    layoutsRef.current.set(id, {
-      y,
-      height,
-      pageY: existing?.pageY ?? y,
-    });
+    layoutsRef.current.set(id, { y, height });
   }, []);
 
   // Compute reordered target index from current finger coordinate
   const calculateTargetIndex = useCallback(
-    (currentTouchY: number, initialIndex: number) => {
+    (currentTouchY: number) => {
       const items = dataRef.current;
       if (items.length <= 1) return 0;
 
@@ -157,7 +142,7 @@ export function DraggableTaskList({
     (touchPageY: number) => {
       if (!scrollRef?.current) return;
       const { height: screenH } = Dimensions.get('window');
-      const topThreshold = 130;
+      const topThreshold = 140;
       const bottomThreshold = screenH - 140;
 
       if (autoScrollAnimFrame.current) {
@@ -166,7 +151,7 @@ export function DraggableTaskList({
       }
 
       const step = () => {
-        if (gestureStateRef.current !== 'DRAGGING') return;
+        if (!isDraggingRef.current) return;
 
         let delta = 0;
         if (touchPageY < topThreshold) {
@@ -191,204 +176,142 @@ export function DraggableTaskList({
     [scrollRef]
   );
 
-  // PanResponder to handle the seamless Hold -> Drag vs Hold -> Menu gesture
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => false,
-        onStartShouldSetPanResponderCapture: () => false,
-        onMoveShouldSetPanResponder: () => {
-          return gestureStateRef.current === 'DRAGGING' || gestureStateRef.current === 'LONG_PRESSED';
-        },
-        onMoveShouldSetPanResponderCapture: () => {
-          return gestureStateRef.current === 'DRAGGING';
-        },
-        onPanResponderMove: (_, gesture) => {
-          if (gestureStateRef.current === 'PRESSING') {
-            if (Math.abs(gesture.dx) > 10 || Math.abs(gesture.dy) > 10) {
-              cleanupTimersAndScroll();
-              gestureStateRef.current = 'IDLE';
-            }
-            return;
-          }
-
-          if (gestureStateRef.current === 'LONG_PRESSED') {
-            if (Math.abs(gesture.dy) > 8) {
-              gestureStateRef.current = 'DRAGGING';
-              triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-            } else {
-              return;
-            }
-          }
-
-          if (gestureStateRef.current === 'DRAGGING') {
-            dragY.setValue(gesture.dy);
-            const targetIdx = calculateTargetIndex(gesture.moveY, startItemIndex.current);
-            if (targetIdx !== placeholderIndexRef.current && targetIdx >= 0 && targetIdx < dataRef.current.length) {
-              setPlaceholderIndex(targetIdx);
-            }
-            startAutoScrollIfNeeded(gesture.moveY);
-          }
-        },
-        onPanResponderRelease: (_, gesture) => {
-          cleanupTimersAndScroll();
-
-          if (gestureStateRef.current === 'PRESSING') {
-            gestureStateRef.current = 'IDLE';
-            return;
-          }
-
-          if (gestureStateRef.current === 'LONG_PRESSED') {
-            const task = activeTaskRef.current;
-            gestureStateRef.current = 'IDLE';
-            setActiveTask(null);
-            setPlaceholderIndex(-1);
-            onDragStateChange?.(false);
-
-            if (task) {
-              const viewRef = itemRefs.current.get(task.id);
-              if (viewRef && onOpenContextMenu) {
-                viewRef.measureInWindow((x, y, width, height) => {
-                  onOpenContextMenu(task, { x, y, width, height });
-                });
-              } else if (onOpenContextMenu) {
-                onOpenContextMenu(task, {
-                  x: 16,
-                  y: startItemY.current,
-                  width: Dimensions.get('window').width - 32,
-                  height: startItemHeight.current,
-                });
-              }
-            }
-            return;
-          }
-
-          if (gestureStateRef.current === 'DRAGGING') {
-            gestureStateRef.current = 'DROPPING';
-            const fromIndex = startItemIndex.current;
-            const toIndex = placeholderIndexRef.current >= 0 ? placeholderIndexRef.current : fromIndex;
-            const items = [...dataRef.current];
-            const [movedItem] = items.splice(fromIndex, 1);
-            items.splice(toIndex, 0, movedItem);
-
-            // Compute target displacement for smooth drop animation
-            let targetOffset = 0;
-            if (fromIndex !== toIndex) {
-              for (let i = Math.min(fromIndex, toIndex); i < Math.max(fromIndex, toIndex); i++) {
-                const layout = layoutsRef.current.get(dataRef.current[i].id);
-                const h = layout ? layout.height : startItemHeight.current;
-                targetOffset += (h + gap) * (fromIndex < toIndex ? 1 : -1);
-              }
-            }
-
-            Animated.parallel([
-              Animated.spring(dragY, {
-                toValue: targetOffset,
-                tension: 340,
-                friction: 26,
-                useNativeDriver: false,
-              }),
-              Animated.spring(dragScale, {
-                toValue: 1,
-                tension: 340,
-                friction: 26,
-                useNativeDriver: false,
-              }),
-              Animated.timing(dragShadow, {
-                toValue: 0,
-                duration: 180,
-                useNativeDriver: false,
-              }),
-            ]).start(() => {
-              triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-              resetDragState();
-              void onReorder(items);
-            });
-          } else {
-            resetDragState();
-          }
-        },
-        onPanResponderTerminate: () => {
-          resetDragState();
-        },
-      }),
-    [
-      calculateTargetIndex,
-      cleanupTimersAndScroll,
-      dragScale,
-      dragShadow,
-      dragY,
-      gap,
-      onDragStateChange,
-      onOpenContextMenu,
-      onReorder,
-      resetDragState,
-      startAutoScrollIfNeeded,
-      triggerHaptic,
-    ]
-  );
-
-  // Initiates the touch flow for an individual task item
-  const handleItemTouchStart = useCallback(
-    (task: Task, index: number, event: { nativeEvent: { pageY: number; pageX: number; locationY: number } }) => {
-      if (gestureStateRef.current !== 'IDLE') return;
-
+  // Triggered when 350ms long-press finishes on an item
+  const handleItemLongPressed = useCallback(
+    (task: Task, index: number, pageY: number) => {
+      triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
       const layout = layoutsRef.current.get(task.id);
-      startTouchY.current = event.nativeEvent.pageY;
-      startTouchX.current = event.nativeEvent.pageX;
+      startTouchY.current = pageY;
       startItemY.current = layout?.y ?? 0;
       startItemHeight.current = layout?.height ?? 48;
       startItemIndex.current = index;
 
-      gestureStateRef.current = 'PRESSING';
+      setActiveTaskId(task.id);
+      setPlaceholderIndex(index);
+      onDragStateChange?.(true);
 
-      longPressTimerRef.current = setTimeout(() => {
-        if (gestureStateRef.current === 'PRESSING') {
-          gestureStateRef.current = 'LONG_PRESSED';
-          triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-          setActiveTask(task);
-          setPlaceholderIndex(index);
-          onDragStateChange?.(true);
-
-          Animated.parallel([
-            Animated.spring(dragScale, {
-              toValue: 1.025,
-              tension: 320,
-              friction: 22,
-              useNativeDriver: false,
-            }),
-            Animated.timing(dragShadow, {
-              toValue: 1,
-              duration: 180,
-              useNativeDriver: false,
-            }),
-          ]).start();
-        }
-      }, 380);
+      Animated.parallel([
+        Animated.spring(dragScale, {
+          toValue: 1.02,
+          tension: 300,
+          friction: 20,
+          useNativeDriver: false,
+        }),
+        Animated.timing(dragShadow, {
+          toValue: 1,
+          duration: 160,
+          useNativeDriver: false,
+        }),
+      ]).start();
     },
     [dragScale, dragShadow, onDragStateChange, triggerHaptic]
   );
 
-  const handleItemTouchEnd = useCallback(
-    (task: Task) => {
-      if (gestureStateRef.current === 'PRESSING') {
-        cleanupTimersAndScroll();
-        gestureStateRef.current = 'IDLE';
-        onPressItem?.(task);
+  // Triggered when movement starts after long press
+  const handleItemDragMove = useCallback(
+    (dy: number, moveY: number) => {
+      if (!isDraggingRef.current) {
+        setIsDragging(true);
+        triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
       }
+      dragY.setValue(dy);
+      const targetIdx = calculateTargetIndex(moveY);
+      if (targetIdx !== placeholderIndexRef.current && targetIdx >= 0 && targetIdx < dataRef.current.length) {
+        setPlaceholderIndex(targetIdx);
+      }
+      startAutoScrollIfNeeded(moveY);
     },
-    [cleanupTimersAndScroll, onPressItem]
+    [calculateTargetIndex, dragY, startAutoScrollIfNeeded, triggerHaptic]
   );
 
+  // Triggered when dropped
+  const handleItemDragDrop = useCallback(() => {
+    cleanupScroll();
+    const fromIndex = startItemIndex.current;
+    const toIndex = placeholderIndexRef.current >= 0 ? placeholderIndexRef.current : fromIndex;
+    const items = [...dataRef.current];
+    const [movedItem] = items.splice(fromIndex, 1);
+    items.splice(toIndex, 0, movedItem);
+
+    // Compute target displacement for smooth drop animation
+    let targetOffset = 0;
+    if (fromIndex !== toIndex) {
+      for (let i = Math.min(fromIndex, toIndex); i < Math.max(fromIndex, toIndex); i++) {
+        const layout = layoutsRef.current.get(dataRef.current[i].id);
+        const h = layout ? layout.height : startItemHeight.current;
+        targetOffset += (h + gap) * (fromIndex < toIndex ? 1 : -1);
+      }
+    }
+
+    Animated.parallel([
+      Animated.spring(dragY, {
+        toValue: targetOffset,
+        tension: 340,
+        friction: 26,
+        useNativeDriver: false,
+      }),
+      Animated.spring(dragScale, {
+        toValue: 1,
+        tension: 340,
+        friction: 26,
+        useNativeDriver: false,
+      }),
+      Animated.timing(dragShadow, {
+        toValue: 0,
+        duration: 160,
+        useNativeDriver: false,
+      }),
+    ]).start(() => {
+      triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+      resetDragState();
+      void onReorder(items);
+    });
+  }, [cleanupScroll, dragScale, dragShadow, dragY, gap, onReorder, resetDragState, triggerHaptic]);
+
+  // Triggered when long-pressed without movement (Open Context Menu)
+  const handleOpenMenuForTask = useCallback(
+    (task: Task) => {
+      resetDragState();
+      const viewRef = itemRefs.current.get(task.id);
+      if (viewRef && onOpenContextMenu) {
+        viewRef.measureInWindow((x, y, width, height) => {
+          if (y > 0 && width > 0 && height > 0) {
+            onOpenContextMenu(task, { x, y, width, height });
+          } else {
+            onOpenContextMenu(task, {
+              x: 16,
+              y: startItemY.current + 80,
+              width: Dimensions.get('window').width - 32,
+              height: startItemHeight.current,
+            });
+          }
+        });
+      } else if (onOpenContextMenu) {
+        onOpenContextMenu(task, {
+          x: 16,
+          y: startItemY.current + 80,
+          width: Dimensions.get('window').width - 32,
+          height: startItemHeight.current,
+        });
+      }
+    },
+    [onOpenContextMenu, resetDragState]
+  );
+
+  const activeTask = useMemo(() => {
+    if (!activeTaskId) return null;
+    return data.find((t) => t.id === activeTaskId) || null;
+  }, [activeTaskId, data]);
+
   return (
-    <View ref={containerRef} style={styles.container} {...panResponder.panHandlers}>
+    <View style={styles.container}>
       {data.map((task, index) => {
         const key = keyExtractor(task);
-        const isDragged = activeTask?.id === task.id;
+        const isThisActive = activeTaskId === task.id;
 
         // Calculate vertical shift for surrounding items based on placeholder index
         let translateYOffset = 0;
-        if (activeTask && !isDragged && placeholderIndex >= 0) {
+        if (activeTaskId && !isThisActive && placeholderIndex >= 0) {
           const activeIdx = startItemIndex.current;
           const draggedHeight = startItemHeight.current + gap;
 
@@ -416,11 +339,10 @@ export function DraggableTaskList({
             style={[
               styles.itemWrapper,
               { marginBottom: index === data.length - 1 ? 0 : gap },
-              isDragged && styles.placeholderRow,
             ]}
           >
-            {isDragged ? (
-              // Empty dashed/translucent placeholder
+            {isThisActive ? (
+              // Soft rounded placeholder matching TickTick style
               <View
                 style={[
                   styles.placeholderSlot,
@@ -433,26 +355,27 @@ export function DraggableTaskList({
                   transform: [{ translateY: translateYOffset }],
                 }}
               >
-                <Pressable
-                  onPressIn={(e) => handleItemTouchStart(task, index, e)}
-                  onPressOut={() => handleItemTouchEnd(task)}
-                >
-                  <TaskRow
-                    task={task}
-                    compact={compact}
-                    isLast={index === data.length - 1}
-                    onPress={() => {}}
-                    onPendingDelete={onPendingDelete}
-                    cardBg={cardBg}
-                  />
-                </Pressable>
+                <DraggableRowItem
+                  task={task}
+                  index={index}
+                  compact={compact}
+                  isLast={index === data.length - 1}
+                  cardBg={cardBg}
+                  onPressItem={onPressItem}
+                  onPendingDelete={onPendingDelete}
+                  onLongPress={handleItemLongPressed}
+                  onDragMove={handleItemDragMove}
+                  onDragDrop={handleItemDragDrop}
+                  onOpenMenu={handleOpenMenuForTask}
+                  onCancel={resetDragState}
+                />
               </Animated.View>
             )}
           </View>
         );
       })}
 
-      {/* Floating Dragged Clone Overlay */}
+      {/* Floating Dragged Item (TickTick style) */}
       {activeTask && (
         <Animated.View
           pointerEvents="none"
@@ -464,11 +387,11 @@ export function DraggableTaskList({
               transform: [{ translateY: dragY }, { scale: dragScale }],
               shadowOpacity: dragShadow.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0, 0.2],
+                outputRange: [0, 0.18],
               }),
               elevation: dragShadow.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0, 10],
+                outputRange: [0, 8],
               }),
             },
           ]}
@@ -487,6 +410,135 @@ export function DraggableTaskList({
   );
 }
 
+// ── Individual Draggable Row with Precise Gesture Handling ────────
+
+type DraggableRowItemProps = {
+  task: Task;
+  index: number;
+  compact: boolean;
+  isLast: boolean;
+  cardBg: string;
+  onPressItem?: (task: Task) => void;
+  onPendingDelete?: (task: Task) => void;
+  onLongPress: (task: Task, index: number, pageY: number) => void;
+  onDragMove: (dy: number, moveY: number) => void;
+  onDragDrop: () => void;
+  onOpenMenu: (task: Task) => void;
+  onCancel: () => void;
+};
+
+const DraggableRowItem = memo(function DraggableRowItem({
+  task,
+  index,
+  compact,
+  isLast,
+  cardBg,
+  onPressItem,
+  onPendingDelete,
+  onLongPress,
+  onDragMove,
+  onDragDrop,
+  onOpenMenu,
+  onCancel,
+}: DraggableRowItemProps) {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPressedRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const startPos = useRef({ pageX: 0, pageY: 0 });
+
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponderCapture: () => false,
+        onMoveShouldSetPanResponder: (_, gesture) => {
+          if (isLongPressedRef.current) return true;
+          return Math.abs(gesture.dx) > 10 || Math.abs(gesture.dy) > 10;
+        },
+        onPanResponderGrant: (_, gesture) => {
+          isLongPressedRef.current = false;
+          isDraggingRef.current = false;
+          startPos.current = { pageX: gesture.x0, pageY: gesture.y0 };
+
+          clearTimer();
+          timerRef.current = setTimeout(() => {
+            isLongPressedRef.current = true;
+            onLongPress(task, index, gesture.y0);
+          }, 350);
+        },
+        onPanResponderMove: (_, gesture) => {
+          if (!isLongPressedRef.current) {
+            // Cancel long press if finger moves significantly before 350ms
+            if (Math.abs(gesture.dx) > 8 || Math.abs(gesture.dy) > 8) {
+              clearTimer();
+            }
+            return;
+          }
+
+          // In long-pressed mode: check for drag movement
+          if (Math.abs(gesture.dy) > 6 || isDraggingRef.current) {
+            isDraggingRef.current = true;
+            onDragMove(gesture.dy, gesture.moveY);
+          }
+        },
+        onPanResponderRelease: (_, gesture) => {
+          clearTimer();
+
+          // Case 1: Short Tap (timer was running, no long press, no significant move)
+          if (!isLongPressedRef.current) {
+            if (Math.abs(gesture.dx) < 8 && Math.abs(gesture.dy) < 8) {
+              onPressItem?.(task);
+            }
+            return;
+          }
+
+          // Case 2: Long Press without Drag -> Open Context Menu
+          if (isLongPressedRef.current && !isDraggingRef.current) {
+            isLongPressedRef.current = false;
+            onOpenMenu(task);
+            return;
+          }
+
+          // Case 3: Drag & Drop -> Commit Reorder
+          if (isDraggingRef.current) {
+            isLongPressedRef.current = false;
+            isDraggingRef.current = false;
+            onDragDrop();
+          }
+        },
+        onPanResponderTerminate: () => {
+          clearTimer();
+          isLongPressedRef.current = false;
+          isDraggingRef.current = false;
+          onCancel();
+        },
+      }),
+    [index, onCancel, onDragDrop, onDragMove, onLongPress, onOpenMenu, onPressItem, task]
+  );
+
+  return (
+    <View {...panResponder.panHandlers}>
+      <TaskRow
+        task={task}
+        compact={compact}
+        isLast={isLast}
+        onPress={() => {}}
+        onPendingDelete={onPendingDelete}
+        cardBg={cardBg}
+      />
+    </View>
+  );
+});
+
+// ── Styles ────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
@@ -495,15 +547,11 @@ const styles = StyleSheet.create({
   itemWrapper: {
     position: 'relative',
   },
-  placeholderRow: {
-    opacity: 0.35,
-  },
   placeholderSlot: {
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#01B7FF',
-    borderStyle: 'dashed',
-    backgroundColor: '#F0F9FF',
+    borderRadius: 12,
+    backgroundColor: '#EEF2F6',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   floatingCard: {
     position: 'absolute',
@@ -511,13 +559,13 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 9999,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 12,
   },
   floatingCardInner: {
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(1, 183, 255, 0.4)',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#01B7FF',
     overflow: 'hidden',
   },
 });
