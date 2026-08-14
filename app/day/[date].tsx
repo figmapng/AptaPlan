@@ -19,7 +19,6 @@ import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from '@/components/task-row';
 import { useCardTransition } from '@/components/card-transition-provider';
 import { TaskBottomSheet } from '@/components/TaskBottomSheet';
-import { SortableTaskList } from '@/components/SortableTaskList';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { CompactWeekStrip } from '@/components/CompactWeekStrip';
 import type { Task } from '@/types/task';
@@ -38,18 +37,6 @@ export default function DayScreen() {
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const scrollRef = useRef<ScrollView>(null);
-  const scrollYRef = useRef(0);
-
-  const handleScrollEnabled = useCallback((enabled: boolean) => {
-    setScrollEnabled(enabled);
-  }, []);
-
-  const handleAutoScroll = useCallback((delta: number) => {
-    const nextY = Math.max(0, scrollYRef.current + delta);
-    scrollYRef.current = nextY;
-    scrollRef.current?.scrollTo({ y: nextY, animated: false });
-  }, []);
-
   const handlePendingDelete = useCallback((task: Task) => {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setPendingDeleteTask(task);
@@ -67,25 +54,6 @@ export default function DayScreen() {
     setPendingDeleteTask(null);
     await refresh();
   }, [settings.haptics, refresh]);
-
-  const handleReorder = useCallback(async (newData: Task[]) => {
-    const db = await getDatabase();
-    const updatedAt = new Date().toISOString();
-
-    // Save the entire order at once. This prevents a partial order from being
-    // rendered when a user drops a row and immediately starts another drag.
-    await db.withTransactionAsync(async () => {
-      for (let i = 0; i < newData.length; i++) {
-        await db.runAsync(
-          'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
-          i,
-          updatedAt,
-          newData[i].id,
-        );
-      }
-    });
-    await refresh();
-  }, [refresh]);
 
   useEffect(() => {
     if (date) void loadRange(date, date);
@@ -208,32 +176,20 @@ export default function DayScreen() {
           alwaysBounceVertical={true}
           overScrollMode="always"
           decelerationRate={Platform.OS === 'ios' ? 'normal' : 0.985}
-          onScroll={(e) => {
-            scrollYRef.current = e.nativeEvent.contentOffset.y;
-          }}
-          scrollEventThrottle={16}
           style={{ maxHeight: taskAreaMaxHeight }}
           contentContainerStyle={{ paddingHorizontal: 4, paddingTop: 10, paddingBottom: 16 }}
         >
           {dayTasks.length ? (
-            <Pressable style={{ flexGrow: 1 }} onPress={beginAdding}>
-              <SortableTaskList
-                data={dayTasks}
-                keyExtractor={(task) => `${task.id}:${task.date}`}
-                onReorder={(newData) => void handleReorder(newData)}
-                onScrollEnabledChange={handleScrollEnabled}
-                onAutoScroll={handleAutoScroll}
-                gap={4}
-                renderItem={(task, isActive, index, totalCount) => (
-                  <TaskRow
-                    task={task}
-                    isLast={index === totalCount - 1}
-                    onPress={() => beginEditing(task)}
-                    onPendingDelete={handlePendingDelete}
-                    isActive={isActive}
-                  />
-                )}
-              />
+            <Pressable style={{ flexGrow: 1, gap: 4 }} onPress={beginAdding}>
+              {dayTasks.map((task, index) => (
+                <TaskRow
+                  key={`${task.id}:${task.date}`}
+                  task={task}
+                  isLast={index === dayTasks.length - 1}
+                  onPress={() => beginEditing(task)}
+                  onPendingDelete={handlePendingDelete}
+                />
+              ))}
             </Pressable>
           ) : (
             <Pressable

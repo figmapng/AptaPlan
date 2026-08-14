@@ -10,7 +10,6 @@ import { months, toDateKey, weekdays } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from './task-row';
 import { TaskBottomSheet } from './TaskBottomSheet';
-import { SortableTaskList } from './SortableTaskList';
 import { CompactWeekStrip } from './CompactWeekStrip';
 import { getDatabase } from '@/database/database';
 import { AnimatedPressable } from './AnimatedPressable';
@@ -48,9 +47,6 @@ type CarouselCardProps = {
   maxHeight: number;
   scrollEnabled: boolean;
   handleListLayout: (h: number) => void;
-  handleReorder: (newData: Task[]) => void;
-  handleScrollEnabled: (enabled: boolean) => void;
-  handleAutoScroll: (delta: number) => void;
   beginEditing: (task: Task) => void;
   beginAdding: (targetDate?: Date) => void;
   closeCard: () => void;
@@ -71,9 +67,6 @@ const CarouselCard = React.memo(function CarouselCard({
   maxHeight,
   scrollEnabled,
   handleListLayout,
-  handleReorder,
-  handleScrollEnabled,
-  handleAutoScroll,
   beginEditing,
   beginAdding,
   closeCard,
@@ -320,38 +313,20 @@ const CarouselCard = React.memo(function CarouselCard({
             contentContainerStyle={{ paddingHorizontal: 0, paddingBottom: 8 }}
           >
             {cardTasks.length ? (
-              <View onLayout={(e) => isCenter && handleListLayout(e.nativeEvent.layout.height)}>
-                <SortableTaskList
-                  data={cardTasks}
-                  keyExtractor={(task) => `${task.id}:${task.date}`}
-                  onReorder={(newData) => void handleReorder(newData)}
-                  onScrollEnabledChange={handleScrollEnabled}
-                  onAutoScroll={handleAutoScroll}
-                  gap={4}
-                  dragHandleOpacity={progress.interpolate({
-                    inputRange: [0.85, 1],
-                    outputRange: [0, 1],
-                  })}
-                  renderItem={(
-                    task,
-                    isActive,
-                    index,
-                    totalCount,
-                    onSwipeX,
-                    onScrollEnabledChangeItem
-                  ) => (
-                    <TaskRow
-                      task={task}
-                      isLast={index === totalCount - 1}
-                      onPress={() => beginEditing(task)}
-                      onPendingDelete={handlePendingDelete}
-                      isActive={isActive}
-                      onSwipeX={onSwipeX}
-                      onScrollEnabledChange={onScrollEnabledChangeItem}
-                      cardBg="#FFFFFF"
-                    />
-                  )}
-                />
+              <View
+                onLayout={(e) => isCenter && handleListLayout(e.nativeEvent.layout.height)}
+                style={{ gap: 4 }}
+              >
+                {cardTasks.map((task, index) => (
+                  <TaskRow
+                    key={`${task.id}:${task.date}`}
+                    task={task}
+                    isLast={index === cardTasks.length - 1}
+                    onPress={() => beginEditing(task)}
+                    onPendingDelete={handlePendingDelete}
+                    cardBg="#FFFFFF"
+                  />
+                ))}
               </View>
             ) : (
               <Pressable
@@ -448,13 +423,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const maxHeight = height - (insets.top + 68) - (Math.max(insets.bottom + 8, 16) + 60) - 12;
   const targetHeight = Math.min(maxHeight, contentHeight);
 
-  const handleScrollEnabled = useCallback((enabled: boolean) => {
-    setScrollEnabled(enabled);
-  }, []);
-
-  const handleAutoScroll = useCallback((delta: number) => {
-  }, []);
-
   const handlePendingDelete = (task: Task) => {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setPendingDeleteTask(task);
@@ -471,27 +439,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setPendingDeleteTask(null);
   };
-
-  const handleReorder = useCallback(
-    async (newData: Task[]) => {
-      const dateKey = toDateKey(activeCardDate);
-      const db = await getDatabase();
-      const updatedAt = new Date().toISOString();
-
-      await db.withTransactionAsync(async () => {
-        for (let i = 0; i < newData.length; i++) {
-          await db.runAsync(
-            'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
-            i,
-            updatedAt,
-            newData[i].id
-          );
-        }
-      });
-      await loadRange(dateKey, dateKey);
-    },
-    [activeCardDate, loadRange]
-  );
 
   const cleanupClose = () => {
     origin.current = null;
@@ -728,9 +675,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     maxHeight={maxHeight}
                     scrollEnabled={scrollEnabled}
                     handleListLayout={handleListLayout}
-                    handleReorder={handleReorder}
-                    handleScrollEnabled={handleScrollEnabled}
-                    handleAutoScroll={handleAutoScroll}
                     beginEditing={beginEditing}
                     beginAdding={beginAdding}
                     closeCard={closeCard}

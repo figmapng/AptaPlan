@@ -5,10 +5,7 @@ import { format, isToday } from 'date-fns';
 import { colors } from '@/constants/colors';
 import { months, toDateKey, weekdays } from '@/services/date-service';
 import type { Task } from '@/types/task';
-import { usePlanner } from '@/store/planner-store';
-import { getDatabase } from '@/database/database';
 import { TaskRow } from './task-row';
-import { SortableTaskList } from './SortableTaskList';
 import { useCardTransition } from './card-transition-provider';
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -51,30 +48,10 @@ export const DayCard = memo(function DayCardComponent({
   const isSaturday = date.getDay() === 6;
   const isWeekend = isSunday || isSaturday;
 
-  const { refresh } = usePlanner();
   const completedCount = tasks.filter((task) => task.isCompleted).length;
   const cardRef = useRef<View>(null);
   const { openCard, activeDate, progress: transitionProgress, originFrame } = useCardTransition();
   const isTransitioning = activeDate === key;
-
-  const handleReorder = useCallback(
-    async (newData: Task[]) => {
-      const db = await getDatabase();
-      const updatedAt = new Date().toISOString();
-      await db.withTransactionAsync(async () => {
-        for (let i = 0; i < newData.length; i++) {
-          await db.runAsync(
-            'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
-            i,
-            updatedAt,
-            newData[i].id,
-          );
-        }
-      });
-      await refresh();
-    },
-    [refresh]
-  );
 
   const measuredFrameRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
@@ -320,25 +297,18 @@ export const DayCard = memo(function DayCardComponent({
               onScroll={(e) => {
                 onScrollYChange?.(e.nativeEvent.contentOffset.y);
               }}
-              contentContainerStyle={{ paddingBottom: 8 }}
+              contentContainerStyle={{ paddingBottom: 8, gap: 4 }}
             >
-              <SortableTaskList
-                data={tasks}
-                keyExtractor={(task) => `${task.id}:${task.date}`}
-                onReorder={handleReorder}
-                gap={4}
-                dragHandleOpacity={1}
-                renderItem={(task, isActive, index, totalCount) => (
-                  <TaskRow
-                    task={task}
-                    isLast={index === totalCount - 1}
-                    onPress={open}
-                    onInteraction={onInteraction}
-                    isActive={isActive}
-                    cardBg="#FFFFFF"
-                  />
-                )}
-              />
+              {tasks.map((task, index) => (
+                <TaskRow
+                  key={`${task.id}:${task.date}`}
+                  task={task}
+                  isLast={index === tasks.length - 1}
+                  onPress={open}
+                  onInteraction={onInteraction}
+                  cardBg="#FFFFFF"
+                />
+              ))}
             </ScrollView>
           ) : (
             tasks.map((task) => (
