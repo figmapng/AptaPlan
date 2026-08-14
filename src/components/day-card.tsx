@@ -1,11 +1,15 @@
-import React, { memo, useCallback, useRef } from 'react';
+import React, { memo, useCallback, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { format, isToday } from 'date-fns';
 import { colors } from '@/constants/colors';
 import { months, toDateKey, weekdays } from '@/services/date-service';
-import type { Task } from '@/types/task';
+import type { Priority, Task } from '@/types/task';
+import { usePlanner } from '@/store/planner-store';
+import { getDatabase } from '@/database/database';
 import { TaskRow } from './task-row';
+import { DraggableTaskList } from './DraggableTaskList';
+import { TaskContextMenu } from './TaskContextMenu';
 import { useCardTransition } from './card-transition-provider';
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -48,10 +52,47 @@ export const DayCard = memo(function DayCardComponent({
   const isSaturday = date.getDay() === 6;
   const isWeekend = isSunday || isSaturday;
 
+  const { refresh, remove } = usePlanner();
   const completedCount = tasks.filter((task) => task.isCompleted).length;
   const cardRef = useRef<View>(null);
   const { openCard, activeDate, progress: transitionProgress, originFrame } = useCardTransition();
   const isTransitioning = activeDate === key;
+
+  const [contextMenuTask, setContextMenuTask] = useState<Task | null>(null);
+  const [contextMenuAnchor, setContextMenuAnchor] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+
+  const handleOpenContextMenu = useCallback((task: Task, layout: { x: number; y: number; width: number; height: number }) => {
+    setContextMenuTask(task);
+    setContextMenuAnchor(layout);
+  }, []);
+
+  const handleReorder = useCallback(
+    async (newData: Task[]) => {
+      const db = await getDatabase();
+      const updatedAt = new Date().toISOString();
+      await db.withTransactionAsync(async () => {
+        for (let i = 0; i < newData.length; i++) {
+          await db.runAsync(
+            'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
+            i,
+            updatedAt,
+            newData[i].id,
+          );
+        }
+      });
+      await refresh();
+    },
+    [refresh]
+  );
+
+  const handleSetPriority = useCallback(
+    async (task: Task, priority: Priority) => {
+      const db = await getDatabase();
+      await db.runAsync('UPDATE tasks SET priority=?, updatedAt=? WHERE id=?', priority, new Date().toISOString(), task.id);
+      await refresh();
+    },
+    [refresh]
+  );
 
   const measuredFrameRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
@@ -297,18 +338,16 @@ export const DayCard = memo(function DayCardComponent({
               onScroll={(e) => {
                 onScrollYChange?.(e.nativeEvent.contentOffset.y);
               }}
-              contentContainerStyle={{ paddingBottom: 8, gap: 4 }}
+              contentContainerStyle={{ paddingBottom: 8 }}
             >
-              {tasks.map((task, index) => (
-                <TaskRow
-                  key={`${task.id}:${task.date}`}
-                  task={task}
-                  isLast={index === tasks.length - 1}
-                  onPress={open}
-                  onInteraction={onInteraction}
-                  cardBg="#FFFFFF"
-                />
-              ))}
+              <DraggableTaskList
+                data={tasks}
+                keyExtractor={(task) => `${task.id}:${task.date}`}
+                onReorder={handleReorder}
+                onPressItem={open}
+                onOpenContextMenu={handleOpenContextMenu}
+                cardBg="#FFFFFF"
+              />
             </ScrollView>
           ) : (
             tasks.map((task) => (
@@ -408,6 +447,18 @@ export const DayCard = memo(function DayCardComponent({
       >
         {cardHeader}
         {cardBodyContent}
+        <TaskContextMenu
+          visible={!!contextMenuTask}
+          task={contextMenuTask}
+          anchorLayout={contextMenuAnchor}
+          onClose={() => {
+            setContextMenuTask(null);
+            setContextMenuAnchor(null);
+          }}
+          onEdit={open}
+          onDelete={(t) => void remove(t.id, t.occurrenceDate || t.date, 'all')}
+          onSetPriority={handleSetPriority}
+        />
       </Animated.View>
     );
   }
@@ -430,6 +481,18 @@ export const DayCard = memo(function DayCardComponent({
     >
       {cardHeader}
       {cardBodyContent}
+      <TaskContextMenu
+        visible={!!contextMenuTask}
+        task={contextMenuTask}
+        anchorLayout={contextMenuAnchor}
+        onClose={() => {
+          setContextMenuTask(null);
+          setContextMenuAnchor(null);
+        }}
+        onEdit={open}
+        onDelete={(t) => void remove(t.id, t.occurrenceDate || t.date, 'all')}
+        onSetPriority={handleSetPriority}
+      />
     </Animated.View>
   );
 });
