@@ -2,6 +2,7 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import {
   Animated,
   Dimensions,
+  GestureResponderEvent,
   PanResponder,
   Platform,
   ScrollView,
@@ -192,8 +193,8 @@ export function DraggableTaskList({
 
       Animated.parallel([
         Animated.spring(dragScale, {
-          toValue: 1.02,
-          tension: 300,
+          toValue: 1.025,
+          tension: 320,
           friction: 20,
           useNativeDriver: false,
         }),
@@ -342,7 +343,7 @@ export function DraggableTaskList({
             ]}
           >
             {isThisActive ? (
-              // Soft rounded placeholder matching TickTick style
+              // Soft rounded placeholder matching TickTick style (Screenshot 4)
               <View
                 style={[
                   styles.placeholderSlot,
@@ -402,6 +403,7 @@ export function DraggableTaskList({
               compact={compact}
               isLast={false}
               cardBg={cardBg}
+              disableInternalGestures={true}
             />
           </View>
         </Animated.View>
@@ -410,7 +412,7 @@ export function DraggableTaskList({
   );
 }
 
-// ── Individual Draggable Row with Precise Gesture Handling ────────
+// ── Individual Draggable Row with Universal Gesture Tracking ─────
 
 type DraggableRowItemProps = {
   task: Task;
@@ -444,7 +446,7 @@ const DraggableRowItem = memo(function DraggableRowItem({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressedRef = useRef(false);
   const isDraggingRef = useRef(false);
-  const startPos = useRef({ pageX: 0, pageY: 0 });
+  const startTouchPos = useRef({ x: 0, y: 0, pageX: 0, pageY: 0 });
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -453,78 +455,88 @@ const DraggableRowItem = memo(function DraggableRowItem({
     }
   };
 
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onStartShouldSetPanResponderCapture: () => false,
-        onMoveShouldSetPanResponder: (_, gesture) => {
-          if (isLongPressedRef.current) return true;
-          return Math.abs(gesture.dx) > 10 || Math.abs(gesture.dy) > 10;
-        },
-        onPanResponderGrant: (_, gesture) => {
-          isLongPressedRef.current = false;
-          isDraggingRef.current = false;
-          startPos.current = { pageX: gesture.x0, pageY: gesture.y0 };
+  const handleTouchStart = (e: GestureResponderEvent) => {
+    const touch = e.nativeEvent;
+    isLongPressedRef.current = false;
+    isDraggingRef.current = false;
+    startTouchPos.current = {
+      x: touch.locationX,
+      y: touch.locationY,
+      pageX: touch.pageX,
+      pageY: touch.pageY,
+    };
 
-          clearTimer();
-          timerRef.current = setTimeout(() => {
-            isLongPressedRef.current = true;
-            onLongPress(task, index, gesture.y0);
-          }, 350);
-        },
-        onPanResponderMove: (_, gesture) => {
-          if (!isLongPressedRef.current) {
-            // Cancel long press if finger moves significantly before 350ms
-            if (Math.abs(gesture.dx) > 8 || Math.abs(gesture.dy) > 8) {
-              clearTimer();
-            }
-            return;
-          }
+    clearTimer();
+    timerRef.current = setTimeout(() => {
+      isLongPressedRef.current = true;
+      onLongPress(task, index, startTouchPos.current.pageY);
+    }, 340);
+  };
 
-          // In long-pressed mode: check for drag movement
-          if (Math.abs(gesture.dy) > 6 || isDraggingRef.current) {
-            isDraggingRef.current = true;
-            onDragMove(gesture.dy, gesture.moveY);
-          }
-        },
-        onPanResponderRelease: (_, gesture) => {
-          clearTimer();
+  const handleTouchMove = (e: GestureResponderEvent) => {
+    const touch = e.nativeEvent;
+    const dx = touch.pageX - startTouchPos.current.pageX;
+    const dy = touch.pageY - startTouchPos.current.pageY;
 
-          // Case 1: Short Tap (timer was running, no long press, no significant move)
-          if (!isLongPressedRef.current) {
-            if (Math.abs(gesture.dx) < 8 && Math.abs(gesture.dy) < 8) {
-              onPressItem?.(task);
-            }
-            return;
-          }
+    if (!isLongPressedRef.current) {
+      // If finger moves > 8px before 340ms, user is scrolling the list -> cancel long press
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        clearTimer();
+      }
+      return;
+    }
 
-          // Case 2: Long Press without Drag -> Open Context Menu
-          if (isLongPressedRef.current && !isDraggingRef.current) {
-            isLongPressedRef.current = false;
-            onOpenMenu(task);
-            return;
-          }
+    // In long-pressed mode: check for drag movement
+    if (Math.abs(dy) > 6 || isDraggingRef.current) {
+      isDraggingRef.current = true;
+      onDragMove(dy, touch.pageY);
+    }
+  };
 
-          // Case 3: Drag & Drop -> Commit Reorder
-          if (isDraggingRef.current) {
-            isLongPressedRef.current = false;
-            isDraggingRef.current = false;
-            onDragDrop();
-          }
-        },
-        onPanResponderTerminate: () => {
-          clearTimer();
-          isLongPressedRef.current = false;
-          isDraggingRef.current = false;
-          onCancel();
-        },
-      }),
-    [index, onCancel, onDragDrop, onDragMove, onLongPress, onOpenMenu, onPressItem, task]
-  );
+  const handleTouchEnd = (e: GestureResponderEvent) => {
+    const touch = e.nativeEvent;
+    const dx = Math.abs(touch.pageX - startTouchPos.current.pageX);
+    const dy = Math.abs(touch.pageY - startTouchPos.current.pageY);
+
+    clearTimer();
+
+    // Case 1: Short Tap (timer was active, no long press, finger didn't move)
+    if (!isLongPressedRef.current) {
+      if (dx < 10 && dy < 10) {
+        onPressItem?.(task);
+      }
+      return;
+    }
+
+    // Case 2: Long Press without Drag -> Open Context Menu
+    if (isLongPressedRef.current && !isDraggingRef.current) {
+      isLongPressedRef.current = false;
+      onOpenMenu(task);
+      return;
+    }
+
+    // Case 3: Drag & Drop -> Commit Reorder
+    if (isDraggingRef.current) {
+      isLongPressedRef.current = false;
+      isDraggingRef.current = false;
+      onDragDrop();
+    }
+  };
+
+  const handleTouchCancel = () => {
+    clearTimer();
+    isLongPressedRef.current = false;
+    isDraggingRef.current = false;
+    onCancel();
+  };
 
   return (
-    <View {...panResponder.panHandlers}>
+    <View
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
+    >
       <TaskRow
         task={task}
         compact={compact}
@@ -532,6 +544,7 @@ const DraggableRowItem = memo(function DraggableRowItem({
         onPress={() => {}}
         onPendingDelete={onPendingDelete}
         cardBg={cardBg}
+        disableInternalGestures={true}
       />
     </View>
   );

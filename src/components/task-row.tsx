@@ -19,6 +19,7 @@ export const TaskRow = React.memo(function TaskRow({
   onSwipeX,
   onScrollEnabledChange,
   cardBg = '#FFFFFF',
+  disableInternalGestures = false,
 }: {
   task: Task;
   compact?: boolean;
@@ -31,6 +32,7 @@ export const TaskRow = React.memo(function TaskRow({
   onSwipeX?: (anim: Animated.Value, onDelete: () => void) => void;
   onScrollEnabledChange?: (enabled: boolean) => void;
   cardBg?: string;
+  disableInternalGestures?: boolean;
 }) {
   const { toggle, remove, settings } = usePlanner();
   const { progress: transitionProgress, activeDate } = useCardTransition();
@@ -343,7 +345,7 @@ export const TaskRow = React.memo(function TaskRow({
     <View style={styles.wrapper}>
       {/* Foreground Task Row Content */}
       <Animated.View
-        {...panResponder.panHandlers}
+        {...(disableInternalGestures ? {} : panResponder.panHandlers)}
         style={[
           styles.rowContainer,
           compact && styles.compactRowContainer,
@@ -399,50 +401,94 @@ export const TaskRow = React.memo(function TaskRow({
         </Pressable>
 
         {/* Task Title & Metadata Stack */}
-        <Pressable
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          onPress={handlePress}
-          style={[
-            styles.contentStack,
-            compact && styles.compactContentStack,
-            isActive && { opacity: 0.7 },
-          ]}
-        >
-          <Animated.View style={{ transform: [{ scale: pressScale }] }}>
-            <Animated.Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={[
-                styles.title,
-                compact && styles.compactTitle,
-                task.isCompleted && styles.completedTitle,
-                { fontSize: dynamicTitleFontSize },
-              ]}
-            >
-              {task.title}
-            </Animated.Text>
+        {disableInternalGestures ? (
+          <View
+            style={[
+              styles.contentStack,
+              compact && styles.compactContentStack,
+              isActive && { opacity: 0.7 },
+            ]}
+          >
+            <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+              <Animated.Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[
+                  styles.title,
+                  compact && styles.compactTitle,
+                  task.isCompleted && styles.completedTitle,
+                  { fontSize: dynamicTitleFontSize },
+                ]}
+              >
+                {task.title}
+              </Animated.Text>
 
-          {/* Metadata Row (only in non-compact detail mode) */}
-          {hasMetadata && (
-            <View style={styles.metadataRow}>
-              {/* 🕒 Time Chip */}
-              {hasTime && (
-                <View style={styles.timeChip}>
-                  <Text style={styles.timeChipText}>{task.time}</Text>
+              {/* Metadata Row (only in non-compact detail mode) */}
+              {hasMetadata && (
+                <View style={styles.metadataRow}>
+                  {/* 🕒 Time Chip */}
+                  {hasTime && (
+                    <View style={styles.timeChip}>
+                      <Text style={styles.timeChipText}>{task.time}</Text>
+                    </View>
+                  )}
+
+                  {/* 🔁 Repeat Chip (icon only) */}
+                  {hasRepeat && (
+                    <View style={styles.repeatChip}>
+                      <RepeatIcon color="#707684" />
+                    </View>
+                  )}
                 </View>
               )}
+            </Animated.View>
+          </View>
+        ) : (
+          <Pressable
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            onPress={handlePress}
+            style={[
+              styles.contentStack,
+              compact && styles.compactContentStack,
+              isActive && { opacity: 0.7 },
+            ]}
+          >
+            <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+              <Animated.Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[
+                  styles.title,
+                  compact && styles.compactTitle,
+                  task.isCompleted && styles.completedTitle,
+                  { fontSize: dynamicTitleFontSize },
+                ]}
+              >
+                {task.title}
+              </Animated.Text>
 
-              {/* 🔁 Repeat Chip (icon only) */}
-              {hasRepeat && (
-                <View style={styles.repeatChip}>
-                  <RepeatIcon color="#707684" />
+              {/* Metadata Row (only in non-compact detail mode) */}
+              {hasMetadata && (
+                <View style={styles.metadataRow}>
+                  {/* 🕒 Time Chip */}
+                  {hasTime && (
+                    <View style={styles.timeChip}>
+                      <Text style={styles.timeChipText}>{task.time}</Text>
+                    </View>
+                  )}
+
+                  {/* 🔁 Repeat Chip (icon only) */}
+                  {hasRepeat && (
+                    <View style={styles.repeatChip}>
+                      <RepeatIcon color="#707684" />
+                    </View>
+                  )}
                 </View>
               )}
-            </View>
-          )}
-          </Animated.View>
-        </Pressable>
+            </Animated.View>
+          </Pressable>
+        )}
       </Animated.View>
     </View>
   );
