@@ -1171,7 +1171,7 @@ export default function Home() {
                   </Animated.View>
                 </View>
               ) : (
-                <Pressable onPress={mode === 'day' || mode === 'week' ? toggleMotivationalHeader : () => setMonthPickerOpen(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Pressable onPress={() => setMonthPickerOpen(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
                     {title}
                   </Text>
