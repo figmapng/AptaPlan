@@ -26,6 +26,7 @@ type DayCardProps = {
   disableOpen?: boolean;
   onScrollYChange?: (scrollY: number) => void;
   scrollEnabled?: boolean;
+  monthLabel?: string;
 };
 
 export const DayCard = memo(function DayCardComponent({
@@ -42,6 +43,7 @@ export const DayCard = memo(function DayCardComponent({
   disableOpen = false,
   onScrollYChange,
   scrollEnabled = true,
+  monthLabel,
 }: DayCardProps) {
   const key = toDateKey(date);
   const today = isToday(date);
@@ -228,6 +230,7 @@ export const DayCard = memo(function DayCardComponent({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: numInnerBg,
+            gap: 2,
           }}
         >
           <Text
@@ -239,8 +242,21 @@ export const DayCard = memo(function DayCardComponent({
               fontVariant: ['tabular-nums'],
             }}
           >
-            {format(date, 'dd')}
+            {format(date, monthLabel ? 'd' : 'dd')}
           </Text>
+          {monthLabel ? (
+            <Text
+              style={{
+                fontSize: wide ? 10 : 9.5,
+                lineHeight: wide ? 13 : 12,
+                fontWeight: '600',
+                color: numTextColor,
+                opacity: 0.85,
+              }}
+            >
+              {monthLabel}
+            </Text>
+          ) : null}
         </View>
       </View>
 

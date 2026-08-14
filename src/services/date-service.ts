@@ -10,10 +10,11 @@ export const getStartOfWeek = (date: Date) => startOfWeek(date, { weekStartsOn: 
 export const getStartOfWeekWith = (date: Date, weekStartsOn: 0 | 1 | 6) => startOfWeek(date, { weekStartsOn });
 export const getWeekDates = (date: Date) => Array.from({ length: 7 }, (_, index) => addDays(getStartOfWeek(date), index));
 export const formatWeekRange = (start: Date, end = addDays(start, 6)) => {
-  const d1 = format(start, 'dd'); const d2 = format(end, 'dd');
-  if (isSameMonth(start, end)) return `${d1}–${d2} ${months[end.getMonth()]}`;
-  if (isSameYear(start, end)) return `${d1} ${months[start.getMonth()]} – ${d2} ${months[end.getMonth()]}`;
-  return `${d1} ${months[start.getMonth()]} ${start.getFullYear()} – ${d2} ${months[end.getMonth()]} ${end.getFullYear()}`;
+  const d1 = format(start, 'd');
+  const d2 = format(end, 'd');
+  if (isSameMonth(start, end)) return `${d1} – ${d2} ${months[end.getMonth()]}`;
+  if (isSameYear(start, end)) return `${d1} ${shortMonths[start.getMonth()]}. – ${d2} ${shortMonths[end.getMonth()]}.`;
+  return `${d1} ${shortMonths[start.getMonth()]}. ${start.getFullYear()} – ${d2} ${shortMonths[end.getMonth()]}. ${end.getFullYear()}`;
 };
 export const formatFullDate = (date: Date) => `${format(date, 'dd')} ${months[date.getMonth()]}, ${weekdays[getDay(date)].toLowerCase()}`;
 export const getMonthGrid = (date: Date, weekStartsOn: 0 | 1 | 6 = 1) =>

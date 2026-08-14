@@ -22,10 +22,12 @@ import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import {
   addDays,
+  formatWeekRange,
   getMonthGrid,
   getStartOfWeekWith,
   isSameMonth,
   months,
+  shortMonths,
   toDateKey,
 } from '@/services/date-service';
 import { DayCard } from '@/components/day-card';
@@ -49,6 +51,7 @@ type DayDataItem = {
   date: Date;
   dateKey: string;
   tasks: Task[];
+  monthLabel?: string;
 };
 
 type SlotData = {
@@ -144,23 +147,53 @@ export default function Home() {
     const nextDates = currDates.map((d) => addDays(d, 7));
 
     const buildDays = (datesList: Date[]): DayDataItem[] => {
+      const monthCounts: Record<number, number> = {};
+      datesList.forEach((d) => {
+        const m = d.getMonth();
+        monthCounts[m] = (monthCounts[m] || 0) + 1;
+      });
+      let dominantMonth = datesList[0].getMonth();
+      let maxCount = 0;
+      for (const [m, count] of Object.entries(monthCounts)) {
+        if (count > maxCount) {
+          maxCount = count;
+          dominantMonth = Number(m);
+        }
+      }
+
       return datesList.map((date) => {
         const key = toDateKey(date);
         const dayTasks = tasks.filter((t) => t.date === key);
+        const isOtherMonth = date.getMonth() !== dominantMonth;
         return {
           date,
           dateKey: key,
           tasks: dayTasks,
+          monthLabel: isOtherMonth ? `${shortMonths[date.getMonth()]}.` : undefined,
         };
       });
     };
 
-    const activeHeaderDate = currDates.find((d) => isToday(d)) ?? currDates[0];
+    const currMonthCounts: Record<number, number> = {};
+    currDates.forEach((d) => {
+      const m = d.getMonth();
+      currMonthCounts[m] = (currMonthCounts[m] || 0) + 1;
+    });
+    let currDominantMonth = currDates[0].getMonth();
+    let currMaxCount = 0;
+    for (const [m, count] of Object.entries(currMonthCounts)) {
+      if (count > currMaxCount) {
+        currMaxCount = count;
+        currDominantMonth = Number(m);
+      }
+    }
+    const dominantDate = currDates.find((d) => d.getMonth() === currDominantMonth) ?? currDates[0];
+
     const headerTitle =
       mode === 'day'
         ? `${months[dayDate.getMonth()][0].toUpperCase()}${months[dayDate.getMonth()].slice(1)} ${dayDate.getFullYear()}`
         : mode === 'week'
-        ? `${months[activeHeaderDate.getMonth()][0].toUpperCase()}${months[activeHeaderDate.getMonth()].slice(1)} ${activeHeaderDate.getFullYear()}`
+        ? `${months[dominantDate.getMonth()][0].toUpperCase()}${months[dominantDate.getMonth()].slice(1)} ${dominantDate.getFullYear()}`
         : mode === 'month'
         ? `${months[month.getMonth()][0].toUpperCase()}${months[month.getMonth()].slice(1)} ${month.getFullYear()}`
         : `${year} жыл`;
@@ -181,7 +214,7 @@ export default function Home() {
 
     return {
       headerTitle,
-      activeHeaderDate,
+      activeHeaderDate: dominantDate,
       isFutureWeek,
       isPastWeek,
       currSlotDays,
@@ -1149,10 +1182,10 @@ export default function Home() {
               )}
 
             {mode === 'week' && (() => {
-              const wTasks = derivedWeekData.currSlotDays.flatMap((d) => d.tasks);
+              const days = derivedWeekData.currSlotDays;
+              const wTasks = days.flatMap((d) => d.tasks);
               const total = wTasks.length;
               const done = wTasks.filter((t) => t.isCompleted).length;
-              const pending = total - done;
 
               if (total === 0) {
                 return (
@@ -1163,31 +1196,15 @@ export default function Home() {
               }
 
               return (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 3 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.secondary }}>
-                    Осы апта:
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '500', color: colors.secondary, fontVariant: ['tabular-nums'] }}>
+                    {done}/{total} орындалды
                   </Text>
-
-                  {/* Done Count Badge */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Svg width={13} height={13} viewBox="0 0 24 24" fill="none">
-                      <Rect x="2" y="2" width="20" height="20" rx="5" fill="#10B981" />
-                      <Path d="M7 12l3.5 3.5L17 8" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </Svg>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#059669', fontVariant: ['tabular-nums'] }}>
-                      {done}
-                    </Text>
-                  </View>
-
-                  {/* Pending Count Badge */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Svg width={13} height={13} viewBox="0 0 24 24" fill="none">
-                      <Rect x="2.5" y="2.5" width="19" height="19" rx="5" stroke="#9CA3AF" strokeWidth="2.5" />
-                    </Svg>
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: colors.secondary, fontVariant: ['tabular-nums'] }}>
-                      {pending}
-                    </Text>
-                  </View>
+                  {done === total && total > 0 && (
+                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#E6F9F0', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 9, color: '#059669', fontWeight: '800' }}>✓</Text>
+                    </View>
+                  )}
                 </View>
               );
             })()}
@@ -1592,17 +1609,17 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1, gap: 8 }}>
           {days.slice(0, 3).map((day) => (
-            <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
+            <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} monthLabel={day.monthLabel} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
           ))}
         </View>
         <View style={{ flex: 1, gap: 8 }}>
           {days.slice(3, 6).map((day) => (
-            <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
+            <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} monthLabel={day.monthLabel} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
           ))}
         </View>
       </View>
       {showLastDay && days[6] && (
-        <DayCard key={days[6].dateKey} date={days[6].date} tasks={days[6].tasks} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
+        <DayCard key={days[6].dateKey} date={days[6].date} tasks={days[6].tasks} monthLabel={days[6].monthLabel} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
       )}
     </View>
   );
