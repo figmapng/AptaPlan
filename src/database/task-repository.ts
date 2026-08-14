@@ -20,12 +20,10 @@ const parseRepeatConfig = (raw: string | null | undefined): RepeatConfig | null 
 const map = (r: Row): Task => ({
   ...r,
   isCompleted: !!r.isCompleted,
-  completed: !!r.isCompleted,
   repeat: (r.repeatType as TaskRepeat) || 'none',
   repeatInterval: r.repeatInterval ?? 1,
   repeatConfig: parseRepeatConfig(r.repeatConfig),
   sortOrder: r.sortOrder ?? 0,
-  order: r.order ?? r.sortOrder ?? 0,
 });
 
 const daysBetween = (start: Date, target: Date) => Math.round((target.getTime() - start.getTime()) / 86400000);

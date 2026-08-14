@@ -33,6 +33,5 @@ export const colors = {
   capsule: '#F1F3F6',
   control: '#EDEFF2',
   danger: '#FF4B3E',
-  time: '#D9FFB6',
 } as const;
 

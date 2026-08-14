@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -32,6 +32,7 @@ export default function SettingsScreen() {
   const [sortModalOpen, setSortModalOpen] = useState(false);
   const [firstDayModalOpen, setFirstDayModalOpen] = useState(false);
   const [lastDayModalOpen, setLastDayModalOpen] = useState(false);
+  const [defaultViewModeModalOpen, setDefaultViewModeModalOpen] = useState(false);
 
   const clear = () =>
     Alert.alert(
@@ -92,6 +93,19 @@ export default function SettingsScreen() {
       >
         {/* Бөлім 1: Жалпы */}
         <Section title="Жалпы">
+          <SettingRow
+            icon="options-outline"
+            label="Әдепкі режим"
+            valueText={
+              settings.defaultViewMode === 'month'
+                ? 'Ай'
+                : settings.defaultViewMode === 'year'
+                ? 'Жыл'
+                : 'Апта'
+            }
+            onPress={() => setDefaultViewModeModalOpen(true)}
+          />
+          <Divider />
           <SettingRow
             icon="calendar-outline"
             label="Аптаның бірінші күні"
@@ -181,6 +195,39 @@ export default function SettingsScreen() {
 
       {/* User Guide Modal */}
       <UserGuideModal visible={guideOpen} onClose={() => setGuideOpen(false)} />
+
+      {/* Default View Mode Modal */}
+      <OptionModal
+        visible={defaultViewModeModalOpen}
+        title="Әдепкі режим"
+        onClose={() => setDefaultViewModeModalOpen(false)}
+        options={[
+          {
+            label: 'Апта (Стандартты)',
+            selected: !settings.defaultViewMode || settings.defaultViewMode === 'week',
+            onSelect: () => {
+              void setPref('defaultViewMode', 'week');
+              setDefaultViewModeModalOpen(false);
+            },
+          },
+          {
+            label: 'Ай',
+            selected: settings.defaultViewMode === 'month',
+            onSelect: () => {
+              void setPref('defaultViewMode', 'month');
+              setDefaultViewModeModalOpen(false);
+            },
+          },
+          {
+            label: 'Жыл',
+            selected: settings.defaultViewMode === 'year',
+            onSelect: () => {
+              void setPref('defaultViewMode', 'year');
+              setDefaultViewModeModalOpen(false);
+            },
+          },
+        ]}
+      />
 
       {/* First Day Modal */}
       <OptionModal
@@ -372,24 +419,39 @@ function OptionModal({
 }) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (visible) {
+      const idx = options.findIndex((o) => o.selected);
+      setSelectedIdx(idx >= 0 ? idx : 0);
+    } else {
+      setSelectedIdx(null);
+    }
+  }, [visible, options]);
+
   const activeIndex = options.findIndex((o) => o.selected);
   const currentIdx = selectedIdx !== null ? selectedIdx : activeIndex >= 0 ? activeIndex : 0;
+
+  const handleClose = () => {
+    setSelectedIdx(null);
+    onClose();
+  };
 
   const handleConfirm = () => {
     if (options[currentIdx]) {
       options[currentIdx].onSelect();
     }
+    handleClose();
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View style={styles.modalOverlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         <View style={styles.modalContentCard}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={styles.modalHeaderTitle}>{title}</Text>
-            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
+            <Pressable onPress={handleClose} style={styles.closeButton} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
           </View>

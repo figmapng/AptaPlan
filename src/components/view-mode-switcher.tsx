@@ -3,7 +3,7 @@ import { colors } from '@/constants/colors';
 import type { ViewMode } from '@/components/ViewModeModal';
 
 export function ViewModeSwitcher({ value, onChange }: { value: ViewMode; onChange: (v: ViewMode) => void }) {
-  const options: [ViewMode, string][] = [['day', 'Күн'], ['week', 'Апта'], ['month', 'Ай'], ['year', 'Жыл']];
+  const options: [ViewMode, string][] = [['week', 'Апта'], ['month', 'Ай'], ['year', 'Жыл']];
   return (
     <View style={{ alignSelf: 'center', height: 42, flexDirection: 'row', backgroundColor: colors.control, borderRadius: 21, padding: 3 }}>
       {options.map(([key, label]) => (

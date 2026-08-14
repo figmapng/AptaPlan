@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Easing, Keyboard, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import {
+  Animated,
+  PanResponder,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { format, isToday } from 'date-fns';
@@ -22,19 +30,12 @@ export default function DayScreen() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { date, add } = useLocalSearchParams<{ date: string; add?: string }>();
-  const { tasks, settings, loadRange, refresh, create, update, remove } = usePlanner();
+  const { tasks, settings, loadRange, refresh, remove } = usePlanner();
   const { closeCard, beginInteractiveClose, updateInteractiveClose, endInteractiveClose } = useCardTransition();
   const [isAdding, setIsAdding] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [draftTitle, setDraftTitle] = useState('');
-  const [draftDate, setDraftDate] = useState(date);
-  const [draftTime, setDraftTime] = useState<string | null>(null);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [pickerTime, setPickerTime] = useState(new Date());
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inputRef = useRef<TextInput>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const scrollRef = useRef<ScrollView>(null);
   const scrollYRef = useRef(0);
@@ -49,22 +50,23 @@ export default function DayScreen() {
     scrollRef.current?.scrollTo({ y: nextY, animated: false });
   }, []);
 
-  const handlePendingDelete = (task: Task) => {
+  const handlePendingDelete = useCallback((task: Task) => {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setPendingDeleteTask(task);
     undoTimerRef.current = setTimeout(() => {
-      void remove(task.id);
+      void remove(task.id, task.occurrenceDate || task.date, 'all');
       setPendingDeleteTask(null);
     }, 4000);
-  };
+  }, [remove]);
 
-  const handleUndo = async () => {
+  const handleUndo = useCallback(async () => {
     if (settings.haptics && process.env.EXPO_OS === 'ios') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setPendingDeleteTask(null);
-  };
+    await refresh();
+  }, [settings.haptics, refresh]);
 
   const handleReorder = useCallback(async (newData: Task[]) => {
     const db = await getDatabase();
@@ -88,14 +90,6 @@ export default function DayScreen() {
   useEffect(() => {
     if (date) void loadRange(date, date);
   }, [date, loadRange]);
-
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const show = Keyboard.addListener(showEvent, (event) => setKeyboardHeight(event.endCoordinates.height));
-    const hide = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
-    return () => { show.remove(); hide.remove(); };
-  }, []);
 
   const selectedDate = fromDateKey(date);
   const dayTasks = tasks.filter((task) => task.date === date);
@@ -125,61 +119,18 @@ export default function DayScreen() {
   });
   const beginAdding = () => {
     setEditingTask(null);
-    setDraftDate(date);
-    setDraftTitle('');
-    setDraftTime(null);
-    const initialTime = fromDateKey(date);
-    initialTime.setHours(new Date().getHours(), new Date().getMinutes(), 0, 0);
-    setPickerTime(initialTime);
     setIsAdding(true);
-    requestAnimationFrame(() => inputRef.current?.focus());
   };
   useEffect(() => {
     if (add === '1') requestAnimationFrame(beginAdding);
   }, [add, date]);
   const beginEditing = (task: Task) => {
     setEditingTask(task);
-    setDraftDate(task.date);
-    setDraftTitle(task.title);
-    setDraftTime(task.time || null);
-    const initialTime = new Date();
-    if (task.time) {
-      const [hours, minutes] = task.time.split(':').map(Number);
-      initialTime.setHours(hours, minutes, 0, 0);
-    }
-    setPickerTime(initialTime);
     setIsAdding(true);
-    requestAnimationFrame(() => inputRef.current?.focus());
   };
   const closeComposer = () => {
     setIsAdding(false);
-    setShowTimePicker(false);
     setEditingTask(null);
-  };
-  const saveInlineTask = async () => {
-    const title = draftTitle.trim();
-    if (!title) {
-      return;
-    }
-    const input = {
-      title,
-      date: draftDate,
-      time: draftTime,
-      note: editingTask?.note ?? null,
-      priority: editingTask?.priority ?? 'normal',
-      repeatType: editingTask?.repeatType ?? 'none',
-      notificationOffset: draftTime ? 10 : null,
-    } as const;
-    if (editingTask) await update(editingTask.id, input);
-    else await create(input);
-    closeComposer();
-  };
-  const deleteEditingTask = () => {
-    if (!editingTask) return;
-    Alert.alert('Тапсырманы өшіру', 'Бұл тапсырманы өшіргіңіз келе ме?', [
-      { text: 'Болдырмау', style: 'cancel' },
-      { text: 'Өшіру', style: 'destructive', onPress: () => void remove(editingTask.id).then(closeComposer) },
-    ]);
   };
 
   return (
@@ -384,10 +335,6 @@ export default function DayScreen() {
     />
     </View>
   );
-}
-
-function BellGlyph({ color = colors.secondary, size = 22 }: { color?: string; size?: number }) {
-  return <Svg width={size} height={size} viewBox="0 0 24 24"><Path d="M5.5 17h13l-1.8-2.4V10a4.7 4.7 0 0 0-9.4 0v4.6L5.5 17ZM10 20h4" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></Svg>;
 }
 
 function ChevronLeftIcon() {

@@ -37,11 +37,18 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
   const tasksRef = useRef<Task[]>([]);
   tasksRef.current = tasks;
 
+  const settingsRef = useRef<PlannerSettings>(settings);
+  settingsRef.current = settings;
+
   const refresh = useCallback(async () => {
     try {
       const db = await getDatabase();
-      await seedDemoData(db);
-      const loaded = rangeRef.current ? await repo.getTasksForRange(db, rangeRef.current[0], rangeRef.current[1]) : [];
+      const loaded = rangeRef.current
+        ? await repo.getTasksForRange(db, rangeRef.current[0], rangeRef.current[1], {
+            sortMode: settingsRef.current.sortMode,
+            completedPlacement: settingsRef.current.completedPlacement,
+          })
+        : [];
       setTasks(loaded);
       setError(null);
     } catch (e) {
@@ -56,7 +63,10 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
         return tasksRef.current;
       }
       const db = await getDatabase();
-      const result = await repo.getTasksForRange(db, s, e);
+      const result = await repo.getTasksForRange(db, s, e, {
+        sortMode: settingsRef.current.sortMode,
+        completedPlacement: settingsRef.current.completedPlacement,
+      });
       rangeRef.current = [s, e];
       setTasks(result);
       setError(null);
@@ -78,7 +88,7 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     setTasks((x) => {
       const next = x.map((v) => {
         if (v.id === t.id && v.date === t.date) {
-          return { ...v, isCompleted: !v.isCompleted, completed: !v.completed };
+          return { ...v, isCompleted: !v.isCompleted, completed: !v.isCompleted };
         }
         return v;
       });
@@ -150,8 +160,15 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
   const setPref = useCallback(async (k: keyof PlannerSettings, v: PlannerSettings[keyof PlannerSettings]) => {
     const db = await getDatabase();
     await setSetting(db, k, v);
-    setSettings((prev) => ({ ...prev, [k]: v }));
-  }, []);
+    setSettings((prev) => {
+      const updated = { ...prev, [k]: v };
+      settingsRef.current = updated;
+      return updated;
+    });
+    if (k === 'sortMode' || k === 'completedPlacement') {
+      await refresh();
+    }
+  }, [refresh]);
 
   const clearAll = useCallback(async () => {
     const db = await getDatabase();
@@ -175,6 +192,11 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         const db = await getDatabase();
+        const dbSettings = await getSettings(db);
+        if (!cancelled) {
+          setSettings(dbSettings);
+          settingsRef.current = dbSettings;
+        }
         await seedDemoData(db);
         await refresh();
         if (!cancelled) setReady(true);

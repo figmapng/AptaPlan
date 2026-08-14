@@ -16,5 +16,9 @@ export const formatWeekRange = (start: Date, end = addDays(start, 6)) => {
   return `${d1} ${months[start.getMonth()]} ${start.getFullYear()} – ${d2} ${months[end.getMonth()]} ${end.getFullYear()}`;
 };
 export const formatFullDate = (date: Date) => `${format(date, 'dd')} ${months[date.getMonth()]}, ${weekdays[getDay(date)].toLowerCase()}`;
-export const getMonthGrid = (date: Date) => eachDayOfInterval({ start: getStartOfWeek(startOfMonth(date)), end: addDays(getStartOfWeek(endOfMonth(date)), 6) });
+export const getMonthGrid = (date: Date, weekStartsOn: 0 | 1 | 6 = 1) =>
+  eachDayOfInterval({
+    start: getStartOfWeekWith(startOfMonth(date), weekStartsOn),
+    end: addDays(getStartOfWeekWith(endOfMonth(date), weekStartsOn), 6),
+  });
 export { addDays, addMonths, addYears, isSameMonth };

@@ -141,9 +141,15 @@ export function TaskBottomSheet({
     };
   }, [keyboardHeightAnim]);
 
+  const isDirty = editingTask
+    ? title.trim() !== editingTask.title ||
+      selectedDate !== editingTask.date ||
+      selectedTime !== (editingTask.time || null)
+    : title.trim().length > 0;
+
   const handleDismissRequest = () => {
-    if (title.trim().length > 0 && !editingTask) {
-      Alert.alert('Өзгерістерді сақтамай жабу?', 'Тапсырма сақталмайды.', [
+    if (isDirty) {
+      Alert.alert('Өзгерістерді сақтамай жабу?', 'Енгізілген өзгерістер сақталмайды.', [
         { text: 'Жалғастыру', style: 'cancel' },
         {
           text: 'Жою',
@@ -158,6 +164,9 @@ export function TaskBottomSheet({
       onClose();
     }
   };
+
+  const handleDismissRef = useRef(handleDismissRequest);
+  handleDismissRef.current = handleDismissRequest;
 
   const panResponder = useMemo(
     () =>
@@ -176,7 +185,7 @@ export function TaskBottomSheet({
               duration: 180,
               useNativeDriver: false,
             }).start(() => {
-              handleDismissRequest();
+              handleDismissRef.current();
             });
           } else {
             Animated.spring(translateY, {
@@ -230,12 +239,10 @@ export function TaskBottomSheet({
         id,
         ...base,
         isCompleted: false,
-        completed: false,
         note: null,
         priority: 'normal',
         notificationId: null,
         sortOrder: 0,
-        order: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });

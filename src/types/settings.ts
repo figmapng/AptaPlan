@@ -4,6 +4,7 @@ export type PlannerSettings = {
   sortMode: 'time' | 'manual';
   firstDayOfWeek?: 'mon' | 'sat' | 'sun';
   lastDayVisibility?: 'visible' | 'hidden';
+  defaultViewMode?: 'day' | 'week' | 'month' | 'year';
 };
 
 export const defaultSettings: PlannerSettings = {
@@ -12,4 +13,5 @@ export const defaultSettings: PlannerSettings = {
   sortMode: 'time',
   firstDayOfWeek: 'mon',
   lastDayVisibility: 'visible',
+  defaultViewMode: 'week',
 };

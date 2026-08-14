@@ -21,7 +21,6 @@ export type Task = {
   id: string;
   title: string;
   isCompleted: boolean;
-  completed?: boolean;
   date: string;
   time: string | null;
   repeat?: TaskRepeat | null;
@@ -33,7 +32,6 @@ export type Task = {
   notificationOffset: number | null;
   notificationId: string | null;
   sortOrder: number;
-  order?: number;
   createdAt: string;
   updatedAt: string;
   occurrenceDate?: string;

@@ -442,10 +442,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const activeDateKey = toDateKey(activeCardDate);
   const activeDayTasks = tasks.filter((t) => t.date === activeDateKey);
   const taskCount = activeDayTasks.length;
-  const emptyCardHeight = Math.round(height * 0.45);
-  const rawContentHeight = 48 + 8 + (measuredListHeight > 0 ? measuredListHeight : taskCount * 48) + 60;
+  const emptyCardHeight = Math.round(height * 0.42);
+  const rawContentHeight = 44 + 16 + (measuredListHeight > 0 ? measuredListHeight : (taskCount > 0 ? taskCount * 48 : 80));
   const contentHeight = Math.max(emptyCardHeight, rawContentHeight);
-  const maxHeight = height - (insets.top + 4) - (Math.max(insets.bottom + 8, 16) + 48 + 24);
+  const maxHeight = height - (insets.top + 68) - (Math.max(insets.bottom + 8, 16) + 60) - 12;
   const targetHeight = Math.min(maxHeight, contentHeight);
 
   const handleScrollEnabled = useCallback((enabled: boolean) => {

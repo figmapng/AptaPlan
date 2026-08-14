@@ -100,22 +100,7 @@ export function ViewModeModal({
             <CalloutArrow />
           </View>
           <View style={styles.dropdownCard}>
-          {/* Option 0: Day */}
-          <AnimatedPressable
-            activeScale={0.96}
-            style={[styles.optionItem, currentMode === 'day' && styles.optionItemActive]}
-            onPress={() => handleSelect('day')}
-          >
-            <View style={styles.optionLeft}>
-              <DayViewIcon color={currentMode === 'day' ? colors.today : colors.text} />
-              <Text style={[styles.optionText, currentMode === 'day' && styles.optionTextActive]}>
-                Күн
-              </Text>
-            </View>
-            {currentMode === 'day' && <CheckmarkIcon color={colors.today} />}
-          </AnimatedPressable>
 
-          <View style={styles.divider} />
 
           {/* Option 1: Week */}
           <AnimatedPressable

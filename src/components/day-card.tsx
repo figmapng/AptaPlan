@@ -1,11 +1,14 @@
-import { memo, useRef } from 'react';
-import { Animated, Pressable, Text, View } from 'react-native';
+import React, { memo, useCallback, useRef } from 'react';
+import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { format, isToday } from 'date-fns';
 import { colors } from '@/constants/colors';
 import { months, toDateKey, weekdays } from '@/services/date-service';
 import type { Task } from '@/types/task';
+import { usePlanner } from '@/store/planner-store';
+import { getDatabase } from '@/database/database';
 import { TaskRow } from './task-row';
+import { SortableTaskList } from './SortableTaskList';
 import { useCardTransition } from './card-transition-provider';
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -21,6 +24,8 @@ type DayCardProps = {
   onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
   isSwipingRef?: React.RefObject<boolean>;
   disableOpen?: boolean;
+  onScrollYChange?: (scrollY: number) => void;
+  scrollEnabled?: boolean;
 };
 
 export const DayCard = memo(function DayCardComponent({
@@ -35,6 +40,8 @@ export const DayCard = memo(function DayCardComponent({
   onLayoutMeasured,
   isSwipingRef,
   disableOpen = false,
+  onScrollYChange,
+  scrollEnabled = true,
 }: DayCardProps) {
   const key = toDateKey(date);
   const today = isToday(date);
@@ -42,10 +49,30 @@ export const DayCard = memo(function DayCardComponent({
   const isSaturday = date.getDay() === 6;
   const isWeekend = isSunday || isSaturday;
 
+  const { refresh } = usePlanner();
   const completedCount = tasks.filter((task) => task.isCompleted).length;
   const cardRef = useRef<View>(null);
   const { openCard, activeDate, progress: transitionProgress, originFrame } = useCardTransition();
   const isTransitioning = activeDate === key;
+
+  const handleReorder = useCallback(
+    async (newData: Task[]) => {
+      const db = await getDatabase();
+      const updatedAt = new Date().toISOString();
+      await db.withTransactionAsync(async () => {
+        for (let i = 0; i < newData.length; i++) {
+          await db.runAsync(
+            'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
+            i,
+            updatedAt,
+            newData[i].id,
+          );
+        }
+      });
+      await refresh();
+    },
+    [refresh]
+  );
 
   const measuredFrameRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
@@ -134,13 +161,6 @@ export const DayCard = memo(function DayCardComponent({
       })
     : 1;
 
-  const wideMarginTop = progress
-    ? progress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 0],
-      })
-    : 0;
-
   const headerBg = today ? '#01B7FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
   const outerBg = today ? '#01B7FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
   const cardBorderColor = today ? '#01B7FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
@@ -161,7 +181,7 @@ export const DayCard = memo(function DayCardComponent({
       onPress={open}
       activeScale={0.98}
       style={{
-        height: wide ? 44 : 29,
+        height: wide ? 35 : 29,
         paddingVertical: 0,
         flexDirection: 'row',
         alignItems: 'center',
@@ -273,17 +293,50 @@ export const DayCard = memo(function DayCardComponent({
         }}
       >
         {tasks.length ? (
-          tasks.map((task) => (
-            <TaskRow
-              key={`${task.id}:${task.date}`}
-              task={task}
-              compact={!wide}
-              onPress={open}
-              onInteraction={onInteraction}
-              isSwipingRef={isSwipingRef}
-              cardBg="#FFFFFF"
-            />
-          ))
+          wide ? (
+            <ScrollView
+              scrollEnabled={scrollEnabled}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}
+              bounces={true}
+              alwaysBounceVertical={true}
+              scrollEventThrottle={16}
+              onScroll={(e) => {
+                onScrollYChange?.(e.nativeEvent.contentOffset.y);
+              }}
+              contentContainerStyle={{ paddingBottom: 8 }}
+            >
+              <SortableTaskList
+                data={tasks}
+                keyExtractor={(task) => `${task.id}:${task.date}`}
+                onReorder={handleReorder}
+                gap={4}
+                dragHandleOpacity={1}
+                renderItem={(task, isActive, index, totalCount) => (
+                  <TaskRow
+                    task={task}
+                    isLast={index === totalCount - 1}
+                    onPress={open}
+                    onInteraction={onInteraction}
+                    isActive={isActive}
+                    cardBg="#FFFFFF"
+                  />
+                )}
+              />
+            </ScrollView>
+          ) : (
+            tasks.map((task) => (
+              <TaskRow
+                key={`${task.id}:${task.date}`}
+                task={task}
+                compact={true}
+                onPress={open}
+                onInteraction={onInteraction}
+                isSwipingRef={isSwipingRef}
+                cardBg="#FFFFFF"
+              />
+            ))
+          )
         ) : wide ? (
           <View
             style={{
@@ -363,7 +416,6 @@ export const DayCard = memo(function DayCardComponent({
             overflow: 'hidden',
             opacity: isTransitioning ? 0 : wideOpacity,
             height: wideHeight,
-            marginTop: wideMarginTop,
             transform: [{ translateY: wideTranslateY }, { scale: wideScale }],
           },
         ]}

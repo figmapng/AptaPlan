@@ -83,9 +83,19 @@ export default function Home() {
   }, [weekStartsOn]);
 
   const [dayDate, setDayDate] = useState(new Date());
-  const [mode, setMode] = useState<ViewMode>('week');
-  const modeRef = useRef<ViewMode>('week');
+  const defaultMode = settings.defaultViewMode ?? 'week';
+  const [mode, setMode] = useState<ViewMode>(defaultMode);
+  const modeRef = useRef<ViewMode>(defaultMode);
   modeRef.current = mode;
+
+  // Update mode when defaultViewMode changes initially
+  const isInitialModeSet = useRef(false);
+  useEffect(() => {
+    if (!isInitialModeSet.current && settings.defaultViewMode) {
+      setMode(settings.defaultViewMode);
+      isInitialModeSet.current = true;
+    }
+  }, [settings.defaultViewMode]);
 
   const [modePickerOpen, setModePickerOpen] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
@@ -312,8 +322,6 @@ export default function Home() {
 
   useEffect(() => {
     if (pendingResetRef.current) {
-      const now = Date.now();
-      console.log(now, '[ReactCommit] React committed new weekStart data. Resetting carousel position to 0');
       carouselAnim.setValue(0);
       pendingResetRef.current = false;
       isAnimatingRef.current = false;
@@ -335,8 +343,6 @@ export default function Home() {
       friction: 32,
       useNativeDriver: true,
     }).start(() => {
-      const now = Date.now();
-      console.log(now, '[SwipeComplete] Native animation finished. Scheduling setWeekStart');
       pendingResetRef.current = true;
       setWeekStart((d) => addDays(d, -direction * 7));
     });
@@ -419,6 +425,7 @@ export default function Home() {
     });
   }, [monthCarouselAnim, screenWidth]);
 
+  const dayScrollYRef = useRef(0);
   const dayGestureHandlers = {
     onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
       if (isDayAnimatingRef.current) return;
@@ -433,25 +440,13 @@ export default function Home() {
       const dx = e.nativeEvent.pageX - dayTouchStartX.current;
       const dy = e.nativeEvent.pageY - dayTouchStartY.current;
       if (!dayHasDetermined.current) {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-        isDayHorizontal.current = Math.abs(dx) > Math.abs(dy) * 1.2;
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+        isDayHorizontal.current = Math.abs(dx) > Math.abs(dy) * 1.5;
         dayHasDetermined.current = true;
       }
       if (isDayHorizontal.current) {
         isSwipingRef.current = true;
         dayCarouselAnim.setValue(dx);
-      } else {
-        if (isMotivationalOpenRef.current) {
-          if (dy < 0) {
-            const val = Math.max(0, 1 + dy / 130);
-            motivationalAnim.setValue(val);
-          }
-        } else {
-          if (dy > 0) {
-            const val = Math.min(1, dy / 130);
-            motivationalAnim.setValue(val);
-          }
-        }
       }
     },
     onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
@@ -472,38 +467,18 @@ export default function Home() {
           });
         }
       } else {
-        const dy = e.nativeEvent.pageY - dayTouchStartY.current;
-        if (isMotivationalOpenRef.current) {
-          if (dy < -15) {
-            closeMotivationalHeader();
-          } else {
-            openMotivationalHeader();
-          }
-        } else {
-          if (dy > 15) {
-            openMotivationalHeader();
-          } else {
-            closeMotivationalHeader();
-          }
-        }
         setTimeout(() => { isSwipingRef.current = false; }, 150);
       }
     },
     onTouchCancel: () => {
-      if (dayHasDetermined.current) {
-        if (isDayHorizontal.current) {
-          isDayAnimatingRef.current = true;
-          Animated.spring(dayCarouselAnim, {
-            toValue: 0, tension: 420, friction: 30, useNativeDriver: true,
-          }).start(() => {
-            isDayAnimatingRef.current = false;
-            setTimeout(() => { isSwipingRef.current = false; }, 150);
-          });
-        } else {
-          if (isMotivationalOpenRef.current) openMotivationalHeader();
-          else closeMotivationalHeader();
+      if (dayHasDetermined.current && isDayHorizontal.current) {
+        isDayAnimatingRef.current = true;
+        Animated.spring(dayCarouselAnim, {
+          toValue: 0, tension: 420, friction: 30, useNativeDriver: true,
+        }).start(() => {
+          isDayAnimatingRef.current = false;
           setTimeout(() => { isSwipingRef.current = false; }, 150);
-        }
+        });
       }
     },
   };
@@ -1163,7 +1138,7 @@ export default function Home() {
                   </Animated.View>
                 </View>
               ) : (
-                <Pressable onPress={() => setMonthPickerOpen(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Pressable onPress={mode === 'day' || mode === 'week' ? toggleMotivationalHeader : () => setMonthPickerOpen(true)} hitSlop={6} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <Text numberOfLines={1} style={{ fontSize: screenWidth < 380 ? 17 : 19, fontWeight: '700', letterSpacing: -0.4, color: colors.text, fontVariant: ['tabular-nums'] }}>
                     {title}
                   </Text>
@@ -1295,7 +1270,10 @@ export default function Home() {
               inputRange: [-screenWidth, 0, screenWidth],
               outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
             });
-            const dayCardH = Math.max(260, availableHeight - bottomBarSpace - 16);
+            const maxDayCardH = Math.max(260, availableHeight - 12);
+            const defaultEmptyCardH = Math.round(screenHeight * 0.42);
+            const taskContentH = 35 + 16 + (slotTasks.length > 0 ? slotTasks.length * 48 : 80);
+            const dayCardH = Math.min(maxDayCardH, Math.max(defaultEmptyCardH, taskContentH));
             return (
               <Animated.View
                 key={offset}
@@ -1311,8 +1289,12 @@ export default function Home() {
                   tasks={slotTasks}
                   wide={true}
                   disableOpen={true}
-                  collapsedBodyHeight={dayCardH - 48}
-                  expandedSundayHeight={dayCardH - 48}
+                  expandedSundayHeight={dayCardH}
+                  collapsedBodyHeight={dayCardH - 35}
+                  scrollEnabled={!isMotivationalOpen}
+                  onScrollYChange={(y) => {
+                    if (offset === 0) dayScrollYRef.current = y;
+                  }}
                 />
               </Animated.View>
             );
@@ -1624,28 +1606,6 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
       )}
     </View>
   );
-}, (prev, next) => {
-  if (prev.days.length !== next.days.length) return false;
-  if (prev.progress !== next.progress) return false;
-  if (prev.showLastDay !== next.showLastDay) return false;
-  if (prev.collapsedBodyHeight !== next.collapsedBodyHeight) return false;
-  if (prev.expandedBodyHeight !== next.expandedBodyHeight) return false;
-  if (prev.expandedSundayHeight !== next.expandedSundayHeight) return false;
-
-  for (let i = 0; i < prev.days.length; i++) {
-    const pd = prev.days[i];
-    const nd = next.days[i];
-    if (pd.dateKey !== nd.dateKey) return false;
-    if (pd.tasks.length !== nd.tasks.length) return false;
-    for (let j = 0; j < pd.tasks.length; j++) {
-      const pt = pd.tasks[j];
-      const nt = nd.tasks[j];
-      if (pt.id !== nt.id || pt.isCompleted !== nt.isCompleted || pt.title !== nt.title || pt.date !== nt.date) {
-        return false;
-      }
-    }
-  }
-  return true;
 });
 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
@@ -1684,7 +1644,11 @@ const MonthGrid = memo(function MonthGridComponent({
   availableHeight: number;
   bottomPadding: number;
 }) {
-  const grid = useMemo(() => getMonthGrid(date), [date]);
+  const { settings } = usePlanner();
+  const firstDay = settings.firstDayOfWeek ?? 'mon';
+  const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
+
+  const grid = useMemo(() => getMonthGrid(date, weekStartsOn), [date, weekStartsOn]);
   const todayKey = useMemo(() => {
     const t = new Date();
     t.setHours(0, 0, 0, 0);
@@ -1725,7 +1689,11 @@ const MonthGrid = memo(function MonthGridComponent({
   );
   const cellH = Math.min(86, Math.max(64, rawCellH));
 
-  const DAY_LABELS = ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жс'];
+  const DAY_LABELS = useMemo(() => {
+    if (firstDay === 'sun') return ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
+    if (firstDay === 'sat') return ['Сб', 'Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм'];
+    return ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жс'];
+  }, [firstDay]);
 
   return (
     <View
@@ -1953,7 +1921,7 @@ const YearView = memo(function YearViewComponent({
     return r;
   }, []);
 
-  const DOW_LABELS = ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сн', 'Жс'];
+  const DOW_LABELS = ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жс'];
   const monthBlockHeight = Math.max(110, Math.floor((availableHeight - 3 * 10 - 16) / 4));
 
   return (
