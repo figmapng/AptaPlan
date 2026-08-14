@@ -36,10 +36,26 @@ export const TaskRow = React.memo(function TaskRow({
   const { progress: transitionProgress, activeDate } = useCardTransition();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Checkbox spring, checkmark scale & completion opacity animations
   const checkScale = useRef(new Animated.Value(task.isCompleted ? 1 : 0)).current;
   const boxScale = useRef(new Animated.Value(1)).current;
   const rowOpacity = useRef(new Animated.Value(task.isCompleted ? 0.55 : 1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(checkScale, {
+        toValue: task.isCompleted ? 1 : 0,
+        tension: 300,
+        friction: 20,
+        useNativeDriver: true,
+      }),
+      Animated.spring(rowOpacity, {
+        toValue: task.isCompleted ? 0.55 : 1,
+        tension: 300,
+        friction: 20,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [task.isCompleted, checkScale, rowOpacity]);
 
   // Swipe Left animations
   const swipeX = useRef(new Animated.Value(0)).current;
@@ -369,15 +385,15 @@ export const TaskRow = React.memo(function TaskRow({
             ]}
           >
             {task.isCompleted && (
-              <Animated.Text
-                style={[
-                  styles.checkMark,
-                  compact && styles.compactCheckMark,
-                  { transform: [{ scale: checkScale }] },
-                ]}
+              <Animated.View
+                style={{
+                  transform: [{ scale: checkScale }],
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                ✓
-              </Animated.Text>
+                <CheckmarkIcon size={compact ? 10 : 13} color="#FFFFFF" />
+              </Animated.View>
             )}
           </Animated.View>
         </Pressable>
@@ -431,6 +447,20 @@ export const TaskRow = React.memo(function TaskRow({
     </View>
   );
 });
+
+function CheckmarkIcon({ size = 12, color = '#FFFFFF' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4.5 12.75l6 6 9-13.5"
+        stroke={color}
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 function RepeatIcon({ color = '#707684' }: { color?: string }) {
   return (
@@ -501,6 +531,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     borderColor: colors.checkboxBorder,
     backgroundColor: colors.checkboxBg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   checkboxCompleted: {
     borderColor: colors.checkedCheckboxBg,
