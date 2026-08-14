@@ -46,13 +46,13 @@ export const TaskRow = React.memo(function TaskRow({
         toValue: task.isCompleted ? 1 : 0,
         tension: 300,
         friction: 20,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.spring(rowOpacity, {
         toValue: task.isCompleted ? 0.55 : 1,
         tension: 300,
         friction: 20,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ]).start();
   }, [task.isCompleted, checkScale, rowOpacity]);
