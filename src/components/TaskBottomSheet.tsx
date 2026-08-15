@@ -49,6 +49,7 @@ export function TaskBottomSheet({
   const planner = usePlanner();
 
   const [title, setTitle] = useState('');
+  const [titleInputHeight, setTitleInputHeight] = useState(24);
   const [selectedDate, setSelectedDate] = useState<string | null>(initialDate || null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedRepeat, setSelectedRepeat] = useState<TaskRepeat | null>('none');
@@ -69,6 +70,7 @@ export function TaskBottomSheet({
     if (visible) {
       if (editingTask) {
         setTitle(editingTask.title);
+        setTitleInputHeight(24);
         setSelectedDate(editingTask.date);
         setSelectedTime(editingTask.time || null);
         setSelectedRepeat(((editingTask.repeat as TaskRepeat) || (editingTask.repeatType as TaskRepeat) || 'none'));
@@ -78,6 +80,7 @@ export function TaskBottomSheet({
         setSelectedCustomConfig(editingTask.repeatConfig ?? undefined);
       } else {
         setTitle('');
+        setTitleInputHeight(24);
         setSelectedDate(initialDate || null);
         setSelectedTime(null);
         setSelectedRepeat('none');
@@ -374,12 +377,13 @@ export function TaskBottomSheet({
 
           {/* Input & Send Button Row (Send button inside input) */}
           <View style={styles.inputRow}>
-            <View style={styles.inputWrapper}>
-              <View style={{ flex: 1, justifyContent: 'center' }}>
-                <TaskInput
+              <View style={[styles.inputWrapper, { minHeight: Math.max(52, titleInputHeight + 10) }]}>
+                <View style={styles.inputContent}>
+                  <TaskInput
                   ref={inputRef}
                   value={title}
                   onChangeText={setTitle}
+                  onHeightChange={setTitleInputHeight}
                   onSubmit={handleSend}
                 />
               </View>
@@ -537,15 +541,23 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 52,
+    position: 'relative',
+    minHeight: 52,
     borderWidth: 1,
     borderColor: '#E5E8EB',
     borderRadius: 26,
     paddingLeft: 16,
     paddingRight: 5,
+    paddingVertical: 5,
     backgroundColor: '#F3F4F6',
+  },
+  inputContent: {
+    position: 'absolute',
+    top: 5,
+    right: 52,
+    bottom: 5,
+    left: 16,
+    justifyContent: 'center',
   },
   sendBtn: {
     width: 40,
@@ -556,8 +568,9 @@ const styles = StyleSheet.create({
     borderColor: '#40C9FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 6,
-    alignSelf: 'center',
+    position: 'absolute',
+    right: 5,
+    bottom: 5,
   },
   sendBtnDisabled: {
     backgroundColor: '#E5E7EB',
