@@ -3,6 +3,7 @@ import { Alert, Animated, Easing, PanResponder, Pressable, StyleSheet, Text, Tou
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
+import { spacing } from '@/constants/spacing';
 import type { Task } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
 import { useCardTransition } from './card-transition-provider';
@@ -19,7 +20,7 @@ export const TaskRow = React.memo(function TaskRow({
   onSwipeX,
   onScrollEnabledChange,
   cardBg = '#FFFFFF',
-  disableInternalGestures = false,
+  cardSurface = false,
 }: {
   task: Task;
   compact?: boolean;
@@ -32,7 +33,7 @@ export const TaskRow = React.memo(function TaskRow({
   onSwipeX?: (anim: Animated.Value, onDelete: () => void) => void;
   onScrollEnabledChange?: (enabled: boolean) => void;
   cardBg?: string;
-  disableInternalGestures?: boolean;
+  cardSurface?: boolean;
 }) {
   const { toggle, remove, settings } = usePlanner();
   const { progress: transitionProgress, activeDate } = useCardTransition();
@@ -345,21 +346,23 @@ export const TaskRow = React.memo(function TaskRow({
     <View style={styles.wrapper}>
       {/* Foreground Task Row Content */}
       <Animated.View
-        {...(disableInternalGestures ? {} : panResponder.panHandlers)}
+        {...panResponder.panHandlers}
         style={[
           styles.rowContainer,
           compact && styles.compactRowContainer,
+          cardSurface && styles.cardRowContainer,
           !hasMetadata && { alignItems: 'center' },
           {
             opacity: rowOpacity,
             backgroundColor: swipeX.interpolate({
               inputRange: [-10, 0],
-              outputRange: ['#F2F2F7', cardBg],
+              outputRange: ['#F2F2F7', cardSurface ? colors.inputBg : cardBg],
               extrapolate: 'clamp',
             }),
             borderRadius: 12,
-            paddingVertical: dynamicPaddingVertical,
+            borderWidth: 0,
             paddingHorizontal: dynamicPaddingHorizontal,
+            paddingVertical: dynamicPaddingVertical,
             gap: dynamicGap,
           },
         ]}
@@ -401,93 +404,63 @@ export const TaskRow = React.memo(function TaskRow({
         </Pressable>
 
         {/* Task Title & Metadata Stack */}
-        {disableInternalGestures ? (
-          <View
-            style={[
-              styles.contentStack,
-              compact && styles.compactContentStack,
-              isActive && { opacity: 0.7 },
-            ]}
-          >
-            <Animated.View style={{ transform: [{ scale: pressScale }] }}>
-              <Animated.Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[
-                  styles.title,
-                  compact && styles.compactTitle,
-                  task.isCompleted && styles.completedTitle,
-                  { fontSize: dynamicTitleFontSize },
-                ]}
-              >
-                {task.title}
-              </Animated.Text>
+        <Pressable
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          onPress={handlePress}
+          style={[
+            styles.contentStack,
+            compact && styles.compactContentStack,
+            isActive && { opacity: 0.7 },
+          ]}
+        >
+          <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+            <Animated.Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[
+                styles.title,
+                compact && styles.compactTitle,
+                task.isCompleted && styles.completedTitle,
+                { fontSize: dynamicTitleFontSize },
+              ]}
+            >
+              {task.title}
+            </Animated.Text>
 
-              {/* Metadata Row (only in non-compact detail mode) */}
-              {hasMetadata && (
-                <View style={styles.metadataRow}>
-                  {/* 🕒 Time Chip */}
-                  {hasTime && (
-                    <View style={styles.timeChip}>
-                      <Text style={styles.timeChipText}>{task.time}</Text>
-                    </View>
-                  )}
-
-                  {/* 🔁 Repeat Chip (icon only) */}
-                  {hasRepeat && (
-                    <View style={styles.repeatChip}>
-                      <RepeatIcon color="#707684" />
-                    </View>
-                  )}
+          {/* Metadata Row (only in non-compact detail mode) */}
+          {hasMetadata && !cardSurface && (
+            <View style={styles.metadataRow}>
+              {/* 🕒 Time Chip */}
+              {hasTime && (
+                <View style={styles.timeChip}>
+                  <Text style={styles.timeChipText}>{task.time}</Text>
                 </View>
               )}
-            </Animated.View>
+
+              {/* 🔁 Repeat Chip (icon only) */}
+              {hasRepeat && (
+                <View style={styles.repeatChip}>
+                  <RepeatIcon color="#707684" />
+                </View>
+              )}
+            </View>
+          )}
+          </Animated.View>
+        </Pressable>
+        {hasMetadata && cardSurface && (
+          <View style={[styles.metadataRow, styles.cardMetadataRow]}>
+            {hasTime && (
+              <View style={styles.timeChip}>
+                <Text style={styles.timeChipText}>{task.time}</Text>
+              </View>
+            )}
+            {hasRepeat && (
+              <View style={styles.repeatChip}>
+                <RepeatIcon color="#707684" />
+              </View>
+            )}
           </View>
-        ) : (
-          <Pressable
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            onPress={handlePress}
-            style={[
-              styles.contentStack,
-              compact && styles.compactContentStack,
-              isActive && { opacity: 0.7 },
-            ]}
-          >
-            <Animated.View style={{ transform: [{ scale: pressScale }] }}>
-              <Animated.Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[
-                  styles.title,
-                  compact && styles.compactTitle,
-                  task.isCompleted && styles.completedTitle,
-                  { fontSize: dynamicTitleFontSize },
-                ]}
-              >
-                {task.title}
-              </Animated.Text>
-
-              {/* Metadata Row (only in non-compact detail mode) */}
-              {hasMetadata && (
-                <View style={styles.metadataRow}>
-                  {/* 🕒 Time Chip */}
-                  {hasTime && (
-                    <View style={styles.timeChip}>
-                      <Text style={styles.timeChipText}>{task.time}</Text>
-                    </View>
-                  )}
-
-                  {/* 🔁 Repeat Chip (icon only) */}
-                  {hasRepeat && (
-                    <View style={styles.repeatChip}>
-                      <RepeatIcon color="#707684" />
-                    </View>
-                  )}
-                </View>
-              )}
-            </Animated.View>
-          </Pressable>
         )}
       </Animated.View>
     </View>
@@ -545,25 +518,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: 'transparent',
-    gap: 10,
-    paddingVertical: 7,
-    paddingHorizontal: 4,
-    minHeight: 38,
+    gap: 12,
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingHorizontal: 0,
+  },
+  cardRowContainer: {
+    width: '100%',
   },
   compactRowContainer: {
     minHeight: 18,
-    paddingVertical: 2,
+    paddingTop: 1,
+    paddingBottom: 1,
     paddingHorizontal: 0,
     gap: 8,
     alignItems: 'center',
   },
   checkboxTouch: {
-    marginTop: 1,
+    marginTop: 2,
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 7,
     borderWidth: 1.5,
     borderColor: '#D1D5DB',
     backgroundColor: '#FFFFFF',
@@ -594,6 +571,13 @@ const styles = StyleSheet.create({
   contentStack: {
     flex: 1,
     justifyContent: 'center',
+  },
+  cardMetadataRow: {
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    marginLeft: 'auto',
+    marginTop: 0,
+    gap: spacing.sm,
   },
   compactContentStack: {
     paddingBottom: 0,

@@ -10,13 +10,12 @@ import { months, toDateKey, weekdays } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from './task-row';
 import { TaskBottomSheet } from './TaskBottomSheet';
-import { DraggableTaskList } from './DraggableTaskList';
-import { TaskContextMenu } from './TaskContextMenu';
+import { SortableTaskList } from './SortableTaskList';
 import { CompactWeekStrip } from './CompactWeekStrip';
 import { getDatabase } from '@/database/database';
 import { AnimatedPressable } from './AnimatedPressable';
 import { BackButton } from './BackButton';
-import type { Priority, Task } from '@/types/task';
+import type { Task } from '@/types/task';
 
 type Frame = { x: number; y: number; width: number; height: number };
 type Transition = { date: Date; tasks: Task[]; frame: Frame; targetHeight: number; phase: 'opening' | 'closing' };
@@ -48,10 +47,11 @@ type CarouselCardProps = {
   emptyCardHeight: number;
   maxHeight: number;
   scrollEnabled: boolean;
-  setScrollEnabled: (enabled: boolean) => void;
   handleListLayout: (h: number) => void;
-  handleReorder: (newData: Task[]) => Promise<void> | void;
-  handleOpenContextMenu: (task: Task, layout: { x: number; y: number; width: number; height: number }) => void;
+  handleReorder: (newData: Task[]) => void;
+  handleScrollEnabled: (enabled: boolean) => void;
+  isScrollingRef: React.RefObject<boolean>;
+  handleTaskListScroll: () => void;
   beginEditing: (task: Task) => void;
   beginAdding: (targetDate?: Date) => void;
   closeCard: () => void;
@@ -71,10 +71,11 @@ const CarouselCard = React.memo(function CarouselCard({
   emptyCardHeight,
   maxHeight,
   scrollEnabled,
-  setScrollEnabled,
   handleListLayout,
   handleReorder,
-  handleOpenContextMenu,
+  handleScrollEnabled,
+  isScrollingRef,
+  handleTaskListScroll,
   beginEditing,
   beginAdding,
   closeCard,
@@ -87,6 +88,11 @@ const CarouselCard = React.memo(function CarouselCard({
   const isWeekendCard = isWeekendDay(cardDate);
   const scrollRef = useRef<ScrollView>(null);
   const scrollYRef = useRef(0);
+  const handleAutoScroll = useCallback((delta: number) => {
+    const nextOffset = Math.max(0, scrollYRef.current + delta);
+    scrollYRef.current = nextOffset;
+    scrollRef.current?.scrollTo({ y: nextOffset, animated: false });
+  }, []);
 
   const cardTaskCount = cardTasks.length;
   const rawCardContentHeight = 44 + 8 + (cardTaskCount > 0 ? cardTaskCount * 52 + 16 : 120);
@@ -304,7 +310,7 @@ const CarouselCard = React.memo(function CarouselCard({
             marginBottom: 2,
             overflow: 'hidden',
             opacity: 1,
-            paddingTop: 6,
+            paddingTop: 0,
           }}
         >
           <ScrollView
@@ -315,23 +321,46 @@ const CarouselCard = React.memo(function CarouselCard({
             bounces={true}
             alwaysBounceVertical={true}
             onScroll={(e) => {
+              handleTaskListScroll();
               scrollYRef.current = e.nativeEvent.contentOffset.y;
             }}
             scrollEventThrottle={16}
-            contentContainerStyle={{ paddingHorizontal: 0, paddingBottom: 8 }}
+            contentContainerStyle={{ paddingHorizontal: 4, paddingTop: 4, paddingBottom: 8 }}
           >
             {cardTasks.length ? (
               <View onLayout={(e) => isCenter && handleListLayout(e.nativeEvent.layout.height)}>
-                <DraggableTaskList
+                <SortableTaskList
                   data={cardTasks}
                   keyExtractor={(task) => `${task.id}:${task.date}`}
-                  onReorder={handleReorder}
-                  onPressItem={beginEditing}
-                  onPendingDelete={handlePendingDelete}
-                  onOpenContextMenu={handleOpenContextMenu}
-                  onDragStateChange={(isDragging) => setScrollEnabled(!isDragging)}
-                  scrollRef={scrollRef}
-                  cardBg="#FFFFFF"
+                  onReorder={(newData) => void handleReorder(newData)}
+                  onScrollEnabledChange={handleScrollEnabled}
+                  onAutoScroll={handleAutoScroll}
+                  isScrollingRef={isScrollingRef}
+                  gap={4}
+                  dragHandleOpacity={progress.interpolate({
+                    inputRange: [0.85, 1],
+                    outputRange: [0, 1],
+                  })}
+                  renderItem={(
+                    task,
+                    isActive,
+                    index,
+                    totalCount,
+                    onSwipeX,
+                    onScrollEnabledChangeItem
+                  ) => (
+                    <TaskRow
+                      task={task}
+                      isLast={index === totalCount - 1}
+                      onPress={() => beginEditing(task)}
+                      onPendingDelete={handlePendingDelete}
+                      isActive={isActive}
+                      onSwipeX={onSwipeX}
+                      onScrollEnabledChange={onScrollEnabledChangeItem}
+                      cardBg="#FFFFFF"
+                      cardSurface
+                    />
+                  )}
                 />
               </View>
             ) : (
@@ -404,6 +433,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const isScrollingRef = useRef(false);
+  const scrollResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [measuredListHeight, setMeasuredListHeight] = useState<number>(0);
   const isAnimatingRef = useRef(false);
@@ -429,13 +460,38 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const maxHeight = height - (insets.top + 68) - (Math.max(insets.bottom + 8, 16) + 60) - 12;
   const targetHeight = Math.min(maxHeight, contentHeight);
 
-  const [contextMenuTask, setContextMenuTask] = useState<Task | null>(null);
-  const [contextMenuAnchor, setContextMenuAnchor] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-
-  const handleOpenContextMenu = useCallback((task: Task, layout: { x: number; y: number; width: number; height: number }) => {
-    setContextMenuTask(task);
-    setContextMenuAnchor(layout);
+  const handleScrollEnabled = useCallback((enabled: boolean) => {
+    setScrollEnabled(enabled);
   }, []);
+
+  const handleTaskListScroll = useCallback(() => {
+    isScrollingRef.current = true;
+    if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current);
+    scrollResetTimerRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
+      scrollResetTimerRef.current = null;
+    }, 120);
+  }, []);
+
+  const handleAutoScroll = useCallback((delta: number) => {
+  }, []);
+
+  const handlePendingDelete = (task: Task) => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setPendingDeleteTask(task);
+    undoTimerRef.current = setTimeout(() => {
+      void remove(task.id);
+      setPendingDeleteTask(null);
+    }, 4000);
+  };
+
+  const handleUndo = async () => {
+    if (settings.haptics && Platform.OS === 'ios') {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setPendingDeleteTask(null);
+  };
 
   const handleReorder = useCallback(
     async (newData: Task[]) => {
@@ -457,33 +513,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     },
     [activeCardDate, loadRange]
   );
-
-  const handleSetPriority = useCallback(
-    async (task: Task, priority: Priority) => {
-      const db = await getDatabase();
-      await db.runAsync('UPDATE tasks SET priority=?, updatedAt=? WHERE id=?', priority, new Date().toISOString(), task.id);
-      const dateKey = toDateKey(activeCardDate);
-      await loadRange(dateKey, dateKey);
-    },
-    [activeCardDate, loadRange]
-  );
-
-  const handlePendingDelete = (task: Task) => {
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-    setPendingDeleteTask(task);
-    undoTimerRef.current = setTimeout(() => {
-      void remove(task.id);
-      setPendingDeleteTask(null);
-    }, 4000);
-  };
-
-  const handleUndo = async () => {
-    if (settings.haptics && Platform.OS === 'ios') {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-    setPendingDeleteTask(null);
-  };
 
   const cleanupClose = () => {
     origin.current = null;
@@ -719,10 +748,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     emptyCardHeight={emptyCardHeight}
                     maxHeight={maxHeight}
                     scrollEnabled={scrollEnabled}
-                    setScrollEnabled={setScrollEnabled}
                     handleListLayout={handleListLayout}
                     handleReorder={handleReorder}
-                    handleOpenContextMenu={handleOpenContextMenu}
+                    handleScrollEnabled={handleScrollEnabled}
+                    isScrollingRef={isScrollingRef}
+                    handleTaskListScroll={handleTaskListScroll}
                     beginEditing={beginEditing}
                     beginAdding={beginAdding}
                     closeCard={closeCard}
@@ -910,20 +940,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
           }}
           initialDate={addingDate ? toDateKey(addingDate) : editingTask?.date}
           editingTask={editingTask}
-        />
-
-        {/* Task Context Action Menu (TickTick / iOS style) */}
-        <TaskContextMenu
-          visible={!!contextMenuTask}
-          task={contextMenuTask}
-          anchorLayout={contextMenuAnchor}
-          onClose={() => {
-            setContextMenuTask(null);
-            setContextMenuAnchor(null);
-          }}
-          onEdit={beginEditing}
-          onDelete={(t) => handlePendingDelete(t)}
-          onSetPriority={handleSetPriority}
         />
       </View>
     </CardTransitionContext.Provider>

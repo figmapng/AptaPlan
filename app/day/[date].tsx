@@ -19,11 +19,10 @@ import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from '@/components/task-row';
 import { useCardTransition } from '@/components/card-transition-provider';
 import { TaskBottomSheet } from '@/components/TaskBottomSheet';
-import { DraggableTaskList } from '@/components/DraggableTaskList';
-import { TaskContextMenu } from '@/components/TaskContextMenu';
+import { SortableTaskList } from '@/components/SortableTaskList';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { CompactWeekStrip } from '@/components/CompactWeekStrip';
-import type { Priority, Task } from '@/types/task';
+import type { Task } from '@/types/task';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getDatabase } from '@/database/database';
 
@@ -31,43 +30,26 @@ export default function DayScreen() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { date, add } = useLocalSearchParams<{ date: string; add?: string }>();
-  const { tasks, settings, loadRange, refresh, remove, toggle } = usePlanner();
+  const { tasks, settings, loadRange, refresh, remove } = usePlanner();
   const { closeCard, beginInteractiveClose, updateInteractiveClose, endInteractiveClose } = useCardTransition();
   const [isAdding, setIsAdding] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
-  const [contextMenuTask, setContextMenuTask] = useState<Task | null>(null);
-  const [contextMenuAnchor, setContextMenuAnchor] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const scrollRef = useRef<ScrollView>(null);
+  const scrollYRef = useRef(0);
 
-  const handleReorder = useCallback(async (newData: Task[]) => {
-    const db = await getDatabase();
-    const updatedAt = new Date().toISOString();
-    await db.withTransactionAsync(async () => {
-      for (let i = 0; i < newData.length; i++) {
-        await db.runAsync(
-          'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
-          i,
-          updatedAt,
-          newData[i].id,
-        );
-      }
-    });
-    await refresh();
-  }, [refresh]);
-
-  const handleOpenContextMenu = useCallback((task: Task, layout: { x: number; y: number; width: number; height: number }) => {
-    setContextMenuTask(task);
-    setContextMenuAnchor(layout);
+  const handleScrollEnabled = useCallback((enabled: boolean) => {
+    setScrollEnabled(enabled);
   }, []);
 
-  const handleSetPriority = useCallback(async (task: Task, priority: Priority) => {
-    const db = await getDatabase();
-    await db.runAsync('UPDATE tasks SET priority=?, updatedAt=? WHERE id=?', priority, new Date().toISOString(), task.id);
-    await refresh();
-  }, [refresh]);
+  const handleAutoScroll = useCallback((delta: number) => {
+    const nextY = Math.max(0, scrollYRef.current + delta);
+    scrollYRef.current = nextY;
+    scrollRef.current?.scrollTo({ y: nextY, animated: false });
+  }, []);
+
   const handlePendingDelete = useCallback((task: Task) => {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setPendingDeleteTask(task);
@@ -85,6 +67,25 @@ export default function DayScreen() {
     setPendingDeleteTask(null);
     await refresh();
   }, [settings.haptics, refresh]);
+
+  const handleReorder = useCallback(async (newData: Task[]) => {
+    const db = await getDatabase();
+    const updatedAt = new Date().toISOString();
+
+    // Save the entire order at once. This prevents a partial order from being
+    // rendered when a user drops a row and immediately starts another drag.
+    await db.withTransactionAsync(async () => {
+      for (let i = 0; i < newData.length; i++) {
+        await db.runAsync(
+          'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
+          i,
+          updatedAt,
+          newData[i].id,
+        );
+      }
+    });
+    await refresh();
+  }, [refresh]);
 
   useEffect(() => {
     if (date) void loadRange(date, date);
@@ -207,21 +208,33 @@ export default function DayScreen() {
           alwaysBounceVertical={true}
           overScrollMode="always"
           decelerationRate={Platform.OS === 'ios' ? 'normal' : 0.985}
+          onScroll={(e) => {
+            scrollYRef.current = e.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
           style={{ maxHeight: taskAreaMaxHeight }}
           contentContainerStyle={{ paddingHorizontal: 4, paddingTop: 10, paddingBottom: 16 }}
         >
           {dayTasks.length ? (
-            <DraggableTaskList
-              data={dayTasks}
-              keyExtractor={(task) => `${task.id}:${task.date}`}
-              onReorder={handleReorder}
-              onPressItem={beginEditing}
-              onPendingDelete={handlePendingDelete}
-              onOpenContextMenu={handleOpenContextMenu}
-              onDragStateChange={(isDragging) => setScrollEnabled(!isDragging)}
-              scrollRef={scrollRef}
-              cardBg={colors.card}
-            />
+            <Pressable style={{ flexGrow: 1 }} onPress={beginAdding}>
+              <SortableTaskList
+                data={dayTasks}
+                keyExtractor={(task) => `${task.id}:${task.date}`}
+                onReorder={(newData) => void handleReorder(newData)}
+                onScrollEnabledChange={handleScrollEnabled}
+                onAutoScroll={handleAutoScroll}
+                gap={4}
+                renderItem={(task, isActive, index, totalCount) => (
+                  <TaskRow
+                    task={task}
+                    isLast={index === totalCount - 1}
+                    onPress={() => beginEditing(task)}
+                    onPendingDelete={handlePendingDelete}
+                    isActive={isActive}
+                  />
+                )}
+              />
+            </Pressable>
           ) : (
             <Pressable
               onPress={beginAdding}
@@ -319,19 +332,6 @@ export default function DayScreen() {
       editingTask={editingTask}
       initialDate={date}
       onClose={closeComposer}
-    />
-    <TaskContextMenu
-      visible={!!contextMenuTask}
-      task={contextMenuTask}
-      anchorLayout={contextMenuAnchor}
-      onClose={() => {
-        setContextMenuTask(null);
-        setContextMenuAnchor(null);
-      }}
-      onEdit={beginEditing}
-      onDelete={(t) => remove(t.id, t.occurrenceDate || t.date, 'all')}
-      onSetPriority={handleSetPriority}
-      onToggleComplete={(t) => toggle(t)}
     />
     </View>
   );
