@@ -416,8 +416,6 @@ export const TaskRow = React.memo(function TaskRow({
         >
           <Animated.View style={{ transform: [{ scale: pressScale }] }}>
             <Animated.Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
               style={[
                 styles.title,
                 compact && styles.compactTitle,

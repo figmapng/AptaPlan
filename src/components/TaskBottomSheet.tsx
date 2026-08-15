@@ -399,7 +399,11 @@ export function TaskBottomSheet({
                   pressed && isEnabled && styles.sendBtnPressed,
                 ]}
               >
-                <ArrowUpIcon color={isEnabled ? '#FFFFFF' : '#9CA3AF'} />
+                {editingTask ? (
+                  <CheckIcon color={isEnabled ? '#FFFFFF' : '#9CA3AF'} />
+                ) : (
+                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : '#9CA3AF'} />
+                )}
               </Pressable>
             </View>
           </View>
@@ -500,6 +504,20 @@ function ArrowUpIcon({ color = '#FFFFFF' }: { color?: string }) {
     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
       <Path
         d="M12 19V5M5 12l7-7 7 7"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function CheckIcon({ color = '#FFFFFF' }: { color?: string }) {
+  return (
+    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="m5 12 4 4L19 6"
         stroke={color}
         strokeWidth="2.5"
         strokeLinecap="round"
