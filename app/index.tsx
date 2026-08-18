@@ -1348,7 +1348,6 @@ export default function Home() {
                 <WeekView
                   days={slot.days}
                   progress={weekProgress}
-                  onInteraction={collapseWeek}
                   collapsedBodyHeight={collapsedBodyHeight}
                   expandedBodyHeight={expandedBodyHeight}
                   expandedSundayHeight={expandedSundayHeight}
