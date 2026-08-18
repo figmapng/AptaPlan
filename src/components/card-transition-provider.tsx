@@ -591,15 +591,12 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     carouselX.setValue(0);
     setTransition(transitionRef.current);
 
-    if (cardTasks.length === 0) {
-      beginAdding(date);
-    }
-
     progress.setValue(0);
-    Animated.timing(progress, {
+    Animated.spring(progress, {
       toValue: 1,
-      duration: 320,
-      easing: Easing.bezier(0.18, 0.9, 0.2, 1),
+      damping: 26,
+      stiffness: 240,
+      mass: 0.85,
       useNativeDriver: false,
     }).start(() => {
       isAnimatingRef.current = false;
@@ -615,10 +612,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     transitionRef.current = { ...origin.current, phase: 'closing' };
     setTransition(transitionRef.current);
 
-    Animated.timing(progress, {
+    Animated.spring(progress, {
       toValue: 0,
-      duration: 260,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      damping: 28,
+      stiffness: 260,
+      mass: 0.8,
       useNativeDriver: false,
     }).start(() => {
       isAnimatingRef.current = false;
