@@ -798,13 +798,13 @@ function DefaultViewModeModal({
 function LastDayVisiblePreview() {
   return (
     <View style={styles.verticalPreviewBox}>
-      {/* Month Header: ТАМЫЗ 2026 + Progress */}
+      {/* Mini Smartphone Status Bar & Month Header */}
       <View style={styles.previewWeekHeader}>
         <View style={styles.previewWeekTitleBadge} />
         <View style={styles.previewWeekProgressBadge} />
       </View>
       {/* 2-column day cards (3 + 3) */}
-      <View style={[styles.previewGridRow, { height: 42, marginTop: 2, gap: 3 }]}>
+      <View style={[styles.previewGridRow, { height: 58, marginTop: 2, gap: 2.5 }]}>
         <View style={styles.previewCardCol}>
           <View style={styles.previewCardMini} />
           <View style={styles.previewCardMini} />
@@ -825,13 +825,13 @@ function LastDayVisiblePreview() {
 function LastDayHiddenPreview() {
   return (
     <View style={styles.verticalPreviewBox}>
-      {/* Month Header: ТАМЫЗ 2026 + Progress */}
+      {/* Mini Smartphone Status Bar & Month Header */}
       <View style={styles.previewWeekHeader}>
         <View style={styles.previewWeekTitleBadge} />
         <View style={styles.previewWeekProgressBadge} />
       </View>
       {/* 2-column day cards filling the full height (3 + 3) */}
-      <View style={[styles.previewGridRow, { height: 56, marginTop: 2, gap: 3 }]}>
+      <View style={[styles.previewGridRow, { height: 78, marginTop: 2, gap: 2.5 }]}>
         <View style={styles.previewCardCol}>
           <View style={styles.previewCardMini} />
           <View style={styles.previewCardMini} />
@@ -1215,28 +1215,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.inputBg,
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1.5,
     borderColor: colors.inputBorder,
-    padding: 10,
-    gap: 12,
+    padding: 12,
+    gap: 14,
   },
   verticalVisualCardSelected: {
     backgroundColor: '#01B7FF08',
     borderColor: colors.today,
   },
   verticalPreviewWrapper: {
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
   },
   verticalPreviewBox: {
-    width: 92,
-    height: 78,
+    width: 58,
+    height: 104,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: '#ECEEF2',
+    borderRadius: 10,
+    padding: 4,
+    paddingTop: 5,
+    paddingBottom: 5,
+    borderWidth: 1.5,
+    borderColor: '#DFE3E8',
     justifyContent: 'space-between',
     overflow: 'hidden',
   },
