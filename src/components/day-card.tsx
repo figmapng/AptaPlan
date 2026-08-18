@@ -80,22 +80,18 @@ export const DayCard = memo(function DayCardComponent({
 
     onInteraction?.();
 
-    const maxGridH = wide ? expandedSundayHeight + 34 : collapsedBodyHeight + 34;
-
-    if (measuredFrameRef.current) {
-      openCard(date, tasks, measuredFrameRef.current);
-    } else if (cardRef.current) {
+    if (cardRef.current) {
       cardRef.current.measureInWindow((x, y, w, h) => {
         if (typeof x === 'number' && !isNaN(x) && w > 0 && h > 0 && y > 0) {
-          const freshFrame = { x, y, width: w, height: Math.min(h, maxGridH) };
+          const freshFrame = { x, y, width: w, height: h };
           measuredFrameRef.current = freshFrame;
           openCard(date, tasks, freshFrame);
-        } else {
-          openCard(date, tasks, { x: 16, y: 120, width: 170, height: maxGridH });
+        } else if (measuredFrameRef.current) {
+          openCard(date, tasks, measuredFrameRef.current);
         }
       });
-    } else {
-      openCard(date, tasks, { x: 16, y: 120, width: 170, height: maxGridH });
+    } else if (measuredFrameRef.current) {
+      openCard(date, tasks, measuredFrameRef.current);
     }
   };
 

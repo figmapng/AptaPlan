@@ -105,6 +105,7 @@ const CarouselCard = React.memo(function CarouselCard({
   const cardTranslateX = Animated.add(virtualIndex * width, carouselX);
   const isCenter = virtualIndex === 0;
   const isMonthOrigin = currentFrame.width < 100;
+  const isWideOrigin = currentFrame.width > width * 0.7;
 
   const cardOpacity = isMonthOrigin
     ? progress.interpolate({
@@ -121,6 +122,10 @@ const CarouselCard = React.memo(function CarouselCard({
         extrapolate: 'clamp',
       })
     : 1;
+
+  const closedHeaderHeight = isMonthOrigin ? 0 : isWideOrigin ? 35 : 29;
+  const closedHeaderPadding = isMonthOrigin ? 4 : isWideOrigin ? 14 : 10;
+  const closedHeaderFontSize = isWideOrigin ? 15 : 12;
 
   return (
     <Animated.View
@@ -175,12 +180,12 @@ const CarouselCard = React.memo(function CarouselCard({
           style={{
             height: progress.interpolate({
               inputRange: [0, 1],
-              outputRange: [isMonthOrigin ? 0 : 29, 44],
+              outputRange: [closedHeaderHeight, 44],
               extrapolate: 'clamp',
             }),
             paddingHorizontal: progress.interpolate({
               inputRange: [0, 1],
-              outputRange: [isMonthOrigin ? 4 : 10, 14],
+              outputRange: [closedHeaderPadding, 14],
               extrapolate: 'clamp',
             }),
             opacity: progress.interpolate({
@@ -198,7 +203,7 @@ const CarouselCard = React.memo(function CarouselCard({
             style={{
               fontSize: progress.interpolate({
                 inputRange: [0, 1],
-                outputRange: [12, 17],
+                outputRange: [closedHeaderFontSize, 17],
                 extrapolate: 'clamp',
               }),
               fontWeight: '600',
