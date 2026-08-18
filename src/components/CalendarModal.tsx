@@ -161,7 +161,12 @@ export function CalendarModal({
           </View>
 
           {/* Quick Date Pills */}
-          <View style={styles.quickRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.quickRow}
+            style={styles.quickScroll}
+          >
             {quickOptions.map((opt) => {
               const isSelected = selectedDate === opt.key;
               const IconComp = opt.icon;
@@ -178,18 +183,13 @@ export function CalendarModal({
                   onPress={() => handleQuickSelect(opt.key)}
                 >
                   <IconComp color={iconColor} />
-                  <Text
-                    numberOfLines={1}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.8}
-                    style={[styles.quickText, isSelected && styles.quickTextActive]}
-                  >
+                  <Text style={[styles.quickText, isSelected && styles.quickTextActive]}>
                     {opt.label}
                   </Text>
                 </AnimatedPressable>
               );
             })}
-          </View>
+          </ScrollView>
 
           {/* Calendar Card Container */}
           <View style={styles.calendarCard}>
@@ -550,21 +550,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickRow: {
+  quickScroll: {
     width: '100%',
+    marginBottom: 14,
+  },
+  quickRow: {
     flexDirection: 'row',
-    gap: 6,
-    paddingBottom: 14,
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 8,
   },
   quickBtn: {
-    flex: 1,
     height: 38,
-    borderRadius: 10,
-    paddingHorizontal: 4,
+    borderRadius: 12,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 6,
     backgroundColor: '#F3F4F6',
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -574,7 +577,7 @@ const styles = StyleSheet.create({
     borderColor: '#01B7FF',
   },
   quickText: {
-    fontSize: 11.5,
+    fontSize: 13,
     fontWeight: '600',
     color: '#374151',
   },
