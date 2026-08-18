@@ -124,7 +124,7 @@ export function TimeModal({
         >
           {quickTimePresets.map((t) => {
             const isSelected = selectedTime === t || currentHHMM === t;
-            const iconColor = isSelected ? '#FFFFFF' : '#01B7FF';
+            const iconColor = isSelected ? '#FFFFFF' : colors.inputPlusIcon;
 
             return (
               <AnimatedPressable
