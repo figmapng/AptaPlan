@@ -322,24 +322,43 @@ export const TaskRow = React.memo(function TaskRow({
 
   const isMorphing = !compact && activeDate && transitionProgress;
 
-  const dynamicPaddingVertical = isMorphing
+  const dynamicMinHeight = isMorphing
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [18, 44],
+        extrapolate: 'clamp',
+      })
+    : compact ? 18 : 44;
+
+  const dynamicPaddingTop = isMorphing
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 10],
+        extrapolate: 'clamp',
+      })
+    : compact ? 1 : 10;
+
+  const dynamicPaddingBottom = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
         outputRange: [1, 0],
+        extrapolate: 'clamp',
       })
-    : 0;
+    : compact ? 1 : 0;
 
   const dynamicGap = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
         outputRange: [6, 12],
+        extrapolate: 'clamp',
       })
-    : compact ? 8 : 12;
+    : compact ? 6 : 12;
 
   const dynamicCheckboxScale = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.72, 1],
+        outputRange: [0.75, 1],
+        extrapolate: 'clamp',
       })
     : 1;
 
@@ -347,6 +366,7 @@ export const TaskRow = React.memo(function TaskRow({
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
         outputRange: [12, 15.5],
+        extrapolate: 'clamp',
       })
     : compact ? 12 : 15.5;
 
@@ -354,8 +374,25 @@ export const TaskRow = React.memo(function TaskRow({
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
         outputRange: [0, 6],
+        extrapolate: 'clamp',
       })
     : compact ? 0 : 6;
+
+  const metadataOpacity = isMorphing
+    ? transitionProgress.interpolate({
+        inputRange: [0.6, 1],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+      })
+    : compact ? 0 : 1;
+
+  const metadataHeight = isMorphing
+    ? transitionProgress.interpolate({
+        inputRange: [0.6, 1],
+        outputRange: [0, 16],
+        extrapolate: 'clamp',
+      })
+    : compact ? 0 : 16;
 
   const dateColor = isOverdue ? '#E03B2F' : '#8E8E93';
 
@@ -369,8 +406,10 @@ export const TaskRow = React.memo(function TaskRow({
           cardSurface && styles.cardRowContainer,
           {
             opacity: rowOpacity,
+            minHeight: dynamicMinHeight,
+            paddingTop: dynamicPaddingTop,
+            paddingBottom: dynamicPaddingBottom,
             paddingHorizontal: dynamicPaddingHorizontal,
-            paddingVertical: dynamicPaddingVertical,
             gap: dynamicGap,
           },
         ]}
@@ -436,7 +475,16 @@ export const TaskRow = React.memo(function TaskRow({
             </Animated.Text>
 
             {hasMetadata && (
-              <View style={styles.metadataRow}>
+              <Animated.View
+                style={[
+                  styles.metadataRow,
+                  {
+                    opacity: metadataOpacity,
+                    height: metadataHeight,
+                    overflow: 'hidden',
+                  },
+                ]}
+              >
                 {hasDate && (
                   <View style={styles.metaItem}>
                     <CalendarIcon size={13} color={dateColor} />
@@ -461,7 +509,7 @@ export const TaskRow = React.memo(function TaskRow({
                     ) : null}
                   </View>
                 )}
-              </View>
+              </Animated.View>
             )}
           </Animated.View>
         </Pressable>
