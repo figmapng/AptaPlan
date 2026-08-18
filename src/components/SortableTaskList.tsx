@@ -539,35 +539,27 @@ export function SortableTaskList<T>({
       {dataState.map((item, index) => {
         const keyStr = keyExtractor(item);
         const isActive = index === activeIndex;
-        const isLast = index === dataState.length - 1;
-        // Dividers are ALWAYS rendered between items (never hidden during drag),
-        // preventing layout height shifts when activeIndex resets.
-        const showDivider = !isLast;
 
         return (
-          <React.Fragment key={keyStr}>
-            <MemoRowItem
-              item={item}
-              index={index}
-              totalCount={dataState.length}
-              isActive={isActive}
-              dragYAnim={dragY}
-              shiftAnim={getShiftAnim(keyStr)}
-              dragHandleOpacity={dragHandleOpacity}
-              onScrollEnabledChange={onScrollEnabledChange}
-              renderItem={renderItem}
-              onLayout={handleLayout}
-              onGrant={handleGrant}
-              onMove={handleMove}
-              onRelease={handleRelease}
-              onTerminate={handleTerminate}
-              isScrollingRef={isScrollingRef}
-              showRowFrame={showRowFrame}
-            />
-            {showDivider && (
-              <Animated.View style={[styles.divider, dragHandleOpacity !== undefined && { opacity: dragHandleOpacity }]} />
-            )}
-          </React.Fragment>
+          <MemoRowItem
+            key={keyStr}
+            item={item}
+            index={index}
+            totalCount={dataState.length}
+            isActive={isActive}
+            dragYAnim={dragY}
+            shiftAnim={getShiftAnim(keyStr)}
+            dragHandleOpacity={dragHandleOpacity}
+            onScrollEnabledChange={onScrollEnabledChange}
+            renderItem={renderItem}
+            onLayout={handleLayout}
+            onGrant={handleGrant}
+            onMove={handleMove}
+            onRelease={handleRelease}
+            onTerminate={handleTerminate}
+            isScrollingRef={isScrollingRef}
+            showRowFrame={showRowFrame}
+          />
         );
       })}
     </View>
@@ -584,11 +576,8 @@ const styles = StyleSheet.create({
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
     paddingHorizontal: 0,
-    backgroundColor: colors.inputBg,
-    borderWidth: 1,
-    borderColor: colors.inputBorder,
+    backgroundColor: 'transparent',
     overflow: 'hidden',
   },
   noRowFrame: {
@@ -598,8 +587,7 @@ const styles = StyleSheet.create({
   },
   activeRow: {
     backgroundColor: colors.inputBg,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderRadius: 12,
   },
   contentWrapper: {
     flex: 1,
@@ -625,11 +613,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFECEC',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#F3F4F6',
-    marginLeft: 42,
-    marginRight: 10,
   },
 });

@@ -11,6 +11,7 @@ interface TaskListFrameProps {
   onPress: () => void;
   onInteraction?: () => void;
   isSwipingRef?: React.RefObject<boolean>;
+  singleLine?: boolean;
 }
 
 export function TaskListFrame({
@@ -21,6 +22,7 @@ export function TaskListFrame({
   onPress,
   onInteraction,
   isSwipingRef,
+  singleLine = false,
 }: TaskListFrameProps) {
   const rows = (
     <View style={{ gap: 2 }}>
@@ -33,6 +35,7 @@ export function TaskListFrame({
           onInteraction={onInteraction}
           isSwipingRef={isSwipingRef}
           cardBg="#FFFFFF"
+          singleLine={singleLine}
         />
       ))}
     </View>

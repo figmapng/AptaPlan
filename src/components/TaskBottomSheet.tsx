@@ -228,31 +228,37 @@ export function TaskBottomSheet({
       notificationOffset: selectedTime ? REMINDER_DEFAULT_OFFSET_MINUTES : null,
     };
 
-    if (editingTask) {
-      const next = {
-        ...base,
-        note: editingTask.note ?? null,
-        priority: editingTask.priority ?? 'normal',
-      };
-      await planner.update(editingTask.id, next);
-      onTaskSaved?.({ ...editingTask, ...next });
-    } else {
-      const id = await planner.create(base);
-      onTaskSaved?.({
-        id,
-        ...base,
-        isCompleted: false,
-        note: null,
-        priority: 'normal',
-        notificationId: null,
-        sortOrder: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-    }
+    try {
+      if (editingTask) {
+        const next = {
+          ...base,
+          note: editingTask.note ?? null,
+          priority: editingTask.priority ?? 'normal',
+        };
+        await planner.update(editingTask.id, next);
+        await planner.refresh();
+        onTaskSaved?.({ ...editingTask, ...next });
+      } else {
+        const id = await planner.create(base);
+        onTaskSaved?.({
+          id,
+          ...base,
+          isCompleted: false,
+          note: null,
+          priority: 'normal',
+          notificationId: null,
+          sortOrder: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
 
-    setTitle('');
-    onClose();
+      setTitle('');
+      onClose();
+    } catch (error) {
+      console.warn('Task save failed', error);
+      Alert.alert('Сақталмады', 'Өзгерісті сақтау кезінде қате шықты. Қайтадан көріңіз.');
+    }
   };
 
   const isEnabled = title.trim().length > 0;

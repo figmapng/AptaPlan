@@ -60,3 +60,15 @@ export function formatFullKzDate(dateStr: string): string {
   const fullMonth = kzMonthsFull[monthIdx];
   return `${day} ${fullMonth}`;
 }
+
+export function formatTaskDisplayDate(dateStr: string): string {
+  const date = fromDateKey(dateStr);
+  const day = date.getDate();
+  const monthIdx = date.getMonth();
+  const shortMonth = kzMonthsShort[monthIdx];
+  const currentYear = new Date().getFullYear();
+  if (date.getFullYear() !== currentYear) {
+    return `${day} ${shortMonth}. ${date.getFullYear()}`;
+  }
+  return `${day} ${shortMonth}.`;
+}

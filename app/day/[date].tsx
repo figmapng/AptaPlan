@@ -183,8 +183,8 @@ export default function DayScreen() {
           }}
         >
           <View style={{ backgroundColor: isSelectedToday ? 'white' : '#F0F0F2', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
-            <Text style={{ color: isWeekend ? colors.weekend : colors.text, fontSize: 14, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
-              {format(selectedDate, 'dd')} {months[selectedDate.getMonth()]}
+            <Text style={{ color: isWeekend ? colors.weekend : colors.text, fontSize: 14, fontWeight: '600' }}>
+              {months[selectedDate.getMonth()]}
             </Text>
           </View>
           <Text style={{ color: isSelectedToday ? 'white' : isWeekend ? colors.weekend : colors.text, fontSize: 16, fontWeight: '600' }}>
@@ -213,7 +213,7 @@ export default function DayScreen() {
           }}
           scrollEventThrottle={16}
           style={{ maxHeight: taskAreaMaxHeight }}
-          contentContainerStyle={{ paddingHorizontal: 4, paddingTop: 10, paddingBottom: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 6, paddingTop: 10, paddingBottom: 16 }}
         >
           {dayTasks.length ? (
             <Pressable style={{ flexGrow: 1 }} onPress={beginAdding}>
@@ -223,7 +223,7 @@ export default function DayScreen() {
                 onReorder={(newData) => void handleReorder(newData)}
                 onScrollEnabledChange={handleScrollEnabled}
                 onAutoScroll={handleAutoScroll}
-                gap={4}
+                gap={0}
                 renderItem={(task, isActive, index, totalCount) => (
                   <TaskRow
                     task={task}

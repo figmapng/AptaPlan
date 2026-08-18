@@ -185,6 +185,10 @@ const CarouselCard = React.memo(function CarouselCard({
                 inputRange: [0, 1],
                 outputRange: [17, 21],
               }),
+              paddingHorizontal: progress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [4, 8],
+              }),
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: isTodayCard
@@ -197,9 +201,7 @@ const CarouselCard = React.memo(function CarouselCard({
                 outputRange: [5, 6],
               }),
               paddingTop: 0,
-              paddingRight: 4,
               paddingBottom: 0,
-              paddingLeft: 4,
             }}
           >
             {/* Inner frame */}
@@ -222,37 +224,17 @@ const CarouselCard = React.memo(function CarouselCard({
                   : colors.dateNumBg,
               }}
             >
-              <Animated.Text
-                style={{
-                  fontSize: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [12, 15],
-                  }),
-                  lineHeight: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [13, 17],
-                  }),
-                  fontWeight: isTodayCard ? '700' : '600',
-                  color: isTodayCard
-                    ? '#049BD6'
-                    : isWeekendCard
-                    ? colors.weekendNumText
-                    : colors.dateNumText,
-                  fontVariant: ['tabular-nums'],
-                }}
-              >
-                {format(cardDate, 'dd')}
-              </Animated.Text>
+              {/* Day number (visible when closed, collapses to 0 when opened) */}
               <Animated.Text
                 numberOfLines={1}
                 style={{
                   fontSize: progress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [12, 15],
+                    outputRange: [12, 0],
                   }),
                   lineHeight: progress.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [13, 17],
+                    outputRange: [13, 0],
                   }),
                   fontWeight: isTodayCard ? '700' : '600',
                   color: isTodayCard
@@ -261,15 +243,50 @@ const CarouselCard = React.memo(function CarouselCard({
                     ? colors.weekendNumText
                     : colors.dateNumText,
                   fontVariant: ['tabular-nums'],
-                  opacity: progress,
+                  opacity: progress.interpolate({
+                    inputRange: [0, 0.3, 1],
+                    outputRange: [1, 0, 0],
+                  }),
                   maxWidth: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 90],
+                    inputRange: [0, 0.5, 1],
+                    outputRange: [30, 0, 0],
                   }),
                   overflow: 'hidden',
                 }}
               >
-                {' ' + months[cardDate.getMonth()]}
+                {format(cardDate, 'dd')}
+              </Animated.Text>
+
+              {/* Month name (hidden when closed, expands when opened) */}
+              <Animated.Text
+                numberOfLines={1}
+                style={{
+                  fontSize: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 14],
+                  }),
+                  lineHeight: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 17],
+                  }),
+                  fontWeight: isTodayCard ? '700' : '600',
+                  color: isTodayCard
+                    ? '#049BD6'
+                    : isWeekendCard
+                    ? colors.weekendNumText
+                    : colors.dateNumText,
+                  opacity: progress.interpolate({
+                    inputRange: [0, 0.4, 1],
+                    outputRange: [0, 0.5, 1],
+                  }),
+                  maxWidth: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 120],
+                  }),
+                  overflow: 'hidden',
+                }}
+              >
+                {months[cardDate.getMonth()]}
               </Animated.Text>
             </Animated.View>
           </Animated.View>
@@ -325,7 +342,7 @@ const CarouselCard = React.memo(function CarouselCard({
               scrollYRef.current = e.nativeEvent.contentOffset.y;
             }}
             scrollEventThrottle={16}
-            contentContainerStyle={{ paddingHorizontal: 4, paddingTop: 4, paddingBottom: 8 }}
+            contentContainerStyle={{ paddingHorizontal: 6, paddingTop: 4, paddingBottom: 8 }}
           >
             {cardTasks.length ? (
               <View onLayout={(e) => isCenter && handleListLayout(e.nativeEvent.layout.height)}>
@@ -336,7 +353,7 @@ const CarouselCard = React.memo(function CarouselCard({
                   onScrollEnabledChange={handleScrollEnabled}
                   onAutoScroll={handleAutoScroll}
                   isScrollingRef={isScrollingRef}
-                  gap={4}
+                  gap={0}
                   dragHandleOpacity={progress.interpolate({
                     inputRange: [0.85, 1],
                     outputRange: [0, 1],

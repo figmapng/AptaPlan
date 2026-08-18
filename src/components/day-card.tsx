@@ -296,6 +296,7 @@ export const DayCard = memo(function DayCardComponent({
               onPress={open}
               onInteraction={onInteraction}
               isSwipingRef={isSwipingRef}
+              singleLine
             />
           ) : (
             <TaskListFrame
@@ -303,6 +304,7 @@ export const DayCard = memo(function DayCardComponent({
               onPress={open}
               onInteraction={onInteraction}
               isSwipingRef={isSwipingRef}
+              singleLine
             />
           )
         ) : wide ? (

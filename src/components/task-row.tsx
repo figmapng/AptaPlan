@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Animated, Easing, PanResponder, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { Alert, Animated, Easing, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
-import { spacing } from '@/constants/spacing';
-import type { Task } from '@/types/task';
+import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
 import { useCardTransition } from './card-transition-provider';
+import { getShortRepeatLabel } from './RepeatChip';
+import { describeCustomRepeat } from './CustomRepeatModal';
+import { formatTaskDisplayDate, getTodayKey } from '@/utils/dateHelpers';
 
 export const TaskRow = React.memo(function TaskRow({
   task,
@@ -21,6 +23,8 @@ export const TaskRow = React.memo(function TaskRow({
   onScrollEnabledChange,
   cardBg = '#FFFFFF',
   cardSurface = false,
+  singleLine = false,
+  showDate = false,
 }: {
   task: Task;
   compact?: boolean;
@@ -34,6 +38,8 @@ export const TaskRow = React.memo(function TaskRow({
   onScrollEnabledChange?: (enabled: boolean) => void;
   cardBg?: string;
   cardSurface?: boolean;
+  singleLine?: boolean;
+  showDate?: boolean;
 }) {
   const { toggle, remove, settings } = usePlanner();
   const { progress: transitionProgress, activeDate } = useCardTransition();
@@ -60,7 +66,6 @@ export const TaskRow = React.memo(function TaskRow({
     ]).start();
   }, [task.isCompleted, checkScale, rowOpacity]);
 
-  // Swipe Left animations
   const swipeX = useRef(new Animated.Value(0)).current;
   const rowHeightAnim = useRef(new Animated.Value(1)).current;
   const rowOpacityAnim = useRef(new Animated.Value(1)).current;
@@ -205,7 +210,6 @@ export const TaskRow = React.memo(function TaskRow({
 
   const hasVibrated = useRef(false);
 
-  // Swipe Left PanResponder with iOS Apple physics
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -213,7 +217,6 @@ export const TaskRow = React.memo(function TaskRow({
         onStartShouldSetPanResponderCapture: () => false,
         onMoveShouldSetPanResponder: (_, gesture) => {
           if (compact) return false;
-          // Strict horizontal swipe lock to prevent gesture trembling with drag handle
           return Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 2.5;
         },
         onPanResponderGrant: () => {
@@ -226,11 +229,9 @@ export const TaskRow = React.memo(function TaskRow({
           onScrollEnabledChange?.(false);
           if (gesture.dx < 0) {
             const dx = gesture.dx;
-            // Apple iOS rubberband physics beyond -72px
             const clamped = dx < -72 ? -72 + (dx + 72) * 0.35 : dx;
             swipeX.setValue(clamped);
 
-            // iPhone Haptic Vibration when swiped to delete threshold (-140px)
             if (gesture.dx < -140 && !hasVibrated.current) {
               hasVibrated.current = true;
               void triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -246,14 +247,12 @@ export const TaskRow = React.memo(function TaskRow({
           onScrollEnabledChange?.(true);
           hasVibrated.current = false;
 
-          // Full swipe to delete threshold (iOS long swipe)
           if (gesture.dx < -140 || gesture.vx < -0.8) {
             void triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
             executeDeleteAction();
             return;
           }
 
-          // Apple spring snap open
           if (gesture.dx < -28 || gesture.vx < -0.3) {
             void triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
             Animated.spring(swipeX, {
@@ -291,7 +290,23 @@ export const TaskRow = React.memo(function TaskRow({
 
   const hasTime = !!task.time;
   const hasRepeat = !!task.repeatType && task.repeatType !== 'none';
-  const hasMetadata = !compact && (hasTime || hasRepeat);
+  const hasDate = !!showDate && !compact && !!task.date;
+  const hasMetadata = !compact && (hasTime || hasRepeat || hasDate);
+
+  const isOverdue = useMemo(() => {
+    if (task.isCompleted || !task.date) return false;
+    const today = getTodayKey();
+    return task.date < today;
+  }, [task.date, task.isCompleted]);
+
+  const repeatLabel = useMemo(() => {
+    if (!hasRepeat) return null;
+    if (task.repeatConfig) {
+      return describeCustomRepeat(task.repeatConfig);
+    }
+    const rep = ((task.repeat || task.repeatType) as TaskRepeat) || 'none';
+    return getShortRepeatLabel(rep, task.repeatInterval || 1);
+  }, [hasRepeat, task.repeatConfig, task.repeat, task.repeatType, task.repeatInterval]);
 
   if (isDeleting) {
     return (
@@ -310,9 +325,9 @@ export const TaskRow = React.memo(function TaskRow({
   const dynamicPaddingVertical = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [1, 4],
+        outputRange: [1, 0],
       })
-    : compact ? 1 : 4;
+    : 0;
 
   const dynamicGap = isMorphing
     ? transitionProgress.interpolate({
@@ -331,43 +346,35 @@ export const TaskRow = React.memo(function TaskRow({
   const dynamicTitleFontSize = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [12, 14],
+        outputRange: [12, 15.5],
       })
-    : compact ? 12 : 14;
+    : compact ? 12 : 15.5;
 
   const dynamicPaddingHorizontal = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, 4],
+        outputRange: [0, 6],
       })
-    : compact ? 0 : 4;
+    : compact ? 0 : 6;
+
+  const dateColor = isOverdue ? '#E03B2F' : '#8E8E93';
 
   return (
     <View style={styles.wrapper}>
-      {/* Foreground Task Row Content */}
       <Animated.View
         {...panResponder.panHandlers}
         style={[
           styles.rowContainer,
           compact && styles.compactRowContainer,
           cardSurface && styles.cardRowContainer,
-          !hasMetadata && { alignItems: 'center' },
           {
             opacity: rowOpacity,
-            backgroundColor: swipeX.interpolate({
-              inputRange: [-10, 0],
-              outputRange: ['#F2F2F7', cardSurface ? colors.inputBg : cardBg],
-              extrapolate: 'clamp',
-            }),
-            borderRadius: 12,
-            borderWidth: 0,
             paddingHorizontal: dynamicPaddingHorizontal,
             paddingVertical: dynamicPaddingVertical,
             gap: dynamicGap,
           },
         ]}
       >
-        {/* Checkbox (Left) */}
         <Pressable
           accessibilityRole="checkbox"
           accessibilityState={{ checked: task.isCompleted }}
@@ -403,7 +410,6 @@ export const TaskRow = React.memo(function TaskRow({
           </Animated.View>
         </Pressable>
 
-        {/* Task Title & Metadata Stack */}
         <Pressable
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
@@ -411,11 +417,14 @@ export const TaskRow = React.memo(function TaskRow({
           style={[
             styles.contentStack,
             compact && styles.compactContentStack,
+            !isLast && !compact && styles.contentStackBorderBottom,
             isActive && { opacity: 0.7 },
           ]}
         >
           <Animated.View style={{ transform: [{ scale: pressScale }] }}>
             <Animated.Text
+              numberOfLines={singleLine ? 1 : undefined}
+              ellipsizeMode={singleLine ? 'tail' : undefined}
               style={[
                 styles.title,
                 compact && styles.compactTitle,
@@ -426,40 +435,36 @@ export const TaskRow = React.memo(function TaskRow({
               {task.title}
             </Animated.Text>
 
-          {/* Metadata Row (only in non-compact detail mode) */}
-          {hasMetadata && !cardSurface && (
-            <View style={styles.metadataRow}>
-              {/* 🕒 Time Chip */}
-              {hasTime && (
-                <View style={styles.timeChip}>
-                  <Text style={styles.timeChipText}>{task.time}</Text>
-                </View>
-              )}
+            {hasMetadata && (
+              <View style={styles.metadataRow}>
+                {hasDate && (
+                  <View style={styles.metaItem}>
+                    <CalendarIcon size={13} color={dateColor} />
+                    <Text style={[styles.metaText, isOverdue && styles.overdueText]}>
+                      {formatTaskDisplayDate(task.date)}
+                    </Text>
+                  </View>
+                )}
 
-              {/* 🔁 Repeat Chip (icon only) */}
-              {hasRepeat && (
-                <View style={styles.repeatChip}>
-                  <RepeatIcon color="#707684" />
-                </View>
-              )}
-            </View>
-          )}
+                {hasTime && (
+                  <View style={styles.metaItem}>
+                    <ClockIcon size={13} color="#8E8E93" />
+                    <Text style={styles.metaText}>{task.time}</Text>
+                  </View>
+                )}
+
+                {hasRepeat && (
+                  <View style={styles.metaItem}>
+                    <RepeatIcon size={13} color="#8E8E93" />
+                    {repeatLabel ? (
+                      <Text style={styles.metaText}>{repeatLabel}</Text>
+                    ) : null}
+                  </View>
+                )}
+              </View>
+            )}
           </Animated.View>
         </Pressable>
-        {hasMetadata && cardSurface && (
-          <View style={[styles.metadataRow, styles.cardMetadataRow]}>
-            {hasTime && (
-              <View style={styles.timeChip}>
-                <Text style={styles.timeChipText}>{task.time}</Text>
-              </View>
-            )}
-            {hasRepeat && (
-              <View style={styles.repeatChip}>
-                <RepeatIcon color="#707684" />
-              </View>
-            )}
-          </View>
-        )}
       </Animated.View>
     </View>
   );
@@ -479,27 +484,41 @@ function CheckmarkIcon({ size = 12, color = '#FFFFFF' }: { size?: number; color?
   );
 }
 
-function RepeatIcon({ color = '#707684' }: { color?: string }) {
+function CalendarIcon({ size = 13, color = '#8E8E93' }: { size?: number; color?: string }) {
   return (
-    <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
-      <Path
-        d="M15.3035 6.70851L14.7142 6.11925C12.1107 3.51576 7.88961 3.51576 5.28612 6.11925C2.68262 8.72271 2.68262 12.9439 5.28612 15.5474C7.88961 18.1509 12.1107 18.1509 14.7142 15.5474C16.2282 14.0333 16.8618 11.9723 16.6149 10.0004M15.3035 3.17297V6.70851H11.7679"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <Rect x="1.75" y="2.75" width="12.5" height="11" rx="2.25" stroke={color} strokeWidth="1.3" />
+      <Path d="M1.75 6.25H14.25" stroke={color} strokeWidth="1.3" />
+      <Path d="M4.75 1.5V3.5" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+      <Path d="M11.25 1.5V3.5" stroke={color} strokeWidth="1.3" strokeLinecap="round" />
+      <Circle cx="5" cy="9.5" r="0.8" fill={color} />
     </Svg>
   );
 }
 
-function TrashIcon({ color = 'white' }: { color?: string }) {
+function ClockIcon({ size = 13, color = '#8E8E93' }: { size?: number; color?: string }) {
   return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <Circle cx="8" cy="8" r="6.25" stroke={color} strokeWidth="1.3" />
+      <Path d="M8 4.75V8L10.25 9.75" stroke={color} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function RepeatIcon({ size = 13, color = '#8E8E93' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
       <Path
-        d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"
+        d="M13.5 3.5H4.5C3.11929 3.5 2 4.61929 2 6V6.5M11 1L13.5 3.5L11 6"
         stroke={color}
-        strokeWidth="2"
+        strokeWidth="1.35"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M2.5 12.5H11.5C12.8807 12.5 14 11.3807 14 10V9.5M5 15L2.5 12.5L5 10"
+        stroke={color}
+        strokeWidth="1.35"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -517,8 +536,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     backgroundColor: 'transparent',
     gap: 12,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingTop: 11,
+    paddingBottom: 0,
     paddingHorizontal: 0,
   },
   cardRowContainer: {
@@ -545,46 +564,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  checkboxCompleted: {
+    borderColor: colors.checkedCheckboxBg,
+    backgroundColor: colors.checkedCheckboxBg,
+  },
   compactCheckbox: {
     width: 16,
     height: 16,
     borderRadius: 5,
+    borderWidth: 1.5,
     borderColor: colors.checkboxBorder,
     backgroundColor: colors.checkboxBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxCompleted: {
-    borderColor: colors.checkedCheckboxBg,
-    backgroundColor: colors.checkedCheckboxBg,
-  },
-  checkMark: {
-    color: colors.checkedCheckboxCheck,
-    fontWeight: '800',
-    fontSize: 12,
-  },
-  compactCheckMark: {
-    fontSize: 10,
-  },
   contentStack: {
     flex: 1,
     justifyContent: 'center',
+    paddingBottom: 11,
   },
-  cardMetadataRow: {
-    alignSelf: 'stretch',
-    justifyContent: 'center',
-    marginLeft: 'auto',
-    marginTop: 0,
-    gap: spacing.sm,
+  contentStackBorderBottom: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECEEF1',
   },
   compactContentStack: {
     paddingBottom: 0,
   },
   title: {
-    fontSize: 14,
+    fontSize: 15.5,
     fontWeight: '400',
-    lineHeight: 20,
-    color: '#1F2937',
+    lineHeight: 21,
+    color: '#111827',
   },
   compactTitle: {
     fontSize: 12,
@@ -599,29 +609,23 @@ const styles = StyleSheet.create({
   metadataRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 6,
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 3,
   },
-  timeChip: {
-    height: 26,
-    paddingHorizontal: 10,
-    borderRadius: 13,
-    backgroundColor: '#F3F4F6',
+  metaItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
   },
-  timeChipText: {
+  metaText: {
     fontSize: 13,
-    fontWeight: '500',
-    color: '#6B7280',
+    lineHeight: 16,
+    fontWeight: '400',
+    color: '#8E8E93',
     fontVariant: ['tabular-nums'],
   },
-  repeatChip: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
+  overdueText: {
+    color: '#E03B2F',
   },
 });

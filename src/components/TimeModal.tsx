@@ -4,6 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -77,6 +78,8 @@ export function TimeModal({
     handleClose();
   };
 
+  const insets = useSafeAreaInsets();
+
   const handlePresetSelect = (timeStr: string) => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     onSelectTime(timeStr);
@@ -88,7 +91,15 @@ export function TimeModal({
   return (
     <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
       <Pressable style={styles.backdrop} onPress={handleClose} />
-      <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
+      <Animated.View
+        style={[
+          styles.sheet,
+          {
+            transform: [{ translateY }],
+            paddingBottom: Math.max(insets.bottom + 16, 28),
+          },
+        ]}
+      >
         <View style={styles.dragPill} />
 
         {/* Header */}
