@@ -642,11 +642,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     transitionRef.current = { ...origin.current, phase: 'closing' };
     setTransition(transitionRef.current);
 
-    Animated.spring(progress, {
+    Animated.timing(progress, {
       toValue: 0,
-      damping: 28,
-      stiffness: 260,
-      mass: 0.8,
+      duration: 230,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       useNativeDriver: false,
     }).start(() => {
       isAnimatingRef.current = false;
