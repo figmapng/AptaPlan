@@ -220,7 +220,17 @@ export function CalendarModal({
   const capitalizedMonthTitle = `${monthName[0].toUpperCase()}${monthName.slice(1)} ${currYear}`;
 
   const matchedQuickOption = quickOptions.find((opt) => opt.key === tempSelectedDate);
-  const selectedThemeColor = matchedQuickOption ? matchedQuickOption.color : colors.today;
+  const selectedOptionStyle = matchedQuickOption
+    ? {
+        activeBg: matchedQuickOption.activeBg,
+        activeBorder: matchedQuickOption.activeBorder,
+        textColor: matchedQuickOption.textColor,
+      }
+    : {
+        activeBg: '#EDF9FF',
+        activeBorder: '#BCE8FF',
+        textColor: colors.today,
+      };
 
   return (
     <>
@@ -361,7 +371,7 @@ export function CalendarModal({
                   todayKey={todayKey}
                   firstDayOfWeek={firstDayOfWeek}
                   onSelectDay={handleSelectDay}
-                  selectedColor={selectedThemeColor}
+                  selectedOptionStyle={selectedOptionStyle}
                 />
               </View>
 
@@ -372,7 +382,7 @@ export function CalendarModal({
                   todayKey={todayKey}
                   firstDayOfWeek={firstDayOfWeek}
                   onSelectDay={handleSelectDay}
-                  selectedColor={selectedThemeColor}
+                  selectedOptionStyle={selectedOptionStyle}
                 />
               </View>
 
@@ -383,7 +393,7 @@ export function CalendarModal({
                   todayKey={todayKey}
                   firstDayOfWeek={firstDayOfWeek}
                   onSelectDay={handleSelectDay}
-                  selectedColor={selectedThemeColor}
+                  selectedOptionStyle={selectedOptionStyle}
                 />
               </View>
             </ScrollView>
@@ -410,11 +420,7 @@ export function CalendarModal({
 
             <AnimatedPressable
               activeScale={0.94}
-              style={[
-                styles.confirmBtn,
-                !onRemoveDate && styles.confirmBtnFull,
-                { backgroundColor: selectedThemeColor, borderColor: selectedThemeColor },
-              ]}
+              style={[styles.confirmBtn, !onRemoveDate && styles.confirmBtnFull]}
               onPress={handleConfirm}
             >
               <Text style={styles.confirmText}>Сақтау</Text>
@@ -423,7 +429,7 @@ export function CalendarModal({
         </Animated.View>
       </Animated.View>
 
-      {/* Month & Year Picker Modal */}
+      {/* Month & Year Selection Modal */}
       <MonthPickerModal
         visible={showMonthPicker}
         currentDate={currentMonthDate}
@@ -444,7 +450,11 @@ interface DaysGridMatrixProps {
   todayKey: string;
   firstDayOfWeek: 'mon' | 'sat' | 'sun';
   onSelectDay: (dateStr: string) => void;
-  selectedColor?: string;
+  selectedOptionStyle?: {
+    activeBg: string;
+    activeBorder: string;
+    textColor: string;
+  };
 }
 
 function DaysGridMatrix({
@@ -453,7 +463,11 @@ function DaysGridMatrix({
   todayKey,
   firstDayOfWeek,
   onSelectDay,
-  selectedColor = colors.today,
+  selectedOptionStyle = {
+    activeBg: '#EDF9FF',
+    activeBorder: '#BCE8FF',
+    textColor: colors.today,
+  },
 }: DaysGridMatrixProps) {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
@@ -532,7 +546,11 @@ function DaysGridMatrix({
             <View
               style={[
                 styles.dayBadge,
-                isSelected && { backgroundColor: selectedColor },
+                isSelected && {
+                  backgroundColor: selectedOptionStyle.activeBg,
+                  borderWidth: 1.5,
+                  borderColor: selectedOptionStyle.activeBorder,
+                },
                 isToday && !isSelected && styles.dayBadgeToday,
               ]}
             >
@@ -542,7 +560,10 @@ function DaysGridMatrix({
                   item.isWeekend && item.isCurrentMonth && styles.dayTextWeekend,
                   !item.isCurrentMonth && (item.isWeekend ? styles.dayTextOtherMonthWeekend : styles.dayTextOtherMonth),
                   isToday && !isSelected && styles.dayTextToday,
-                  isSelected && styles.dayTextSelected,
+                  isSelected && {
+                    color: selectedOptionStyle.textColor,
+                    fontWeight: '700',
+                  },
                 ]}
               >
                 {item.dayNum}
