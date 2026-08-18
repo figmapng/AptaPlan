@@ -605,26 +605,52 @@ function OptionModal({
 function WeekLayoutPreview() {
   return (
     <View style={styles.phonePreviewBox}>
-      {/* Mini Smartphone Status Bar & Month Header */}
-      <View style={styles.previewWeekHeader}>
-        <View style={styles.previewWeekTitleBadge} />
-        <View style={styles.previewWeekProgressBadge} />
+      {/* Top Header: Left title + right mode pill */}
+      <View style={styles.previewHeaderRow}>
+        <View>
+          <View style={styles.previewWeekTitleBadge} />
+          <View style={styles.previewWeekSubTitleBadge} />
+        </View>
+        <View style={styles.previewModePillBadge} />
       </View>
+
       {/* 2-column day cards (3 + 3) */}
-      <View style={[styles.previewGridRow, { height: 58, marginTop: 2, gap: 2.5 }]}>
+      <View style={[styles.previewGridRow, { height: 60, marginTop: 2, gap: 2.5 }]}>
+        {/* Left column */}
         <View style={styles.previewCardCol}>
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
+          {/* Card 1: Mon */}
+          <View style={styles.previewDayCardRealistic}>
+            <View style={styles.previewDayCardHeader} />
+          </View>
+          {/* Card 2: Tue (Today - Active Cyan) */}
+          <View style={[styles.previewDayCardRealistic, styles.previewDayCardToday]}>
+            <View style={styles.previewDayCardHeaderToday} />
+          </View>
+          {/* Card 3: Wed */}
+          <View style={styles.previewDayCardRealistic}>
+            <View style={styles.previewDayCardHeader} />
+          </View>
         </View>
+
+        {/* Right column */}
         <View style={styles.previewCardCol}>
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
+          {/* Card 4: Thu */}
+          <View style={styles.previewDayCardRealistic}>
+            <View style={styles.previewDayCardHeader} />
+          </View>
+          {/* Card 5: Fri */}
+          <View style={styles.previewDayCardRealistic}>
+            <View style={styles.previewDayCardHeader} />
+          </View>
+          {/* Card 6: Sat (Weekend Pastel Red) */}
+          <View style={styles.previewDayCardRealistic}>
+            <View style={styles.previewDayCardHeaderWeekend} />
+          </View>
         </View>
       </View>
-      {/* Sunday 7th wide card */}
-      <View style={styles.previewWideCardMini} />
+
+      {/* Bottom Floating Bar */}
+      <View style={styles.previewBottomFloatingBar} />
     </View>
   );
 }
@@ -632,10 +658,10 @@ function WeekLayoutPreview() {
 function MonthLayoutPreview() {
   return (
     <View style={styles.phonePreviewBox}>
-      {/* Month Header: Neutral month title badge + progress badge */}
-      <View style={styles.previewWeekHeader}>
+      {/* Top Header: Left title + right mode pill */}
+      <View style={styles.previewHeaderRow}>
         <View style={styles.previewWeekTitleBadge} />
-        <View style={styles.previewWeekProgressBadge} />
+        <View style={styles.previewModePillBadge} />
       </View>
 
       {/* Weekday headers row */}
@@ -648,10 +674,10 @@ function MonthLayoutPreview() {
         ))}
       </View>
 
-      {/* 5 week rows of day cells with active week highlight */}
+      {/* 6 week rows of day cells with active week outline & today filled */}
       <View style={styles.previewMonthWeeksCol}>
-        {[0, 1, 2, 3, 4].map((w) => {
-          const isCurrentWeek = w === 2;
+        {[0, 1, 2, 3, 4, 5].map((w) => {
+          const isCurrentWeek = w === 3; // 4th row (Aug 17-23)
           return (
             <View
               key={w}
@@ -662,7 +688,7 @@ function MonthLayoutPreview() {
             >
               <View style={styles.previewMonthCellsRow}>
                 {[0, 1, 2, 3, 4, 5, 6].map((d) => {
-                  const isToday = isCurrentWeek && d === 1;
+                  const isToday = isCurrentWeek && d === 1; // Tue 18
                   const isWeekend = d >= 5;
                   return (
                     <View
@@ -687,6 +713,9 @@ function MonthLayoutPreview() {
           );
         })}
       </View>
+
+      {/* Bottom Floating Bar */}
+      <View style={styles.previewBottomFloatingBar} />
     </View>
   );
 }
@@ -694,16 +723,16 @@ function MonthLayoutPreview() {
 function YearLayoutPreview() {
   return (
     <View style={styles.phonePreviewBox}>
-      {/* Mini Year Header: "2026" with ACCENT COLOR */}
-      <View style={styles.previewWeekHeader}>
+      {/* Top Header: Left cyan "2026" + right mode pill */}
+      <View style={styles.previewHeaderRow}>
         <View style={styles.previewYearTitleBadge} />
-        <View style={[styles.previewWeekProgressBadge, { width: 8 }]} />
+        <View style={styles.previewModePillBadge} />
       </View>
 
-      {/* 4 rows x 3 columns grid (12 months) */}
+      {/* 4 rows x 3 columns grid (12 month cards) */}
       <View style={styles.previewYearGridNew}>
         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((m) => {
-          const isActiveMonth = m === 7;
+          const isActiveMonth = m === 7; // August (Тамыз)
           return (
             <View
               key={m}
@@ -712,21 +741,32 @@ function YearLayoutPreview() {
                 isActiveMonth && styles.previewYearMonthCardActive,
               ]}
             >
-              {/* Month name bar */}
+              {/* Month name title bar */}
               <View
                 style={[
                   styles.previewYearMonthTitle,
                   isActiveMonth && { backgroundColor: colors.today },
                 ]}
               />
-              {/* Mini calendar grid lines */}
+              {/* DOW row */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 1 }}>
+                <View style={{ width: 1.5, height: 1, backgroundColor: '#94A3B8' }} />
+                <View style={{ width: 1.5, height: 1, backgroundColor: '#94A3B8' }} />
+                <View style={{ width: 1.5, height: 1, backgroundColor: '#FF8882' }} />
+              </View>
+              {/* Mini calendar grid lines / dot */}
               <View style={styles.previewYearMonthLine1} />
               <View style={styles.previewYearMonthLine2} />
-              <View style={styles.previewYearMonthLine3} />
+              {isActiveMonth && (
+                <View style={{ width: 2.5, height: 2.5, borderRadius: 1.25, backgroundColor: colors.today, alignSelf: 'center', marginTop: 0.5 }} />
+              )}
             </View>
           );
         })}
       </View>
+
+      {/* Bottom Floating Bar */}
+      <View style={styles.previewBottomFloatingBar} />
     </View>
   );
 }
@@ -835,26 +875,31 @@ function DefaultViewModeModal({
 function LastDayVisiblePreview() {
   return (
     <View style={styles.verticalPreviewBox}>
-      {/* Mini Smartphone Status Bar & Month Header */}
-      <View style={styles.previewWeekHeader}>
-        <View style={styles.previewWeekTitleBadge} />
-        <View style={styles.previewWeekProgressBadge} />
+      {/* Top Header: Left title + right mode pill */}
+      <View style={styles.previewHeaderRow}>
+        <View>
+          <View style={styles.previewWeekTitleBadge} />
+          <View style={styles.previewWeekSubTitleBadge} />
+        </View>
+        <View style={styles.previewModePillBadge} />
       </View>
       {/* 2-column day cards (3 + 3) */}
-      <View style={[styles.previewGridRow, { height: 58, marginTop: 2, gap: 2.5 }]}>
+      <View style={[styles.previewGridRow, { height: 50, marginTop: 2, gap: 2.5 }]}>
         <View style={styles.previewCardCol}>
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
+          <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeader} /></View>
+          <View style={[styles.previewDayCardRealistic, styles.previewDayCardToday]}><View style={styles.previewDayCardHeaderToday} /></View>
+          <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeader} /></View>
         </View>
         <View style={styles.previewCardCol}>
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
+          <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeader} /></View>
+          <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeader} /></View>
+          <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeaderWeekend} /></View>
         </View>
       </View>
       {/* 7th wide card at the bottom (Sunday) */}
       <View style={styles.previewWideCardMini} />
+      {/* Bottom Floating Bar */}
+      <View style={styles.previewBottomFloatingBar} />
     </View>
   );
 }
@@ -862,24 +907,29 @@ function LastDayVisiblePreview() {
 function LastDayHiddenPreview() {
   return (
     <View style={styles.verticalPreviewBox}>
-      {/* Mini Smartphone Status Bar & Month Header */}
-      <View style={styles.previewWeekHeader}>
-        <View style={styles.previewWeekTitleBadge} />
-        <View style={styles.previewWeekProgressBadge} />
+      {/* Top Header: Left title + right mode pill */}
+      <View style={styles.previewHeaderRow}>
+        <View>
+          <View style={styles.previewWeekTitleBadge} />
+          <View style={styles.previewWeekSubTitleBadge} />
+        </View>
+        <View style={styles.previewModePillBadge} />
       </View>
       {/* 2-column day cards filling the full height (3 + 3) */}
-      <View style={[styles.previewGridRow, { height: 78, marginTop: 2, gap: 2.5 }]}>
+      <View style={[styles.previewGridRow, { height: 68, marginTop: 2, gap: 2.5 }]}>
         <View style={styles.previewCardCol}>
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
+          <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeader} /></View>
+          <View style={[styles.previewDayCardRealistic, styles.previewDayCardToday]}><View style={styles.previewDayCardHeaderToday} /></View>
+          <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeader} /></View>
         </View>
         <View style={styles.previewCardCol}>
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
-          <View style={styles.previewCardMini} />
+          <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeader} /></View>
+          <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeader} /></View>
+          <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeaderWeekend} /></View>
         </View>
       </View>
+      {/* Bottom Floating Bar */}
+      <View style={styles.previewBottomFloatingBar} />
     </View>
   );
 }
@@ -1216,38 +1266,79 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     overflow: 'hidden',
   },
-  previewWeekHeader: {
+  previewHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    height: 8,
-    marginBottom: 4,
+    alignItems: 'flex-start',
+    marginBottom: 2,
   },
   previewWeekTitleBadge: {
-    width: 24,
-    height: 6,
-    borderRadius: 2,
-    backgroundColor: '#94A3B8',
-  },
-  previewYearTitleBadge: {
     width: 18,
-    height: 6,
-    borderRadius: 2,
-    backgroundColor: colors.today,
+    height: 3.5,
+    borderRadius: 1,
+    backgroundColor: '#94A3B8',
+    marginBottom: 1,
   },
-  previewWeekProgressBadge: {
-    width: 14,
-    height: 5,
-    borderRadius: 2,
+  previewWeekSubTitleBadge: {
+    width: 11,
+    height: 2,
+    borderRadius: 0.5,
     backgroundColor: '#CBD5E1',
   },
+  previewModePillBadge: {
+    width: 12,
+    height: 4.5,
+    borderRadius: 2,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 0.5,
+    borderColor: '#E2E8F0',
+  },
+  previewYearTitleBadge: {
+    width: 16,
+    height: 4.5,
+    borderRadius: 1,
+    backgroundColor: colors.today,
+  },
+  previewDayCardRealistic: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2.5,
+    borderWidth: 0.5,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  previewDayCardToday: {
+    borderColor: colors.today,
+    borderWidth: 0.8,
+  },
+  previewDayCardHeader: {
+    height: 4.5,
+    backgroundColor: '#F1F5F9',
+  },
+  previewDayCardHeaderToday: {
+    height: 4.5,
+    backgroundColor: colors.today,
+  },
+  previewDayCardHeaderWeekend: {
+    height: 4.5,
+    backgroundColor: '#FFE4E2',
+  },
+  previewBottomFloatingBar: {
+    width: '100%',
+    height: 4.5,
+    borderRadius: 2.25,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 0.5,
+    borderColor: '#E2E8F0',
+    marginTop: 2,
+  },
   previewWideCardMini: {
-    height: 14,
-    borderRadius: 3,
+    height: 12,
+    borderRadius: 2.5,
     backgroundColor: '#FFF0EE',
     borderWidth: 0.5,
     borderColor: '#FFCDC8',
-    marginTop: 3,
+    marginTop: 2,
   },
   // Vertical card styles for LastDayVisibilityModal
   verticalCardsContainer: {
