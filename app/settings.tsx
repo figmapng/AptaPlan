@@ -604,14 +604,14 @@ function OptionModal({
 
 function WeekLayoutPreview() {
   return (
-    <View style={styles.previewBox}>
-      {/* Month header badge & progress pill (No calendar strip) */}
+    <View style={styles.phonePreviewBox}>
+      {/* Mini Smartphone Status Bar & Month Header */}
       <View style={styles.previewWeekHeader}>
         <View style={styles.previewWeekTitleBadge} />
         <View style={styles.previewWeekProgressBadge} />
       </View>
       {/* 2-column day cards (3 + 3) */}
-      <View style={styles.previewGridRow}>
+      <View style={[styles.previewGridRow, { height: 58, marginTop: 2, gap: 2.5 }]}>
         <View style={styles.previewCardCol}>
           <View style={styles.previewCardMini} />
           <View style={styles.previewCardMini} />
@@ -631,7 +631,7 @@ function WeekLayoutPreview() {
 
 function MonthLayoutPreview() {
   return (
-    <View style={styles.previewBox}>
+    <View style={styles.phonePreviewBox}>
       {/* Month header badge */}
       <View style={styles.previewMonthHeader}>
         <View style={styles.previewMonthTitleBadge} />
@@ -642,34 +642,40 @@ function MonthLayoutPreview() {
           <View key={i} style={[styles.previewDot, i >= 5 && styles.previewDotWeekend]} />
         ))}
       </View>
-      {/* 5x7 matrix cells */}
-      {[0, 1, 2, 3, 4].map((row) => (
-        <View key={row} style={styles.previewMatrixRow}>
-          {[0, 1, 2, 3, 4, 5, 6].map((col) => {
-            const isActive = row === 2 && col === 2;
-            const isWeekend = col >= 5;
-            return (
-              <View
-                key={col}
-                style={[
-                  styles.previewCellDot,
-                  isActive && styles.previewCellDotActive,
-                  isWeekend && !isActive && styles.previewCellDotWeekend,
-                ]}
-              />
-            );
-          })}
-        </View>
-      ))}
+      {/* 6 rows of 7 matrix cells */}
+      <View style={{ flex: 1, justifyContent: 'space-between', marginVertical: 2 }}>
+        {[0, 1, 2, 3, 4, 5].map((row) => (
+          <View key={row} style={styles.previewMatrixRow}>
+            {[0, 1, 2, 3, 4, 5, 6].map((col) => {
+              const isActive = row === 2 && col === 2;
+              const isWeekend = col >= 5;
+              return (
+                <View
+                  key={col}
+                  style={[
+                    styles.previewCellDot,
+                    isActive && styles.previewCellDotActive,
+                    isWeekend && !isActive && styles.previewCellDotWeekend,
+                  ]}
+                />
+              );
+            })}
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
 
 function YearLayoutPreview() {
   return (
-    <View style={styles.previewBox}>
-      {/* 3x4 mini month blocks */}
-      <View style={styles.previewYearGrid}>
+    <View style={styles.phonePreviewBox}>
+      {/* Year header badge */}
+      <View style={styles.previewMonthHeader}>
+        <View style={[styles.previewMonthTitleBadge, { width: 18 }]} />
+      </View>
+      {/* 4 rows x 3 columns of mini month blocks */}
+      <View style={[styles.previewYearGrid, { marginTop: 2 }]}>
         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((m) => (
           <View key={m} style={[styles.previewYearMonth, m === 7 && styles.previewYearMonthActive]}>
             <View style={styles.previewYearMonthHeader} />
@@ -1241,6 +1247,20 @@ const styles = StyleSheet.create({
     borderColor: '#DFE3E8',
     justifyContent: 'space-between',
     overflow: 'hidden',
+  },
+  phonePreviewBox: {
+    width: 58,
+    height: 104,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 4,
+    paddingTop: 5,
+    paddingBottom: 5,
+    borderWidth: 1.5,
+    borderColor: '#DFE3E8',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+    marginBottom: 8,
   },
   verticalCardInfo: {
     flex: 1,
