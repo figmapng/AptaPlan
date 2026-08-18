@@ -670,18 +670,38 @@ function MonthLayoutPreview() {
 function YearLayoutPreview() {
   return (
     <View style={styles.phonePreviewBox}>
-      {/* Year header badge */}
-      <View style={styles.previewMonthHeader}>
-        <View style={[styles.previewMonthTitleBadge, { width: 18 }]} />
+      {/* Mini Year Header: "2026" */}
+      <View style={styles.previewWeekHeader}>
+        <View style={[styles.previewWeekTitleBadge, { width: 16 }]} />
+        <View style={[styles.previewWeekProgressBadge, { width: 8 }]} />
       </View>
-      {/* 4 rows x 3 columns of mini month blocks */}
-      <View style={[styles.previewYearGrid, { marginTop: 2 }]}>
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((m) => (
-          <View key={m} style={[styles.previewYearMonth, m === 7 && styles.previewYearMonthActive]}>
-            <View style={styles.previewYearMonthHeader} />
-            <View style={styles.previewYearMonthLines} />
-          </View>
-        ))}
+
+      {/* 4 rows x 3 columns grid (12 months) */}
+      <View style={styles.previewYearGridNew}>
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((m) => {
+          const isActiveMonth = m === 7;
+          return (
+            <View
+              key={m}
+              style={[
+                styles.previewYearMonthCard,
+                isActiveMonth && styles.previewYearMonthCardActive,
+              ]}
+            >
+              {/* Month name bar */}
+              <View
+                style={[
+                  styles.previewYearMonthTitle,
+                  isActiveMonth && { backgroundColor: colors.today },
+                ]}
+              />
+              {/* Mini calendar grid lines */}
+              <View style={styles.previewYearMonthLine1} />
+              <View style={styles.previewYearMonthLine2} />
+              <View style={styles.previewYearMonthLine3} />
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -1361,38 +1381,51 @@ const styles = StyleSheet.create({
   previewCellDotWeekend: {
     backgroundColor: '#FFE4E2',
   },
-  previewYearGrid: {
+  previewYearGridNew: {
     flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 3,
     justifyContent: 'space-between',
+    alignContent: 'space-between',
+    marginTop: 2,
   },
-  previewYearMonth: {
-    width: '30%',
-    height: 17,
+  previewYearMonthCard: {
+    width: '31%',
+    height: 18,
     backgroundColor: '#F8F9FB',
-    borderRadius: 3,
+    borderRadius: 2,
     borderWidth: 0.5,
     borderColor: '#E2E8F0',
-    padding: 2,
+    padding: 1.5,
+    justifyContent: 'space-between',
   },
-  previewYearMonthActive: {
+  previewYearMonthCardActive: {
     borderColor: colors.today,
     backgroundColor: '#01B7FF12',
   },
-  previewYearMonthHeader: {
-    width: '60%',
-    height: 2.5,
-    backgroundColor: '#CBD5E1',
+  previewYearMonthTitle: {
+    width: '75%',
+    height: 2,
     borderRadius: 1,
-    marginBottom: 2,
+    backgroundColor: '#64748B',
   },
-  previewYearMonthLines: {
-    width: '100%',
-    height: 5,
+  previewYearMonthLine1: {
+    width: '95%',
+    height: 1.5,
+    borderRadius: 0.5,
+    backgroundColor: '#CBD5E1',
+  },
+  previewYearMonthLine2: {
+    width: '90%',
+    height: 1.5,
+    borderRadius: 0.5,
     backgroundColor: '#E2E8F0',
-    borderRadius: 1,
+  },
+  previewYearMonthLine3: {
+    width: '70%',
+    height: 1.5,
+    borderRadius: 0.5,
+    backgroundColor: '#E2E8F0',
   },
   visualCardLabel: {
     fontSize: 13,
