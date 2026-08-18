@@ -32,15 +32,15 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
         !date ? styles.iconOnly : undefined,
       ]}
     >
-      <CalendarIcon color={date ? '#23262D' : '#707684'} />
+      <CalendarIcon size={16} color={date ? '#4B5563' : '#707684'} />
       {displayText && <Text style={styles.activeText}>{displayText}</Text>}
     </AnimatedPressable>
   );
 }
 
-function CalendarIcon({ color = '#23262D' }: { color?: string }) {
+function CalendarIcon({ color = '#23262D', size = 18 }: { color?: string; size?: number }) {
   return (
-    <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
       <Path
         d="M1.6665 10C1.6665 6.85734 1.6665 5.286 2.64281 4.30968C3.61913 3.33337 5.19047 3.33337 8.33317 3.33337H11.6665C14.8092 3.33337 16.3806 3.33337 17.3568 4.30968C18.3332 5.286 18.3332 6.85734 18.3332 10V11.6667C18.3332 14.8094 18.3332 16.3808 17.3568 17.357C16.3806 18.3334 14.8092 18.3334 11.6665 18.3334H8.33317C5.19047 18.3334 3.61913 18.3334 2.64281 17.357C1.6665 16.3808 1.6665 14.8094 1.6665 11.6667V10Z"
         stroke={color}
@@ -68,6 +68,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#ECEEF2',
   },
   iconOnly: {
     width: 34,
@@ -79,10 +81,11 @@ const styles = StyleSheet.create({
   },
   activeChip: {
     backgroundColor: '#F3F4F6',
+    borderColor: '#E5E7EB',
   },
   activeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#23262D',
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#4B5563',
   },
 });

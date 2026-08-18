@@ -61,15 +61,15 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
         !label ? styles.iconOnly : undefined,
       ]}
     >
-      <RepeatIcon color={isActive ? '#23262D' : '#707684'} />
+      <RepeatIcon size={16} color={isActive ? '#01B7FF' : '#707684'} />
       {label && <Text style={[styles.text, isActive && styles.activeText]}>{label}</Text>}
     </AnimatedPressable>
   );
 }
 
-function RepeatIcon({ color = '#23262D' }: { color?: string }) {
+function RepeatIcon({ color = '#23262D', size = 18 }: { color?: string; size?: number }) {
   return (
-    <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
       <Path
         d="M16.5 4.5H5.5C3.84315 4.5 2.5 5.84315 2.5 7.5V8M13.5 1.5L16.5 4.5L13.5 7.5"
         stroke={color}
@@ -97,6 +97,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#ECEEF2',
   },
   iconOnly: {
     width: 34,
@@ -107,14 +109,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
   },
   activeChip: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#01B7FF12',
+    borderColor: '#01B7FF35',
   },
   text: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#23262D',
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#4B5563',
   },
   activeText: {
-    color: '#23262D',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#01B7FF',
   },
 });

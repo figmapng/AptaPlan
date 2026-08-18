@@ -29,15 +29,15 @@ export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps
         !time ? styles.iconOnly : undefined,
       ]}
     >
-      <ClockIcon color={time ? '#23262D' : '#707684'} />
+      <ClockIcon size={16} color={time ? '#4B5563' : '#707684'} />
       {time && <Text style={styles.activeText}>{time}</Text>}
     </AnimatedPressable>
   );
 }
 
-function ClockIcon({ color = '#23262D' }: { color?: string }) {
+function ClockIcon({ color = '#23262D', size = 18 }: { color?: string; size?: number }) {
   return (
-    <Svg width={18} height={18} viewBox="0 0 20 20" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
       <Path
         d="M10 18.3334C14.1421 18.3334 17.5 14.9755 17.5 10.8334C17.5 6.69124 14.1421 3.33337 10 3.33337C5.85786 3.33337 2.5 6.69124 2.5 10.8334C2.5 14.9755 5.85786 18.3334 10 18.3334Z"
         stroke={color}
@@ -77,6 +77,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#ECEEF2',
   },
   iconOnly: {
     width: 34,
@@ -88,10 +90,11 @@ const styles = StyleSheet.create({
   },
   activeChip: {
     backgroundColor: '#F3F4F6',
+    borderColor: '#E5E7EB',
   },
   activeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#23262D',
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#4B5563',
   },
 });
