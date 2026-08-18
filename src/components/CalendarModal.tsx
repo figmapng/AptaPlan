@@ -175,8 +175,8 @@ export function CalendarModal({
   const nextMonthDate = addMonths(currentMonthDate, 1);
 
   const quickOptions = [
-    { key: todayKey, label: 'Бүгін', icon: SunIcon, color: '#F59E0B' },
-    { key: tomorrowKey, label: 'Ертең', icon: TomorrowIcon, color: '#0284C7' },
+    { key: todayKey, label: 'Бүгін', icon: SunIcon, color: '#0284C7' },
+    { key: tomorrowKey, label: 'Ертең', icon: TomorrowIcon, color: '#F59E0B' },
     { key: weekendKey, label: 'Демалыс күні', icon: WeekendIcon, color: '#FF5A5F' },
     { key: nextWeekKey, label: 'Келесі апта', icon: NextWeekIcon, color: '#8B5CF6' },
   ];
