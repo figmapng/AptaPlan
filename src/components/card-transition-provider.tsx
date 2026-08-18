@@ -640,12 +640,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     }
     isAnimatingRef.current = true;
     transitionRef.current = { ...origin.current, phase: 'closing' };
-    setTransition(transitionRef.current);
 
     Animated.timing(progress, {
       toValue: 0,
-      duration: 230,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      duration: 210,
+      easing: Easing.bezier(0.2, 0.8, 0.25, 1),
       useNativeDriver: false,
     }).start(() => {
       isAnimatingRef.current = false;
