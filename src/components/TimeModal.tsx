@@ -34,6 +34,7 @@ export function TimeModal({
   onRemoveTime,
   onClose,
 }: TimeModalProps) {
+  const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const onCloseRef = useRef(onClose);
@@ -77,8 +78,6 @@ export function TimeModal({
     onSelectTime(`${hh}:${mm}`);
     handleClose();
   };
-
-  const insets = useSafeAreaInsets();
 
   const handlePresetSelect = (timeStr: string) => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
