@@ -106,6 +106,20 @@ const CarouselCard = React.memo(function CarouselCard({
   const isCenter = virtualIndex === 0;
   const isMonthOrigin = currentFrame.width < 100;
 
+  const cardOpacity = isMonthOrigin
+    ? progress.interpolate({
+        inputRange: [0, 0.35, 1],
+        outputRange: [0, 0.95, 1],
+      })
+    : 1;
+
+  const cardScale = isMonthOrigin
+    ? progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.94, 1],
+      })
+    : 1;
+
   return (
     <Animated.View
       style={[
@@ -132,8 +146,12 @@ const CarouselCard = React.memo(function CarouselCard({
             outputRange: [isMonthOrigin ? 8 : 14, 16],
           }),
           backgroundColor: isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : '#EDEFF2',
+          opacity: cardOpacity,
           zIndex: isCenter ? 9999 : 9998,
-          transform: [{ translateX: cardTranslateX }],
+          transform: [
+            { translateX: cardTranslateX },
+            { scale: cardScale },
+          ],
         },
       ]}
     >
@@ -777,8 +795,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
           style={{
             flex: 1,
             opacity: progress.interpolate({
-              inputRange: [0, 1],
-              outputRange: [1, 0.5],
+              inputRange: [0, 0.7, 1],
+              outputRange: [1, 0.35, 0],
             }),
           }}
         >
@@ -881,7 +899,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 bottom: 0,
                 height: Math.max(insets.bottom + 8, 12) + 54,
                 zIndex: 10000,
-                opacity: progress,
+                opacity: progress.interpolate({
+                  inputRange: [0.3, 1],
+                  outputRange: [0, 1],
+                }),
               }}
             >
               <Svg width="100%" height="100%">
@@ -909,7 +930,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 gap: 10,
                 zIndex: 10001,
                 elevation: 12,
-                opacity: progress,
+                opacity: progress.interpolate({
+                  inputRange: [0.3, 1],
+                  outputRange: [0, 1],
+                }),
               }}
             >
               <BackButton onPress={closeCard} />
