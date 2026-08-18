@@ -2,9 +2,9 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState, use }
 import type { Task, TaskInput } from '@/types/task';
 import type { PlannerSettings } from '@/types/settings';
 import { defaultSettings } from '@/types/settings';
-import { getDatabase } from '@/database/database';
+import { getDatabase, getDatabaseSync } from '@/database/database';
 import * as repo from '@/database/task-repository';
-import { getSettings, setSetting } from '@/database/settings-repository';
+import { getSettings, getSettingsSync, setSetting } from '@/database/settings-repository';
 import { cancelReminder, scheduleReminder } from '@/services/notification-service';
 import { removeSyncedAppleReminders, syncAppleRemindersToAptaPlan, type SyncResult } from '@/services/apple-reminders-service';
 
@@ -34,7 +34,14 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [settings, setSettings] = useState(defaultSettings);
+  const [settings, setSettings] = useState<PlannerSettings>(() => {
+    try {
+      const db = getDatabaseSync();
+      return getSettingsSync(db);
+    } catch {
+      return defaultSettings;
+    }
+  });
 
   const rangeRef = useRef<[string, string] | null>(null);
   const tasksRef = useRef<Task[]>([]);

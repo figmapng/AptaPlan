@@ -141,14 +141,14 @@ export const DayCard = memo(function DayCardComponent({
       })
     : 1;
 
-  const headerBg = today ? '#01B7FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
-  const outerBg = today ? '#01B7FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
-  const cardBorderColor = today ? '#01B7FF' : isWeekend ? '#FFE5E2' : '#EDEFF2';
+  const headerBg = today ? colors.today : isWeekend ? '#FFE5E2' : '#EDEFF2';
+  const outerBg = today ? colors.today : isWeekend ? '#FFE5E2' : '#EDEFF2';
+  const cardBorderColor = today ? colors.today : isWeekend ? '#FFE5E2' : '#EDEFF2';
   const cardBorderWidth = 0;
 
   const numOuterBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
   const numInnerBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
-  const numTextColor = today ? '#049BD6' : isWeekend ? colors.weekendNumText : colors.dateNumText;
+  const numTextColor = today ? colors.today : isWeekend ? colors.weekendNumText : colors.dateNumText;
 
   const dayNameColor = today ? '#FFFFFF' : isWeekend ? colors.sundayText : '#333C4E';
   const progressCountColor = today ? '#FFFFFF' : isWeekend ? '#7B4545' : '#333C4E';

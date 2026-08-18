@@ -615,7 +615,7 @@ function WeekLayoutPreview() {
       </View>
 
       {/* 2-column day cards (3 + 3 = exactly 6 days) */}
-      <View style={[styles.previewGridRow, { flex: 1, marginVertical: 2.5, gap: 2.5 }]}>
+      <View style={[styles.previewGridRow, { flex: 1, marginTop: 3, gap: 2.5 }]}>
         {/* Left column */}
         <View style={styles.previewCardCol}>
           {/* Card 1: Mon */}
@@ -648,9 +648,6 @@ function WeekLayoutPreview() {
           </View>
         </View>
       </View>
-
-      {/* Bottom Floating Bar */}
-      <View style={styles.previewBottomFloatingBar} />
     </View>
   );
 }
@@ -674,48 +671,37 @@ function MonthLayoutPreview() {
         ))}
       </View>
 
-      {/* 6 week rows of day cells with active week outline & today filled */}
+      {/* 6 week rows of day cells */}
       <View style={styles.previewMonthWeeksCol}>
         {[0, 1, 2, 3, 4, 5].map((w) => {
-          const isCurrentWeek = w === 3; // 4th row (Aug 17-23)
+          const isCurrentWeek = w === 3;
           return (
-            <View
-              key={w}
-              style={[
-                styles.previewMonthWeekWrapper,
-                isCurrentWeek && styles.previewMonthWeekActive,
-              ]}
-            >
-              <View style={styles.previewMonthCellsRow}>
-                {[0, 1, 2, 3, 4, 5, 6].map((d) => {
-                  const isToday = isCurrentWeek && d === 1; // Tue 18
-                  const isWeekend = d >= 5;
-                  return (
+            <View key={w} style={styles.previewMonthCellsRow}>
+              {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+                const isToday = isCurrentWeek && d === 1;
+                const isWeekend = d >= 5;
+                return (
+                  <View
+                    key={d}
+                    style={[
+                      styles.previewMonthDayCell,
+                      isToday && styles.previewMonthDayCellToday,
+                    ]}
+                  >
                     <View
-                      key={d}
                       style={[
-                        styles.previewMonthDayCell,
-                        isToday && styles.previewMonthDayCellToday,
+                        styles.previewMonthDayNum,
+                        isToday && { backgroundColor: '#FFFFFF' },
+                        isWeekend && !isToday && { backgroundColor: '#FF8882' },
                       ]}
-                    >
-                      <View
-                        style={[
-                          styles.previewMonthDayNum,
-                          isToday && { backgroundColor: '#FFFFFF' },
-                          isWeekend && !isToday && { backgroundColor: '#FF8882' },
-                        ]}
-                      />
-                    </View>
-                  );
-                })}
-              </View>
+                    />
+                  </View>
+                );
+              })}
             </View>
           );
         })}
       </View>
-
-      {/* Bottom Floating Bar */}
-      <View style={styles.previewBottomFloatingBar} />
     </View>
   );
 }
@@ -764,9 +750,6 @@ function YearLayoutPreview() {
           );
         })}
       </View>
-
-      {/* Bottom Floating Bar */}
-      <View style={styles.previewBottomFloatingBar} />
     </View>
   );
 }
@@ -884,7 +867,7 @@ function LastDayVisiblePreview() {
         <View style={styles.previewModePillBadge} />
       </View>
       {/* 2-column day cards (3 + 3) */}
-      <View style={[styles.previewGridRow, { height: 50, marginTop: 2, gap: 2.5 }]}>
+      <View style={[styles.previewGridRow, { flex: 1, marginTop: 3, marginBottom: 3, gap: 2.5 }]}>
         <View style={styles.previewCardCol}>
           <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeader} /></View>
           <View style={[styles.previewDayCardRealistic, styles.previewDayCardToday]}><View style={styles.previewDayCardHeaderToday} /></View>
@@ -898,8 +881,6 @@ function LastDayVisiblePreview() {
       </View>
       {/* 7th wide card at the bottom (Sunday) */}
       <View style={styles.previewWideCardMini} />
-      {/* Bottom Floating Bar */}
-      <View style={styles.previewBottomFloatingBar} />
     </View>
   );
 }
@@ -916,7 +897,7 @@ function LastDayHiddenPreview() {
         <View style={styles.previewModePillBadge} />
       </View>
       {/* 2-column day cards filling the full height (3 + 3) */}
-      <View style={[styles.previewGridRow, { flex: 1, marginVertical: 2.5, gap: 2.5 }]}>
+      <View style={[styles.previewGridRow, { flex: 1, marginTop: 3, gap: 2.5 }]}>
         <View style={styles.previewCardCol}>
           <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeader} /></View>
           <View style={[styles.previewDayCardRealistic, styles.previewDayCardToday]}><View style={styles.previewDayCardHeaderToday} /></View>
@@ -928,8 +909,6 @@ function LastDayHiddenPreview() {
           <View style={styles.previewDayCardRealistic}><View style={styles.previewDayCardHeaderWeekend} /></View>
         </View>
       </View>
-      {/* Bottom Floating Bar */}
-      <View style={styles.previewBottomFloatingBar} />
     </View>
   );
 }
@@ -962,13 +941,13 @@ function LastDayVisibilityModal({
     {
       mode: 'visible',
       label: 'Үнемі көрінеді',
-      sublabel: '7 күннен тұратын толық апта көрінісі (Жексенбі қосылған)',
+      sublabel: '7 күннен тұратын толық апта көрінісі (свайппен жасыруға болады)',
       preview: <LastDayVisiblePreview />,
     },
     {
       mode: 'hidden',
       label: 'Жасырын',
-      sublabel: '6 күндік ықшам режим (Дүйсенбі - Сенбі)',
+      sublabel: '6 күндік ықшам режим (свайппен ашуға болады)',
       preview: <LastDayHiddenPreview />,
     },
   ];
@@ -1323,22 +1302,12 @@ const styles = StyleSheet.create({
     height: 4.5,
     backgroundColor: '#FFE4E2',
   },
-  previewBottomFloatingBar: {
-    width: '100%',
-    height: 4.5,
-    borderRadius: 2.25,
-    backgroundColor: '#F8F9FA',
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
-    marginTop: 2,
-  },
   previewWideCardMini: {
-    height: 12,
-    borderRadius: 2.5,
+    height: 14,
+    borderRadius: 3,
     backgroundColor: '#FFF0EE',
     borderWidth: 0.5,
     borderColor: '#FFCDC8',
-    marginTop: 2,
   },
   // Vertical card styles for LastDayVisibilityModal
   verticalCardsContainer: {
