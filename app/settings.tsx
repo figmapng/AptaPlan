@@ -676,7 +676,13 @@ function MonthLayoutPreview() {
         {[0, 1, 2, 3, 4, 5].map((w) => {
           const isCurrentWeek = w === 3;
           return (
-            <View key={w} style={styles.previewMonthCellsRow}>
+            <View
+              key={w}
+              style={[
+                styles.previewMonthCellsRow,
+                isCurrentWeek && styles.previewMonthCurrentWeekGroup,
+              ]}
+            >
               {[0, 1, 2, 3, 4, 5, 6].map((d) => {
                 const isToday = isCurrentWeek && d === 1;
                 const isWeekend = d >= 5;
@@ -685,14 +691,15 @@ function MonthLayoutPreview() {
                     key={d}
                     style={[
                       styles.previewMonthDayCell,
+                      isWeekend && styles.previewMonthDayCellWeekend,
                       isToday && styles.previewMonthDayCellToday,
                     ]}
                   >
                     <View
                       style={[
                         styles.previewMonthDayNum,
-                        isToday && { backgroundColor: '#FFFFFF' },
-                        isWeekend && !isToday && { backgroundColor: '#FF8882' },
+                        isWeekend && styles.previewMonthDayNumWeekend,
+                        isToday && styles.previewMonthDayNumToday,
                       ]}
                     />
                   </View>
@@ -735,16 +742,16 @@ function YearLayoutPreview() {
                 ]}
               />
               {/* DOW row */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 1 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 0.5 }}>
                 <View style={{ width: 1.5, height: 1, backgroundColor: '#94A3B8' }} />
                 <View style={{ width: 1.5, height: 1, backgroundColor: '#94A3B8' }} />
-                <View style={{ width: 1.5, height: 1, backgroundColor: '#FF8882' }} />
+                <View style={{ width: 1.5, height: 1, backgroundColor: '#FF7B75' }} />
               </View>
               {/* Mini calendar grid lines / dot */}
               <View style={styles.previewYearMonthLine1} />
               <View style={styles.previewYearMonthLine2} />
               {isActiveMonth && (
-                <View style={{ width: 2.5, height: 2.5, borderRadius: 1.25, backgroundColor: colors.today, alignSelf: 'center', marginTop: 0.5 }} />
+                <View style={{ width: 2, height: 2, borderRadius: 1, backgroundColor: colors.today, alignSelf: 'center', marginTop: 0.5 }} />
               )}
             </View>
           );
@@ -1445,14 +1452,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 2,
   },
-  previewMonthWeekWrapper: {
-    padding: 1,
-    borderRadius: 3,
-  },
-  previewMonthWeekActive: {
-    backgroundColor: '#01B7FF0E',
-    borderWidth: 0.5,
-    borderColor: colors.today,
+  previewMonthCurrentWeekGroup: {
+    borderWidth: 0.8,
+    borderColor: '#40C9FF60',
+    borderRadius: 2.5,
+    padding: 0.5,
+    marginHorizontal: -0.5,
   },
   previewMonthCellsRow: {
     flexDirection: 'row',
@@ -1461,22 +1466,33 @@ const styles = StyleSheet.create({
   },
   previewMonthDayCell: {
     flex: 1,
-    height: 11,
-    backgroundColor: '#F8F9FB',
+    height: 10,
+    backgroundColor: '#F6F8FA',
     borderRadius: 2,
     borderWidth: 0.5,
-    borderColor: '#E2E8F0',
+    borderColor: '#E8EDF3',
     padding: 1,
   },
+  previewMonthDayCellWeekend: {
+    backgroundColor: '#FFF3F2',
+    borderColor: '#FFE0DC',
+  },
   previewMonthDayCellToday: {
-    backgroundColor: colors.today,
+    backgroundColor: '#E5F6FD',
     borderColor: colors.today,
+    borderWidth: 0.8,
   },
   previewMonthDayNum: {
     width: 3,
     height: 2,
     borderRadius: 0.5,
-    backgroundColor: '#94A3B8',
+    backgroundColor: '#8A94A6',
+  },
+  previewMonthDayNumWeekend: {
+    backgroundColor: '#FF5959',
+  },
+  previewMonthDayNumToday: {
+    backgroundColor: colors.today,
   },
   previewYearGridNew: {
     flex: 1,
@@ -1489,22 +1505,22 @@ const styles = StyleSheet.create({
   previewYearMonthCard: {
     width: '31%',
     height: 18,
-    backgroundColor: '#F8F9FB',
-    borderRadius: 2,
-    borderWidth: 0.5,
-    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 3,
+    borderWidth: 0.8,
+    borderColor: '#D8DEE8',
     padding: 1.5,
     justifyContent: 'space-between',
   },
   previewYearMonthCardActive: {
     borderColor: colors.today,
-    backgroundColor: '#01B7FF12',
+    borderWidth: 1,
   },
   previewYearMonthTitle: {
     width: '75%',
     height: 2,
     borderRadius: 1,
-    backgroundColor: '#64748B',
+    backgroundColor: '#1E293B',
   },
   previewYearMonthLine1: {
     width: '95%',
@@ -1514,12 +1530,6 @@ const styles = StyleSheet.create({
   },
   previewYearMonthLine2: {
     width: '90%',
-    height: 1.5,
-    borderRadius: 0.5,
-    backgroundColor: '#E2E8F0',
-  },
-  previewYearMonthLine3: {
-    width: '70%',
     height: 1.5,
     borderRadius: 0.5,
     backgroundColor: '#E2E8F0',
