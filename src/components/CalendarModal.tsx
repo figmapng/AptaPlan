@@ -4,7 +4,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { addMonths } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
-import { fromDateKey, getNextWeekKey, getTodayKey, getTomorrowKey, kzMonthsFull, kzWeekdaysShort, toDateKey } from '@/utils/dateHelpers';
+import { fromDateKey, getNextWeekMondayKey, getThisWeekendKey, getTodayKey, getTomorrowKey, kzMonthsFull, kzWeekdaysShort, toDateKey } from '@/utils/dateHelpers';
 import { AnimatedPressable } from './AnimatedPressable';
 import { MonthPickerModal } from './MonthPickerModal';
 
@@ -116,16 +116,18 @@ export function CalendarModal({
 
   const todayKey = getTodayKey();
   const tomorrowKey = getTomorrowKey();
-  const nextWeekKey = getNextWeekKey();
+  const weekendKey = getThisWeekendKey();
+  const nextWeekKey = getNextWeekMondayKey();
 
   // 3-Month Carousel Data: [prevMonth, currMonth, nextMonth]
   const prevMonthDate = addMonths(currentMonthDate, -1);
   const nextMonthDate = addMonths(currentMonthDate, 1);
 
   const quickOptions = [
-    { key: todayKey, label: 'Бүгін', icon: SunIcon },
-    { key: tomorrowKey, label: 'Ертең', icon: TomorrowIcon },
-    { key: nextWeekKey, label: 'Келесі апта', icon: NextWeekIcon },
+    { key: todayKey, label: 'Бүгін', icon: SunIcon, color: '#F59E0B' },
+    { key: tomorrowKey, label: 'Ертең', icon: TomorrowIcon, color: '#0284C7' },
+    { key: weekendKey, label: 'Демалыс күні', icon: WeekendIcon, color: '#FF5A5F' },
+    { key: nextWeekKey, label: 'Келесі апта', icon: NextWeekIcon, color: '#8B5CF6' },
   ];
 
   // Capitalized Month Title
@@ -163,7 +165,7 @@ export function CalendarModal({
             {quickOptions.map((opt) => {
               const isSelected = selectedDate === opt.key;
               const IconComp = opt.icon;
-              const iconColor = isSelected ? '#FFFFFF' : '#01B7FF';
+              const iconColor = isSelected ? '#FFFFFF' : opt.color;
 
               return (
                 <AnimatedPressable
@@ -171,12 +173,17 @@ export function CalendarModal({
                   activeScale={0.92}
                   style={[
                     styles.quickBtn,
-                    isSelected && styles.quickBtnActive,
+                    isSelected && { backgroundColor: opt.color, borderColor: opt.color },
                   ]}
                   onPress={() => handleQuickSelect(opt.key)}
                 >
                   <IconComp color={iconColor} />
-                  <Text style={[styles.quickText, isSelected && styles.quickTextActive]}>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    style={[styles.quickText, isSelected && styles.quickTextActive]}
+                  >
                     {opt.label}
                   </Text>
                 </AnimatedPressable>
@@ -398,12 +405,12 @@ function DaysGridMatrix({
 // Icons
 function SunIcon({ color }: { color: string }) {
   return (
-    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="12" r="4" stroke={color} strokeWidth="2.2" />
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="4" stroke={color} strokeWidth="2.3" />
       <Path
         d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
         stroke={color}
-        strokeWidth="2.2"
+        strokeWidth="2.3"
         strokeLinecap="round"
       />
     </Svg>
@@ -412,11 +419,25 @@ function SunIcon({ color }: { color: string }) {
 
 function TomorrowIcon({ color }: { color: string }) {
   return (
-    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M17 18a5 5 0 00-10 0M12 2v8M9 5l3-3 3 3M2 18h20"
+        d="M17 18a5 5 0 00-10 0M12 3v7M9 6l3-3 3 3M2 18h20"
         stroke={color}
-        strokeWidth="2.2"
+        strokeWidth="2.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function WeekendIcon({ color }: { color: string }) {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M18 8h1a3 3 0 010 6h-1M3 8h15v8a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM7 2v3M11 2v3M15 2v3"
+        stroke={color}
+        strokeWidth="2.3"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -426,11 +447,11 @@ function TomorrowIcon({ color }: { color: string }) {
 
 function NextWeekIcon({ color }: { color: string }) {
   return (
-    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
       <Path
         d="M13 5l7 7-7 7M5 5l7 7-7 7"
         stroke={color}
-        strokeWidth="2.2"
+        strokeWidth="2.3"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -532,18 +553,18 @@ const styles = StyleSheet.create({
   quickRow: {
     width: '100%',
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
     paddingBottom: 14,
   },
   quickBtn: {
     flex: 1,
-    height: 36,
+    height: 38,
     borderRadius: 10,
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
+    gap: 4,
     backgroundColor: '#F3F4F6',
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -553,7 +574,7 @@ const styles = StyleSheet.create({
     borderColor: '#01B7FF',
   },
   quickText: {
-    fontSize: 13,
+    fontSize: 11.5,
     fontWeight: '600',
     color: '#374151',
   },

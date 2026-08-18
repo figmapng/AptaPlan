@@ -30,17 +30,21 @@ export function getTomorrowKey(): string {
   return toDateKey(addDays(new Date(), 1));
 }
 
-export function getNextWeekKey(): string {
-  return toDateKey(addDays(new Date(), 7));
-}
-
-export function getNextSaturdayKey(): string {
+export function getThisWeekendKey(): string {
   const d = new Date();
-  const day = d.getDay();
-  const diff = (6 - day + 7) % 7 || 7;
+  const day = d.getDay(); // 0: Sun, 6: Sat
+  if (day === 6) return toDateKey(d);
+  if (day === 0) return toDateKey(d);
+  const diff = 6 - day;
   return toDateKey(addDays(d, diff));
 }
 
+export function getNextWeekMondayKey(): string {
+  const d = new Date();
+  const day = d.getDay(); // 0: Sun, 1: Mon...
+  const daysUntilNextMon = day === 0 ? 1 : (8 - day);
+  return toDateKey(addDays(d, daysUntilNextMon));
+}
 
 export const kzWeekdaysShort = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
 
