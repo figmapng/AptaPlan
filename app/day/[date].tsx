@@ -97,9 +97,13 @@ export default function DayScreen() {
   const isWeekend = selectedDate.getDay() === 0 || selectedDate.getDay() === 6;
   const isSelectedToday = isToday(selectedDate);
   const activeDayColor = '#9FAABA';
-  // Fixed back button: 28px from bottom, 42px high, with another 28px gap above it.
-  const cardMaxHeight = Math.max(220, windowHeight - insets.top - 102);
-  const taskAreaMaxHeight = cardMaxHeight - 48;
+  const [measuredListHeight, setMeasuredListHeight] = useState(0);
+  const emptyCardHeight = Math.round(windowHeight * 0.42);
+  const cardMaxHeight = windowHeight - insets.top - (insets.bottom + 88) - 12;
+  const taskListHeight = measuredListHeight > 0 ? measuredListHeight : (dayTasks.length > 0 ? dayTasks.length * 48 + 16 : 80);
+  const rawContentHeight = 48 + taskListHeight;
+  const cardHeight = Math.min(cardMaxHeight, Math.max(emptyCardHeight, rawContentHeight));
+  const taskAreaMaxHeight = cardHeight - 48;
   const returnToList = () => {
     closeCard();
     if (router.canGoBack()) {
@@ -162,6 +166,7 @@ export default function DayScreen() {
           borderRadius: 20,
           borderCurve: 'continuous',
           overflow: 'hidden',
+          height: cardHeight,
           maxHeight: cardMaxHeight,
           borderWidth: 1,
           borderColor: isSelectedToday ? colors.activeCardBorder : colors.cardBorder,
@@ -216,7 +221,11 @@ export default function DayScreen() {
           contentContainerStyle={{ paddingHorizontal: 6, paddingTop: 10, paddingBottom: 16 }}
         >
           {dayTasks.length ? (
-            <Pressable style={{ flexGrow: 1 }} onPress={beginAdding}>
+            <Pressable
+              style={{ flexGrow: 1 }}
+              onPress={beginAdding}
+              onLayout={(e) => setMeasuredListHeight(e.nativeEvent.layout.height)}
+            >
               <SortableTaskList
                 data={dayTasks}
                 keyExtractor={(task) => `${task.id}:${task.date}`}

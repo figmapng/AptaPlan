@@ -94,8 +94,10 @@ const CarouselCard = React.memo(function CarouselCard({
     scrollRef.current?.scrollTo({ y: nextOffset, animated: false });
   }, []);
 
+  const [localListHeight, setLocalListHeight] = useState(0);
   const cardTaskCount = cardTasks.length;
-  const rawCardContentHeight = 44 + 8 + (cardTaskCount > 0 ? cardTaskCount * 52 + 16 : 120);
+  const taskListHeight = localListHeight > 0 ? localListHeight : (cardTaskCount > 0 ? cardTaskCount * 48 + 12 : 80);
+  const rawCardContentHeight = 44 + 8 + taskListHeight;
   const cardContentHeight = Math.max(emptyCardHeight, rawCardContentHeight);
   const cardTargetHeight = Math.min(maxHeight, cardContentHeight);
 
@@ -345,7 +347,13 @@ const CarouselCard = React.memo(function CarouselCard({
             contentContainerStyle={{ paddingHorizontal: 6, paddingTop: 4, paddingBottom: 8 }}
           >
             {cardTasks.length ? (
-              <View onLayout={(e) => isCenter && handleListLayout(e.nativeEvent.layout.height)}>
+              <View
+                onLayout={(e) => {
+                  const h = e.nativeEvent.layout.height;
+                  setLocalListHeight(h);
+                  if (isCenter) handleListLayout(h);
+                }}
+              >
                 <SortableTaskList
                   data={cardTasks}
                   keyExtractor={(task) => `${task.id}:${task.date}`}
