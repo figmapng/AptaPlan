@@ -755,23 +755,20 @@ function DefaultViewModeModal({
     onClose();
   };
 
-  const options: { mode: 'week' | 'month' | 'year'; label: string; sublabel: string; preview: React.ReactNode }[] = [
+  const options: { mode: 'week' | 'month' | 'year'; label: string; preview: React.ReactNode }[] = [
     {
       mode: 'week',
       label: 'Апта',
-      sublabel: 'Стандартты',
       preview: <WeekLayoutPreview />,
     },
     {
       mode: 'month',
       label: 'Ай',
-      sublabel: 'Күнтізбе',
       preview: <MonthLayoutPreview />,
     },
     {
       mode: 'year',
       label: 'Жыл',
-      sublabel: 'Шолу',
       preview: <YearLayoutPreview />,
     },
   ];
@@ -806,7 +803,7 @@ function DefaultViewModeModal({
                   {/* Visual UI Preview Graphic */}
                   {opt.preview}
 
-                  {/* Label */}
+                  {/* Mode Label */}
                   <Text
                     style={[
                       styles.visualCardLabel,
@@ -814,16 +811,6 @@ function DefaultViewModeModal({
                     ]}
                   >
                     {opt.label}
-                  </Text>
-
-                  {/* Subtitle / Badge */}
-                  <Text
-                    style={[
-                      styles.visualCardSublabel,
-                      isSelected && styles.visualCardSublabelSelected,
-                    ]}
-                  >
-                    {opt.sublabel}
                   </Text>
 
                   {/* Radio Indicator */}
@@ -1240,7 +1227,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 6,
     borderRadius: 2,
-    backgroundColor: '#334155',
+    backgroundColor: '#94A3B8',
   },
   previewYearTitleBadge: {
     width: 18,
@@ -1481,7 +1468,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 1,
+    marginBottom: 8,
   },
   visualCardLabelSelected: {
     color: colors.today,
