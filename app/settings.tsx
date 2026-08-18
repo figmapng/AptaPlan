@@ -369,29 +369,12 @@ export default function SettingsScreen() {
         ]}
       />
 
-      {/* Last Day Visibility Modal */}
-      <OptionModal
+      {/* Visual Last Day Visibility Modal */}
+      <LastDayVisibilityModal
         visible={lastDayModalOpen}
-        title="Соңғы күннің көрінуі"
+        currentValue={settings.lastDayVisibility || 'visible'}
         onClose={() => setLastDayModalOpen(false)}
-        options={[
-          {
-            label: 'Үнемі көрінеді (Стандартты)',
-            selected: !settings.lastDayVisibility || settings.lastDayVisibility === 'visible',
-            onSelect: () => {
-              void setPref('lastDayVisibility', 'visible');
-              setLastDayModalOpen(false);
-            },
-          },
-          {
-            label: 'Жасырын',
-            selected: settings.lastDayVisibility === 'hidden',
-            onSelect: () => {
-              void setPref('lastDayVisibility', 'hidden');
-              setLastDayModalOpen(false);
-            },
-          },
-        ]}
+        onSelectValue={(val) => void setPref('lastDayVisibility', val)}
       />
 
       {/* Completed Placement Modal */}
@@ -801,6 +784,207 @@ function DefaultViewModeModal({
 
                   {/* Radio Indicator */}
                   <View style={[styles.visualRadio, isSelected && styles.visualRadioSelected]}>
+                    {isSelected && <View style={styles.visualRadioInner} />}
+                  </View>
+                </AnimatedPressable>
+              );
+            })}
+          </View>
+
+          {/* Confirm Button */}
+          <Pressable style={styles.modalContinueButton} onPress={handleConfirm}>
+            <Text style={styles.modalContinueButtonText}>Сақтау</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function LastDayVisiblePreview() {
+  return (
+    <View style={styles.previewBox}>
+      {/* Top week strip with 7 days */}
+      <View style={styles.previewWeekBar}>
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          <View
+            key={i}
+            style={[
+              styles.previewDayPill,
+              i === 1 && styles.previewDayPillActive,
+              i >= 5 && styles.previewDayPillWeekend,
+            ]}
+          />
+        ))}
+      </View>
+      {/* 2-column day cards (3 + 3) */}
+      <View style={[styles.previewGridRow, { flex: 0, height: 44, gap: 3 }]}>
+        <View style={styles.previewCardCol}>
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+        </View>
+        <View style={styles.previewCardCol}>
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+        </View>
+      </View>
+      {/* 7th wide card at the bottom */}
+      <View
+        style={{
+          height: 15,
+          borderRadius: 4,
+          backgroundColor: '#FFF0EE',
+          borderWidth: 0.5,
+          borderColor: '#FFCDC8',
+          marginTop: 3,
+        }}
+      />
+    </View>
+  );
+}
+
+function LastDayHiddenPreview() {
+  return (
+    <View style={styles.previewBox}>
+      {/* Top week strip with 6 days */}
+      <View style={styles.previewWeekBar}>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <View
+            key={i}
+            style={[
+              styles.previewDayPill,
+              i === 1 && styles.previewDayPillActive,
+              i === 5 && styles.previewDayPillWeekend,
+            ]}
+          />
+        ))}
+        {/* 7th day faded/empty outline */}
+        <View
+          style={[
+            styles.previewDayPill,
+            {
+              backgroundColor: 'transparent',
+              borderWidth: 0.5,
+              borderColor: '#CBD5E1',
+            },
+          ]}
+        />
+      </View>
+      {/* 2-column day cards filling the full height (3 + 3) */}
+      <View style={[styles.previewGridRow, { flex: 1, gap: 3 }]}>
+        <View style={styles.previewCardCol}>
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+        </View>
+        <View style={styles.previewCardCol}>
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function LastDayVisibilityModal({
+  visible,
+  currentValue,
+  onSelectValue,
+  onClose,
+}: {
+  visible: boolean;
+  currentValue: 'visible' | 'hidden';
+  onSelectValue: (val: 'visible' | 'hidden') => void;
+  onClose: () => void;
+}) {
+  const [selected, setSelected] = useState<'visible' | 'hidden'>(currentValue || 'visible');
+
+  useEffect(() => {
+    if (visible) {
+      setSelected(currentValue || 'visible');
+    }
+  }, [visible, currentValue]);
+
+  const handleConfirm = () => {
+    onSelectValue(selected);
+    onClose();
+  };
+
+  const options: { mode: 'visible' | 'hidden'; label: string; sublabel: string; preview: React.ReactNode }[] = [
+    {
+      mode: 'visible',
+      label: 'Үнемі көрінеді',
+      sublabel: '7 күн (Толық апта)',
+      preview: <LastDayVisiblePreview />,
+    },
+    {
+      mode: 'hidden',
+      label: 'Жасырын',
+      sublabel: '6 күн (Дс - Сб)',
+      preview: <LastDayHiddenPreview />,
+    },
+  ];
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={styles.modalContentCard}>
+          {/* Header with Title and Close X button */}
+          <View style={styles.modalHeaderRow}>
+            <Text style={styles.modalHeaderTitle}>Соңғы күннің көрінуі</Text>
+            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
+              <Ionicons name="close" size={18} color={colors.secondary} />
+            </Pressable>
+          </View>
+
+          {/* Visual Cards Row */}
+          <View style={styles.visualCardsContainer}>
+            {options.map((opt) => {
+              const isSelected = selected === opt.mode;
+              return (
+                <AnimatedPressable
+                  key={opt.mode}
+                  activeScale={0.95}
+                  style={[
+                    styles.visualCard,
+                    isSelected && styles.visualCardSelected,
+                  ]}
+                  onPress={() => setSelected(opt.mode)}
+                >
+                  {/* Visual UI Preview Graphic */}
+                  {opt.preview}
+
+                  {/* Label */}
+                  <Text
+                    style={[
+                      styles.visualCardLabel,
+                      isSelected && styles.visualCardLabelSelected,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+
+                  {/* Subtitle / Badge */}
+                  <Text
+                    style={[
+                      styles.visualCardSublabel,
+                      isSelected && styles.visualCardSublabelSelected,
+                    ]}
+                  >
+                    {opt.sublabel}
+                  </Text>
+
+                  {/* Radio Indicator */}
+                  <View
+                    style={[
+                      styles.visualRadio,
+                      isSelected && styles.visualRadioSelected,
+                    ]}
+                  >
                     {isSelected && <View style={styles.visualRadioInner} />}
                   </View>
                 </AnimatedPressable>
