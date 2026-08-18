@@ -14,6 +14,7 @@ import { TaskPreviewModal } from './TaskPreviewModal';
 import { SortableTaskList } from './SortableTaskList';
 import { CompactWeekStrip } from './CompactWeekStrip';
 import { getDatabase } from '@/database/database';
+import { TaskListFrame } from './task-list-frame';
 import { AnimatedPressable } from './AnimatedPressable';
 import { BackButton } from './BackButton';
 import type { Task } from '@/types/task';
@@ -387,84 +388,155 @@ const CarouselCard = React.memo(function CarouselCard({
             paddingTop: 0,
           }}
         >
-          <ScrollView
-            ref={scrollRef}
-            scrollEnabled={scrollEnabled}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-            bounces={true}
-            alwaysBounceVertical={true}
-            onScroll={(e) => {
-              handleTaskListScroll();
-              scrollYRef.current = e.nativeEvent.contentOffset.y;
+          {/* 1. Compact Grid Replica Layer (matches DayCard 100% during close) */}
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              paddingHorizontal: 8,
+              paddingTop: 6,
+              paddingBottom: 6,
+              opacity: progress.interpolate({
+                inputRange: [0, 0.45, 0.85],
+                outputRange: [1, 0.85, 0],
+                extrapolate: 'clamp',
+              }),
             }}
-            scrollEventThrottle={16}
-            contentContainerStyle={{ paddingHorizontal: 6, paddingTop: 4, paddingBottom: 8 }}
           >
             {cardTasks.length ? (
-              <View
-                onLayout={(e) => {
-                  const h = e.nativeEvent.layout.height;
-                  setLocalListHeight(h);
-                  if (isCenter) handleListLayout(h);
-                }}
-              >
-                <SortableTaskList
-                  data={cardTasks}
-                  keyExtractor={(task) => `${task.id}:${task.date}`}
-                  onReorder={(newData) => void handleReorder(newData)}
-                  onScrollEnabledChange={handleScrollEnabled}
-                  onAutoScroll={handleAutoScroll}
-                  isScrollingRef={isScrollingRef}
-                  gap={0}
-                  dragHandleOpacity={progress.interpolate({
-                    inputRange: [0.85, 1],
-                    outputRange: [0, 1],
-                  })}
-                  renderItem={(
-                    task,
-                    isActive,
-                    index,
-                    totalCount,
-                    onSwipeX,
-                    onScrollEnabledChangeItem
-                  ) => (
-                    <TaskRow
-                      task={task}
-                      isLast={index === totalCount - 1}
-                      onPress={() => beginEditing(task)}
-                      onPendingDelete={handlePendingDelete}
-                      isActive={isActive}
-                      onSwipeX={onSwipeX}
-                      onScrollEnabledChange={onScrollEnabledChangeItem}
-                      cardBg="#FFFFFF"
-                      cardSurface
-                    />
-                  )}
-                />
-              </View>
+              <TaskListFrame
+                tasks={cardTasks}
+                singleLine
+                onPress={() => {}}
+              />
             ) : (
-              <Pressable
-                onPress={() => beginAdding(cardDate)}
+              <View
                 style={{
-                  minHeight: Math.max(140, targetHeight - 120),
-                  justifyContent: 'center',
+                  flexDirection: 'row',
                   alignItems: 'center',
+                  gap: 8,
+                  paddingVertical: 1,
                 }}
               >
-                <Text
+                <View
                   style={{
-                    color: colors.secondary,
-                    fontSize: 16,
-                    fontWeight: '500',
-                    textAlign: 'center',
+                    width: 16,
+                    height: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  Тапсырма жоқ
+                  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M12 4v16M4 12h16"
+                      stroke={colors.secondary}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                </View>
+                <Text style={{ color: colors.secondary, fontSize: 12, lineHeight: 17, fontWeight: '400' }}>
+                  Тапсырма қосу
                 </Text>
-              </Pressable>
+              </View>
             )}
-          </ScrollView>
+          </Animated.View>
+
+          {/* 2. Full Interactive ScrollView Layer */}
+          <Animated.View
+            style={{
+              flex: 1,
+              opacity: progress.interpolate({
+                inputRange: [0.35, 0.75, 1],
+                outputRange: [0, 0.2, 1],
+                extrapolate: 'clamp',
+              }),
+            }}
+          >
+            <ScrollView
+              ref={scrollRef}
+              scrollEnabled={scrollEnabled}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}
+              bounces={true}
+              alwaysBounceVertical={true}
+              onScroll={(e) => {
+                handleTaskListScroll();
+                scrollYRef.current = e.nativeEvent.contentOffset.y;
+              }}
+              scrollEventThrottle={16}
+              contentContainerStyle={{ paddingHorizontal: 6, paddingTop: 4, paddingBottom: 8 }}
+            >
+              {cardTasks.length ? (
+                <View
+                  onLayout={(e) => {
+                    const h = e.nativeEvent.layout.height;
+                    setLocalListHeight(h);
+                    if (isCenter) handleListLayout(h);
+                  }}
+                >
+                  <SortableTaskList
+                    data={cardTasks}
+                    keyExtractor={(task) => `${task.id}:${task.date}`}
+                    onReorder={(newData) => void handleReorder(newData)}
+                    onScrollEnabledChange={handleScrollEnabled}
+                    onAutoScroll={handleAutoScroll}
+                    isScrollingRef={isScrollingRef}
+                    gap={0}
+                    dragHandleOpacity={progress.interpolate({
+                      inputRange: [0.85, 1],
+                      outputRange: [0, 1],
+                    })}
+                    renderItem={(
+                      task,
+                      isActive,
+                      index,
+                      totalCount,
+                      onSwipeX,
+                      onScrollEnabledChangeItem
+                    ) => (
+                      <TaskRow
+                        task={task}
+                        isLast={index === totalCount - 1}
+                        onPress={() => beginEditing(task)}
+                        onPendingDelete={handlePendingDelete}
+                        isActive={isActive}
+                        onSwipeX={onSwipeX}
+                        onScrollEnabledChange={onScrollEnabledChangeItem}
+                        cardBg="#FFFFFF"
+                        cardSurface
+                      />
+                    )}
+                  />
+                </View>
+              ) : (
+                <Pressable
+                  onPress={() => beginAdding(cardDate)}
+                  style={{
+                    minHeight: Math.max(140, targetHeight - 120),
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.secondary,
+                      fontSize: 16,
+                      fontWeight: '500',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Тапсырма жоқ
+                  </Text>
+                </Pressable>
+              )}
+            </ScrollView>
+          </Animated.View>
         </Animated.View>
       </View>
     </Animated.View>
