@@ -5,6 +5,7 @@ export type PlannerSettings = {
   firstDayOfWeek?: 'mon' | 'sat' | 'sun';
   lastDayVisibility?: 'visible' | 'hidden';
   defaultViewMode?: 'day' | 'week' | 'month' | 'year';
+  syncAppleReminders?: boolean;
   autoSyncAppleReminders?: boolean;
   lastRemindersSyncTime?: string;
 };
@@ -16,5 +17,6 @@ export const defaultSettings: PlannerSettings = {
   firstDayOfWeek: 'mon',
   lastDayVisibility: 'visible',
   defaultViewMode: 'week',
-  autoSyncAppleReminders: false,
+  syncAppleReminders: false,
+  autoSyncAppleReminders: true,
 };

@@ -206,10 +206,16 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     const result = await syncAppleRemindersToAptaPlan(db);
     if (result.success) {
       const nowStr = new Date().toISOString();
+      await setSetting(db, 'syncAppleReminders', true);
       await setSetting(db, 'autoSyncAppleReminders', true);
       await setSetting(db, 'lastRemindersSyncTime', nowStr);
       setSettings((prev) => {
-        const updated = { ...prev, autoSyncAppleReminders: true, lastRemindersSyncTime: nowStr };
+        const updated = {
+          ...prev,
+          syncAppleReminders: true,
+          autoSyncAppleReminders: true,
+          lastRemindersSyncTime: nowStr,
+        };
         settingsRef.current = updated;
         return updated;
       });
@@ -221,9 +227,9 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
   const disableAppleReminders = useCallback(async () => {
     const db = await getDatabase();
     await removeSyncedAppleReminders(db);
-    await setSetting(db, 'autoSyncAppleReminders', false);
+    await setSetting(db, 'syncAppleReminders', false);
     setSettings((prev) => {
-      const updated = { ...prev, autoSyncAppleReminders: false };
+      const updated = { ...prev, syncAppleReminders: false };
       settingsRef.current = updated;
       return updated;
     });
@@ -281,7 +287,7 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
           setSettings(dbSettings);
           settingsRef.current = dbSettings;
         }
-        if (dbSettings.autoSyncAppleReminders) {
+        if (dbSettings.syncAppleReminders && dbSettings.autoSyncAppleReminders !== false) {
           try {
             await syncAppleRemindersToAptaPlan(db);
           } catch (err) {

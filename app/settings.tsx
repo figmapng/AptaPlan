@@ -260,7 +260,7 @@ export default function SettingsScreen() {
                 <ActivityIndicator size="small" color={colors.today} />
               ) : (
                 <Switch
-                  value={!!settings.autoSyncAppleReminders}
+                  value={!!settings.syncAppleReminders}
                   onValueChange={handleToggleRemindersSync}
                   trackColor={{ false: '#E2E5EB', true: colors.today }}
                   thumbColor="#FFFFFF"
@@ -268,11 +268,24 @@ export default function SettingsScreen() {
               )
             }
           />
-          {settings.autoSyncAppleReminders && (
+          {settings.syncAppleReminders && (
             <>
               <Divider />
               <SettingRow
-                icon="refresh-outline"
+                icon="refresh-circle-outline"
+                label="Авто-синхрондау"
+                rightElement={
+                  <Switch
+                    value={settings.autoSyncAppleReminders !== false}
+                    onValueChange={(v) => void setPref('autoSyncAppleReminders', v)}
+                    trackColor={{ false: '#E2E5EB', true: colors.today }}
+                    thumbColor="#FFFFFF"
+                  />
+                }
+              />
+              <Divider />
+              <SettingRow
+                icon="sync-outline"
                 label="Қазір синхрондау"
                 valueText={isSyncing ? 'Жүктелуде...' : syncStatusText || undefined}
                 onPress={handleSyncReminders}
