@@ -120,7 +120,6 @@ const occursOn = (task: Task, date: string) => {
 
 export type TaskSortOptions = { sortMode?: 'time' | 'manual'; completedPlacement?: 'keep' | 'bottom' };
 const sortTasksForRange = (tasks: Task[], opts?: TaskSortOptions) => {
-  const sortMode = opts?.sortMode ?? 'manual';
   const placement = opts?.completedPlacement ?? 'bottom';
   return [...tasks].sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
@@ -130,20 +129,20 @@ const sortTasksForRange = (tasks: Task[], opts?: TaskSortOptions) => {
       const bDone = Number(b.isCompleted);
       if (aDone !== bDone) return aDone - bDone;
     }
-    if (sortMode === 'time') {
-      const aHas = !!a.time;
-      const bHas = !!b.time;
-      if (aHas !== bHas) return aHas ? -1 : 1;
-      if (aHas && a.time !== b.time) return a.time!.localeCompare(b.time!);
+
+    // Always sort timed tasks chronologically (e.g. 08:00 < 11:31 < 12:52)
+    const aHas = !!a.time;
+    const bHas = !!b.time;
+    if (aHas && bHas && a.time !== b.time) {
+      return a.time!.localeCompare(b.time!);
     }
+    if (aHas !== bHas) {
+      return aHas ? -1 : 1;
+    }
+
     const sortDiff = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
     if (sortDiff !== 0) return sortDiff;
 
-    // Fallback if sortOrder is equal: sort timed tasks by time, then untimed by createdAt
-    const aHas = !!a.time;
-    const bHas = !!b.time;
-    if (aHas && bHas && a.time !== b.time) return a.time!.localeCompare(b.time!);
-    if (aHas !== bHas) return aHas ? -1 : 1;
     return (a.createdAt || '').localeCompare(b.createdAt || '');
   });
 };
