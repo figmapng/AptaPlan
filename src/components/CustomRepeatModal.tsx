@@ -35,7 +35,7 @@ interface CustomRepeatModalProps {
 
 const unitLabels: Record<CustomUnit, string> = {
   hourly: 'Сағат сайын',
-  daily: 'Күн сайын',
+  daily: 'Күнде',
   weekly: 'Апта сайын',
   monthly: 'Ай сайын',
   yearly: 'Жыл сайын',
@@ -92,7 +92,7 @@ export function describeCustomRepeat(config: RepeatConfig): string {
   const unit = config.unit;
 
   if (unit === 'daily') {
-    return interval === 1 ? 'Күн сайын' : `Әр ${interval} күнде`;
+    return interval === 1 ? 'Күнде' : `Әр ${interval} күнде`;
   }
 
   if (unit === 'weekly') {
@@ -126,7 +126,7 @@ export function describeCustomRepeat(config: RepeatConfig): string {
     return interval === 1 ? `Жыл сайын (${mShort})` : `Әр ${interval} жылда (${mShort})`;
   }
 
-  return interval === 1 ? 'Күн сайын' : `Әр ${interval} күнде`;
+  return interval === 1 ? 'Күнде' : `Әр ${interval} күнде`;
 }
 
 export function CustomRepeatModal({
