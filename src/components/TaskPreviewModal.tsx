@@ -39,6 +39,109 @@ function CheckmarkIcon({ size = 12, color = '#FFFFFF' }: { size?: number; color?
   );
 }
 
+function CalendarIcon({ color = '#23262D', size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <Path
+        d="M1.6665 10C1.6665 6.85734 1.6665 5.286 2.64281 4.30968C3.61913 3.33337 5.19047 3.33337 8.33317 3.33337H11.6665C14.8092 3.33337 16.3806 3.33337 17.3568 4.30968C18.3332 5.286 18.3332 6.85734 18.3332 10V11.6667C18.3332 14.8094 18.3332 16.3808 17.3568 17.357C16.3806 18.3334 14.8092 18.3334 11.6665 18.3334H8.33317C5.19047 18.3334 3.61913 18.3334 2.64281 17.357C1.6665 16.3808 1.6665 14.8094 1.6665 11.6667V10Z"
+        stroke={color}
+        strokeWidth="1.5"
+      />
+      <Path d="M5.8335 3.33337V2.08337" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Path d="M14.1665 3.33337V2.08337" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Path d="M2.0835 7.5H17.9168" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <Path d="M15.0002 14.1667C15.0002 14.627 14.6271 15 14.1668 15C13.7066 15 13.3335 14.627 13.3335 14.1667C13.3335 13.7065 13.7066 13.3334 14.1668 13.3334C14.6271 13.3334 15.0002 13.7065 15.0002 14.1667Z" fill={color} />
+      <Path d="M15.0002 10.8333C15.0002 11.2936 14.6271 11.6667 14.1668 11.6667C13.7066 11.6667 13.3335 11.2936 13.3335 10.8333C13.3335 10.3731 13.7066 10 14.1668 10C14.6271 10 15.0002 10.3731 15.0002 10.8333Z" fill={color} />
+      <Path d="M10.8332 14.1667C10.8332 14.627 10.4601 15 9.99984 15C9.53959 15 9.1665 14.627 9.1665 14.1667C9.1665 13.7065 9.53959 13.3334 9.99984 13.3334C10.4601 13.3334 10.8332 13.7065 10.8332 14.1667Z" fill={color} />
+      <Path d="M10.8332 10.8333C10.8332 11.2936 10.4601 11.6667 9.99984 11.6667C9.53959 11.6667 9.1665 11.2936 9.1665 10.8333C9.1665 10.3731 9.53959 10 9.99984 10C10.4601 10 10.8332 10.3731 10.8332 10.8333Z" fill={color} />
+      <Path d="M6.66667 14.1667C6.66667 14.627 6.29357 15 5.83333 15C5.3731 15 5 14.627 5 14.1667C5 13.7065 5.3731 13.3334 5.83333 13.3334C6.29357 13.3334 6.66667 13.7065 6.66667 14.1667Z" fill={color} />
+      <Path d="M6.66667 10.8333C6.66667 11.2936 6.29357 11.6667 5.83333 11.6667C5.3731 11.6667 5 11.2936 5 10.8333C5 10.3731 5.3731 10 5.83333 10C6.29357 10 6.66667 10.3731 6.66667 10.8333Z" fill={color} />
+    </Svg>
+  );
+}
+
+function ClockIcon({ color = '#23262D', size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <Path
+        d="M10 18.3334C14.1421 18.3334 17.5 14.9755 17.5 10.8334C17.5 6.69124 14.1421 3.33337 10 3.33337C5.85786 3.33337 2.5 6.69124 2.5 10.8334C2.5 14.9755 5.85786 18.3334 10 18.3334Z"
+        stroke={color}
+        strokeWidth="1.5"
+      />
+      <Path
+        d="M10 7.5V10.8333L12.0833 12.9167"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M2.9165 3.74996L6.24985 1.66663"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M17.0835 3.74996L13.7502 1.66663"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function RepeatIcon({ color = '#23262D', size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <Path
+        d="M16.5 4.5H5.5C3.84315 4.5 2.5 5.84315 2.5 7.5V8M13.5 1.5L16.5 4.5L13.5 7.5"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M3.5 15.5H14.5C16.1569 15.5 17.5 14.1569 17.5 12.5V12M6.5 18.5L3.5 15.5L6.5 12.5"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function EditIcon({ color = '#23262D', size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <Path
+        d="M14.1667 2.5L17.5 5.83333L6.66667 16.6667H3.33333V13.3333L14.1667 2.5Z"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function TrashIcon({ color = '#FF4B3E', size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 interface TaskPreviewModalProps {
   visible: boolean;
   task: Task | null;
@@ -263,7 +366,7 @@ export function TaskPreviewModal({
             <View style={styles.metaRow}>
               {/* Date & Time Text */}
               <View style={styles.dateBadge}>
-                <Ionicons name="calendar" size={13} color={colors.secondary} />
+                <CalendarIcon size={14} color={colors.secondary} />
                 <Text style={styles.dateBadgeText}>
                   {formatTaskDisplayDate(t.date)}
                   {t.time ? ` · ${t.time}` : ''}
@@ -273,7 +376,7 @@ export function TaskPreviewModal({
               {/* Repeat Tag if set */}
               {repeatLabel ? (
                 <View style={styles.repeatBadge}>
-                  <Ionicons name="sync" size={13} color={colors.today} />
+                  <RepeatIcon size={14} color={colors.today} />
                   <Text style={styles.repeatBadgeText}>{repeatLabel}</Text>
                 </View>
               ) : null}
@@ -284,47 +387,44 @@ export function TaskPreviewModal({
           <View style={styles.actionDockRow}>
             {/* Action Buttons Capsule with vertical dividers */}
             <View style={styles.actionCapsule}>
-              {/* Date Action (Filled) */}
+              {/* Date Action */}
               <AnimatedPressable
                 activeScale={0.88}
                 onPress={() => setShowCalendar(true)}
                 style={styles.actionIconBtn}
                 hitSlop={6}
               >
-                <Ionicons
-                  name="calendar"
-                  size={20}
+                <CalendarIcon
+                  size={19}
                   color={t.date ? colors.today : '#5E6778'}
                 />
               </AnimatedPressable>
 
               <View style={styles.dockDivider} />
 
-              {/* Time Action (Filled) */}
+              {/* Time Action */}
               <AnimatedPressable
                 activeScale={0.88}
                 onPress={() => setShowTimePicker(true)}
                 style={styles.actionIconBtn}
                 hitSlop={6}
               >
-                <Ionicons
-                  name="time"
-                  size={20}
+                <ClockIcon
+                  size={19}
                   color={t.time ? colors.today : '#5E6778'}
                 />
               </AnimatedPressable>
 
               <View style={styles.dockDivider} />
 
-              {/* Repeat Action (Filled) */}
+              {/* Repeat Action */}
               <AnimatedPressable
                 activeScale={0.88}
                 onPress={() => setShowRepeatSheet(true)}
                 style={styles.actionIconBtn}
                 hitSlop={6}
               >
-                <Ionicons
-                  name="sync"
+                <RepeatIcon
                   size={19}
                   color={t.repeatType && t.repeatType !== 'none' ? colors.today : '#5E6778'}
                 />
@@ -332,14 +432,14 @@ export function TaskPreviewModal({
 
               <View style={styles.dockDivider} />
 
-              {/* Edit Full Task Action (Filled) */}
+              {/* Edit Full Task Action */}
               <AnimatedPressable
                 activeScale={0.88}
                 onPress={handleEdit}
                 style={styles.actionIconBtn}
                 hitSlop={6}
               >
-                <Ionicons name="create" size={20} color="#5E6778" />
+                <EditIcon size={19} color="#5E6778" />
               </AnimatedPressable>
             </View>
 
@@ -350,7 +450,7 @@ export function TaskPreviewModal({
               style={styles.deleteButtonStandalone}
               hitSlop={6}
             >
-              <Ionicons name="trash" size={20} color="#FF4B3E" />
+              <TrashIcon size={20} color="#FF4B3E" />
             </AnimatedPressable>
           </View>
         </Animated.View>
