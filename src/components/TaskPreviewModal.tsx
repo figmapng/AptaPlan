@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
@@ -22,7 +23,21 @@ import { AnimatedPressable } from './AnimatedPressable';
 import { CalendarModal } from './CalendarModal';
 import { TimeModal } from './TimeModal';
 import { RepeatActionSheet } from './RepeatActionSheet';
-import { CustomRepeatConfig, CustomRepeatModal, describeCustomRepeat } from './CustomRepeatModal';
+import { CustomRepeatConfig, describeCustomRepeat } from './CustomRepeatModal';
+
+function CheckmarkIcon({ size = 12, color = '#FFFFFF' }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4.5 12.75l6 6 9-13.5"
+        stroke={color}
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 interface TaskPreviewModalProps {
   visible: boolean;
@@ -225,7 +240,7 @@ export function TaskPreviewModal({
                 hitSlop={8}
               >
                 {t.isCompleted && (
-                  <Ionicons name="checkmark" size={15} color="#FFFFFF" />
+                  <CheckmarkIcon size={12} color="#FFFFFF" />
                 )}
               </Pressable>
 
@@ -248,7 +263,7 @@ export function TaskPreviewModal({
             <View style={styles.metaRow}>
               {/* Date & Time Text */}
               <View style={styles.dateBadge}>
-                <Ionicons name="calendar-outline" size={13} color={colors.secondary} />
+                <Ionicons name="calendar" size={13} color={colors.secondary} />
                 <Text style={styles.dateBadgeText}>
                   {formatTaskDisplayDate(t.date)}
                   {t.time ? ` · ${t.time}` : ''}
@@ -258,7 +273,7 @@ export function TaskPreviewModal({
               {/* Repeat Tag if set */}
               {repeatLabel ? (
                 <View style={styles.repeatBadge}>
-                  <Ionicons name="repeat-outline" size={13} color={colors.today} />
+                  <Ionicons name="sync" size={13} color={colors.today} />
                   <Text style={styles.repeatBadgeText}>{repeatLabel}</Text>
                 </View>
               ) : null}
@@ -276,19 +291,17 @@ export function TaskPreviewModal({
                 t.isCompleted && styles.doneButtonCompleted,
               ]}
             >
-              <Ionicons
-                name={t.isCompleted ? 'checkmark-circle' : 'checkmark-circle-outline'}
-                size={19}
-                color="#FFFFFF"
-              />
+              <View style={[styles.doneCheckCircle, t.isCompleted && styles.doneCheckCircleCompleted]}>
+                <CheckmarkIcon size={11} color={t.isCompleted ? '#34C759' : colors.today} />
+              </View>
               <Text style={styles.doneButtonText}>
                 {t.isCompleted ? 'Орындалды' : 'Орындау'}
               </Text>
             </AnimatedPressable>
 
-            {/* Action Buttons Capsule */}
+            {/* Action Buttons Capsule with vertical dividers */}
             <View style={styles.actionCapsule}>
-              {/* Date Action */}
+              {/* Date Action (Filled) */}
               <AnimatedPressable
                 activeScale={0.88}
                 onPress={() => setShowCalendar(true)}
@@ -296,13 +309,15 @@ export function TaskPreviewModal({
                 hitSlop={6}
               >
                 <Ionicons
-                  name="calendar-outline"
+                  name="calendar"
                   size={20}
-                  color={t.date ? colors.today : '#4A5568'}
+                  color={t.date ? colors.today : '#5E6778'}
                 />
               </AnimatedPressable>
 
-              {/* Time Action */}
+              <View style={styles.dockDivider} />
+
+              {/* Time Action (Filled) */}
               <AnimatedPressable
                 activeScale={0.88}
                 onPress={() => setShowTimePicker(true)}
@@ -310,13 +325,15 @@ export function TaskPreviewModal({
                 hitSlop={6}
               >
                 <Ionicons
-                  name="time-outline"
+                  name="time"
                   size={20}
-                  color={t.time ? colors.today : '#4A5568'}
+                  color={t.time ? colors.today : '#5E6778'}
                 />
               </AnimatedPressable>
 
-              {/* Repeat Action */}
+              <View style={styles.dockDivider} />
+
+              {/* Repeat Action (Filled) */}
               <AnimatedPressable
                 activeScale={0.88}
                 onPress={() => setShowRepeatSheet(true)}
@@ -324,30 +341,34 @@ export function TaskPreviewModal({
                 hitSlop={6}
               >
                 <Ionicons
-                  name="repeat-outline"
-                  size={20}
-                  color={t.repeatType && t.repeatType !== 'none' ? colors.today : '#4A5568'}
+                  name="sync"
+                  size={19}
+                  color={t.repeatType && t.repeatType !== 'none' ? colors.today : '#5E6778'}
                 />
               </AnimatedPressable>
 
-              {/* Edit Full Task Action */}
+              <View style={styles.dockDivider} />
+
+              {/* Edit Full Task Action (Filled) */}
               <AnimatedPressable
                 activeScale={0.88}
                 onPress={handleEdit}
                 style={styles.actionIconBtn}
                 hitSlop={6}
               >
-                <Ionicons name="create-outline" size={20} color="#4A5568" />
+                <Ionicons name="create" size={20} color="#5E6778" />
               </AnimatedPressable>
 
-              {/* Delete Action */}
+              <View style={styles.dockDivider} />
+
+              {/* Delete Action (Filled) */}
               <AnimatedPressable
                 activeScale={0.88}
                 onPress={handleDelete}
                 style={styles.actionIconBtn}
                 hitSlop={6}
               >
-                <Ionicons name="trash-outline" size={20} color="#FF4B3E" />
+                <Ionicons name="trash" size={20} color="#FF4B3E" />
               </AnimatedPressable>
             </View>
           </View>
@@ -431,17 +452,17 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 22,
     height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: colors.cardBorder,
+    borderRadius: 7,
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
     backgroundColor: '#FFFFFF',
   },
   checkboxCompleted: {
-    backgroundColor: colors.today,
-    borderColor: colors.today,
+    backgroundColor: colors.checkedCheckboxBg,
+    borderColor: colors.checkedCheckboxBg,
   },
   taskTitle: {
     flex: 1,
@@ -510,12 +531,12 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     height: 50,
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
     borderRadius: 25,
     backgroundColor: colors.today,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
@@ -524,6 +545,17 @@ const styles = StyleSheet.create({
   },
   doneButtonCompleted: {
     backgroundColor: '#34C759',
+  },
+  doneCheckCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  doneCheckCircleCompleted: {
+    backgroundColor: '#FFFFFF',
   },
   doneButtonText: {
     fontSize: 15,
@@ -538,7 +570,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
     borderWidth: 1,
     borderColor: '#ECEEF2',
     shadowColor: '#000000',
@@ -548,10 +580,15 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   actionIconBtn: {
-    width: 38,
+    width: 36,
     height: 38,
-    borderRadius: 19,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dockDivider: {
+    width: 1,
+    height: 18,
+    backgroundColor: '#ECEEF2',
   },
 });
