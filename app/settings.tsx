@@ -632,36 +632,60 @@ function WeekLayoutPreview() {
 function MonthLayoutPreview() {
   return (
     <View style={styles.phonePreviewBox}>
-      {/* Month header badge */}
-      <View style={styles.previewMonthHeader}>
-        <View style={styles.previewMonthTitleBadge} />
+      {/* Month Header: Neutral month title badge + progress badge */}
+      <View style={styles.previewWeekHeader}>
+        <View style={styles.previewWeekTitleBadge} />
+        <View style={styles.previewWeekProgressBadge} />
       </View>
+
       {/* Weekday headers row */}
       <View style={styles.previewMonthWeekRow}>
         {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <View key={i} style={[styles.previewDot, i >= 5 && styles.previewDotWeekend]} />
+          <View
+            key={i}
+            style={[styles.previewDot, i >= 5 && styles.previewDotWeekend]}
+          />
         ))}
       </View>
-      {/* 6 rows of 7 matrix cells */}
-      <View style={{ flex: 1, justifyContent: 'space-between', marginVertical: 2 }}>
-        {[0, 1, 2, 3, 4, 5].map((row) => (
-          <View key={row} style={styles.previewMatrixRow}>
-            {[0, 1, 2, 3, 4, 5, 6].map((col) => {
-              const isActive = row === 2 && col === 2;
-              const isWeekend = col >= 5;
-              return (
-                <View
-                  key={col}
-                  style={[
-                    styles.previewCellDot,
-                    isActive && styles.previewCellDotActive,
-                    isWeekend && !isActive && styles.previewCellDotWeekend,
-                  ]}
-                />
-              );
-            })}
-          </View>
-        ))}
+
+      {/* 5 week rows of day cells with active week highlight */}
+      <View style={styles.previewMonthWeeksCol}>
+        {[0, 1, 2, 3, 4].map((w) => {
+          const isCurrentWeek = w === 2;
+          return (
+            <View
+              key={w}
+              style={[
+                styles.previewMonthWeekWrapper,
+                isCurrentWeek && styles.previewMonthWeekActive,
+              ]}
+            >
+              <View style={styles.previewMonthCellsRow}>
+                {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+                  const isToday = isCurrentWeek && d === 1;
+                  const isWeekend = d >= 5;
+                  return (
+                    <View
+                      key={d}
+                      style={[
+                        styles.previewMonthDayCell,
+                        isToday && styles.previewMonthDayCellToday,
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.previewMonthDayNum,
+                          isToday && { backgroundColor: '#FFFFFF' },
+                          isWeekend && !isToday && { backgroundColor: '#FF8882' },
+                        ]}
+                      />
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -670,9 +694,9 @@ function MonthLayoutPreview() {
 function YearLayoutPreview() {
   return (
     <View style={styles.phonePreviewBox}>
-      {/* Mini Year Header: "2026" */}
+      {/* Mini Year Header: "2026" with ACCENT COLOR */}
       <View style={styles.previewWeekHeader}>
-        <View style={[styles.previewWeekTitleBadge, { width: 16 }]} />
+        <View style={styles.previewYearTitleBadge} />
         <View style={[styles.previewWeekProgressBadge, { width: 8 }]} />
       </View>
 
@@ -1216,6 +1240,12 @@ const styles = StyleSheet.create({
     width: 24,
     height: 6,
     borderRadius: 2,
+    backgroundColor: '#334155',
+  },
+  previewYearTitleBadge: {
+    width: 18,
+    height: 6,
+    borderRadius: 2,
     backgroundColor: colors.today,
   },
   previewWeekProgressBadge: {
@@ -1363,23 +1393,43 @@ const styles = StyleSheet.create({
   previewDotWeekend: {
     backgroundColor: '#FF4B3E',
   },
-  previewMatrixRow: {
+  previewMonthWeeksCol: {
+    flex: 1,
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  previewMonthWeekWrapper: {
+    padding: 1,
+    borderRadius: 3,
+  },
+  previewMonthWeekActive: {
+    backgroundColor: '#01B7FF0E',
+    borderWidth: 0.5,
+    borderColor: colors.today,
+  },
+  previewMonthCellsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 1,
-    paddingHorizontal: 1,
+    gap: 1.5,
   },
-  previewCellDot: {
-    width: 6,
-    height: 6,
+  previewMonthDayCell: {
+    flex: 1,
+    height: 11,
+    backgroundColor: '#F8F9FB',
     borderRadius: 2,
-    backgroundColor: '#F1F5F9',
+    borderWidth: 0.5,
+    borderColor: '#E2E8F0',
+    padding: 1,
   },
-  previewCellDotActive: {
+  previewMonthDayCellToday: {
     backgroundColor: colors.today,
+    borderColor: colors.today,
   },
-  previewCellDotWeekend: {
-    backgroundColor: '#FFE4E2',
+  previewMonthDayNum: {
+    width: 3,
+    height: 2,
+    borderRadius: 0.5,
+    backgroundColor: '#94A3B8',
   },
   previewYearGridNew: {
     flex: 1,
