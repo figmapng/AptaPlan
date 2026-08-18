@@ -110,6 +110,7 @@ const CarouselCard = React.memo(function CarouselCard({
     ? progress.interpolate({
         inputRange: [0, 0.35, 1],
         outputRange: [0, 0.95, 1],
+        extrapolate: 'clamp',
       })
     : 1;
 
@@ -117,6 +118,7 @@ const CarouselCard = React.memo(function CarouselCard({
     ? progress.interpolate({
         inputRange: [0, 1],
         outputRange: [0.94, 1],
+        extrapolate: 'clamp',
       })
     : 1;
 
@@ -128,22 +130,27 @@ const CarouselCard = React.memo(function CarouselCard({
           left: progress.interpolate({
             inputRange: [0, 1],
             outputRange: [currentFrame.x, 16],
+            extrapolate: 'clamp',
           }),
           top: progress.interpolate({
             inputRange: [0, 1],
             outputRange: [currentFrame.y, insets.top + 62],
+            extrapolate: 'clamp',
           }),
           width: progress.interpolate({
             inputRange: [0, 1],
             outputRange: [currentFrame.width, width - 32],
+            extrapolate: 'clamp',
           }),
           height: progress.interpolate({
             inputRange: [0, 1],
             outputRange: [currentFrame.height, cardTargetHeight],
+            extrapolate: 'clamp',
           }),
           borderRadius: progress.interpolate({
             inputRange: [0, 1],
             outputRange: [isMonthOrigin ? 8 : 14, 16],
+            extrapolate: 'clamp',
           }),
           backgroundColor: isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : '#EDEFF2',
           opacity: cardOpacity,
@@ -169,14 +176,17 @@ const CarouselCard = React.memo(function CarouselCard({
             height: progress.interpolate({
               inputRange: [0, 1],
               outputRange: [isMonthOrigin ? 0 : 29, 44],
+              extrapolate: 'clamp',
             }),
             paddingHorizontal: progress.interpolate({
               inputRange: [0, 1],
               outputRange: [isMonthOrigin ? 4 : 10, 14],
+              extrapolate: 'clamp',
             }),
             opacity: progress.interpolate({
               inputRange: [0, 0.25, 1],
               outputRange: [isMonthOrigin ? 0 : 0.7, 0.9, 1],
+              extrapolate: 'clamp',
             }),
             flexDirection: 'row',
             alignItems: 'center',
@@ -189,6 +199,7 @@ const CarouselCard = React.memo(function CarouselCard({
               fontSize: progress.interpolate({
                 inputRange: [0, 1],
                 outputRange: [12, 17],
+                extrapolate: 'clamp',
               }),
               fontWeight: '600',
               color: isTodayCard ? '#FFFFFF' : isWeekendCard ? colors.sundayText : '#333C4E',
@@ -203,18 +214,22 @@ const CarouselCard = React.memo(function CarouselCard({
               marginLeft: progress.interpolate({
                 inputRange: [0, 1],
                 outputRange: [6, 8],
+                extrapolate: 'clamp',
               }),
               minWidth: progress.interpolate({
                 inputRange: [0, 1],
                 outputRange: [20, 24],
+                extrapolate: 'clamp',
               }),
               minHeight: progress.interpolate({
                 inputRange: [0, 1],
                 outputRange: [17, 21],
+                extrapolate: 'clamp',
               }),
               paddingHorizontal: progress.interpolate({
                 inputRange: [0, 1],
                 outputRange: [4, 8],
+                extrapolate: 'clamp',
               }),
               alignItems: 'center',
               justifyContent: 'center',
@@ -226,6 +241,7 @@ const CarouselCard = React.memo(function CarouselCard({
               borderRadius: progress.interpolate({
                 inputRange: [0, 1],
                 outputRange: [5, 6],
+                extrapolate: 'clamp',
               }),
               paddingTop: 0,
               paddingBottom: 0,
@@ -239,6 +255,7 @@ const CarouselCard = React.memo(function CarouselCard({
                 borderRadius: progress.interpolate({
                   inputRange: [0, 1],
                   outputRange: [4, 5],
+                  extrapolate: 'clamp',
                 }),
                 paddingHorizontal: 0,
                 paddingVertical: 0,
@@ -258,10 +275,12 @@ const CarouselCard = React.memo(function CarouselCard({
                   fontSize: progress.interpolate({
                     inputRange: [0, 1],
                     outputRange: [12, 0],
+                    extrapolate: 'clamp',
                   }),
                   lineHeight: progress.interpolate({
                     inputRange: [0, 1],
                     outputRange: [13, 0],
+                    extrapolate: 'clamp',
                   }),
                   fontWeight: isTodayCard ? '700' : '600',
                   color: isTodayCard
@@ -273,10 +292,12 @@ const CarouselCard = React.memo(function CarouselCard({
                   opacity: progress.interpolate({
                     inputRange: [0, 0.3, 1],
                     outputRange: [1, 0, 0],
+                    extrapolate: 'clamp',
                   }),
                   maxWidth: progress.interpolate({
                     inputRange: [0, 0.5, 1],
                     outputRange: [30, 0, 0],
+                    extrapolate: 'clamp',
                   }),
                   overflow: 'hidden',
                 }}
@@ -291,10 +312,12 @@ const CarouselCard = React.memo(function CarouselCard({
                   fontSize: progress.interpolate({
                     inputRange: [0, 1],
                     outputRange: [0, 14],
+                    extrapolate: 'clamp',
                   }),
                   lineHeight: progress.interpolate({
                     inputRange: [0, 1],
                     outputRange: [0, 17],
+                    extrapolate: 'clamp',
                   }),
                   fontWeight: isTodayCard ? '700' : '600',
                   color: isTodayCard
@@ -305,10 +328,12 @@ const CarouselCard = React.memo(function CarouselCard({
                   opacity: progress.interpolate({
                     inputRange: [0, 0.4, 1],
                     outputRange: [0, 0.5, 1],
+                    extrapolate: 'clamp',
                   }),
                   maxWidth: progress.interpolate({
                     inputRange: [0, 1],
                     outputRange: [0, 120],
+                    extrapolate: 'clamp',
                   }),
                   overflow: 'hidden',
                 }}
