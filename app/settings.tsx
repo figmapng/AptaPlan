@@ -605,20 +605,12 @@ function OptionModal({
 function WeekLayoutPreview() {
   return (
     <View style={styles.previewBox}>
-      {/* Top week strip */}
-      <View style={styles.previewWeekBar}>
-        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <View
-            key={i}
-            style={[
-              styles.previewDayPill,
-              i === 1 && styles.previewDayPillActive,
-              i >= 5 && styles.previewDayPillWeekend,
-            ]}
-          />
-        ))}
+      {/* Month header badge & progress pill (No calendar strip) */}
+      <View style={styles.previewWeekHeader}>
+        <View style={styles.previewWeekTitleBadge} />
+        <View style={styles.previewWeekProgressBadge} />
       </View>
-      {/* 2-column day cards */}
+      {/* 2-column day cards (3 + 3) */}
       <View style={styles.previewGridRow}>
         <View style={styles.previewCardCol}>
           <View style={styles.previewCardMini} />
@@ -631,6 +623,8 @@ function WeekLayoutPreview() {
           <View style={styles.previewCardMini} />
         </View>
       </View>
+      {/* Sunday 7th wide card */}
+      <View style={styles.previewWideCardMini} />
     </View>
   );
 }
@@ -803,22 +797,14 @@ function DefaultViewModeModal({
 
 function LastDayVisiblePreview() {
   return (
-    <View style={styles.previewBox}>
-      {/* Top week strip with 7 days */}
-      <View style={styles.previewWeekBar}>
-        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <View
-            key={i}
-            style={[
-              styles.previewDayPill,
-              i === 1 && styles.previewDayPillActive,
-              i >= 5 && styles.previewDayPillWeekend,
-            ]}
-          />
-        ))}
+    <View style={styles.verticalPreviewBox}>
+      {/* Month Header: ТАМЫЗ 2026 + Progress */}
+      <View style={styles.previewWeekHeader}>
+        <View style={styles.previewWeekTitleBadge} />
+        <View style={styles.previewWeekProgressBadge} />
       </View>
       {/* 2-column day cards (3 + 3) */}
-      <View style={[styles.previewGridRow, { flex: 0, height: 44, gap: 3 }]}>
+      <View style={[styles.previewGridRow, { height: 42, marginTop: 2, gap: 3 }]}>
         <View style={styles.previewCardCol}>
           <View style={styles.previewCardMini} />
           <View style={styles.previewCardMini} />
@@ -830,50 +816,22 @@ function LastDayVisiblePreview() {
           <View style={styles.previewCardMini} />
         </View>
       </View>
-      {/* 7th wide card at the bottom */}
-      <View
-        style={{
-          height: 15,
-          borderRadius: 4,
-          backgroundColor: '#FFF0EE',
-          borderWidth: 0.5,
-          borderColor: '#FFCDC8',
-          marginTop: 3,
-        }}
-      />
+      {/* 7th wide card at the bottom (Sunday) */}
+      <View style={styles.previewWideCardMini} />
     </View>
   );
 }
 
 function LastDayHiddenPreview() {
   return (
-    <View style={styles.previewBox}>
-      {/* Top week strip with 6 days */}
-      <View style={styles.previewWeekBar}>
-        {[0, 1, 2, 3, 4, 5].map((i) => (
-          <View
-            key={i}
-            style={[
-              styles.previewDayPill,
-              i === 1 && styles.previewDayPillActive,
-              i === 5 && styles.previewDayPillWeekend,
-            ]}
-          />
-        ))}
-        {/* 7th day faded/empty outline */}
-        <View
-          style={[
-            styles.previewDayPill,
-            {
-              backgroundColor: 'transparent',
-              borderWidth: 0.5,
-              borderColor: '#CBD5E1',
-            },
-          ]}
-        />
+    <View style={styles.verticalPreviewBox}>
+      {/* Month Header: ТАМЫЗ 2026 + Progress */}
+      <View style={styles.previewWeekHeader}>
+        <View style={styles.previewWeekTitleBadge} />
+        <View style={styles.previewWeekProgressBadge} />
       </View>
       {/* 2-column day cards filling the full height (3 + 3) */}
-      <View style={[styles.previewGridRow, { flex: 1, gap: 3 }]}>
+      <View style={[styles.previewGridRow, { height: 56, marginTop: 2, gap: 3 }]}>
         <View style={styles.previewCardCol}>
           <View style={styles.previewCardMini} />
           <View style={styles.previewCardMini} />
@@ -917,13 +875,13 @@ function LastDayVisibilityModal({
     {
       mode: 'visible',
       label: 'Үнемі көрінеді',
-      sublabel: '7 күн (Толық апта)',
+      sublabel: '7 күннен тұратын толық апта көрінісі (Жексенбі қосылған)',
       preview: <LastDayVisiblePreview />,
     },
     {
       mode: 'hidden',
       label: 'Жасырын',
-      sublabel: '6 күн (Дс - Сб)',
+      sublabel: '6 күндік ықшам режим (Дүйсенбі - Сенбі)',
       preview: <LastDayHiddenPreview />,
     },
   ];
@@ -941,44 +899,41 @@ function LastDayVisibilityModal({
             </Pressable>
           </View>
 
-          {/* Visual Cards Row */}
-          <View style={styles.visualCardsContainer}>
+          {/* Vertical Option Cards Container */}
+          <View style={styles.verticalCardsContainer}>
             {options.map((opt) => {
               const isSelected = selected === opt.mode;
               return (
                 <AnimatedPressable
                   key={opt.mode}
-                  activeScale={0.95}
+                  activeScale={0.97}
                   style={[
-                    styles.visualCard,
-                    isSelected && styles.visualCardSelected,
+                    styles.verticalVisualCard,
+                    isSelected && styles.verticalVisualCardSelected,
                   ]}
                   onPress={() => setSelected(opt.mode)}
                 >
-                  {/* Visual UI Preview Graphic */}
-                  {opt.preview}
+                  {/* Left: Mini Screen UI Graphic */}
+                  <View style={styles.verticalPreviewWrapper}>
+                    {opt.preview}
+                  </View>
 
-                  {/* Label */}
-                  <Text
-                    style={[
-                      styles.visualCardLabel,
-                      isSelected && styles.visualCardLabelSelected,
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
+                  {/* Middle: Info */}
+                  <View style={styles.verticalCardInfo}>
+                    <Text
+                      style={[
+                        styles.verticalCardLabel,
+                        isSelected && styles.verticalCardLabelSelected,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                    <Text style={styles.verticalCardSublabel}>
+                      {opt.sublabel}
+                    </Text>
+                  </View>
 
-                  {/* Subtitle / Badge */}
-                  <Text
-                    style={[
-                      styles.visualCardSublabel,
-                      isSelected && styles.visualCardSublabelSelected,
-                    ]}
-                  >
-                    {opt.sublabel}
-                  </Text>
-
-                  {/* Radio Indicator */}
+                  {/* Right: Radio Indicator */}
                   <View
                     style={[
                       styles.visualRadio,
@@ -1223,6 +1178,87 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     justifyContent: 'space-between',
     overflow: 'hidden',
+  },
+  previewWeekHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 8,
+    marginBottom: 4,
+  },
+  previewWeekTitleBadge: {
+    width: 24,
+    height: 6,
+    borderRadius: 2,
+    backgroundColor: colors.today,
+  },
+  previewWeekProgressBadge: {
+    width: 14,
+    height: 5,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1',
+  },
+  previewWideCardMini: {
+    height: 14,
+    borderRadius: 3,
+    backgroundColor: '#FFF0EE',
+    borderWidth: 0.5,
+    borderColor: '#FFCDC8',
+    marginTop: 3,
+  },
+  // Vertical card styles for LastDayVisibilityModal
+  verticalCardsContainer: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  verticalVisualCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.inputBg,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: colors.inputBorder,
+    padding: 10,
+    gap: 12,
+  },
+  verticalVisualCardSelected: {
+    backgroundColor: '#01B7FF08',
+    borderColor: colors.today,
+  },
+  verticalPreviewWrapper: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  verticalPreviewBox: {
+    width: 92,
+    height: 78,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: '#ECEEF2',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  verticalCardInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  verticalCardLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 3,
+  },
+  verticalCardLabelSelected: {
+    color: colors.today,
+    fontWeight: '700',
+  },
+  verticalCardSublabel: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: colors.secondary,
+    lineHeight: 16,
   },
   previewWeekBar: {
     flexDirection: 'row',
