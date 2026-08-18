@@ -328,37 +328,12 @@ export default function SettingsScreen() {
       {/* User Guide Modal */}
       <UserGuideModal visible={guideOpen} onClose={() => setGuideOpen(false)} />
 
-      {/* Default View Mode Modal */}
-      <OptionModal
+      {/* Visual Default View Mode Modal */}
+      <DefaultViewModeModal
         visible={defaultViewModeModalOpen}
-        title="Әдепкі режим"
+        currentMode={(settings.defaultViewMode as any) || 'week'}
         onClose={() => setDefaultViewModeModalOpen(false)}
-        options={[
-          {
-            label: 'Апта (Стандартты)',
-            selected: !settings.defaultViewMode || settings.defaultViewMode === 'week',
-            onSelect: () => {
-              void setPref('defaultViewMode', 'week');
-              setDefaultViewModeModalOpen(false);
-            },
-          },
-          {
-            label: 'Ай',
-            selected: settings.defaultViewMode === 'month',
-            onSelect: () => {
-              void setPref('defaultViewMode', 'month');
-              setDefaultViewModeModalOpen(false);
-            },
-          },
-          {
-            label: 'Жыл',
-            selected: settings.defaultViewMode === 'year',
-            onSelect: () => {
-              void setPref('defaultViewMode', 'year');
-              setDefaultViewModeModalOpen(false);
-            },
-          },
-        ]}
+        onSelectMode={(mode) => void setPref('defaultViewMode', mode)}
       />
 
       {/* First Day Modal */}
@@ -644,6 +619,205 @@ function OptionModal({
   );
 }
 
+function WeekLayoutPreview() {
+  return (
+    <View style={styles.previewBox}>
+      {/* Top week strip */}
+      <View style={styles.previewWeekBar}>
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          <View
+            key={i}
+            style={[
+              styles.previewDayPill,
+              i === 1 && styles.previewDayPillActive,
+              i >= 5 && styles.previewDayPillWeekend,
+            ]}
+          />
+        ))}
+      </View>
+      {/* 2-column day cards */}
+      <View style={styles.previewGridRow}>
+        <View style={styles.previewCardCol}>
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+        </View>
+        <View style={styles.previewCardCol}>
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+          <View style={styles.previewCardMini} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function MonthLayoutPreview() {
+  return (
+    <View style={styles.previewBox}>
+      {/* Month header badge */}
+      <View style={styles.previewMonthHeader}>
+        <View style={styles.previewMonthTitleBadge} />
+      </View>
+      {/* Weekday headers row */}
+      <View style={styles.previewMonthWeekRow}>
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          <View key={i} style={[styles.previewDot, i >= 5 && styles.previewDotWeekend]} />
+        ))}
+      </View>
+      {/* 5x7 matrix cells */}
+      {[0, 1, 2, 3, 4].map((row) => (
+        <View key={row} style={styles.previewMatrixRow}>
+          {[0, 1, 2, 3, 4, 5, 6].map((col) => {
+            const isActive = row === 2 && col === 2;
+            const isWeekend = col >= 5;
+            return (
+              <View
+                key={col}
+                style={[
+                  styles.previewCellDot,
+                  isActive && styles.previewCellDotActive,
+                  isWeekend && !isActive && styles.previewCellDotWeekend,
+                ]}
+              />
+            );
+          })}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function YearLayoutPreview() {
+  return (
+    <View style={styles.previewBox}>
+      {/* 3x4 mini month blocks */}
+      <View style={styles.previewYearGrid}>
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((m) => (
+          <View key={m} style={[styles.previewYearMonth, m === 7 && styles.previewYearMonthActive]}>
+            <View style={styles.previewYearMonthHeader} />
+            <View style={styles.previewYearMonthLines} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function DefaultViewModeModal({
+  visible,
+  currentMode,
+  onSelectMode,
+  onClose,
+}: {
+  visible: boolean;
+  currentMode: 'week' | 'month' | 'year';
+  onSelectMode: (mode: 'week' | 'month' | 'year') => void;
+  onClose: () => void;
+}) {
+  const [selected, setSelected] = useState<'week' | 'month' | 'year'>(currentMode || 'week');
+
+  useEffect(() => {
+    if (visible) {
+      setSelected(currentMode || 'week');
+    }
+  }, [visible, currentMode]);
+
+  const handleConfirm = () => {
+    onSelectMode(selected);
+    onClose();
+  };
+
+  const options: { mode: 'week' | 'month' | 'year'; label: string; sublabel: string; preview: React.ReactNode }[] = [
+    {
+      mode: 'week',
+      label: 'Апта',
+      sublabel: 'Стандартты',
+      preview: <WeekLayoutPreview />,
+    },
+    {
+      mode: 'month',
+      label: 'Ай',
+      sublabel: 'Күнтізбе',
+      preview: <MonthLayoutPreview />,
+    },
+    {
+      mode: 'year',
+      label: 'Жыл',
+      sublabel: 'Шолу',
+      preview: <YearLayoutPreview />,
+    },
+  ];
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={styles.modalContentCard}>
+          {/* Header with Title and Close X button */}
+          <View style={styles.modalHeaderRow}>
+            <Text style={styles.modalHeaderTitle}>Әдепкі режим</Text>
+            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
+              <Ionicons name="close" size={18} color={colors.secondary} />
+            </Pressable>
+          </View>
+
+          {/* Visual Cards Row */}
+          <View style={styles.visualCardsContainer}>
+            {options.map((opt) => {
+              const isSelected = selected === opt.mode;
+              return (
+                <AnimatedPressable
+                  key={opt.mode}
+                  activeScale={0.95}
+                  style={[
+                    styles.visualCard,
+                    isSelected && styles.visualCardSelected,
+                  ]}
+                  onPress={() => setSelected(opt.mode)}
+                >
+                  {/* Visual UI Preview Graphic */}
+                  {opt.preview}
+
+                  {/* Label */}
+                  <Text
+                    style={[
+                      styles.visualCardLabel,
+                      isSelected && styles.visualCardLabelSelected,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+
+                  {/* Subtitle / Badge */}
+                  <Text
+                    style={[
+                      styles.visualCardSublabel,
+                      isSelected && styles.visualCardSublabelSelected,
+                    ]}
+                  >
+                    {opt.sublabel}
+                  </Text>
+
+                  {/* Radio Indicator */}
+                  <View style={[styles.visualRadio, isSelected && styles.visualRadioSelected]}>
+                    {isSelected && <View style={styles.visualRadioInner} />}
+                  </View>
+                </AnimatedPressable>
+              );
+            })}
+          </View>
+
+          {/* Confirm Button */}
+          <Pressable style={styles.modalContinueButton} onPress={handleConfirm}>
+            <Text style={styles.modalContinueButtonText}>Сақтау</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -833,5 +1007,187 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  // Visual View Mode Card Styles
+  visualCardsContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  visualCard: {
+    flex: 1,
+    backgroundColor: colors.inputBg,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: colors.inputBorder,
+    padding: 8,
+    alignItems: 'center',
+  },
+  visualCardSelected: {
+    backgroundColor: '#01B7FF08',
+    borderColor: colors.today,
+  },
+  previewBox: {
+    width: '100%',
+    height: 94,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: '#ECEEF2',
+    marginBottom: 8,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  previewWeekBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    height: 10,
+    paddingHorizontal: 2,
+    alignItems: 'center',
+  },
+  previewDayPill: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#E2E8F0',
+  },
+  previewDayPillActive: {
+    backgroundColor: colors.today,
+  },
+  previewDayPillWeekend: {
+    backgroundColor: '#FFCDC8',
+  },
+  previewGridRow: {
+    flexDirection: 'row',
+    gap: 4,
+    flex: 1,
+    marginTop: 4,
+  },
+  previewCardCol: {
+    flex: 1,
+    gap: 3,
+  },
+  previewCardMini: {
+    flex: 1,
+    backgroundColor: '#F8F9FB',
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: '#E2E8F0',
+  },
+  previewMonthHeader: {
+    height: 8,
+    justifyContent: 'center',
+  },
+  previewMonthTitleBadge: {
+    width: 24,
+    height: 6,
+    borderRadius: 2,
+    backgroundColor: colors.today,
+  },
+  previewMonthWeekRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 2,
+    paddingHorizontal: 1,
+  },
+  previewDot: {
+    width: 5,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: '#94A3B8',
+  },
+  previewDotWeekend: {
+    backgroundColor: '#FF4B3E',
+  },
+  previewMatrixRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 1,
+    paddingHorizontal: 1,
+  },
+  previewCellDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 2,
+    backgroundColor: '#F1F5F9',
+  },
+  previewCellDotActive: {
+    backgroundColor: colors.today,
+  },
+  previewCellDotWeekend: {
+    backgroundColor: '#FFE4E2',
+  },
+  previewYearGrid: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 3,
+    justifyContent: 'space-between',
+  },
+  previewYearMonth: {
+    width: '30%',
+    height: 17,
+    backgroundColor: '#F8F9FB',
+    borderRadius: 3,
+    borderWidth: 0.5,
+    borderColor: '#E2E8F0',
+    padding: 2,
+  },
+  previewYearMonthActive: {
+    borderColor: colors.today,
+    backgroundColor: '#01B7FF12',
+  },
+  previewYearMonthHeader: {
+    width: '60%',
+    height: 2.5,
+    backgroundColor: '#CBD5E1',
+    borderRadius: 1,
+    marginBottom: 2,
+  },
+  previewYearMonthLines: {
+    width: '100%',
+    height: 5,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 1,
+  },
+  visualCardLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 1,
+  },
+  visualCardLabelSelected: {
+    color: colors.today,
+    fontWeight: '700',
+  },
+  visualCardSublabel: {
+    fontSize: 10,
+    fontWeight: '400',
+    color: colors.secondary,
+    marginBottom: 6,
+  },
+  visualCardSublabelSelected: {
+    color: colors.today,
+  },
+  visualRadio: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: colors.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  visualRadioSelected: {
+    borderColor: colors.today,
+  },
+  visualRadioInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.today,
   },
 });
