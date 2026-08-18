@@ -61,7 +61,7 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
         !label ? styles.iconOnly : undefined,
       ]}
     >
-      <RepeatIcon size={16} color={isActive ? '#01B7FF' : '#707684'} />
+      <RepeatIcon size={16} color={isActive ? '#4B5563' : '#707684'} />
       {label && <Text style={[styles.text, isActive && styles.activeText]}>{label}</Text>}
     </AnimatedPressable>
   );
@@ -109,8 +109,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
   },
   activeChip: {
-    backgroundColor: '#01B7FF12',
-    borderColor: '#01B7FF35',
+    backgroundColor: '#F3F4F6',
+    borderColor: '#E5E7EB',
   },
   text: {
     fontSize: 13,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   activeText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#01B7FF',
+    fontWeight: '500',
+    color: '#4B5563',
   },
 });

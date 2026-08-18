@@ -376,7 +376,7 @@ export function TaskPreviewModal({
               {/* Repeat Tag if set */}
               {repeatLabel ? (
                 <View style={styles.repeatBadge}>
-                  <RepeatIcon size={14} color={colors.today} />
+                  <RepeatIcon size={14} color={colors.secondary} />
                   <Text style={styles.repeatBadgeText}>{repeatLabel}</Text>
                 </View>
               ) : null}
@@ -593,17 +593,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#01B7FF12',
+    backgroundColor: colors.inputBg,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#01B7FF30',
+    borderColor: colors.inputBorder,
   },
   repeatBadgeText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: colors.today,
+    fontWeight: '500',
+    color: colors.secondary,
   },
   actionDockRow: {
     flexDirection: 'row',
