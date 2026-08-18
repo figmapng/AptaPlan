@@ -175,10 +175,42 @@ export function CalendarModal({
   const nextMonthDate = addMonths(currentMonthDate, 1);
 
   const quickOptions = [
-    { key: todayKey, label: 'Бүгін', icon: SunIcon, color: colors.today },
-    { key: tomorrowKey, label: 'Ертең', icon: TomorrowIcon, color: '#F59E0B' },
-    { key: weekendKey, label: 'Демалыс күні', icon: WeekendIcon, color: '#FF5A5F' },
-    { key: nextWeekKey, label: 'Келесі апта', icon: NextWeekIcon, color: '#8B5CF6' },
+    {
+      key: todayKey,
+      label: 'Бүгін',
+      icon: SunIcon,
+      color: colors.today,
+      activeBg: '#EDF9FF',
+      activeBorder: '#BCE8FF',
+      textColor: colors.today,
+    },
+    {
+      key: tomorrowKey,
+      label: 'Ертең',
+      icon: TomorrowIcon,
+      color: '#F59E0B',
+      activeBg: '#FFFBEB',
+      activeBorder: '#FDE68A',
+      textColor: '#D97706',
+    },
+    {
+      key: weekendKey,
+      label: 'Демалыс күні',
+      icon: WeekendIcon,
+      color: '#FF4B3E',
+      activeBg: '#FFF1F0',
+      activeBorder: '#FFE0DE',
+      textColor: '#FF4B3E',
+    },
+    {
+      key: nextWeekKey,
+      label: 'Келесі апта',
+      icon: NextWeekIcon,
+      color: '#8B5CF6',
+      activeBg: '#F5F3FF',
+      activeBorder: '#DDD6FE',
+      textColor: '#7C3AED',
+    },
   ];
 
   // Capitalized Month Title
@@ -221,7 +253,7 @@ export function CalendarModal({
             {quickOptions.map((opt) => {
               const isSelected = tempSelectedDate === opt.key;
               const IconComp = opt.icon;
-              const iconColor = opt.color;
+              const iconColor = isSelected ? opt.textColor : opt.color;
 
               return (
                 <AnimatedPressable
@@ -230,8 +262,8 @@ export function CalendarModal({
                   style={[
                     styles.quickBtn,
                     isSelected && {
-                      backgroundColor: `${opt.color}18`,
-                      borderColor: opt.color,
+                      backgroundColor: opt.activeBg,
+                      borderColor: opt.activeBorder,
                     },
                   ]}
                   onPress={() => handleQuickSelect(opt.key)}
@@ -240,7 +272,7 @@ export function CalendarModal({
                   <Text
                     style={[
                       styles.quickText,
-                      isSelected && { color: opt.color, fontWeight: '700' },
+                      isSelected && { color: opt.textColor, fontWeight: '700' },
                     ]}
                   >
                     {opt.label}
