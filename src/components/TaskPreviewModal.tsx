@@ -280,25 +280,8 @@ export function TaskPreviewModal({
             </View>
           </View>
 
-          {/* Floating Action Dock (Circled in red in design) */}
+          {/* Floating Action Dock */}
           <View style={styles.actionDockRow}>
-            {/* Done / Toggle Pill Button */}
-            <AnimatedPressable
-              activeScale={0.94}
-              onPress={handleToggleDone}
-              style={[
-                styles.doneButton,
-                t.isCompleted && styles.doneButtonCompleted,
-              ]}
-            >
-              <View style={[styles.doneCheckCircle, t.isCompleted && styles.doneCheckCircleCompleted]}>
-                <CheckmarkIcon size={11} color={t.isCompleted ? '#34C759' : colors.today} />
-              </View>
-              <Text style={styles.doneButtonText}>
-                {t.isCompleted ? 'Орындалды' : 'Орындау'}
-              </Text>
-            </AnimatedPressable>
-
             {/* Action Buttons Capsule with vertical dividers */}
             <View style={styles.actionCapsule}>
               {/* Date Action (Filled) */}
@@ -358,19 +341,17 @@ export function TaskPreviewModal({
               >
                 <Ionicons name="create" size={20} color="#5E6778" />
               </AnimatedPressable>
-
-              <View style={styles.dockDivider} />
-
-              {/* Delete Action (Filled) */}
-              <AnimatedPressable
-                activeScale={0.88}
-                onPress={handleDelete}
-                style={styles.actionIconBtn}
-                hitSlop={6}
-              >
-                <Ionicons name="trash" size={20} color="#FF4B3E" />
-              </AnimatedPressable>
             </View>
+
+            {/* Standalone Delete Button */}
+            <AnimatedPressable
+              activeScale={0.88}
+              onPress={handleDelete}
+              style={styles.deleteButtonStandalone}
+              hitSlop={6}
+            >
+              <Ionicons name="trash" size={20} color="#FF4B3E" />
+            </AnimatedPressable>
           </View>
         </Animated.View>
       </View>
@@ -529,39 +510,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  doneButton: {
-    height: 50,
-    paddingHorizontal: 14,
-    borderRadius: 25,
-    backgroundColor: colors.today,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  doneButtonCompleted: {
-    backgroundColor: '#34C759',
-  },
-  doneCheckCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneCheckCircleCompleted: {
-    backgroundColor: '#FFFFFF',
-  },
-  doneButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
   actionCapsule: {
     flex: 1,
     height: 50,
@@ -570,7 +518,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
     borderWidth: 1,
     borderColor: '#ECEEF2',
     shadowColor: '#000000',
@@ -580,15 +528,29 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   actionIconBtn: {
-    width: 36,
-    height: 38,
-    borderRadius: 18,
+    flex: 1,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dockDivider: {
     width: 1,
-    height: 18,
+    height: 20,
     backgroundColor: '#ECEEF2',
+  },
+  deleteButtonStandalone: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ECEEF2',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
   },
 });
