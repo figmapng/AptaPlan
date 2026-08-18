@@ -614,8 +614,8 @@ function WeekLayoutPreview() {
         <View style={styles.previewModePillBadge} />
       </View>
 
-      {/* 2-column day cards (3 + 3) */}
-      <View style={[styles.previewGridRow, { height: 60, marginTop: 2, gap: 2.5 }]}>
+      {/* 2-column day cards (3 + 3 = exactly 6 days) */}
+      <View style={[styles.previewGridRow, { height: 68, marginTop: 2, gap: 2.5 }]}>
         {/* Left column */}
         <View style={styles.previewCardCol}>
           {/* Card 1: Mon */}
