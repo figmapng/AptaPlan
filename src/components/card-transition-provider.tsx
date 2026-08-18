@@ -104,6 +104,7 @@ const CarouselCard = React.memo(function CarouselCard({
 
   const cardTranslateX = Animated.add(virtualIndex * width, carouselX);
   const isCenter = virtualIndex === 0;
+  const isMonthOrigin = currentFrame.width < 100;
 
   return (
     <Animated.View
@@ -128,7 +129,7 @@ const CarouselCard = React.memo(function CarouselCard({
           }),
           borderRadius: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: [14, 16],
+            outputRange: [isMonthOrigin ? 8 : 14, 16],
           }),
           backgroundColor: isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : '#EDEFF2',
           zIndex: isCenter ? 9999 : 9998,
@@ -149,14 +150,19 @@ const CarouselCard = React.memo(function CarouselCard({
           style={{
             height: progress.interpolate({
               inputRange: [0, 1],
-              outputRange: [29, 44],
+              outputRange: [isMonthOrigin ? 0 : 29, 44],
             }),
             paddingHorizontal: progress.interpolate({
               inputRange: [0, 1],
-              outputRange: [10, 14],
+              outputRange: [isMonthOrigin ? 4 : 10, 14],
+            }),
+            opacity: progress.interpolate({
+              inputRange: [0, 0.25, 1],
+              outputRange: [isMonthOrigin ? 0 : 0.7, 0.9, 1],
             }),
             flexDirection: 'row',
             alignItems: 'center',
+            overflow: 'hidden',
           }}
         >
           {/* Weekday Name */}
@@ -574,8 +580,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     progress.setValue(0);
     Animated.timing(progress, {
       toValue: 1,
-      duration: 380,
-      easing: Easing.bezier(0.12, 1, 0.22, 1),
+      duration: 320,
+      easing: Easing.bezier(0.18, 0.9, 0.2, 1),
       useNativeDriver: false,
     }).start(() => {
       isAnimatingRef.current = false;
@@ -593,8 +599,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
     Animated.timing(progress, {
       toValue: 0,
-      duration: 280,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
+      duration: 260,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       useNativeDriver: false,
     }).start(() => {
       isAnimatingRef.current = false;
@@ -617,30 +623,62 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
   const endInteractiveClose = (translationY: number, velocityY: number) => {
     if (!origin.current || !transitionRef.current) return;
-    if (translationY > 90 || velocityY > 0.6) {
+    if (translationY > 80 || velocityY > 0.5) {
       closeCard();
       return;
     }
-    Animated.timing(progress, {
+    Animated.spring(progress, {
       toValue: 1,
-      duration: 200,
-      easing: Easing.out(Easing.quad),
       useNativeDriver: false,
+      bounciness: 0,
+      speed: 24,
     }).start();
   };
+
+  const isDraggingVertically = useRef(false);
 
   const carouselPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponder: (_, gesture) =>
-        Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.1,
-      onMoveShouldSetPanResponderCapture: (_, gesture) =>
-        Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.1,
+      onMoveShouldSetPanResponder: (_, gesture) => {
+        const isHorizontal = Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2;
+        const isVerticalDown = gesture.dy > 12 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.3;
+        return isHorizontal || isVerticalDown;
+      },
+      onMoveShouldSetPanResponderCapture: (_, gesture) => {
+        const isHorizontal = Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2;
+        const isVerticalDown = gesture.dy > 12 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.3;
+        return isHorizontal || isVerticalDown;
+      },
+      onPanResponderGrant: (_, gesture) => {
+        isDraggingVertically.current = gesture.dy > 8 && Math.abs(gesture.dy) > Math.abs(gesture.dx);
+      },
       onPanResponderMove: (_, gesture) => {
-        carouselX.setValue(-pageIndexRef.current * width + gesture.dx);
+        if (isDraggingVertically.current || (gesture.dy > 10 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.3)) {
+          isDraggingVertically.current = true;
+          const newProg = Math.max(0, Math.min(1, 1 - gesture.dy / 280));
+          progress.setValue(newProg);
+        } else {
+          carouselX.setValue(-pageIndexRef.current * width + gesture.dx);
+        }
       },
       onPanResponderRelease: (_, gesture) => {
+        if (isDraggingVertically.current) {
+          isDraggingVertically.current = false;
+          if (gesture.dy > 70 || gesture.vy > 0.5) {
+            closeCard();
+          } else {
+            Animated.spring(progress, {
+              toValue: 1,
+              useNativeDriver: false,
+              bounciness: 0,
+              speed: 24,
+            }).start();
+          }
+          return;
+        }
+
         const threshold = (width - 32) * 0.22;
         const velocity = gesture.vx;
 
@@ -688,6 +726,16 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
         }
       },
       onPanResponderTerminate: () => {
+        if (isDraggingVertically.current) {
+          isDraggingVertically.current = false;
+          Animated.spring(progress, {
+            toValue: 1,
+            useNativeDriver: false,
+            bounciness: 0,
+            speed: 24,
+          }).start();
+          return;
+        }
         setPageIndex(pageIndexRef.current);
         Animated.spring(carouselX, {
           toValue: -pageIndexRef.current * width,
