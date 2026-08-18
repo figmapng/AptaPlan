@@ -219,6 +219,9 @@ export function CalendarModal({
   const monthName = kzMonthsFull[currMonthIdx];
   const capitalizedMonthTitle = `${monthName[0].toUpperCase()}${monthName.slice(1)} ${currYear}`;
 
+  const matchedQuickOption = quickOptions.find((opt) => opt.key === tempSelectedDate);
+  const selectedThemeColor = matchedQuickOption ? matchedQuickOption.color : colors.today;
+
   return (
     <>
       <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
@@ -358,6 +361,7 @@ export function CalendarModal({
                   todayKey={todayKey}
                   firstDayOfWeek={firstDayOfWeek}
                   onSelectDay={handleSelectDay}
+                  selectedColor={selectedThemeColor}
                 />
               </View>
 
@@ -368,6 +372,7 @@ export function CalendarModal({
                   todayKey={todayKey}
                   firstDayOfWeek={firstDayOfWeek}
                   onSelectDay={handleSelectDay}
+                  selectedColor={selectedThemeColor}
                 />
               </View>
 
@@ -378,6 +383,7 @@ export function CalendarModal({
                   todayKey={todayKey}
                   firstDayOfWeek={firstDayOfWeek}
                   onSelectDay={handleSelectDay}
+                  selectedColor={selectedThemeColor}
                 />
               </View>
             </ScrollView>
@@ -404,7 +410,11 @@ export function CalendarModal({
 
             <AnimatedPressable
               activeScale={0.94}
-              style={[styles.confirmBtn, !onRemoveDate && styles.confirmBtnFull]}
+              style={[
+                styles.confirmBtn,
+                !onRemoveDate && styles.confirmBtnFull,
+                { backgroundColor: selectedThemeColor, borderColor: selectedThemeColor },
+              ]}
               onPress={handleConfirm}
             >
               <Text style={styles.confirmText}>Сақтау</Text>
@@ -434,6 +444,7 @@ interface DaysGridMatrixProps {
   todayKey: string;
   firstDayOfWeek: 'mon' | 'sat' | 'sun';
   onSelectDay: (dateStr: string) => void;
+  selectedColor?: string;
 }
 
 function DaysGridMatrix({
@@ -442,6 +453,7 @@ function DaysGridMatrix({
   todayKey,
   firstDayOfWeek,
   onSelectDay,
+  selectedColor = colors.today,
 }: DaysGridMatrixProps) {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
@@ -520,7 +532,7 @@ function DaysGridMatrix({
             <View
               style={[
                 styles.dayBadge,
-                isSelected && styles.dayBadgeSelected,
+                isSelected && { backgroundColor: selectedColor },
                 isToday && !isSelected && styles.dayBadgeToday,
               ]}
             >
