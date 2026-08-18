@@ -461,21 +461,34 @@ export function CustomRepeatModal({
 
               {monthlyMode === 'dates' && (
                 <View style={styles.daysGridContainer}>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
-                    const isSelected = selectedMonthDate === d;
+                  {Array.from({ length: 5 }, (_, rowIdx) => {
+                    const rowDates = Array.from({ length: 7 }, (__, colIdx) => {
+                      const d = rowIdx * 7 + colIdx + 1;
+                      return d <= 31 ? d : null;
+                    });
                     return (
-                      <Pressable
-                        key={d}
-                        style={[styles.dayGridCell, isSelected && styles.dayGridCellSelected]}
-                        onPress={() => {
-                          triggerHaptic();
-                          setSelectedMonthDate(d);
-                        }}
-                      >
-                        <Text style={[styles.dayGridText, isSelected && styles.dayGridTextSelected]}>
-                          {d}
-                        </Text>
-                      </Pressable>
+                      <View key={`row-${rowIdx}`} style={styles.dayGridRow}>
+                        {rowDates.map((d, colIdx) => {
+                          if (d === null) {
+                            return <View key={`empty-${colIdx}`} style={styles.dayGridCell} />;
+                          }
+                          const isSelected = selectedMonthDate === d;
+                          return (
+                            <Pressable
+                              key={d}
+                              style={[styles.dayGridCell, isSelected && styles.dayGridCellSelected]}
+                              onPress={() => {
+                                triggerHaptic();
+                                setSelectedMonthDate(d);
+                              }}
+                            >
+                              <Text style={[styles.dayGridText, isSelected && styles.dayGridTextSelected]}>
+                                {d}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
                     );
                   })}
                 </View>
@@ -812,20 +825,24 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   daysGridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
     padding: 8,
     borderTopWidth: 1,
     borderTopColor: colors.inputBorder,
   },
+  dayGridRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   dayGridCell: {
-    width: `${100 / 7}%`,
+    flex: 1,
     height: 42,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dayGridCellSelected: {
-    backgroundColor: '#01B7FF',
+    backgroundColor: colors.today,
     borderRadius: 4,
   },
   dayGridText: {

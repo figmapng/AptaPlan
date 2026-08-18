@@ -530,48 +530,57 @@ function DaysGridMatrix({
     nextDay++;
   }
 
+  const rows: (typeof days)[] = [];
+  for (let i = 0; i < days.length; i += 7) {
+    rows.push(days.slice(i, i + 7));
+  }
+
   return (
     <View style={styles.daysGrid}>
-      {days.map((item, idx) => {
-        const isSelected = selectedDate === item.dateStr;
-        const isToday = todayKey === item.dateStr;
+      {rows.map((row, rowIdx) => (
+        <View key={`row-${rowIdx}`} style={styles.weekRow}>
+          {row.map((item, colIdx) => {
+            const isSelected = selectedDate === item.dateStr;
+            const isToday = todayKey === item.dateStr;
 
-        return (
-          <AnimatedPressable
-            key={`${item.dateStr}-${idx}`}
-            activeScale={0.9}
-            style={styles.dayCell}
-            onPress={() => onSelectDay(item.dateStr)}
-          >
-            <View
-              style={[
-                styles.dayBadge,
-                isSelected && {
-                  backgroundColor: selectedOptionStyle.activeBg,
-                  borderWidth: 1.5,
-                  borderColor: selectedOptionStyle.activeBorder,
-                },
-                isToday && !isSelected && styles.dayBadgeToday,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.dayText,
-                  item.isWeekend && item.isCurrentMonth && styles.dayTextWeekend,
-                  !item.isCurrentMonth && (item.isWeekend ? styles.dayTextOtherMonthWeekend : styles.dayTextOtherMonth),
-                  isToday && !isSelected && styles.dayTextToday,
-                  isSelected && {
-                    color: selectedOptionStyle.textColor,
-                    fontWeight: '700',
-                  },
-                ]}
+            return (
+              <AnimatedPressable
+                key={`${item.dateStr}-${rowIdx}-${colIdx}`}
+                activeScale={0.9}
+                style={styles.dayCell}
+                onPress={() => onSelectDay(item.dateStr)}
               >
-                {item.dayNum}
-              </Text>
-            </View>
-          </AnimatedPressable>
-        );
-      })}
+                <View
+                  style={[
+                    styles.dayBadge,
+                    isSelected && {
+                      backgroundColor: selectedOptionStyle.activeBg,
+                      borderWidth: 1.5,
+                      borderColor: selectedOptionStyle.activeBorder,
+                    },
+                    isToday && !isSelected && styles.dayBadgeToday,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.dayText,
+                      item.isWeekend && item.isCurrentMonth && styles.dayTextWeekend,
+                      !item.isCurrentMonth && (item.isWeekend ? styles.dayTextOtherMonthWeekend : styles.dayTextOtherMonth),
+                      isToday && !isSelected && styles.dayTextToday,
+                      isSelected && {
+                        color: selectedOptionStyle.textColor,
+                        fontWeight: '700',
+                      },
+                    ]}
+                  >
+                    {item.dayNum}
+                  </Text>
+                </View>
+              </AnimatedPressable>
+            );
+          })}
+        </View>
+      ))}
     </View>
   );
 }
@@ -803,12 +812,11 @@ const styles = StyleSheet.create({
   weekHeader: {
     width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    alignItems: 'center',
     marginBottom: 6,
   },
   weekTitle: {
-    width: `${100 / 7}%`,
+    flex: 1,
     textAlign: 'center',
     fontSize: 12,
     fontWeight: '600',
@@ -820,11 +828,15 @@ const styles = StyleSheet.create({
   },
   daysGrid: {
     width: '100%',
+    flexDirection: 'column',
+  },
+  weekRow: {
+    width: '100%',
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
   },
   dayCell: {
-    width: `${100 / 7}%`,
+    flex: 1,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
@@ -837,12 +849,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayBadgeSelected: {
-    backgroundColor: '#01B7FF',
+    backgroundColor: colors.today,
   },
   dayBadgeToday: {
-    backgroundColor: '#01B7FF15',
+    backgroundColor: '#40C9FF18',
     borderWidth: 1.5,
-    borderColor: '#01B7FF',
+    borderColor: colors.today,
   },
   dayText: {
     fontSize: 14,
@@ -862,7 +874,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   dayTextToday: {
-    color: '#01B7FF',
+    color: colors.today,
     fontWeight: '700',
   },
   dayTextSelected: {
@@ -907,9 +919,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
-    backgroundColor: '#01B7FF',
+    backgroundColor: colors.today,
     borderWidth: 1,
-    borderColor: '#01B7FF',
+    borderColor: colors.today,
   },
   confirmBtnFull: {
     flex: 1,
