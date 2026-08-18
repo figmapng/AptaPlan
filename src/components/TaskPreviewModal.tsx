@@ -23,6 +23,9 @@ import { AnimatedPressable } from './AnimatedPressable';
 import { CalendarModal } from './CalendarModal';
 import { TimeModal } from './TimeModal';
 import { RepeatActionSheet } from './RepeatActionSheet';
+import { DateChip } from './DateChip';
+import { TimeChip } from './TimeChip';
+import { RepeatChip } from './RepeatChip';
 import { CustomRepeatConfig, describeCustomRepeat } from './CustomRepeatModal';
 
 function CheckmarkIcon({ size = 12, color = '#FFFFFF' }: { size?: number; color?: string }) {
@@ -362,24 +365,22 @@ export function TaskPreviewModal({
               <Text style={styles.taskNote}>{t.note}</Text>
             ) : null}
 
-            {/* Meta Tags Row */}
+            {/* Interactive Chips Row directly on the card */}
             <View style={styles.metaRow}>
-              {/* Date & Time Text */}
-              <View style={styles.dateBadge}>
-                <CalendarIcon size={14} color={colors.secondary} />
-                <Text style={styles.dateBadgeText}>
-                  {formatTaskDisplayDate(t.date)}
-                  {t.time ? ` · ${t.time}` : ''}
-                </Text>
-              </View>
-
-              {/* Repeat Tag if set */}
-              {repeatLabel ? (
-                <View style={styles.repeatBadge}>
-                  <RepeatIcon size={14} color={colors.secondary} />
-                  <Text style={styles.repeatBadgeText}>{repeatLabel}</Text>
-                </View>
-              ) : null}
+              <DateChip
+                date={t.date}
+                onPress={() => setShowCalendar(true)}
+              />
+              <TimeChip
+                time={t.time || null}
+                onPress={() => setShowTimePicker(true)}
+              />
+              <RepeatChip
+                repeat={((t.repeat as TaskRepeat) || (t.repeatType as TaskRepeat) || 'none')}
+                interval={t.repeatInterval || 1}
+                customLabel={repeatLabel || undefined}
+                onPress={() => setShowRepeatSheet(true)}
+              />
             </View>
           </View>
 
@@ -572,38 +573,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 14,
     paddingLeft: 34,
-  },
-  dateBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: colors.inputBg,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.inputBorder,
-  },
-  dateBadgeText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors.secondary,
-  },
-  repeatBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: colors.inputBg,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.inputBorder,
-  },
-  repeatBadgeText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors.secondary,
   },
   actionDockRow: {
     flexDirection: 'row',
