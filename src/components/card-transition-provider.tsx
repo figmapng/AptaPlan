@@ -379,7 +379,7 @@ const CarouselCard = React.memo(function CarouselCard({
             flex: 1,
             paddingHorizontal: 0,
             backgroundColor: '#FFFFFF',
-            borderRadius: 14,
+            borderRadius: isWideOrigin ? 12 : 14,
             borderCurve: 'continuous',
             marginHorizontal: 2,
             marginBottom: 2,
@@ -401,8 +401,8 @@ const CarouselCard = React.memo(function CarouselCard({
               paddingTop: 6,
               paddingBottom: 6,
               opacity: progress.interpolate({
-                inputRange: [0, 0.45, 0.85],
-                outputRange: [1, 0.85, 0],
+                inputRange: [0, 0.5, 0.9],
+                outputRange: [1, 0.9, 0],
                 extrapolate: 'clamp',
               }),
             }}
@@ -410,9 +410,23 @@ const CarouselCard = React.memo(function CarouselCard({
             {cardTasks.length ? (
               <TaskListFrame
                 tasks={cardTasks}
+                scrollable={isWideOrigin}
                 singleLine
                 onPress={() => {}}
               />
+            ) : isWideOrigin ? (
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 20,
+                }}
+              >
+                <Text style={{ color: colors.secondary, fontSize: 15, fontWeight: '500' }}>
+                  Тапсырма жоқ
+                </Text>
+              </View>
             ) : (
               <View
                 style={{
@@ -452,8 +466,8 @@ const CarouselCard = React.memo(function CarouselCard({
             style={{
               flex: 1,
               opacity: progress.interpolate({
-                inputRange: [0.35, 0.75, 1],
-                outputRange: [0, 0.2, 1],
+                inputRange: [0.25, 0.7, 1],
+                outputRange: [0, 0.15, 1],
                 extrapolate: 'clamp',
               }),
             }}
