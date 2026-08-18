@@ -288,7 +288,7 @@ const CarouselCard = React.memo(function CarouselCard({
                   overflow: 'hidden',
                 }}
               >
-                {months[cardDate.getMonth()]}
+                {months[cardDate.getMonth()][0].toUpperCase() + months[cardDate.getMonth()].slice(1)}
               </Animated.Text>
             </Animated.View>
           </Animated.View>
