@@ -221,7 +221,7 @@ export function CalendarModal({
             {quickOptions.map((opt) => {
               const isSelected = tempSelectedDate === opt.key;
               const IconComp = opt.icon;
-              const iconColor = isSelected ? '#FFFFFF' : opt.color;
+              const iconColor = opt.color;
 
               return (
                 <AnimatedPressable
@@ -229,12 +229,20 @@ export function CalendarModal({
                   activeScale={0.92}
                   style={[
                     styles.quickBtn,
-                    isSelected && { backgroundColor: opt.color, borderColor: opt.color },
+                    isSelected && {
+                      backgroundColor: `${opt.color}18`,
+                      borderColor: opt.color,
+                    },
                   ]}
                   onPress={() => handleQuickSelect(opt.key)}
                 >
                   <IconComp color={iconColor} />
-                  <Text style={[styles.quickText, isSelected && styles.quickTextActive]}>
+                  <Text
+                    style={[
+                      styles.quickText,
+                      isSelected && { color: opt.color, fontWeight: '700' },
+                    ]}
+                  >
                     {opt.label}
                   </Text>
                 </AnimatedPressable>
