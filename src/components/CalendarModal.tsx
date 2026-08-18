@@ -33,6 +33,7 @@ export function CalendarModal({
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
+  const [tempSelectedDate, setTempSelectedDate] = useState<string | null>(selectedDate);
   const [currentMonthDate, setCurrentMonthDate] = useState<Date>(() => {
     return selectedDate ? fromDateKey(selectedDate) : new Date();
   });
@@ -72,6 +73,7 @@ export function CalendarModal({
 
   useEffect(() => {
     if (visible) {
+      setTempSelectedDate(selectedDate);
       const initialDate = selectedDate ? fromDateKey(selectedDate) : new Date();
       setCurrentMonthDate(initialDate);
       Animated.parallel([
@@ -94,13 +96,21 @@ export function CalendarModal({
 
   const handleQuickSelect = (key: string) => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    onSelectDate(key);
-    handleClose();
+    setTempSelectedDate(key);
+    const d = fromDateKey(key);
+    setCurrentMonthDate(new Date(d.getFullYear(), d.getMonth(), 1));
   };
 
   const handleSelectDay = (dateStr: string) => {
     triggerHaptic();
-    onSelectDate(dateStr);
+    setTempSelectedDate(dateStr);
+  };
+
+  const handleConfirm = () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    if (tempSelectedDate) {
+      onSelectDate(tempSelectedDate);
+    }
     handleClose();
   };
 
@@ -168,7 +178,7 @@ export function CalendarModal({
             style={styles.quickScroll}
           >
             {quickOptions.map((opt) => {
-              const isSelected = selectedDate === opt.key;
+              const isSelected = tempSelectedDate === opt.key;
               const IconComp = opt.icon;
               const iconColor = isSelected ? '#FFFFFF' : opt.color;
 
@@ -257,7 +267,7 @@ export function CalendarModal({
               <View style={{ width: ITEM_WIDTH, height: 240 }}>
                 <DaysGridMatrix
                   monthDate={prevMonthDate}
-                  selectedDate={selectedDate}
+                  selectedDate={tempSelectedDate}
                   todayKey={todayKey}
                   onSelectDay={handleSelectDay}
                 />
@@ -266,7 +276,7 @@ export function CalendarModal({
               <View style={{ width: ITEM_WIDTH, height: 240 }}>
                 <DaysGridMatrix
                   monthDate={currentMonthDate}
-                  selectedDate={selectedDate}
+                  selectedDate={tempSelectedDate}
                   todayKey={todayKey}
                   onSelectDay={handleSelectDay}
                 />
@@ -275,7 +285,7 @@ export function CalendarModal({
               <View style={{ width: ITEM_WIDTH, height: 240 }}>
                 <DaysGridMatrix
                   monthDate={nextMonthDate}
-                  selectedDate={selectedDate}
+                  selectedDate={tempSelectedDate}
                   todayKey={todayKey}
                   onSelectDay={handleSelectDay}
                 />
@@ -283,23 +293,33 @@ export function CalendarModal({
             </ScrollView>
           </View>
 
-          {/* Footer Remove Button */}
-          {onRemoveDate && (
+          {/* Action Button Row */}
+          <View style={styles.btnRow}>
+            {onRemoveDate && (
+              <AnimatedPressable
+                activeScale={0.94}
+                style={[styles.removeBtn, !tempSelectedDate && styles.removeBtnDisabled]}
+                onPress={() => {
+                  triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+                  onRemoveDate();
+                  handleClose();
+                }}
+              >
+                <TrashIcon color={tempSelectedDate ? '#FF4B3E' : '#A0A5B1'} />
+                <Text style={[styles.removeText, !tempSelectedDate && styles.removeTextDisabled]}>
+                  Күнді өшіру
+                </Text>
+              </AnimatedPressable>
+            )}
+
             <AnimatedPressable
               activeScale={0.94}
-              style={[styles.removeBtn, !selectedDate && styles.removeBtnDisabled]}
-              onPress={() => {
-                triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-                onRemoveDate();
-                handleClose();
-              }}
+              style={[styles.confirmBtn, !onRemoveDate && styles.confirmBtnFull]}
+              onPress={handleConfirm}
             >
-              <TrashIcon color={selectedDate ? '#FF4B3E' : '#A0A5B1'} />
-              <Text style={[styles.removeText, !selectedDate && styles.removeTextDisabled]}>
-                Күнді өшіру
-              </Text>
+              <Text style={styles.confirmText}>Сақтау</Text>
             </AnimatedPressable>
-          )}
+          </View>
         </Animated.View>
       </Animated.View>
 
@@ -683,14 +703,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
   },
+  btnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+  },
   removeBtn: {
+    flex: 1,
+    height: 50,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    width: '100%',
-    paddingVertical: 12,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: '#FFF1F0',
     borderWidth: 1,
     borderColor: '#FFE0DE',
@@ -700,12 +726,31 @@ const styles = StyleSheet.create({
     borderColor: colors.inputBorder,
   },
   removeText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#FF4B3E',
   },
   removeTextDisabled: {
     color: '#9CA3AF',
     fontWeight: '600',
+  },
+  confirmBtn: {
+    flex: 1,
+    height: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    backgroundColor: '#01B7FF',
+    borderWidth: 1,
+    borderColor: '#01B7FF',
+  },
+  confirmBtnFull: {
+    flex: 1,
+  },
+  confirmText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
