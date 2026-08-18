@@ -123,6 +123,8 @@ const sortTasksForRange = (tasks: Task[], opts?: TaskSortOptions) => {
   const sortMode = opts?.sortMode ?? 'manual';
   const placement = opts?.completedPlacement ?? 'bottom';
   return [...tasks].sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+
     if (placement === 'bottom') {
       const aDone = Number(a.isCompleted);
       const bDone = Number(b.isCompleted);
@@ -134,7 +136,15 @@ const sortTasksForRange = (tasks: Task[], opts?: TaskSortOptions) => {
       if (aHas !== bHas) return aHas ? -1 : 1;
       if (aHas && a.time !== b.time) return a.time!.localeCompare(b.time!);
     }
-    return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+    const sortDiff = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+    if (sortDiff !== 0) return sortDiff;
+
+    // Fallback if sortOrder is equal: sort timed tasks by time, then untimed by createdAt
+    const aHas = !!a.time;
+    const bHas = !!b.time;
+    if (aHas && bHas && a.time !== b.time) return a.time!.localeCompare(b.time!);
+    if (aHas !== bHas) return aHas ? -1 : 1;
+    return (a.createdAt || '').localeCompare(b.createdAt || '');
   });
 };
 
@@ -171,6 +181,40 @@ export async function getTasksForRange(db: SQLiteDatabase, start: string, end: s
 }
 export const getTasksForDate = (db: SQLiteDatabase, date: string) => getTasksForRange(db, date, date);
 
+/**
+ * Orders tasks on a given date chronologically by time:
+ * 1. Tasks with time: sorted ascending by time ("08:00", "09:30", "14:00"...)
+ * 2. Tasks without time: placed after timed tasks, preserving their relative sortOrder / creation order.
+ */
+export async function reorderTasksByTimeForDate(db: SQLiteDatabase, date: string) {
+  const tasks = await db.getAllAsync<{ id: string; time: string | null; sortOrder: number; createdAt: string }>(
+    `SELECT id, time, sortOrder, createdAt FROM tasks WHERE date=? AND deletedAt IS NULL`,
+    date
+  );
+  if (tasks.length <= 1) return;
+
+  const sorted = [...tasks].sort((a, b) => {
+    const aHas = !!a.time;
+    const bHas = !!b.time;
+    if (aHas && bHas) {
+      const timeCmp = a.time!.localeCompare(b.time!);
+      if (timeCmp !== 0) return timeCmp;
+      return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+    }
+    if (aHas !== bHas) return aHas ? -1 : 1;
+    return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+  });
+
+  const now = new Date().toISOString();
+  await db.withTransactionAsync(async () => {
+    for (let i = 0; i < sorted.length; i++) {
+      if (sorted[i].sortOrder !== i) {
+        await db.runAsync('UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?', i, now, sorted[i].id);
+      }
+    }
+  });
+}
+
 export async function createTask(db: SQLiteDatabase, input: TaskInput) {
   const now = new Date().toISOString();
   const id = createId();
@@ -191,10 +235,14 @@ export async function createTask(db: SQLiteDatabase, input: TaskInput) {
     now,
     now
   );
+  if (input.time) {
+    await reorderTasksByTimeForDate(db, input.date);
+  }
   return id;
 }
 
 export async function updateTask(db: SQLiteDatabase, id: string, input: TaskInput) {
+  const prev = await db.getFirstAsync<{ date: string; time: string | null }>('SELECT date, time FROM tasks WHERE id=?', id);
   await db.runAsync(
     `UPDATE tasks SET title=?,note=?,date=?,time=?,priority=?,repeatType=?,repeatInterval=?,repeatConfig=?,notificationOffset=?,updatedAt=? WHERE id=?`,
     input.title.trim(),
@@ -209,6 +257,14 @@ export async function updateTask(db: SQLiteDatabase, id: string, input: TaskInpu
     new Date().toISOString(),
     id
   );
+  if (input.time !== (prev?.time || null) || input.date !== prev?.date) {
+    if (prev?.date && prev.date !== input.date) {
+      await reorderTasksByTimeForDate(db, prev.date);
+    }
+    if (input.time) {
+      await reorderTasksByTimeForDate(db, input.date);
+    }
+  }
 }
 
 export async function setNotificationId(db: SQLiteDatabase, id: string, notificationId: string | null) {
