@@ -10,6 +10,7 @@ import { months, toDateKey, weekdays } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from './task-row';
 import { TaskBottomSheet } from './TaskBottomSheet';
+import { TaskPreviewModal } from './TaskPreviewModal';
 import { SortableTaskList } from './SortableTaskList';
 import { CompactWeekStrip } from './CompactWeekStrip';
 import { getDatabase } from '@/database/database';
@@ -455,6 +456,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [addingDate, setAddingDate] = useState<Date | null>(null);
+  const [previewTask, setPreviewTask] = useState<Task | null>(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
@@ -778,7 +780,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     handleScrollEnabled={handleScrollEnabled}
                     isScrollingRef={isScrollingRef}
                     handleTaskListScroll={handleTaskListScroll}
-                    beginEditing={beginEditing}
+                    beginEditing={(task) => setPreviewTask(task)}
                     beginAdding={beginAdding}
                     closeCard={closeCard}
                     handlePendingDelete={handlePendingDelete}
@@ -954,6 +956,21 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
             )}
           </View>
         )}
+
+        {/* Task Preview Modal with Bottom Action Toolbar */}
+        <TaskPreviewModal
+          visible={!!previewTask}
+          task={previewTask}
+          onClose={() => setPreviewTask(null)}
+          onEdit={(t) => {
+            setPreviewTask(null);
+            beginEditing(t);
+          }}
+          onDelete={(t) => {
+            setPreviewTask(null);
+            handlePendingDelete(t);
+          }}
+        />
 
         {/* Task BottomSheet for Adding / Editing */}
         <TaskBottomSheet

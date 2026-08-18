@@ -19,6 +19,7 @@ import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from '@/components/task-row';
 import { useCardTransition } from '@/components/card-transition-provider';
 import { TaskBottomSheet } from '@/components/TaskBottomSheet';
+import { TaskPreviewModal } from '@/components/TaskPreviewModal';
 import { SortableTaskList } from '@/components/SortableTaskList';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { CompactWeekStrip } from '@/components/CompactWeekStrip';
@@ -34,6 +35,7 @@ export default function DayScreen() {
   const { closeCard, beginInteractiveClose, updateInteractiveClose, endInteractiveClose } = useCardTransition();
   const [isAdding, setIsAdding] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [previewTask, setPreviewTask] = useState<Task | null>(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
@@ -237,7 +239,7 @@ export default function DayScreen() {
                   <TaskRow
                     task={task}
                     isLast={index === totalCount - 1}
-                    onPress={() => beginEditing(task)}
+                    onPress={() => setPreviewTask(task)}
                     onPendingDelete={handlePendingDelete}
                     isActive={isActive}
                   />
@@ -336,6 +338,19 @@ export default function DayScreen() {
         <Text style={{ color: colors.inputPlaceholder, fontSize: 14, fontWeight: '500' }}>Тапсырма қосу</Text>
       </AnimatedPressable>
     </View>
+    <TaskPreviewModal
+      visible={!!previewTask}
+      task={previewTask}
+      onClose={() => setPreviewTask(null)}
+      onEdit={(t) => {
+        setPreviewTask(null);
+        beginEditing(t);
+      }}
+      onDelete={(t) => {
+        setPreviewTask(null);
+        handlePendingDelete(t);
+      }}
+    />
     <TaskBottomSheet
       visible={isAdding}
       editingTask={editingTask}
