@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -24,7 +26,7 @@ import { exportBackup, importBackup } from '@/services/backup-service';
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { settings, setPref, clearAll, refresh } = usePlanner();
+  const { settings, setPref, clearAll, refresh, syncAppleReminders } = usePlanner();
 
   // Modals for selection settings
   const [guideOpen, setGuideOpen] = useState(false);
@@ -33,6 +35,38 @@ export default function SettingsScreen() {
   const [firstDayModalOpen, setFirstDayModalOpen] = useState(false);
   const [lastDayModalOpen, setLastDayModalOpen] = useState(false);
   const [defaultViewModeModalOpen, setDefaultViewModeModalOpen] = useState(false);
+
+  // Sync state
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatusText, setSyncStatusText] = useState<string | null>(null);
+
+  const handleSyncReminders = async () => {
+    if (isSyncing) return;
+    if (Platform.OS !== 'ios') {
+      Alert.alert('Ескерту', 'Apple Reminders тек iOS құрылғыларында қолжетімді.');
+      return;
+    }
+    setIsSyncing(true);
+    setSyncStatusText(null);
+    try {
+      const res = await syncAppleReminders();
+      if (res.success) {
+        const total = res.importedCount + res.updatedCount;
+        const msg = total > 0 ? `Жаңартылды: ${total}` : 'Жаңа тапсырма жоқ';
+        setSyncStatusText(msg);
+        Alert.alert(
+          'Синхрондау аяқталды',
+          `Apple Reminders-тен тапсырмалар сәтті жүктелді.\n\n• Қосылды: ${res.importedCount}\n• Жаңартылды: ${res.updatedCount}\n• Барлығы табылды: ${res.totalFound}`
+        );
+      } else {
+        Alert.alert('Синхрондау қатесі', res.error || 'Қате орын алды');
+      }
+    } catch (e: any) {
+      Alert.alert('Қате', e?.message || 'Синхрондау мүмкін болмады');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const clear = () =>
     Alert.alert(
@@ -162,7 +196,35 @@ export default function SettingsScreen() {
           />
         </Section>
 
-        {/* Карточка 2: Деректер мен сақтық көшірме */}
+        {/* Карточка 2: Apple Reminders (Еске салғыштар) синхрондау */}
+        <Section>
+          <SettingRow
+            icon="sync-outline"
+            label="Apple Reminders-тен импорттау"
+            valueText={isSyncing ? 'Синхрондалуда...' : syncStatusText || undefined}
+            onPress={handleSyncReminders}
+            rightElement={
+              isSyncing ? (
+                <ActivityIndicator size="small" color={colors.today} />
+              ) : undefined
+            }
+          />
+          <Divider />
+          <SettingRow
+            icon="refresh-circle-outline"
+            label="Авто-синхрондау"
+            rightElement={
+              <Switch
+                value={!!settings.autoSyncAppleReminders}
+                onValueChange={(v) => void setPref('autoSyncAppleReminders', v)}
+                trackColor={{ false: '#E2E5EB', true: colors.today }}
+                thumbColor="#FFFFFF"
+              />
+            }
+          />
+        </Section>
+
+        {/* Карточка 3: Деректер мен сақтық көшірме */}
         <Section>
           <SettingRow
             icon="cloud-upload-outline"

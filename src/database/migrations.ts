@@ -31,5 +31,12 @@ export async function migrate(db: SQLiteDatabase) {
     // Column may already exist
   }
 
+  try {
+    await db.execAsync(`ALTER TABLE tasks ADD COLUMN externalId TEXT;`);
+    await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_tasks_external_id ON tasks(externalId);`);
+  } catch {
+    // Column may already exist
+  }
+
   await db.runAsync('INSERT OR IGNORE INTO migrations(version) VALUES (1)');
 }

@@ -14,10 +14,20 @@
     "plugins": [
       "expo-router",
       "expo-sqlite",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-calendar",
+        {
+          "remindersPermission": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет."
+        }
+      ]
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSRemindersUsageDescription": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет.",
+        "NSRemindersFullAccessUsageDescription": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет."
+      }
     },
     "android": {
       "edgeToEdgeEnabled": true

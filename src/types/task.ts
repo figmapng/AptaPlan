@@ -19,6 +19,7 @@ export type RepeatConfig = {
 
 export type Task = {
   id: string;
+  externalId?: string | null;
   title: string;
   isCompleted: boolean;
   date: string;
@@ -38,6 +39,8 @@ export type Task = {
 };
 
 export type TaskInput = {
+  id?: string;
+  externalId?: string | null;
   title: string;
   date: string;
   time?: string | null;
@@ -48,4 +51,5 @@ export type TaskInput = {
   priority?: Priority;
   repeatType?: RepeatType | string;
   notificationOffset?: number | null;
+  isCompleted?: boolean;
 };

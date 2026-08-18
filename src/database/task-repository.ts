@@ -216,11 +216,12 @@ export async function reorderTasksByTimeForDate(db: SQLiteDatabase, date: string
 
 export async function createTask(db: SQLiteDatabase, input: TaskInput) {
   const now = new Date().toISOString();
-  const id = createId();
+  const id = input.id || createId();
   const row = await db.getFirstAsync<{ n: number }>('SELECT COALESCE(MAX(sortOrder), -1) + 1 AS n FROM tasks WHERE date=?', input.date);
   await db.runAsync(
-    `INSERT INTO tasks(id,title,note,date,time,priority,repeatType,repeatInterval,repeatConfig,notificationOffset,sortOrder,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO tasks(id,externalId,title,note,date,time,priority,repeatType,repeatInterval,repeatConfig,notificationOffset,isCompleted,sortOrder,createdAt,updatedAt) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     id,
+    input.externalId || null,
     input.title.trim(),
     input.note || null,
     input.date,
@@ -230,6 +231,7 @@ export async function createTask(db: SQLiteDatabase, input: TaskInput) {
     input.repeatInterval || 1,
     input.repeatConfig ? JSON.stringify(input.repeatConfig) : null,
     input.notificationOffset || null,
+    input.isCompleted ? 1 : 0,
     row?.n ?? 0,
     now,
     now
@@ -243,7 +245,7 @@ export async function createTask(db: SQLiteDatabase, input: TaskInput) {
 export async function updateTask(db: SQLiteDatabase, id: string, input: TaskInput) {
   const prev = await db.getFirstAsync<{ date: string; time: string | null }>('SELECT date, time FROM tasks WHERE id=?', id);
   await db.runAsync(
-    `UPDATE tasks SET title=?,note=?,date=?,time=?,priority=?,repeatType=?,repeatInterval=?,repeatConfig=?,notificationOffset=?,updatedAt=? WHERE id=?`,
+    `UPDATE tasks SET title=?,note=?,date=?,time=?,priority=?,repeatType=?,repeatInterval=?,repeatConfig=?,notificationOffset=?,isCompleted=CASE WHEN ? IS NOT NULL THEN ? ELSE isCompleted END,updatedAt=? WHERE id=?`,
     input.title.trim(),
     input.note || null,
     input.date,
@@ -253,6 +255,8 @@ export async function updateTask(db: SQLiteDatabase, id: string, input: TaskInpu
     input.repeatInterval || 1,
     input.repeatConfig ? JSON.stringify(input.repeatConfig) : null,
     input.notificationOffset || null,
+    input.isCompleted !== undefined ? (input.isCompleted ? 1 : 0) : null,
+    input.isCompleted !== undefined ? (input.isCompleted ? 1 : 0) : null,
     new Date().toISOString(),
     id
   );
@@ -264,6 +268,11 @@ export async function updateTask(db: SQLiteDatabase, id: string, input: TaskInpu
       await reorderTasksByTimeForDate(db, input.date);
     }
   }
+}
+
+export async function getTaskByExternalId(db: SQLiteDatabase, externalId: string) {
+  const r = await db.getFirstAsync<Row>('SELECT * FROM tasks WHERE externalId=? AND deletedAt IS NULL', externalId);
+  return r ? map(r) : null;
 }
 
 export async function setNotificationId(db: SQLiteDatabase, id: string, notificationId: string | null) {

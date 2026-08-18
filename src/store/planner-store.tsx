@@ -5,8 +5,8 @@ import { defaultSettings } from '@/types/settings';
 import { getDatabase } from '@/database/database';
 import * as repo from '@/database/task-repository';
 import { getSettings, setSetting } from '@/database/settings-repository';
-import { seedDemoData } from '@/database/demo-data';
 import { cancelReminder, scheduleReminder } from '@/services/notification-service';
+import { syncAppleRemindersToAptaPlan, type SyncResult } from '@/services/apple-reminders-service';
 
 type Store = {
   ready: boolean;
@@ -23,6 +23,7 @@ type Store = {
   get: (id: string) => Promise<Task | null>;
   setPref: <K extends keyof PlannerSettings>(k: K, v: PlannerSettings[K]) => Promise<void>;
   clearAll: () => Promise<void>;
+  syncAppleReminders: () => Promise<SyncResult>;
 };
 
 const Context = createContext<Store | null>(null);
@@ -182,9 +183,25 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     await refresh();
   }, [refresh]);
 
+  const syncAppleReminders = useCallback(async (): Promise<SyncResult> => {
+    const db = await getDatabase();
+    const result = await syncAppleRemindersToAptaPlan(db);
+    if (result.success) {
+      const nowStr = new Date().toISOString();
+      await setSetting(db, 'lastRemindersSyncTime', nowStr);
+      setSettings((prev) => {
+        const updated = { ...prev, lastRemindersSyncTime: nowStr };
+        settingsRef.current = updated;
+        return updated;
+      });
+      await refresh();
+    }
+    return result;
+  }, [refresh]);
+
   const value = useMemo(
-    () => ({ ready, error, tasks, settings, loadRange, refresh, toggle, create, update, remove, removeOccurrence, get, setPref, clearAll }),
-    [ready, error, tasks, settings, loadRange, refresh, toggle, create, update, remove, removeOccurrence, get, setPref, clearAll]
+    () => ({ ready, error, tasks, settings, loadRange, refresh, toggle, create, update, remove, removeOccurrence, get, setPref, clearAll, syncAppleReminders }),
+    [ready, error, tasks, settings, loadRange, refresh, toggle, create, update, remove, removeOccurrence, get, setPref, clearAll, syncAppleReminders]
   );
 
   useEffect(() => {
@@ -197,7 +214,13 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
           setSettings(dbSettings);
           settingsRef.current = dbSettings;
         }
-        await seedDemoData(db);
+        if (dbSettings.autoSyncAppleReminders) {
+          try {
+            await syncAppleRemindersToAptaPlan(db);
+          } catch (err) {
+            console.warn('Auto sync reminders failed:', err);
+          }
+        }
         await refresh();
         if (!cancelled) setReady(true);
       } catch (e) {
