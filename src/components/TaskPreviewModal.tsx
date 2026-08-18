@@ -330,8 +330,14 @@ export function TaskPreviewModal({
             },
           ]}
         >
-          {/* Main Task Card */}
-          <View style={styles.taskCard}>
+          {/* Main Task Card (Tappable to Edit) */}
+          <Pressable
+            onPress={handleEdit}
+            style={({ pressed }) => [
+              styles.taskCard,
+              pressed && { opacity: 0.95 },
+            ]}
+          >
             {/* Header: Checkbox + Title */}
             <View style={styles.taskHeaderRow}>
               <Pressable
@@ -365,23 +371,31 @@ export function TaskPreviewModal({
             {/* Meta Tags Row */}
             <View style={styles.metaRow}>
               {/* Date & Time Text */}
-              <View style={styles.dateBadge}>
+              <Pressable
+                onPress={() => setShowCalendar(true)}
+                style={styles.dateBadge}
+                hitSlop={4}
+              >
                 <CalendarIcon size={14} color={colors.secondary} />
                 <Text style={styles.dateBadgeText}>
                   {formatTaskDisplayDate(t.date)}
                   {t.time ? ` · ${t.time}` : ''}
                 </Text>
-              </View>
+              </Pressable>
 
               {/* Repeat Tag if set */}
               {repeatLabel ? (
-                <View style={styles.repeatBadge}>
+                <Pressable
+                  onPress={() => setShowRepeatSheet(true)}
+                  style={styles.repeatBadge}
+                  hitSlop={4}
+                >
                   <RepeatIcon size={14} color={colors.secondary} />
                   <Text style={styles.repeatBadgeText}>{repeatLabel}</Text>
-                </View>
+                </Pressable>
               ) : null}
             </View>
-          </View>
+          </Pressable>
 
           {/* Floating Action Dock */}
           <View style={styles.actionDockRow}>
