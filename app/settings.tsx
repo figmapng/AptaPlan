@@ -91,8 +91,8 @@ export default function SettingsScreen() {
           { paddingBottom: insets.bottom + 32 },
         ]}
       >
-        {/* Бөлім 1: Жалпы */}
-        <Section title="Жалпы">
+        {/* Карточка 1: Негізгі баптаулар */}
+        <Section>
           <SettingRow
             icon="options-outline"
             label="Әдепкі режим"
@@ -126,7 +126,7 @@ export default function SettingsScreen() {
               <Switch
                 value={settings.haptics}
                 onValueChange={(v) => void setPref('haptics', v)}
-                trackColor={{ false: '#E9E9EA', true: '#34C759' }}
+                trackColor={{ false: '#E2E5EB', true: colors.today }}
                 thumbColor="#FFFFFF"
               />
             }
@@ -162,8 +162,8 @@ export default function SettingsScreen() {
           />
         </Section>
 
-        {/* Бөлім 2: Деректер */}
-        <Section title="Деректер">
+        {/* Карточка 2: Деректер мен сақтық көшірме */}
+        <Section>
           <SettingRow
             icon="cloud-upload-outline"
             label="Деректерді экспорттау (JSON)"
@@ -178,9 +178,9 @@ export default function SettingsScreen() {
           <Divider />
           <SettingRow
             icon="trash-outline"
-            iconColor="#FF3B30"
+            iconColor="#FF4B3E"
             label="Барлық деректі өшіру"
-            labelStyle={{ color: '#FF3B30', fontWeight: '500' }}
+            labelStyle={{ color: '#FF4B3E', fontWeight: '600' }}
             onPress={clear}
           />
         </Section>
@@ -343,23 +343,18 @@ export default function SettingsScreen() {
 // Subcomponents
 
 function Section({
-  title,
   children,
 }: {
-  title: string;
   children: React.ReactNode;
 }) {
   return (
-    <View style={styles.sectionContainer}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.card}>{children}</View>
-    </View>
+    <View style={styles.card}>{children}</View>
   );
 }
 
 function SettingRow({
   icon,
-  iconColor = '#1C1C1E',
+  iconColor = '#23262D',
   label,
   labelStyle,
   valueText,
@@ -377,7 +372,7 @@ function SettingRow({
   const content = (
     <View style={styles.rowInner}>
       <View style={styles.iconBox}>
-        <Ionicons name={icon as any} size={22} color={iconColor} />
+        <Ionicons name={icon as any} size={21} color={iconColor} />
       </View>
       <Text style={[styles.rowLabel, labelStyle]}>
         {label}
@@ -387,7 +382,11 @@ function SettingRow({
           {valueText}
         </Text>
       ) : null}
-      {rightElement}
+      {rightElement ? (
+        rightElement
+      ) : onPress ? (
+        <Ionicons name="chevron-forward" size={16} color="#CBD5E1" style={{ marginLeft: 6 }} />
+      ) : null}
     </View>
   );
 
@@ -522,26 +521,19 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 4,
-  },
-  sectionContainer: {
-    marginTop: 22,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#8E8E93',
-    marginBottom: 8,
-    paddingLeft: 4,
+    paddingTop: 12,
   },
   card: {
-    backgroundColor: '#F5F5F7',
+    backgroundColor: colors.inputBg,
     borderRadius: 20,
     borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+    marginBottom: 16,
     overflow: 'hidden',
   },
   rowPressable: {
-    minHeight: 54,
+    minHeight: 52,
     justifyContent: 'center',
   },
   rowInner: {
@@ -551,29 +543,29 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   iconBox: {
-    width: 26,
-    height: 26,
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 12,
   },
   rowLabel: {
     flex: 1,
     flexShrink: 1,
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 15,
+    fontWeight: '500',
     color: '#1C1C1E',
     marginRight: 8,
   },
   valueText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '400',
-    color: '#8E8E93',
+    color: colors.secondary,
     flexShrink: 0,
   },
   divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#EBEBEF',
+    height: 1,
+    backgroundColor: colors.inputBorder,
     marginLeft: 56,
   },
   footerVersion: {
