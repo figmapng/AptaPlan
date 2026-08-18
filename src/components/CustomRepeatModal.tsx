@@ -769,13 +769,13 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.inputBorder,
     marginLeft: 16,
   },
   stepperContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.inputBorder,
     padding: 3,
     borderRadius: 14,
   },
@@ -816,7 +816,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     padding: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: colors.inputBorder,
   },
   dayGridCell: {
     width: `${100 / 7}%`,
@@ -847,7 +847,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 0.5,
-    borderColor: '#E5E7EB',
+    borderColor: colors.inputBorder,
   },
   monthGridCellSelected: {
     backgroundColor: '#01B7FF',
@@ -864,7 +864,7 @@ const styles = StyleSheet.create({
   pickerWheelBox: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: colors.inputBorder,
     backgroundColor: '#FFFFFF',
     paddingVertical: 4,
   },
@@ -904,7 +904,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 20,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.inputBorder,
   },
   menuItem: {
     flexDirection: 'row',

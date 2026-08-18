@@ -353,8 +353,8 @@ const styles = StyleSheet.create({
     borderColor: '#FFE0DE',
   },
   removeBtnDisabled: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#F3F4F6',
+    backgroundColor: colors.inputBg,
+    borderColor: colors.inputBorder,
   },
   removeText: {
     fontSize: 15,

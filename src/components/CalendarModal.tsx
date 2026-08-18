@@ -568,9 +568,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.inputBg,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.inputBorder,
   },
   quickBtnActive: {
     backgroundColor: '#01B7FF',
@@ -696,8 +696,8 @@ const styles = StyleSheet.create({
     borderColor: '#FFE0DE',
   },
   removeBtnDisabled: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#E5E7EB',
+    backgroundColor: colors.inputBg,
+    borderColor: colors.inputBorder,
   },
   removeText: {
     fontSize: 14,
