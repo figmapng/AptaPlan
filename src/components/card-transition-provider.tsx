@@ -212,7 +212,7 @@ const CarouselCard = React.memo(function CarouselCard({
             {cardDate.getDate()}
           </Text>
           <View style={{ gap: 1, flex: 1, overflow: 'hidden' }}>
-            {cardTasks.slice(0, 3).map((task) => (
+            {cardTasks.slice(0, cardTasks.length > 3 ? 2 : 3).map((task) => (
               <Text
                 key={task.id}
                 numberOfLines={1}
@@ -227,6 +227,30 @@ const CarouselCard = React.memo(function CarouselCard({
                 {task.title}
               </Text>
             ))}
+            {cardTasks.length > 3 && (
+              <View
+                style={{
+                  backgroundColor: isTodayCard ? `${colors.today}25` : '#E2E8F0',
+                  borderRadius: 3.5,
+                  paddingHorizontal: 3.5,
+                  paddingVertical: 0.5,
+                  alignSelf: 'flex-start',
+                  marginTop: 1,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 8.5,
+                    fontWeight: '700',
+                    lineHeight: 11,
+                    color: isTodayCard ? colors.today : '#4A5568',
+                    fontVariant: ['tabular-nums'],
+                  }}
+                >
+                  +{cardTasks.length - 2}
+                </Text>
+              </View>
+            )}
           </View>
         </Animated.View>
       )}

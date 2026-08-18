@@ -1808,9 +1808,11 @@ const MonthDayCell = memo(function MonthDayCellComponent({
   const isOffMonth = !isSameMonth(day, date);
   const isWeekend = day.getDay() === 0 || day.getDay() === 6;
 
-  const maxChips = Math.max(1, Math.floor((cellH - 24) / 14));
-  const visible = dayTasks.slice(0, maxChips);
-  const overflow = dayTasks.length - maxChips;
+  const maxSlots = Math.max(1, Math.floor((cellH - 26) / 13));
+  const hasOverflow = dayTasks.length > maxSlots;
+  const visibleCount = hasOverflow ? Math.max(1, maxSlots - 1) : maxSlots;
+  const visible = dayTasks.slice(0, visibleCount);
+  const overflow = dayTasks.length - visible.length;
 
   const handlePress = () => {
     if (cellRef.current) {
@@ -1892,16 +1894,28 @@ const MonthDayCell = memo(function MonthDayCellComponent({
           </Text>
         ))}
         {overflow > 0 && (
-          <Text
+          <View
             style={{
-              fontSize: 8.5,
-              fontWeight: '600',
-              lineHeight: 11,
-              color: colors.today,
+              backgroundColor: isToday ? `${colors.today}25` : '#E2E8F0',
+              borderRadius: 3.5,
+              paddingHorizontal: 3.5,
+              paddingVertical: 0.5,
+              alignSelf: 'flex-start',
+              marginTop: 1,
             }}
           >
-            +{overflow}
-          </Text>
+            <Text
+              style={{
+                fontSize: 8.5,
+                fontWeight: '700',
+                lineHeight: 11,
+                color: isToday ? colors.today : '#4A5568',
+                fontVariant: ['tabular-nums'],
+              }}
+            >
+              +{overflow}
+            </Text>
+          </View>
         )}
       </View>
     </Pressable>
