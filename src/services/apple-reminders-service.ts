@@ -1,8 +1,21 @@
 import { Platform } from 'react-native';
 import * as Calendar from 'expo-calendar';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { createTask, getTaskByExternalId, updateTask } from '@/database/task-repository';
+import { createTask, deleteSyncedTasks, getTaskByExternalId, updateTask } from '@/database/task-repository';
+import { cancelReminder } from '@/services/notification-service';
 import { toDateKey } from '@/utils/dateHelpers';
+
+export async function removeSyncedAppleReminders(db: SQLiteDatabase): Promise<number> {
+  const rows = await deleteSyncedTasks(db);
+  for (const r of rows) {
+    if (r.notificationId) {
+      try {
+        await cancelReminder(r.notificationId);
+      } catch {}
+    }
+  }
+  return rows.length;
+}
 
 export async function requestRemindersPermission(): Promise<boolean> {
   if (Platform.OS !== 'ios') return false;

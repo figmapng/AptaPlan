@@ -26,7 +26,15 @@ import { exportBackup, importBackup } from '@/services/backup-service';
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { settings, setPref, clearAll, refresh, syncAppleReminders } = usePlanner();
+  const {
+    settings,
+    setPref,
+    clearAll,
+    refresh,
+    syncAppleReminders,
+    enableAppleReminders,
+    disableAppleReminders,
+  } = usePlanner();
 
   // Modals for selection settings
   const [guideOpen, setGuideOpen] = useState(false);
@@ -39,6 +47,51 @@ export default function SettingsScreen() {
   // Sync state
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatusText, setSyncStatusText] = useState<string | null>(null);
+
+  const handleToggleRemindersSync = async (enable: boolean) => {
+    if (enable) {
+      if (Platform.OS !== 'ios') {
+        Alert.alert('Ескерту', 'Apple Reminders тек iOS құрылғыларында қолжетімді.');
+        return;
+      }
+      setIsSyncing(true);
+      try {
+        const res = await enableAppleReminders();
+        if (res.success) {
+          Alert.alert(
+            'Синхрондау қосылды',
+            `Apple Reminders қосымшасынан тапсырмалар жүктелді.\n\n• Қосылды: ${res.importedCount}\n• Жаңартылды: ${res.updatedCount}`
+          );
+        } else {
+          Alert.alert('Рұқсат қажет', res.error || 'Қате орын алды');
+        }
+      } catch (e: any) {
+        Alert.alert('Қате', e?.message || 'Қосу мүмкін болмады');
+      } finally {
+        setIsSyncing(false);
+      }
+    } else {
+      Alert.alert(
+        'Apple Reminders синхрондауын өшіру',
+        'Бұрын синхрондалған барлық еске салғыштар AptaPlan-нан өшіріледі. Қолдан қосылған тапсырмалар сақталады.',
+        [
+          { text: 'Болдырмау', style: 'cancel' },
+          {
+            text: 'Өшіру',
+            style: 'destructive',
+            onPress: async () => {
+              setIsSyncing(true);
+              try {
+                await disableAppleReminders();
+              } finally {
+                setIsSyncing(false);
+              }
+            },
+          },
+        ]
+      );
+    }
+  };
 
   const handleSyncReminders = async () => {
     if (isSyncing) return;
@@ -199,29 +252,32 @@ export default function SettingsScreen() {
         {/* Карточка 2: Apple Reminders (Еске салғыштар) синхрондау */}
         <Section>
           <SettingRow
-            icon="sync-outline"
-            label="Apple Reminders-тен импорттау"
-            valueText={isSyncing ? 'Синхрондалуда...' : syncStatusText || undefined}
-            onPress={handleSyncReminders}
+            icon="logo-apple"
+            label="Apple Reminders синхрондау"
             rightElement={
               isSyncing ? (
                 <ActivityIndicator size="small" color={colors.today} />
-              ) : undefined
+              ) : (
+                <Switch
+                  value={!!settings.autoSyncAppleReminders}
+                  onValueChange={handleToggleRemindersSync}
+                  trackColor={{ false: '#E2E5EB', true: colors.today }}
+                  thumbColor="#FFFFFF"
+                />
+              )
             }
           />
-          <Divider />
-          <SettingRow
-            icon="refresh-circle-outline"
-            label="Авто-синхрондау"
-            rightElement={
-              <Switch
-                value={!!settings.autoSyncAppleReminders}
-                onValueChange={(v) => void setPref('autoSyncAppleReminders', v)}
-                trackColor={{ false: '#E2E5EB', true: colors.today }}
-                thumbColor="#FFFFFF"
+          {settings.autoSyncAppleReminders && (
+            <>
+              <Divider />
+              <SettingRow
+                icon="refresh-outline"
+                label="Қазір синхрондау"
+                valueText={isSyncing ? 'Жүктелуде...' : syncStatusText || undefined}
+                onPress={handleSyncReminders}
               />
-            }
-          />
+            </>
+          )}
         </Section>
 
         {/* Карточка 3: Деректер мен сақтық көшірме */}

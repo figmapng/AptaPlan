@@ -6,7 +6,7 @@ import { getDatabase } from '@/database/database';
 import * as repo from '@/database/task-repository';
 import { getSettings, setSetting } from '@/database/settings-repository';
 import { cancelReminder, scheduleReminder } from '@/services/notification-service';
-import { syncAppleRemindersToAptaPlan, type SyncResult } from '@/services/apple-reminders-service';
+import { removeSyncedAppleReminders, syncAppleRemindersToAptaPlan, type SyncResult } from '@/services/apple-reminders-service';
 
 type Store = {
   ready: boolean;
@@ -24,6 +24,8 @@ type Store = {
   setPref: <K extends keyof PlannerSettings>(k: K, v: PlannerSettings[K]) => Promise<void>;
   clearAll: () => Promise<void>;
   syncAppleReminders: () => Promise<SyncResult>;
+  enableAppleReminders: () => Promise<SyncResult>;
+  disableAppleReminders: () => Promise<void>;
 };
 
 const Context = createContext<Store | null>(null);
@@ -199,9 +201,74 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     return result;
   }, [refresh]);
 
+  const enableAppleReminders = useCallback(async (): Promise<SyncResult> => {
+    const db = await getDatabase();
+    const result = await syncAppleRemindersToAptaPlan(db);
+    if (result.success) {
+      const nowStr = new Date().toISOString();
+      await setSetting(db, 'autoSyncAppleReminders', true);
+      await setSetting(db, 'lastRemindersSyncTime', nowStr);
+      setSettings((prev) => {
+        const updated = { ...prev, autoSyncAppleReminders: true, lastRemindersSyncTime: nowStr };
+        settingsRef.current = updated;
+        return updated;
+      });
+      await refresh();
+    }
+    return result;
+  }, [refresh]);
+
+  const disableAppleReminders = useCallback(async () => {
+    const db = await getDatabase();
+    await removeSyncedAppleReminders(db);
+    await setSetting(db, 'autoSyncAppleReminders', false);
+    setSettings((prev) => {
+      const updated = { ...prev, autoSyncAppleReminders: false };
+      settingsRef.current = updated;
+      return updated;
+    });
+    await refresh();
+  }, [refresh]);
+
   const value = useMemo(
-    () => ({ ready, error, tasks, settings, loadRange, refresh, toggle, create, update, remove, removeOccurrence, get, setPref, clearAll, syncAppleReminders }),
-    [ready, error, tasks, settings, loadRange, refresh, toggle, create, update, remove, removeOccurrence, get, setPref, clearAll, syncAppleReminders]
+    () => ({
+      ready,
+      error,
+      tasks,
+      settings,
+      loadRange,
+      refresh,
+      toggle,
+      create,
+      update,
+      remove,
+      removeOccurrence,
+      get,
+      setPref,
+      clearAll,
+      syncAppleReminders,
+      enableAppleReminders,
+      disableAppleReminders,
+    }),
+    [
+      ready,
+      error,
+      tasks,
+      settings,
+      loadRange,
+      refresh,
+      toggle,
+      create,
+      update,
+      remove,
+      removeOccurrence,
+      get,
+      setPref,
+      clearAll,
+      syncAppleReminders,
+      enableAppleReminders,
+      disableAppleReminders,
+    ]
   );
 
   useEffect(() => {

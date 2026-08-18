@@ -283,6 +283,15 @@ export async function deleteTask(db: SQLiteDatabase, id: string) {
   await db.runAsync('UPDATE tasks SET deletedAt=?,updatedAt=? WHERE id=?', new Date().toISOString(), new Date().toISOString(), id);
 }
 
+export async function deleteSyncedTasks(db: SQLiteDatabase) {
+  const rows = await db.getAllAsync<{ id: string; notificationId: string | null }>(
+    'SELECT id, notificationId FROM tasks WHERE externalId IS NOT NULL'
+  );
+  await db.runAsync('DELETE FROM tasks WHERE externalId IS NOT NULL');
+  await db.runAsync('DELETE FROM task_occurrences WHERE taskId NOT IN (SELECT id FROM tasks)');
+  return rows;
+}
+
 export async function deleteAllTasks(db: SQLiteDatabase) {
   await db.runAsync(
     'UPDATE tasks SET deletedAt=?,updatedAt=? WHERE deletedAt IS NULL',
