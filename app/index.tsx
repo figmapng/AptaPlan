@@ -1761,8 +1761,8 @@ const MonthGrid = memo(function MonthGridComponent({
                   padding: 2,
                   marginHorizontal: -2,
                   borderRadius: 10,
-                  borderWidth: 1.2,
-                  borderColor: '#40C9FF55',
+                  borderWidth: 1,
+                  borderColor: '#CBD5E1',
                 },
               ]}
             >

@@ -1454,7 +1454,7 @@ const styles = StyleSheet.create({
   },
   previewMonthCurrentWeekGroup: {
     borderWidth: 0.8,
-    borderColor: '#40C9FF60',
+    borderColor: '#CBD5E1',
     borderRadius: 2.5,
     padding: 0.5,
     marginHorizontal: -0.5,
