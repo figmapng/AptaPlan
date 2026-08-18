@@ -4,7 +4,8 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { addMonths } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
-import { fromDateKey, getNextWeekMondayKey, getThisWeekendKey, getTodayKey, getTomorrowKey, kzMonthsFull, kzWeekdaysShort, toDateKey } from '@/utils/dateHelpers';
+import { usePlanner } from '@/store/planner-store';
+import { fromDateKey, getNextWeekMondayKey, getThisWeekendKey, getTodayKey, getTomorrowKey, kzMonthsFull, toDateKey } from '@/utils/dateHelpers';
 import { AnimatedPressable } from './AnimatedPressable';
 import { MonthPickerModal } from './MonthPickerModal';
 
@@ -20,6 +21,43 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_WIDTH = SCREEN_WIDTH - 40; // 20px horizontal padding on sheet
 const ITEM_WIDTH = CARD_WIDTH - 14; // exact internal container width for each month grid
 
+type WeekdayHeaderInfo = { label: string; isWeekend: boolean; dayIndex: number };
+
+function getWeekdayHeaders(firstDayOfWeek: 'mon' | 'sat' | 'sun'): WeekdayHeaderInfo[] {
+  if (firstDayOfWeek === 'sun') {
+    return [
+      { label: 'Жс', isWeekend: true, dayIndex: 0 },
+      { label: 'Дс', isWeekend: false, dayIndex: 1 },
+      { label: 'Сс', isWeekend: false, dayIndex: 2 },
+      { label: 'Ср', isWeekend: false, dayIndex: 3 },
+      { label: 'Бс', isWeekend: false, dayIndex: 4 },
+      { label: 'Жм', isWeekend: false, dayIndex: 5 },
+      { label: 'Сб', isWeekend: true, dayIndex: 6 },
+    ];
+  }
+  if (firstDayOfWeek === 'sat') {
+    return [
+      { label: 'Сб', isWeekend: true, dayIndex: 6 },
+      { label: 'Жс', isWeekend: true, dayIndex: 0 },
+      { label: 'Дс', isWeekend: false, dayIndex: 1 },
+      { label: 'Сс', isWeekend: false, dayIndex: 2 },
+      { label: 'Ср', isWeekend: false, dayIndex: 3 },
+      { label: 'Бс', isWeekend: false, dayIndex: 4 },
+      { label: 'Жм', isWeekend: false, dayIndex: 5 },
+    ];
+  }
+  // Default 'mon'
+  return [
+    { label: 'Дс', isWeekend: false, dayIndex: 1 },
+    { label: 'Сс', isWeekend: false, dayIndex: 2 },
+    { label: 'Ср', isWeekend: false, dayIndex: 3 },
+    { label: 'Бс', isWeekend: false, dayIndex: 4 },
+    { label: 'Жм', isWeekend: false, dayIndex: 5 },
+    { label: 'Сб', isWeekend: true, dayIndex: 6 },
+    { label: 'Жс', isWeekend: true, dayIndex: 0 },
+  ];
+}
+
 export function CalendarModal({
   visible,
   selectedDate,
@@ -27,6 +65,9 @@ export function CalendarModal({
   onRemoveDate,
   onClose,
 }: CalendarModalProps) {
+  const planner = usePlanner();
+  const firstDayOfWeek = (planner?.settings?.firstDayOfWeek as 'mon' | 'sat' | 'sun') || 'mon';
+  const weekdayHeaders = getWeekdayHeaders(firstDayOfWeek);
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
@@ -234,9 +275,15 @@ export function CalendarModal({
 
             {/* 2. FIXED STATIC WEEKDAY TITLES ROW */}
             <View style={styles.weekHeader}>
-              {kzWeekdaysShort.map((w, idx) => (
-                <Text key={`${w}-${idx}`} style={styles.weekTitle}>
-                  {w}
+              {weekdayHeaders.map((w, idx) => (
+                <Text
+                  key={`${w.label}-${idx}`}
+                  style={[
+                    styles.weekTitle,
+                    w.isWeekend && styles.weekTitleWeekend,
+                  ]}
+                >
+                  {w.label}
                 </Text>
               ))}
             </View>
@@ -269,6 +316,7 @@ export function CalendarModal({
                   monthDate={prevMonthDate}
                   selectedDate={tempSelectedDate}
                   todayKey={todayKey}
+                  firstDayOfWeek={firstDayOfWeek}
                   onSelectDay={handleSelectDay}
                 />
               </View>
@@ -278,6 +326,7 @@ export function CalendarModal({
                   monthDate={currentMonthDate}
                   selectedDate={tempSelectedDate}
                   todayKey={todayKey}
+                  firstDayOfWeek={firstDayOfWeek}
                   onSelectDay={handleSelectDay}
                 />
               </View>
@@ -287,6 +336,7 @@ export function CalendarModal({
                   monthDate={nextMonthDate}
                   selectedDate={tempSelectedDate}
                   todayKey={todayKey}
+                  firstDayOfWeek={firstDayOfWeek}
                   onSelectDay={handleSelectDay}
                 />
               </View>
@@ -342,6 +392,7 @@ interface DaysGridMatrixProps {
   monthDate: Date;
   selectedDate: string | null;
   todayKey: string;
+  firstDayOfWeek: 'mon' | 'sat' | 'sun';
   onSelectDay: (dateStr: string) => void;
 }
 
@@ -349,6 +400,7 @@ function DaysGridMatrix({
   monthDate,
   selectedDate,
   todayKey,
+  firstDayOfWeek,
   onSelectDay,
 }: DaysGridMatrixProps) {
   const year = monthDate.getFullYear();
@@ -356,23 +408,45 @@ function DaysGridMatrix({
 
   // Generate days for fixed 6-week matrix (42 cells)
   const firstDay = new Date(year, month, 1);
-  const startDayOfWeek = firstDay.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const rawDayOfWeek = firstDay.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+
+  let startOffset = 0;
+  if (firstDayOfWeek === 'mon') {
+    startOffset = (rawDayOfWeek + 6) % 7;
+  } else if (firstDayOfWeek === 'sat') {
+    startOffset = (rawDayOfWeek + 1) % 7;
+  } else {
+    startOffset = rawDayOfWeek;
+  }
+
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const prevMonthDays = new Date(year, month, 0).getDate();
 
-  const days: { dateStr: string; dayNum: number; isCurrentMonth: boolean }[] = [];
+  const days: { dateStr: string; dayNum: number; isCurrentMonth: boolean; isWeekend: boolean }[] = [];
 
   // Trailing days from previous month
-  for (let i = startDayOfWeek - 1; i >= 0; i--) {
+  for (let i = startOffset - 1; i >= 0; i--) {
     const d = prevMonthDays - i;
     const prevDate = new Date(year, month - 1, d);
-    days.push({ dateStr: toDateKey(prevDate), dayNum: d, isCurrentMonth: false });
+    const dayOfWeek = prevDate.getDay();
+    days.push({
+      dateStr: toDateKey(prevDate),
+      dayNum: d,
+      isCurrentMonth: false,
+      isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+    });
   }
 
   // Days in current month
   for (let d = 1; d <= daysInMonth; d++) {
     const currDate = new Date(year, month, d);
-    days.push({ dateStr: toDateKey(currDate), dayNum: d, isCurrentMonth: true });
+    const dayOfWeek = currDate.getDay();
+    days.push({
+      dateStr: toDateKey(currDate),
+      dayNum: d,
+      isCurrentMonth: true,
+      isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+    });
   }
 
   // Leading days for next month to strictly complete 42 cells (6 rows x 7 days)
@@ -380,7 +454,13 @@ function DaysGridMatrix({
   const totalCells = 42;
   while (days.length < totalCells) {
     const nextDate = new Date(year, month + 1, nextDay);
-    days.push({ dateStr: toDateKey(nextDate), dayNum: nextDay, isCurrentMonth: false });
+    const dayOfWeek = nextDate.getDay();
+    days.push({
+      dateStr: toDateKey(nextDate),
+      dayNum: nextDay,
+      isCurrentMonth: false,
+      isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+    });
     nextDay++;
   }
 
@@ -407,7 +487,8 @@ function DaysGridMatrix({
               <Text
                 style={[
                   styles.dayText,
-                  !item.isCurrentMonth && styles.dayTextOtherMonth,
+                  item.isWeekend && item.isCurrentMonth && styles.dayTextWeekend,
+                  !item.isCurrentMonth && (item.isWeekend ? styles.dayTextOtherMonthWeekend : styles.dayTextOtherMonth),
                   isToday && !isSelected && styles.dayTextToday,
                   isSelected && styles.dayTextSelected,
                 ]}
@@ -660,6 +741,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#707684',
   },
+  weekTitleWeekend: {
+    color: colors.weekend,
+    fontWeight: '700',
+  },
   daysGrid: {
     width: '100%',
     flexDirection: 'row',
@@ -691,8 +776,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#23262D',
   },
+  dayTextWeekend: {
+    color: colors.weekend,
+    fontWeight: '600',
+  },
   dayTextOtherMonth: {
     color: '#CBD5E1',
+    fontWeight: '400',
+  },
+  dayTextOtherMonthWeekend: {
+    color: '#FFB8B3',
     fontWeight: '400',
   },
   dayTextToday: {
