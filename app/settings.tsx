@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle, Path } from 'react-native-svg';
 import Constants from 'expo-constants';
 
 import { colors } from '@/constants/colors';
@@ -252,7 +253,7 @@ export default function SettingsScreen() {
         {/* Карточка 2: Apple Reminders (Еске салғыштар) синхрондау */}
         <Section>
           <SettingRow
-            icon="logo-apple"
+            customIcon={<AppleRemindersIcon size={21} />}
             label="Apple Reminders синхрондау"
             rightElement={
               isSyncing ? (
@@ -470,17 +471,37 @@ function Section({
   );
 }
 
+function AppleRemindersIcon({ size = 21 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* Top bullet item (Orange) */}
+      <Circle cx="4.5" cy="5" r="2.75" fill="#FF9500" />
+      <Path d="M10 5h11" stroke="#8E8E93" strokeWidth="2.2" strokeLinecap="round" />
+
+      {/* Middle bullet item (Blue) */}
+      <Circle cx="4.5" cy="12" r="2.75" fill="#007AFF" />
+      <Path d="M10 12h11" stroke="#8E8E93" strokeWidth="2.2" strokeLinecap="round" />
+
+      {/* Bottom bullet item (Red) */}
+      <Circle cx="4.5" cy="19" r="2.75" fill="#FF3B30" />
+      <Path d="M10 19h11" stroke="#8E8E93" strokeWidth="2.2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 function SettingRow({
   icon,
   iconColor = '#23262D',
+  customIcon,
   label,
   labelStyle,
   valueText,
   rightElement,
   onPress,
 }: {
-  icon: string;
+  icon?: string;
   iconColor?: string;
+  customIcon?: React.ReactNode;
   label: string;
   labelStyle?: object;
   valueText?: string;
@@ -490,7 +511,11 @@ function SettingRow({
   const content = (
     <View style={styles.rowInner}>
       <View style={styles.iconBox}>
-        <Ionicons name={icon as any} size={21} color={iconColor} />
+        {customIcon ? (
+          customIcon
+        ) : icon ? (
+          <Ionicons name={icon as any} size={21} color={iconColor} />
+        ) : null}
       </View>
       <Text style={[styles.rowLabel, labelStyle]}>
         {label}
