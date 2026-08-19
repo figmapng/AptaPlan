@@ -98,9 +98,9 @@ export function ViewModeModal({
         >
           {/* Callout arrow pointing upward — SVG rounded */}
           <View style={[styles.arrowWrapper, { left: arrowLeft }]}>
-            <CalloutArrow fill={colors.inputBg} />
+            <CalloutArrow fill="#FFFFFF" />
           </View>
-          <View style={[styles.dropdownCard, { backgroundColor: colors.inputBg }]}>
+          <View style={[styles.dropdownCard, { backgroundColor: '#FFFFFF' }]}>
 
 
           {/* Option 1: Week */}
@@ -108,8 +108,7 @@ export function ViewModeModal({
             activeScale={0.96}
             style={[
               styles.optionItem,
-              { backgroundColor: 'transparent' },
-              currentMode === 'week' && { backgroundColor: `${colors.today}14` },
+              { backgroundColor: currentMode === 'week' ? `${colors.today}14` : colors.inputBg },
             ]}
             onPress={() => handleSelect('week')}
           >
@@ -129,8 +128,7 @@ export function ViewModeModal({
             activeScale={0.96}
             style={[
               styles.optionItem,
-              { backgroundColor: 'transparent' },
-              currentMode === 'month' && { backgroundColor: `${colors.today}14` },
+              { backgroundColor: currentMode === 'month' ? `${colors.today}14` : colors.inputBg },
             ]}
             onPress={() => handleSelect('month')}
           >
@@ -150,8 +148,7 @@ export function ViewModeModal({
             activeScale={0.96}
             style={[
               styles.optionItem,
-              { backgroundColor: 'transparent' },
-              currentMode === 'year' && { backgroundColor: `${colors.today}14` },
+              { backgroundColor: currentMode === 'year' ? `${colors.today}14` : colors.inputBg },
             ]}
             onPress={() => handleSelect('year')}
           >
