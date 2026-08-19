@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Path } from 'react-native-svg';
 import Constants from 'expo-constants';
+import * as Haptics from 'expo-haptics';
 
 import { colors } from '@/constants/colors';
 import { THEMES, THEME_LIST, type ThemeConfig } from '@/constants/themes';
@@ -42,7 +43,6 @@ export default function SettingsScreen() {
   } = usePlanner();
 
   // Modals for selection settings
-  const [themeModalOpen, setThemeModalOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [placementModalOpen, setPlacementModalOpen] = useState(false);
   const [sortModalOpen, setSortModalOpen] = useState(false);
@@ -190,35 +190,84 @@ export default function SettingsScreen() {
           { paddingBottom: insets.bottom + 32 },
         ]}
       >
-        {/* Карточка 1: Негізгі баптаулар */}
+        {/* Карточка 1: Қосымшаның түсі (Telegram стиліндегі ықшам палитра) */}
         <Section>
-          <SettingRow
-            icon="color-palette-outline"
-            label="Қосымшаның түсі"
-            valueText={themeConfig.name}
-            rightElement={
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 10,
-                    backgroundColor: themeConfig.primary,
-                    borderWidth: 2,
-                    borderColor: '#FFFFFF',
-                    shadowColor: themeConfig.primary,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.35,
-                    shadowRadius: 3,
-                    elevation: 2,
-                  }}
-                />
-                <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+          <View style={styles.themeSectionHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={styles.iconBox}>
+                <Ionicons name="color-palette-outline" size={21} color={colors.text} />
               </View>
-            }
-            onPress={() => setThemeModalOpen(true)}
-          />
-          <Divider />
+              <Text style={[styles.rowLabel, { color: colors.text }]}>Қосымшаның түсі</Text>
+            </View>
+            <View style={[styles.themeActiveBadge, { backgroundColor: colors.tintBg }]}>
+              <Text style={[styles.themeActiveBadgeText, { color: colors.today }]}>{themeConfig.name}</Text>
+            </View>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.telegramThemeScroll}
+          >
+            {THEME_LIST.map((th) => {
+              const isSelected = (settings.theme || 'ocean') === th.id;
+              return (
+                <AnimatedPressable
+                  key={th.id}
+                  activeScale={0.9}
+                  onPress={() => {
+                    if (settings.haptics) {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                    void setPref('theme', th.id);
+                  }}
+                  style={styles.telegramThemeItem}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${th.name} темасы`}
+                >
+                  {/* Telegram-style Color Bubble */}
+                  <View
+                    style={[
+                      styles.telegramThemeBubbleOuter,
+                      isSelected && {
+                        borderColor: th.primary,
+                        backgroundColor: '#FFFFFF',
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.telegramThemeBubble,
+                        { backgroundColor: th.primary },
+                      ]}
+                    >
+                      {isSelected && (
+                        <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Theme Name */}
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.telegramThemeTitle,
+                      {
+                        color: isSelected ? colors.text : colors.secondary,
+                        fontWeight: isSelected ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    {th.name}
+                  </Text>
+                </AnimatedPressable>
+              );
+            })}
+          </ScrollView>
+        </Section>
+
+        {/* Карточка 2: Басқа негізгі баптаулар */}
+        <Section>
           <SettingRow
             icon="options-outline"
             label="Әдепкі режим"
@@ -362,14 +411,6 @@ export default function SettingsScreen() {
           </Text>
         </View>
       </ScrollView>
-
-      {/* Theme Picker Modal */}
-      <ThemePickerModal
-        visible={themeModalOpen}
-        currentTheme={theme}
-        onClose={() => setThemeModalOpen(false)}
-        onSelectTheme={(t) => void setTheme(t)}
-      />
 
       {/* User Guide Modal */}
       <UserGuideModal visible={guideOpen} onClose={() => setGuideOpen(false)} />
@@ -1080,279 +1121,6 @@ function LastDayVisibilityModal({
   );
 }
 
-function ThemeMiniAppPreview({ theme }: { theme: ThemeConfig }) {
-  return (
-    <View
-      style={{
-        width: '100%',
-        height: 74,
-        backgroundColor: theme.background,
-        borderRadius: 10,
-        padding: 5,
-        borderWidth: 1,
-        borderColor: theme.cardBorder,
-        justifyContent: 'space-between',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Top Mini Header */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-          <View style={{ width: 32, height: 4.5, borderRadius: 2.25, backgroundColor: theme.text }} />
-          <View style={{ width: 3.5, height: 3.5, borderRadius: 1.75, backgroundColor: theme.secondary }} />
-        </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 2,
-            backgroundColor: theme.inputBg,
-            borderColor: theme.inputBorder,
-            borderWidth: 0.75,
-            paddingHorizontal: 4,
-            paddingVertical: 1.5,
-            borderRadius: 5,
-          }}
-        >
-          <View style={{ width: 3.5, height: 3.5, borderRadius: 1.75, backgroundColor: theme.today }} />
-          <View style={{ width: 12, height: 3, borderRadius: 1.5, backgroundColor: theme.text }} />
-        </View>
-      </View>
-
-      {/* 2 Day Cards */}
-      <View style={{ flexDirection: 'row', gap: 4, flex: 1, marginVertical: 2.5 }}>
-        {/* Day Card 1: Normal Inactive Day */}
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: '#FFFFFF',
-            borderRadius: 6,
-            borderWidth: 0.75,
-            borderColor: theme.cardBorder,
-            overflow: 'hidden',
-          }}
-        >
-          {/* Inactive Header */}
-          <View
-            style={{
-              backgroundColor: theme.cardHeaderBg,
-              paddingHorizontal: 3.5,
-              paddingVertical: 1.5,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <View style={{ width: 14, height: 2.5, borderRadius: 1.25, backgroundColor: theme.text }} />
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: theme.dateNumBg }} />
-          </View>
-          {/* Content task line */}
-          <View style={{ padding: 2.5, gap: 1.5 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <View style={{ width: 4.5, height: 4.5, borderRadius: 1.25, borderWidth: 0.75, borderColor: theme.checkboxBorder }} />
-              <View style={{ width: 16, height: 2, borderRadius: 1, backgroundColor: theme.text }} />
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <View style={{ width: 4.5, height: 4.5, borderRadius: 1.25, borderWidth: 0.75, borderColor: theme.checkboxBorder }} />
-              <View style={{ width: 12, height: 2, borderRadius: 1, backgroundColor: theme.text }} />
-            </View>
-          </View>
-        </View>
-
-        {/* Day Card 2: Active Today Day */}
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: '#FFFFFF',
-            borderRadius: 6,
-            borderWidth: 1,
-            borderColor: theme.activeCardBorder,
-            overflow: 'hidden',
-          }}
-        >
-          {/* Active Today Header */}
-          <View
-            style={{
-              backgroundColor: theme.activeHeaderBg,
-              paddingHorizontal: 3.5,
-              paddingVertical: 1.5,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <View style={{ width: 14, height: 2.5, borderRadius: 1.25, backgroundColor: '#FFFFFF' }} />
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFFFFF' }} />
-          </View>
-          {/* Content task line with completed task */}
-          <View style={{ padding: 2.5, gap: 1.5 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <View style={{ width: 4.5, height: 4.5, borderRadius: 1.25, backgroundColor: theme.checkedCheckboxBg }} />
-              <View style={{ width: 14, height: 2, borderRadius: 1, backgroundColor: theme.secondary }} />
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <View style={{ width: 4.5, height: 4.5, borderRadius: 1.25, borderWidth: 0.75, borderColor: theme.checkboxBorder }} />
-              <View style={{ width: 10, height: 2, borderRadius: 1, backgroundColor: theme.text }} />
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Bottom Mini Task Input */}
-      <View
-        style={{
-          height: 8,
-          backgroundColor: theme.inputBg,
-          borderColor: theme.inputBorder,
-          borderWidth: 0.6,
-          borderRadius: 4,
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 3,
-          gap: 2,
-        }}
-      >
-        <View style={{ width: 2.5, height: 2.5, borderRadius: 1.25, backgroundColor: theme.inputPlusIcon }} />
-        <View style={{ width: 20, height: 1.75, borderRadius: 1, backgroundColor: theme.inputPlaceholder }} />
-      </View>
-    </View>
-  );
-}
-
-function ThemePickerModal({
-  visible,
-  currentTheme,
-  onSelectTheme,
-  onClose,
-}: {
-  visible: boolean;
-  currentTheme: ThemeId;
-  onSelectTheme: (theme: ThemeId) => void;
-  onClose: () => void;
-}) {
-  const [selected, setSelected] = useState<ThemeId>(currentTheme || 'ocean');
-
-  useEffect(() => {
-    if (visible) {
-      setSelected(currentTheme || 'ocean');
-    }
-  }, [visible, currentTheme]);
-
-  const handleConfirm = () => {
-    onSelectTheme(selected);
-    onClose();
-  };
-
-  const activeSelectedConfig = THEMES[selected] || THEMES.ocean;
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { maxHeight: '88%' }]}>
-          {/* Header with Title, Subtitle, and Close button */}
-          <View style={styles.modalHeaderRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.modalHeaderTitle}>Қосымшаның түсі</Text>
-              <Text style={styles.modalHeaderSubtitle}>
-                Әр түстің көрнекі үлгісін көріп, таңдаңыз
-              </Text>
-            </View>
-            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
-              <Ionicons name="close" size={18} color="#707684" />
-            </Pressable>
-          </View>
-
-          {/* Themes List / Grid with Visual Previews */}
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.themeGridContent}
-            style={{ maxHeight: 460 }}
-          >
-            <View style={styles.themeVisualGrid}>
-              {THEME_LIST.map((th) => {
-                const isSelected = selected === th.id;
-                return (
-                  <AnimatedPressable
-                    key={th.id}
-                    activeScale={0.97}
-                    style={[
-                      styles.themeVisualCard,
-                      isSelected && {
-                        borderColor: th.primary,
-                        borderWidth: 2,
-                        backgroundColor: th.tintBg,
-                      },
-                    ]}
-                    onPress={() => setSelected(th.id)}
-                  >
-                    {/* Realistic Mini-App Screen Preview */}
-                    <ThemeMiniAppPreview theme={th} />
-
-                    {/* Theme Info & Radio Row */}
-                    <View style={styles.themeVisualCardFooter}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                        <View
-                          style={[
-                            styles.themeColorDotSmall,
-                            { backgroundColor: th.primary },
-                          ]}
-                        />
-                        <View style={{ flex: 1 }}>
-                          <Text
-                            style={[
-                              styles.themeVisualCardTitle,
-                              isSelected && { color: th.primary, fontWeight: '700' },
-                            ]}
-                            numberOfLines={1}
-                          >
-                            {th.name}
-                          </Text>
-                          <Text style={styles.themeVisualCardSubtitle} numberOfLines={1}>
-                            {th.englishName}
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Selection Radio Circle */}
-                      <View
-                        style={[
-                          styles.themeRadio,
-                          isSelected && { borderColor: th.primary, backgroundColor: '#FFFFFF' },
-                        ]}
-                      >
-                        {isSelected && (
-                          <View
-                            style={[
-                              styles.themeRadioInner,
-                              { backgroundColor: th.primary },
-                            ]}
-                          />
-                        )}
-                      </View>
-                    </View>
-                  </AnimatedPressable>
-                );
-              })}
-            </View>
-          </ScrollView>
-
-          {/* Bottom Action Button */}
-          <Pressable
-            style={[
-              styles.modalContinueButton,
-              { backgroundColor: activeSelectedConfig.primary, marginTop: 14 },
-            ]}
-            onPress={handleConfirm}
-          >
-            <Text style={styles.modalContinueButtonText}>Сақтау</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1895,68 +1663,57 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.today,
   },
-  modalHeaderSubtitle: {
-    fontSize: 13,
-    color: colors.secondary,
-    marginTop: 2,
-  },
-  themeGridContent: {
-    paddingVertical: 6,
-  },
-  themeVisualGrid: {
-    gap: 12,
-  },
-  themeVisualCard: {
-    backgroundColor: colors.inputBg,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: colors.inputBorder,
-    padding: 8,
-    gap: 8,
-  },
-  themeVisualCardFooter: {
+  themeSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
-    paddingBottom: 2,
-    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
   },
-  themeColorDotSmall: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
-    elevation: 1,
-  },
-  themeVisualCardTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  themeVisualCardSubtitle: {
-    fontSize: 11,
-    color: colors.secondary,
-    marginTop: 1,
-  },
-  themeRadio: {
-    width: 20,
-    height: 20,
+  themeActiveBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3.5,
     borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.cardBorder,
+  },
+  themeActiveBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  telegramThemeScroll: {
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    paddingTop: 2,
+    gap: 12,
+  },
+  telegramThemeItem: {
+    alignItems: 'center',
+    width: 68,
+    gap: 6,
+  },
+  telegramThemeBubbleOuter: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2.5,
+    borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
   },
-  themeRadioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  telegramThemeBubble: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  telegramThemeTitle: {
+    fontSize: 11,
+    textAlign: 'center',
   },
 });
