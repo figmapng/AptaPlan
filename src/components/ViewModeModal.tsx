@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -99,9 +98,9 @@ export function ViewModeModal({
         >
           {/* Callout arrow pointing upward — SVG rounded */}
           <View style={[styles.arrowWrapper, { left: arrowLeft }]}>
-            <CalloutArrow />
+            <CalloutArrow fill={colors.inputBg} />
           </View>
-          <View style={styles.dropdownCard}>
+          <View style={[styles.dropdownCard, { backgroundColor: colors.inputBg }]}>
 
 
           {/* Option 1: Week */}
@@ -109,13 +108,14 @@ export function ViewModeModal({
             activeScale={0.96}
             style={[
               styles.optionItem,
+              { backgroundColor: 'transparent' },
               currentMode === 'week' && { backgroundColor: `${colors.today}14` },
             ]}
             onPress={() => handleSelect('week')}
           >
             <View style={styles.optionLeft}>
               <WeekViewIcon color={currentMode === 'week' ? colors.today : colors.text} />
-              <Text style={[styles.optionText, currentMode === 'week' && { color: colors.today, fontWeight: '700' }]}>
+              <Text style={[styles.optionText, { color: colors.text }, currentMode === 'week' && { color: colors.today, fontWeight: '700' }]}>
                 Апта
               </Text>
             </View>
@@ -129,13 +129,14 @@ export function ViewModeModal({
             activeScale={0.96}
             style={[
               styles.optionItem,
+              { backgroundColor: 'transparent' },
               currentMode === 'month' && { backgroundColor: `${colors.today}14` },
             ]}
             onPress={() => handleSelect('month')}
           >
             <View style={styles.optionLeft}>
               <MonthViewIcon color={currentMode === 'month' ? colors.today : colors.text} />
-              <Text style={[styles.optionText, currentMode === 'month' && { color: colors.today, fontWeight: '700' }]}>
+              <Text style={[styles.optionText, { color: colors.text }, currentMode === 'month' && { color: colors.today, fontWeight: '700' }]}>
                 Ай
               </Text>
             </View>
@@ -149,13 +150,14 @@ export function ViewModeModal({
             activeScale={0.96}
             style={[
               styles.optionItem,
+              { backgroundColor: 'transparent' },
               currentMode === 'year' && { backgroundColor: `${colors.today}14` },
             ]}
             onPress={() => handleSelect('year')}
           >
             <View style={styles.optionLeft}>
               <YearViewIcon color={currentMode === 'year' ? colors.today : colors.text} />
-              <Text style={[styles.optionText, currentMode === 'year' && { color: colors.today, fontWeight: '700' }]}>
+              <Text style={[styles.optionText, { color: colors.text }, currentMode === 'year' && { color: colors.today, fontWeight: '700' }]}>
                 Жыл
               </Text>
             </View>
@@ -167,6 +169,7 @@ export function ViewModeModal({
     </Modal>
   );
 }
+
 
 function DayViewIcon({ color }: { color: string }) {
   return (
@@ -227,12 +230,12 @@ function CheckmarkIcon({ color }: { color: string }) {
 }
 
 /** Rounded callout arrow — smooth bezier tip and base corners, like the reference */
-function CalloutArrow() {
+function CalloutArrow({ fill }: { fill: string }) {
   return (
     <Svg width={30} height={15} viewBox="0 0 30 15">
       <Path
         d="M0 15 C5 15, 10 8, 13 3 Q15 0 17 3 C20 8, 25 15, 30 15 Z"
-        fill={colors.background}
+        fill={fill}
       />
     </Svg>
   );
@@ -253,7 +256,6 @@ const styles = StyleSheet.create({
   },
   dropdownCard: {
     width: '100%',
-    backgroundColor: colors.background,
     borderRadius: 18,
     padding: 6,
     boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
@@ -267,10 +269,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.inputBg,
-  },
-  optionItemActive: {
-    backgroundColor: `${colors.today}12`,
   },
   optionLeft: {
     flexDirection: 'row',
@@ -280,11 +278,6 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
-  },
-  optionTextActive: {
-    color: colors.today,
-    fontWeight: '700',
   },
   divider: {
     height: 6,

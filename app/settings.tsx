@@ -572,6 +572,7 @@ function OptionModal({
   onClose: () => void;
   options: { label: string; sublabel?: string; selected: boolean; onSelect: () => void }[];
 }) {
+  const { colors } = useTheme();
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -602,10 +603,10 @@ function OptionModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-        <View style={styles.modalContentCard}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalHeaderTitle}>{title}</Text>
+            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{title}</Text>
             <Pressable onPress={handleClose} style={styles.closeButton} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
@@ -622,12 +623,16 @@ function OptionModal({
                   onPress={() => setSelectedIdx(i)}
                 >
                   <View style={styles.optionRowLeft}>
-                    <Text style={[styles.optionRowTitle, isChecked && styles.optionRowTitleSelected]}>
+                    <Text style={[styles.optionRowTitle, { color: colors.text }, isChecked && { fontWeight: '700' }]}>
                       {opt.label}
                     </Text>
                   </View>
-                  <View style={[styles.radioButton, isChecked && styles.radioButtonSelected]}>
-                    {isChecked && <View style={styles.radioButtonInner} />}
+                  <View style={[
+                    styles.radioButton,
+                    { borderColor: colors.cardBorder },
+                    isChecked && { borderColor: colors.today },
+                  ]}>
+                    {isChecked && <View style={[styles.radioButtonInner, { backgroundColor: colors.today }]} />}
                   </View>
                 </Pressable>
               );
@@ -635,7 +640,7 @@ function OptionModal({
           </View>
 
           {/* Bottom Action Button */}
-          <Pressable style={styles.modalContinueButton} onPress={handleConfirm}>
+          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
             <Text style={styles.modalContinueButtonText}>Растау</Text>
           </Pressable>
         </View>
@@ -643,6 +648,7 @@ function OptionModal({
     </Modal>
   );
 }
+
 
 function WeekLayoutPreview() {
   return (
@@ -814,6 +820,7 @@ function DefaultViewModeModal({
   onSelectMode: (mode: 'week' | 'month' | 'year') => void;
   onClose: () => void;
 }) {
+  const { colors } = useTheme();
   const [selected, setSelected] = useState<'week' | 'month' | 'year'>(currentMode || 'week');
 
   useEffect(() => {
@@ -849,10 +856,10 @@ function DefaultViewModeModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.modalContentCard}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalHeaderTitle}>Әдепкі режим</Text>
+            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Әдепкі режим</Text>
             <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
@@ -868,7 +875,8 @@ function DefaultViewModeModal({
                   activeScale={0.95}
                   style={[
                     styles.visualCard,
-                    isSelected && styles.visualCardSelected,
+                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+                    isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today },
                   ]}
                   onPress={() => setSelected(opt.mode)}
                 >
@@ -879,15 +887,16 @@ function DefaultViewModeModal({
                   <Text
                     style={[
                       styles.visualCardLabel,
-                      isSelected && styles.visualCardLabelSelected,
+                      { color: colors.text },
+                      isSelected && { color: colors.today, fontWeight: '700' },
                     ]}
                   >
                     {opt.label}
                   </Text>
 
                   {/* Radio Indicator */}
-                  <View style={[styles.visualRadio, isSelected && styles.visualRadioSelected]}>
-                    {isSelected && <View style={styles.visualRadioInner} />}
+                  <View style={[styles.visualRadio, { borderColor: colors.cardBorder }, isSelected && { borderColor: colors.today }]}>
+                    {isSelected && <View style={[styles.visualRadioInner, { backgroundColor: colors.today }]} />}
                   </View>
                 </AnimatedPressable>
               );
@@ -895,7 +904,7 @@ function DefaultViewModeModal({
           </View>
 
           {/* Confirm Button */}
-          <Pressable style={styles.modalContinueButton} onPress={handleConfirm}>
+          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
             <Text style={styles.modalContinueButtonText}>Сақтау</Text>
           </Pressable>
         </View>
@@ -973,6 +982,7 @@ function LastDayVisibilityModal({
   onSelectValue: (val: 'visible' | 'hidden') => void;
   onClose: () => void;
 }) {
+  const { colors } = useTheme();
   const [selected, setSelected] = useState<'visible' | 'hidden'>(currentValue || 'visible');
 
   useEffect(() => {
@@ -1005,10 +1015,10 @@ function LastDayVisibilityModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.modalContentCard}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalHeaderTitle}>Соңғы күннің көрінуі</Text>
+            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Соңғы күннің көрінуі</Text>
             <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
@@ -1024,7 +1034,8 @@ function LastDayVisibilityModal({
                   activeScale={0.97}
                   style={[
                     styles.verticalVisualCard,
-                    isSelected && styles.verticalVisualCardSelected,
+                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+                    isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today },
                   ]}
                   onPress={() => setSelected(opt.mode)}
                 >
@@ -1038,12 +1049,13 @@ function LastDayVisibilityModal({
                     <Text
                       style={[
                         styles.verticalCardLabel,
-                        isSelected && styles.verticalCardLabelSelected,
+                        { color: colors.text },
+                        isSelected && { color: colors.today, fontWeight: '700' },
                       ]}
                     >
                       {opt.label}
                     </Text>
-                    <Text style={styles.verticalCardSublabel}>
+                    <Text style={[styles.verticalCardSublabel, { color: colors.secondary }]}>
                       {opt.sublabel}
                     </Text>
                   </View>
@@ -1052,10 +1064,11 @@ function LastDayVisibilityModal({
                   <View
                     style={[
                       styles.visualRadio,
-                      isSelected && styles.visualRadioSelected,
+                      { borderColor: colors.cardBorder },
+                      isSelected && { borderColor: colors.today },
                     ]}
                   >
-                    {isSelected && <View style={styles.visualRadioInner} />}
+                    {isSelected && <View style={[styles.visualRadioInner, { backgroundColor: colors.today }]} />}
                   </View>
                 </AnimatedPressable>
               );
@@ -1063,7 +1076,7 @@ function LastDayVisibilityModal({
           </View>
 
           {/* Confirm Button */}
-          <Pressable style={styles.modalContinueButton} onPress={handleConfirm}>
+          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
             <Text style={styles.modalContinueButtonText}>Сақтау</Text>
           </Pressable>
         </View>
@@ -1071,6 +1084,7 @@ function LastDayVisibilityModal({
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
