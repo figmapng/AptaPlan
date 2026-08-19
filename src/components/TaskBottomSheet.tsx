@@ -359,9 +359,9 @@ export function TaskBottomSheet({
                 ]}
               >
                 {editingTask ? (
-                  <CheckIcon color={isEnabled ? '#FFFFFF' : colors.secondary} />
+                  <CheckIcon color={isEnabled ? '#FFFFFF' : colors.inputPlaceholder} />
                 ) : (
-                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : colors.secondary} />
+                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : colors.inputPlaceholder} />
                 )}
               </Pressable>
             </View>
