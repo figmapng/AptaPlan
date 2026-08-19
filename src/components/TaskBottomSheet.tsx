@@ -17,7 +17,9 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { Task, TaskRepeat } from '@/types/task';
+import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
+import { useTheme } from '@/hooks/use-theme';
 import { getTodayKey } from '@/utils/dateHelpers';
 import { TaskInput } from './TaskInput';
 import { DateChip } from './DateChip';
@@ -47,6 +49,7 @@ export function TaskBottomSheet({
   onTaskDeleted,
 }: TaskBottomSheetProps) {
   const planner = usePlanner();
+  const { colors } = useTheme();
 
   const [title, setTitle] = useState('');
   const [titleInputHeight, setTitleInputHeight] = useState(24);
@@ -326,12 +329,12 @@ export function TaskBottomSheet({
         >
           {/* Top Drag Pill Indicator */}
           <View style={styles.dragHeader}>
-            <View style={styles.dragPill} />
+            <View style={[styles.dragPill, { backgroundColor: colors.checkboxBorder }]} />
           </View>
 
           {/* Input & Send Button Row (Send button inside input) */}
           <View style={styles.inputRow}>
-              <View style={[styles.inputWrapper, { minHeight: Math.max(52, titleInputHeight + 10) }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }, { minHeight: Math.max(52, titleInputHeight + 10) }]}>
                 <View style={styles.inputContent}>
                   <TaskInput
                   ref={inputRef}
@@ -349,6 +352,7 @@ export function TaskBottomSheet({
                 onPress={handleSend}
                 style={({ pressed }) => [
                   styles.sendBtn,
+                  isEnabled && { backgroundColor: colors.today, borderColor: colors.todayDark },
                   !isEnabled && styles.sendBtnDisabled,
                   pressed && isEnabled && styles.sendBtnPressed,
                 ]}
@@ -517,9 +521,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#01B7FF',
+    backgroundColor: colors.today,
     borderWidth: 1.5,
-    borderColor: '#40C9FF',
+    borderColor: colors.today,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'absolute',
@@ -527,7 +531,7 @@ const styles = StyleSheet.create({
     bottom: 5,
   },
   sendBtnDisabled: {
-    backgroundColor: '#E5E7EB',
+    backgroundColor: colors.inputBorder,
     borderColor: 'transparent',
     opacity: 1,
   },

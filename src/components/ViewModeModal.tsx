@@ -3,6 +3,7 @@ import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View, useWindowDi
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 export type ViewMode = 'day' | 'week' | 'month' | 'year';
@@ -24,6 +25,7 @@ export function ViewModeModal({
   buttonBounds,
   topOffset = 60,
 }: ViewModeModalProps) {
+  const { colors } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -105,12 +107,15 @@ export function ViewModeModal({
           {/* Option 1: Week */}
           <AnimatedPressable
             activeScale={0.96}
-            style={[styles.optionItem, currentMode === 'week' && styles.optionItemActive]}
+            style={[
+              styles.optionItem,
+              currentMode === 'week' && { backgroundColor: `${colors.today}14` },
+            ]}
             onPress={() => handleSelect('week')}
           >
             <View style={styles.optionLeft}>
               <WeekViewIcon color={currentMode === 'week' ? colors.today : colors.text} />
-              <Text style={[styles.optionText, currentMode === 'week' && styles.optionTextActive]}>
+              <Text style={[styles.optionText, currentMode === 'week' && { color: colors.today, fontWeight: '700' }]}>
                 Апта
               </Text>
             </View>
@@ -122,12 +127,15 @@ export function ViewModeModal({
           {/* Option 2: Month */}
           <AnimatedPressable
             activeScale={0.96}
-            style={[styles.optionItem, currentMode === 'month' && styles.optionItemActive]}
+            style={[
+              styles.optionItem,
+              currentMode === 'month' && { backgroundColor: `${colors.today}14` },
+            ]}
             onPress={() => handleSelect('month')}
           >
             <View style={styles.optionLeft}>
               <MonthViewIcon color={currentMode === 'month' ? colors.today : colors.text} />
-              <Text style={[styles.optionText, currentMode === 'month' && styles.optionTextActive]}>
+              <Text style={[styles.optionText, currentMode === 'month' && { color: colors.today, fontWeight: '700' }]}>
                 Ай
               </Text>
             </View>
@@ -139,12 +147,15 @@ export function ViewModeModal({
           {/* Option 3: Year */}
           <AnimatedPressable
             activeScale={0.96}
-            style={[styles.optionItem, currentMode === 'year' && styles.optionItemActive]}
+            style={[
+              styles.optionItem,
+              currentMode === 'year' && { backgroundColor: `${colors.today}14` },
+            ]}
             onPress={() => handleSelect('year')}
           >
             <View style={styles.optionLeft}>
               <YearViewIcon color={currentMode === 'year' ? colors.today : colors.text} />
-              <Text style={[styles.optionText, currentMode === 'year' && styles.optionTextActive]}>
+              <Text style={[styles.optionText, currentMode === 'year' && { color: colors.today, fontWeight: '700' }]}>
                 Жыл
               </Text>
             </View>
@@ -259,7 +270,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.inputBg,
   },
   optionItemActive: {
-    backgroundColor: '#01B7FF12',
+    backgroundColor: `${colors.today}12`,
   },
   optionLeft: {
     flexDirection: 'row',

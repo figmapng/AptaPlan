@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { format, isToday } from 'date-fns';
 import { colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 import { fromDateKey, months, toDateKey, weekdays } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from '@/components/task-row';
@@ -30,6 +31,7 @@ import { getDatabase } from '@/database/database';
 export default function DayScreen() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { date, add } = useLocalSearchParams<{ date: string; add?: string }>();
   const { tasks, settings, loadRange, refresh, remove } = usePlanner();
   const { closeCard, beginInteractiveClose, updateInteractiveClose, endInteractiveClose } = useCardTransition();
@@ -189,8 +191,8 @@ export default function DayScreen() {
             backgroundColor: isSelectedToday ? activeDayColor : colors.card,
           }}
         >
-          <View style={{ backgroundColor: isSelectedToday ? 'white' : '#F0F0F2', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
-            <Text style={{ color: isWeekend ? colors.weekend : colors.text, fontSize: 14, fontWeight: '600' }}>
+          <View style={{ backgroundColor: isSelectedToday ? 'white' : isWeekend ? colors.weekendNumBg : colors.dateNumBg, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
+            <Text style={{ color: isSelectedToday ? colors.today : isWeekend ? colors.weekendNumText : colors.dateNumText, fontSize: 14, fontWeight: '600' }}>
               {months[selectedDate.getMonth()][0].toUpperCase() + months[selectedDate.getMonth()].slice(1)}
             </Text>
           </View>

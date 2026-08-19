@@ -1,15 +1,55 @@
-export const colors = {
+export type ColorPalette = {
+  background: string;
+  card: string;
+  cardBorder: string;
+  cardHeaderBg: string;
+  text: string;
+  secondary: string;
+  dateNumBg: string;
+  dateNumText: string;
+  weekendNumBg: string;
+  weekendNumText: string;
+  activeHeaderBg: string;
+  activeCardBorder: string;
+  activeHeaderText: string;
+  sundayText: string;
+  sundayNumBg: string;
+  checkboxBorder: string;
+  checkboxBg: string;
+  checkedCheckboxBg: string;
+  checkedCheckboxCheck: string;
+  checkedTaskText: string;
+  strikeLine: string;
+  inputBg: string;
+  inputBorder: string;
+  inputPlaceholder: string;
+  inputPlusIcon: string;
+  inputFocusedBorder: string;
+  inputEnteredText: string;
+  inputCursor: string;
+  divider: string;
+  today: string;
+  todayDark: string;
+  tintBg: string;
+  weekend: string;
+  capsule: string;
+  control: string;
+  danger: string;
+};
+
+export const colors: ColorPalette = {
   background: '#FFFFFF',
   card: '#FFFFFF',
   cardBorder: '#D9DDE5',
+  cardHeaderBg: '#EDEFF2',
   text: '#23262D',
   secondary: '#707684',
   dateNumBg: '#DCE0E5',
   dateNumText: '#565B66',
   weekendNumBg: '#FFCDC8',
   weekendNumText: '#B25147',
-  activeHeaderBg: '#40C9FF',
-  activeCardBorder: '#40C9FF',
+  activeHeaderBg: '#01B7FF',
+  activeCardBorder: '#01B7FF',
   activeHeaderText: '#FFFFFF',
   sundayText: '#FF4B3E',
   sundayNumBg: '#FFF0EE',
@@ -23,15 +63,16 @@ export const colors = {
   inputBorder: '#ECEEF2',
   inputPlaceholder: '#9AA1AF',
   inputPlusIcon: '#7D8796',
-  inputFocusedBorder: '#40C9FF',
+  inputFocusedBorder: '#01B7FF',
   inputEnteredText: '#23262D',
-  inputCursor: '#40C9FF',
+  inputCursor: '#01B7FF',
   divider: '#D9DDE5',
-  today: '#40C9FF',
-  todayDark: '#00AEEF',
+  today: '#01B7FF',
+  todayDark: '#009FD6',
+  tintBg: '#EAF8FF',
   weekend: '#FF4B3E',
   capsule: '#F1F3F6',
   control: '#EDEFF2',
   danger: '#FF4B3E',
-} as const;
+};
 

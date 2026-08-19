@@ -20,6 +20,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
 import { formatFullDate, weekdays } from '@/services/date-service';
@@ -45,6 +46,7 @@ export function TaskDetailModal({
   onTaskDeleted,
 }: TaskDetailModalProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { update, remove, toggle, create, settings } = usePlanner();
 
   const [title, setTitle] = useState('');
@@ -333,43 +335,43 @@ export function TaskDetailModal({
           ]}
         >
           {/* Header Handle Bar */}
-          <View {...panResponder.panHandlers} style={styles.handleContainer}>
-            <View style={styles.handlePill} />
+          <View {...panResponder.panHandlers} style={[styles.handleContainer, { backgroundColor: colors.card }]}>
+            <View style={[styles.handlePill, { backgroundColor: colors.checkboxBorder }]} />
           </View>
 
           {/* Top Action Bar (Close & More Options) */}
-          <View style={styles.topBar}>
+          <View style={[styles.topBar, { backgroundColor: colors.card }]}>
             {/* Close Button (✕) */}
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={handleClose}
               hitSlop={12}
-              style={styles.circleButton}
+              style={[styles.circleButton, { backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.inputBorder }]}
             >
-              <CloseIcon size={16} color="#374151" />
+              <CloseIcon size={16} color={colors.inputPlusIcon} />
             </TouchableOpacity>
 
             {/* Title */}
-            <Text style={styles.headerTitle}>Тапсырма параметрі</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Тапсырма параметрі</Text>
 
             {/* More Options (•••) */}
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={openActionMenu}
               hitSlop={12}
-              style={styles.circleButton}
+              style={[styles.circleButton, { backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.inputBorder }]}
             >
-              <MoreHorizontalIcon size={18} color="#374151" />
+              <MoreHorizontalIcon size={18} color={colors.inputPlusIcon} />
             </TouchableOpacity>
           </View>
 
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { backgroundColor: colors.card }]}
           >
             {/* Main Parameters Card */}
-            <View style={styles.mainCard}>
+            <View style={[styles.mainCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
               {/* Checkbox & Title Row */}
               <View style={styles.titleRow}>
                 <Animated.View style={{ transform: [{ scale: checkScale }] }}>
@@ -378,7 +380,8 @@ export function TaskDetailModal({
                     hitSlop={8}
                     style={[
                       styles.checkbox,
-                      isCompleted && styles.checkboxCompleted,
+                      { borderColor: colors.checkboxBorder, backgroundColor: colors.card },
+                      isCompleted && { borderColor: colors.checkedCheckboxBg, backgroundColor: colors.checkedCheckboxBg },
                     ]}
                   >
                     {isCompleted && <CheckmarkIcon size={12} color="#FFFFFF" />}
@@ -390,16 +393,17 @@ export function TaskDetailModal({
                   onChangeText={(text) => setTitle(text)}
                   onBlur={() => void saveChanges()}
                   placeholder="Тапсырма атауы..."
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.inputPlaceholder}
                   multiline
                   style={[
                     styles.titleInput,
+                    { color: colors.text },
                     isCompleted && styles.completedTitleText,
                   ]}
                 />
               </View>
 
-              <View style={styles.cardDivider} />
+              <View style={[styles.cardDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* 📅 Date Row */}
               <TouchableOpacity
@@ -409,17 +413,17 @@ export function TaskDetailModal({
               >
                 <View style={styles.propertyLeft}>
                   <View style={styles.propertyIconContainer}>
-                    <CalendarIcon size={18} color="#64748B" />
+                    <CalendarIcon size={18} color={colors.secondary} />
                   </View>
-                  <Text style={styles.propertyLabel}>Күні</Text>
+                  <Text style={[styles.propertyLabel, { color: colors.text }]}>Күні</Text>
                 </View>
                 <View style={styles.propertyRight}>
-                  <Text style={styles.propertyValue}>{formattedDateText}</Text>
-                  <ChevronRightIcon size={16} color="#CBD5E1" />
+                  <Text style={[styles.propertyValue, { color: colors.text }]}>{formattedDateText}</Text>
+                  <ChevronRightIcon size={16} color={colors.secondary} />
                 </View>
               </TouchableOpacity>
 
-              <View style={styles.cardDivider} />
+              <View style={[styles.cardDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* 🕒 Time Row */}
               <TouchableOpacity
@@ -429,12 +433,12 @@ export function TaskDetailModal({
               >
                 <View style={styles.propertyLeft}>
                   <View style={styles.propertyIconContainer}>
-                    <ClockIcon size={18} color="#64748B" />
+                    <ClockIcon size={18} color={colors.secondary} />
                   </View>
-                  <Text style={styles.propertyLabel}>Уақыты</Text>
+                  <Text style={[styles.propertyLabel, { color: colors.text }]}>Уақыты</Text>
                 </View>
                 <View style={styles.propertyRight}>
-                  <Text style={[styles.propertyValue, !selectedTime && styles.propertyPlaceholder, selectedTime && styles.propertyValueActive]}>
+                  <Text style={[styles.propertyValue, { color: colors.text }, !selectedTime && styles.propertyPlaceholder, selectedTime && { color: colors.today, fontWeight: '700' }]}>
                     {selectedTime || 'Таңдалмаған'}
                   </Text>
                   {selectedTime ? (
@@ -446,15 +450,15 @@ export function TaskDetailModal({
                       }}
                       style={styles.clearChip}
                     >
-                      <CloseIcon size={12} color="#94A3B8" />
+                      <CloseIcon size={12} color={colors.secondary} />
                     </TouchableOpacity>
                   ) : (
-                    <ChevronRightIcon size={16} color="#CBD5E1" />
+                    <ChevronRightIcon size={16} color={colors.secondary} />
                   )}
                 </View>
               </TouchableOpacity>
 
-              <View style={styles.cardDivider} />
+              <View style={[styles.cardDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* 🔁 Repeat Row */}
               <TouchableOpacity
@@ -464,15 +468,15 @@ export function TaskDetailModal({
               >
                 <View style={styles.propertyLeft}>
                   <View style={styles.propertyIconContainer}>
-                    <RepeatIcon size={18} color="#64748B" />
+                    <RepeatIcon size={18} color={colors.secondary} />
                   </View>
-                  <Text style={styles.propertyLabel}>Қайталау</Text>
+                  <Text style={[styles.propertyLabel, { color: colors.text }]}>Қайталау</Text>
                 </View>
                 <View style={styles.propertyRight}>
-                  <Text style={[styles.propertyValue, selectedRepeat === 'none' && styles.propertyPlaceholder, selectedRepeat !== 'none' && styles.propertyValueActive]}>
+                  <Text style={[styles.propertyValue, { color: colors.text }, selectedRepeat === 'none' && styles.propertyPlaceholder, selectedRepeat !== 'none' && { color: colors.today, fontWeight: '700' }]}>
                     {repeatText}
                   </Text>
-                  <ChevronRightIcon size={16} color="#CBD5E1" />
+                  <ChevronRightIcon size={16} color={colors.secondary} />
                 </View>
               </TouchableOpacity>
             </View>

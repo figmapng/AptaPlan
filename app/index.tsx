@@ -20,6 +20,7 @@ import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
+import { useTheme } from '@/hooks/use-theme';
 import {
   addDays,
   formatWeekRange,
@@ -76,6 +77,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const { openCard } = useCardTransition();
   const { ready, error, tasks, loadRange, create, settings } = usePlanner();
+  const { colors } = useTheme();
   const firstDay = settings.firstDayOfWeek ?? 'mon';
   const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
   const [weekStart, setWeekStart] = useState(() => getStartOfWeekWith(new Date(), weekStartsOn));
@@ -1633,6 +1635,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
 });
 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
+  const { colors } = useTheme();
   return (
     <AnimatedPressable
       accessibilityRole="button"
@@ -1669,6 +1672,7 @@ const MonthGrid = memo(function MonthGridComponent({
   bottomPadding: number;
 }) {
   const { settings } = usePlanner();
+  const { colors } = useTheme();
   const firstDay = settings.firstDayOfWeek ?? 'mon';
   const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
 
@@ -1719,6 +1723,13 @@ const MonthGrid = memo(function MonthGridComponent({
     return ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жс'];
   }, [firstDay]);
 
+  const todayDowIndex = useMemo(() => {
+    const day = new Date().getDay();
+    if (firstDay === 'sun') return day;
+    if (firstDay === 'sat') return (day + 1) % 7;
+    return (day + 6) % 7;
+  }, [firstDay]);
+
   return (
     <View
       style={{
@@ -1731,21 +1742,25 @@ const MonthGrid = memo(function MonthGridComponent({
     >
       {/* ── Day-of-week labels */}
       <View style={{ flexDirection: 'row', height: DAY_LABEL_H, alignItems: 'center', marginBottom: 3 }}>
-        {DAY_LABELS.map((label, i) => (
-          <Text
-            key={label}
-            style={{
-              flex: 1,
-              textAlign: 'center',
-              fontSize: 11,
-              fontWeight: '600',
-              letterSpacing: 0.1,
-              color: i >= 5 ? '#FF5959' : '#94A3B8',
-            }}
-          >
-            {label}
-          </Text>
-        ))}
+        {DAY_LABELS.map((label, i) => {
+          const isTodayDow = i === todayDowIndex;
+          const isWeekend = firstDay === 'mon' ? i >= 5 : firstDay === 'sun' ? (i === 0 || i === 6) : (i === 0 || i === 1);
+          return (
+            <Text
+              key={label}
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                fontSize: 11,
+                fontWeight: isTodayDow ? '700' : '600',
+                letterSpacing: 0.1,
+                color: isTodayDow ? colors.today : isWeekend ? colors.weekend : colors.secondary,
+              }}
+            >
+              {label}
+            </Text>
+          );
+        })}
       </View>
 
       {/* ── Week rows */}
@@ -1762,7 +1777,7 @@ const MonthGrid = memo(function MonthGridComponent({
                   marginHorizontal: -2,
                   borderRadius: 10,
                   borderWidth: 1,
-                  borderColor: '#CBD5E1',
+                  borderColor: colors.cardBorder,
                 },
               ]}
             >
@@ -1802,6 +1817,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
   todayKey: string;
 }) {
   const { openCard } = useCardTransition();
+  const { colors } = useTheme();
   const cellRef = useRef<View>(null);
   const key = toDateKey(day);
   const isToday = key === todayKey;
@@ -1829,20 +1845,20 @@ const MonthDayCell = memo(function MonthDayCellComponent({
   };
 
   const cellBg = isToday
-    ? '#E5F6FD'
+    ? colors.tintBg
     : isWeekend
     ? isOffMonth
       ? '#FFF8F7'
       : '#FFF3F2'
     : isOffMonth
-    ? '#FAFBFC'
-    : '#F6F8FA';
+    ? colors.background
+    : colors.inputBg;
 
   const cellBorderColor = isToday
     ? colors.today
     : isWeekend
     ? '#FFE0DC'
-    : '#E8EDF3';
+    : colors.inputBorder;
 
   return (
     <Pressable
@@ -1867,7 +1883,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
           fontSize: isToday ? 13 : 12,
           fontWeight: isToday ? '800' : '600',
           lineHeight: 16,
-          color: isToday ? colors.today : isWeekend ? colors.weekend : '#2D3748',
+          color: isToday ? colors.today : isWeekend ? colors.weekend : colors.text,
           fontVariant: ['tabular-nums'],
           textAlign: 'center',
           marginBottom: 2,
@@ -1886,7 +1902,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
               fontSize: 9,
               fontWeight: '400',
               lineHeight: 12,
-              color: task.isCompleted ? '#A0AEC0' : '#4A5568',
+              color: task.isCompleted ? colors.checkedTaskText : colors.text,
               textDecorationLine: task.isCompleted ? 'line-through' : 'none',
             }}
           >
@@ -1896,7 +1912,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
         {overflow > 0 && (
           <View
             style={{
-              backgroundColor: isToday ? `${colors.today}25` : '#E2E8F0',
+              backgroundColor: isToday ? `${colors.today}25` : colors.inputBorder,
               borderRadius: 3.5,
               paddingHorizontal: 3.5,
               paddingVertical: 0.5,
@@ -1909,7 +1925,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
                 fontSize: 8.5,
                 fontWeight: '700',
                 lineHeight: 11,
-                color: isToday ? colors.today : '#4A5568',
+                color: isToday ? colors.today : colors.secondary,
                 fontVariant: ['tabular-nums'],
               }}
             >
@@ -1935,6 +1951,7 @@ const YearView = memo(function YearViewComponent({
   onSelect: (i: number) => void;
   isSwipingRef?: React.RefObject<boolean>;
 }) {
+  const { colors } = useTheme();
   const today = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => toDateKey(today), [today]);
 
@@ -1990,8 +2007,12 @@ const YearView = memo(function YearViewComponent({
                 key={monthIndex}
                 style={[
                   yearStyles.monthBlock,
-                  { height: monthBlockHeight },
-                  isCurrentMonth && yearStyles.monthBlockActive,
+                  {
+                    height: monthBlockHeight,
+                    backgroundColor: colors.card,
+                    borderColor: isCurrentMonth ? colors.today : colors.cardBorder,
+                    borderWidth: isCurrentMonth ? 1.5 : 1,
+                  },
                 ]}
                 onPress={() => {
                   if (isSwipingRef?.current) return;
@@ -1999,7 +2020,12 @@ const YearView = memo(function YearViewComponent({
                 }}
               >
                 {/* Month name */}
-                <Text style={[yearStyles.monthName, isCurrentMonth && yearStyles.monthNameActive]}>
+                <Text
+                  style={[
+                    yearStyles.monthName,
+                    { color: isCurrentMonth ? colors.today : colors.text },
+                  ]}
+                >
                   {months[monthIndex][0].toUpperCase() + months[monthIndex].slice(1)}
                 </Text>
 
@@ -2009,6 +2035,7 @@ const YearView = memo(function YearViewComponent({
                       key={i}
                       style={[
                         yearStyles.dowLabel,
+                        { color: colors.secondary },
                         i >= 5 && { color: '#FF7B75' },
                       ]}
                     >
@@ -2028,17 +2055,25 @@ const YearView = memo(function YearViewComponent({
                       const isWeekend = di >= 5;
                       return (
                         <View key={di} style={yearStyles.dayCell}>
-                          <View style={[
-                            yearStyles.dayInner,
-                            isT && yearStyles.todayCircle,
-                          ]}>
-                            <Text style={[
-                              yearStyles.dayNum,
-                              isT ? yearStyles.todayNum
-                              : isWeekend ? { color: '#FF6B6B' }
-                              : hasTasks ? { color: colors.today, fontWeight: '700' }
-                              : undefined,
-                            ]}>
+                          <View
+                            style={[
+                              yearStyles.dayInner,
+                              isT && { backgroundColor: colors.today },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                yearStyles.dayNum,
+                                { color: colors.text },
+                                isT
+                                  ? yearStyles.todayNum
+                                  : isWeekend
+                                  ? { color: '#FF6B6B' }
+                                  : hasTasks
+                                  ? { color: colors.today, fontWeight: '700' }
+                                  : undefined,
+                              ]}
+                            >
                               {day}
                             </Text>
                           </View>
@@ -2054,18 +2089,6 @@ const YearView = memo(function YearViewComponent({
       ))}
     </ScrollView>
   );
-}, (prev, next) => {
-  if (prev.year !== next.year) return false;
-  if (prev.availableHeight !== next.availableHeight) return false;
-  if (prev.tasks.length !== next.tasks.length) return false;
-  for (let i = 0; i < prev.tasks.length; i++) {
-    const p = prev.tasks[i];
-    const n = next.tasks[i];
-    if (p.id !== n.id || p.isCompleted !== n.isCompleted || p.title !== n.title || p.date !== n.date) {
-      return false;
-    }
-  }
-  return true;
 });
 
 const yearStyles = StyleSheet.create({
@@ -2087,9 +2110,9 @@ const yearStyles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#D8DEE8',
+    borderColor: colors.cardBorder,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     overflow: 'hidden',
   },
   monthBlockActive: {
@@ -2099,7 +2122,7 @@ const yearStyles = StyleSheet.create({
   monthName: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.text,
     marginBottom: 4,
     letterSpacing: 0.1,
   },
@@ -2116,7 +2139,7 @@ const yearStyles = StyleSheet.create({
     fontSize: 7.5,
     lineHeight: 9,
     fontWeight: '500',
-    color: '#8A94A6',
+    color: colors.secondary,
   },
   weekRow: {
     flexDirection: 'row',
@@ -2140,7 +2163,7 @@ const yearStyles = StyleSheet.create({
     fontSize: 8,
     lineHeight: 10,
     fontWeight: '500',
-    color: '#334155',
+    color: colors.text,
     textAlign: 'center',
   },
   todayNum: {
@@ -2169,6 +2192,7 @@ function AnimatedYearTitle({
   screenWidth: number;
   small: boolean;
 }) {
+  const { colors } = useTheme();
   const fontSize = small ? 32 : 38;
   const lineHeight = small ? 38 : 44;
   const slideOffset = small ? 95 : 115;

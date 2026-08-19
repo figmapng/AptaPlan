@@ -5,6 +5,7 @@ import { addMonths } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
+import { useTheme } from '@/hooks/use-theme';
 import { fromDateKey, getNextWeekMondayKey, getThisWeekendKey, getTodayKey, getTomorrowKey, kzMonthsFull, toDateKey } from '@/utils/dateHelpers';
 import { AnimatedPressable } from './AnimatedPressable';
 import { MonthPickerModal } from './MonthPickerModal';
@@ -65,6 +66,7 @@ export function CalendarModal({
   onRemoveDate,
   onClose,
 }: CalendarModalProps) {
+  const { colors } = useTheme();
   const planner = usePlanner();
   const firstDayOfWeek = (planner?.settings?.firstDayOfWeek as 'mon' | 'sat' | 'sun') || 'mon';
   const weekdayHeaders = getWeekdayHeaders(firstDayOfWeek);
@@ -180,8 +182,8 @@ export function CalendarModal({
       label: 'Бүгін',
       icon: SunIcon,
       color: colors.today,
-      activeBg: '#EDF9FF',
-      activeBorder: '#BCE8FF',
+      activeBg: colors.tintBg,
+      activeBorder: colors.today,
       textColor: colors.today,
     },
     {
@@ -227,8 +229,8 @@ export function CalendarModal({
         textColor: matchedQuickOption.textColor,
       }
     : {
-        activeBg: '#EDF9FF',
-        activeBorder: '#BCE8FF',
+        activeBg: colors.tintBg,
+        activeBorder: colors.today,
         textColor: colors.today,
       };
 
@@ -244,10 +246,10 @@ export function CalendarModal({
 
           {/* Top Sheet Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Күнді таңдау</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Күнді таңдау</Text>
             <AnimatedPressable
               activeScale={0.88}
-              style={styles.closeBtn}
+              style={[styles.closeBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
               onPress={handleClose}
               accessibilityRole="button"
               accessibilityLabel="Жабу"
@@ -274,6 +276,7 @@ export function CalendarModal({
                   activeScale={0.92}
                   style={[
                     styles.quickBtn,
+                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
                     isSelected && {
                       backgroundColor: opt.activeBg,
                       borderColor: opt.activeBorder,
@@ -285,6 +288,7 @@ export function CalendarModal({
                   <Text
                     style={[
                       styles.quickText,
+                      { color: colors.text },
                       isSelected && { color: opt.textColor, fontWeight: '700' },
                     ]}
                   >
@@ -296,12 +300,12 @@ export function CalendarModal({
           </ScrollView>
 
           {/* Calendar Card Container */}
-          <View style={styles.calendarCard}>
+          <View style={[styles.calendarCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
             {/* 1. FIXED STATIC MONTH HEADER (Clickable to open Month & Year Picker) */}
             <View style={styles.monthHeader}>
               <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handlePrevMonth}>
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                  <Path d="M15 18l-6-6 6-6" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M15 18l-6-6 6-6" stroke={colors.text} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </AnimatedPressable>
 
@@ -315,13 +319,13 @@ export function CalendarModal({
                 accessibilityRole="button"
                 accessibilityLabel="Ай мен жылды таңдау"
               >
-                <Text style={styles.monthTitle}>{capitalizedMonthTitle}</Text>
-                <ChevronDownIcon color="#1C1C1E" />
+                <Text style={[styles.monthTitle, { color: colors.text }]}>{capitalizedMonthTitle}</Text>
+                <ChevronDownIcon color={colors.text} />
               </AnimatedPressable>
 
               <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handleNextMonth}>
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                  <Path d="M9 18l6-6-6-6" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M9 18l6-6-6-6" stroke={colors.text} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </AnimatedPressable>
             </View>
@@ -404,15 +408,19 @@ export function CalendarModal({
             {onRemoveDate && (
               <AnimatedPressable
                 activeScale={0.94}
-                style={[styles.removeBtn, !tempSelectedDate && styles.removeBtnDisabled]}
+                style={[
+                  styles.removeBtn,
+                  { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+                  !tempSelectedDate && styles.removeBtnDisabled,
+                ]}
                 onPress={() => {
                   triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
                   onRemoveDate();
                   handleClose();
                 }}
               >
-                <TrashIcon color={tempSelectedDate ? '#FF4B3E' : '#A0A5B1'} />
-                <Text style={[styles.removeText, !tempSelectedDate && styles.removeTextDisabled]}>
+                <TrashIcon color={tempSelectedDate ? '#FF4B3E' : colors.secondary} />
+                <Text style={[styles.removeText, { color: colors.secondary }, !tempSelectedDate && styles.removeTextDisabled]}>
                   Күнді өшіру
                 </Text>
               </AnimatedPressable>
@@ -420,7 +428,11 @@ export function CalendarModal({
 
             <AnimatedPressable
               activeScale={0.94}
-              style={[styles.confirmBtn, !onRemoveDate && styles.confirmBtnFull]}
+              style={[
+                styles.confirmBtn,
+                { backgroundColor: colors.today, borderColor: colors.today },
+                !onRemoveDate && styles.confirmBtnFull,
+              ]}
               onPress={handleConfirm}
             >
               <Text style={styles.confirmText}>Сақтау</Text>
@@ -463,12 +475,14 @@ function DaysGridMatrix({
   todayKey,
   firstDayOfWeek,
   onSelectDay,
-  selectedOptionStyle = {
-    activeBg: '#EDF9FF',
-    activeBorder: '#BCE8FF',
-    textColor: colors.today,
-  },
+  selectedOptionStyle,
 }: DaysGridMatrixProps) {
+  const { colors } = useTheme();
+  const effectiveOptionStyle = selectedOptionStyle || {
+    activeBg: colors.tintBg,
+    activeBorder: colors.today,
+    textColor: colors.today,
+  };
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
 
@@ -554,11 +568,15 @@ function DaysGridMatrix({
                   style={[
                     styles.dayBadge,
                     isSelected && {
-                      backgroundColor: selectedOptionStyle.activeBg,
+                      backgroundColor: effectiveOptionStyle.activeBg,
                       borderWidth: 1.5,
-                      borderColor: selectedOptionStyle.activeBorder,
+                      borderColor: effectiveOptionStyle.activeBorder,
                     },
-                    isToday && !isSelected && styles.dayBadgeToday,
+                    isToday && !isSelected && {
+                      backgroundColor: `${colors.today}18`,
+                      borderWidth: 1.5,
+                      borderColor: colors.today,
+                    },
                   ]}
                 >
                   <Text
@@ -566,9 +584,9 @@ function DaysGridMatrix({
                       styles.dayText,
                       item.isWeekend && item.isCurrentMonth && styles.dayTextWeekend,
                       !item.isCurrentMonth && (item.isWeekend ? styles.dayTextOtherMonthWeekend : styles.dayTextOtherMonth),
-                      isToday && !isSelected && styles.dayTextToday,
+                      isToday && !isSelected && { color: colors.today, fontWeight: '700' },
                       isSelected && {
-                        color: selectedOptionStyle.textColor,
+                        color: effectiveOptionStyle.textColor,
                         fontWeight: '700',
                       },
                     ]}
@@ -720,7 +738,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 19,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: colors.text,
     letterSpacing: -0.3,
   },
   closeBtn: {
@@ -756,8 +774,8 @@ const styles = StyleSheet.create({
     borderColor: colors.inputBorder,
   },
   quickBtnActive: {
-    backgroundColor: '#01B7FF',
-    borderColor: '#01B7FF',
+    backgroundColor: colors.today,
+    borderColor: colors.today,
   },
   quickText: {
     fontSize: 13,
@@ -799,7 +817,7 @@ const styles = StyleSheet.create({
   monthTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: colors.text,
   },
   arrowBtn: {
     width: 34,
@@ -820,7 +838,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontWeight: '600',
-    color: '#707684',
+    color: colors.secondary,
   },
   weekTitleWeekend: {
     color: colors.weekend,
@@ -852,21 +870,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.today,
   },
   dayBadgeToday: {
-    backgroundColor: '#40C9FF18',
+    backgroundColor: `${colors.today}18`,
     borderWidth: 1.5,
     borderColor: colors.today,
   },
   dayText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#23262D',
+    color: colors.text,
   },
   dayTextWeekend: {
     color: colors.weekend,
     fontWeight: '600',
   },
   dayTextOtherMonth: {
-    color: '#CBD5E1',
+    color: colors.secondary,
     fontWeight: '400',
   },
   dayTextOtherMonthWeekend: {

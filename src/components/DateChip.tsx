@@ -2,6 +2,7 @@ import { StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { formatChipDate } from '@/utils/dateHelpers';
+import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface DateChipProps {
@@ -11,6 +12,8 @@ interface DateChipProps {
 }
 
 export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps) {
+  const { colors } = useTheme();
+
   const handlePress = async () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -28,12 +31,13 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
       activeScale={0.93}
       style={[
         styles.chip,
-        date ? styles.activeChip : undefined,
+        { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+        date ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }] : undefined,
         !date ? styles.iconOnly : undefined,
       ]}
     >
-      <CalendarIcon size={16} color={date ? '#4B5563' : '#707684'} />
-      {displayText && <Text style={styles.activeText}>{displayText}</Text>}
+      <CalendarIcon size={16} color={date ? colors.text : colors.secondary} />
+      {displayText && <Text style={[styles.activeText, { color: colors.text }]}>{displayText}</Text>}
     </AnimatedPressable>
   );
 }

@@ -1,0 +1,310 @@
+import { colors as baseColors, type ColorPalette } from './colors';
+import type { ThemeId } from '@/types/settings';
+
+export interface ThemeConfig {
+  id: ThemeId;
+  name: string;
+  englishName: string;
+  primary: string;
+  primaryDark: string;
+  tintBg: string;
+  activeHeaderText: string;
+  today: string;
+  todayDark: string;
+  activeHeaderBg: string;
+  activeCardBorder: string;
+  inputFocusedBorder: string;
+  inputCursor: string;
+
+  // Hue-harmonized chromatic neutrals
+  inputBg: string;
+  inputBorder: string;
+  cardHeaderBg: string;
+  cardBorder: string;
+  dateNumBg: string;
+  dateNumText: string;
+  capsule: string;
+  text: string;
+  secondary: string;
+  inputPlaceholder: string;
+  inputPlusIcon: string;
+  checkboxBorder: string;
+  checkedCheckboxBg: string;
+  divider: string;
+}
+
+export const THEMES: Record<ThemeId, ThemeConfig> = {
+  ocean: {
+    id: 'ocean',
+    name: 'Көк мұхит',
+    englishName: 'Ocean Blue',
+    primary: '#01B7FF',
+    primaryDark: '#009FD6',
+    tintBg: '#EAF8FF',
+    activeHeaderText: '#FFFFFF',
+    today: '#01B7FF',
+    todayDark: '#009FD6',
+    activeHeaderBg: '#01B7FF',
+    activeCardBorder: '#01B7FF',
+    inputFocusedBorder: '#01B7FF',
+    inputCursor: '#01B7FF',
+    inputBg: '#F6F8FA',
+    inputBorder: '#E5E9ED',
+    cardHeaderBg: '#EDEFF2',
+    cardBorder: '#E1E5E9',
+    dateNumBg: '#DFE4E8',
+    dateNumText: '#455562',
+    capsule: '#F6F8FA',
+    text: '#1C242B',
+    secondary: '#5D6B75',
+    inputPlaceholder: '#8B97A0',
+    inputPlusIcon: '#5D6B75',
+    checkboxBorder: '#D0D7DC',
+    checkedCheckboxBg: '#CBD2D8',
+    divider: '#E5E9ED',
+  },
+  emerald: {
+    id: 'emerald',
+    name: 'Изумруд',
+    englishName: 'Emerald Green',
+    primary: '#10B981',
+    primaryDark: '#059669',
+    tintBg: '#ECFDF5',
+    activeHeaderText: '#FFFFFF',
+    today: '#10B981',
+    todayDark: '#059669',
+    activeHeaderBg: '#10B981',
+    activeCardBorder: '#10B981',
+    inputFocusedBorder: '#10B981',
+    inputCursor: '#10B981',
+    inputBg: '#F6FAF8',
+    inputBorder: '#E5EEE9',
+    cardHeaderBg: '#EDF3F0',
+    cardBorder: '#E2EBE6',
+    dateNumBg: '#DEEAE4',
+    dateNumText: '#3F6355',
+    capsule: '#F6FAF8',
+    text: '#1B2A24',
+    secondary: '#567468',
+    inputPlaceholder: '#8BA096',
+    inputPlusIcon: '#567468',
+    checkboxBorder: '#D0DDD7',
+    checkedCheckboxBg: '#CBD8D2',
+    divider: '#E5EEE9',
+  },
+  violet: {
+    id: 'violet',
+    name: 'Күлгін ғарыш',
+    englishName: 'Royal Violet',
+    primary: '#8B5CF6',
+    primaryDark: '#7C3AED',
+    tintBg: '#F5F3FF',
+    activeHeaderText: '#FFFFFF',
+    today: '#8B5CF6',
+    todayDark: '#7C3AED',
+    activeHeaderBg: '#8B5CF6',
+    activeCardBorder: '#8B5CF6',
+    inputFocusedBorder: '#8B5CF6',
+    inputCursor: '#8B5CF6',
+    inputBg: '#F8F7FB',
+    inputBorder: '#EBE7F2',
+    cardHeaderBg: '#F0EEF4',
+    cardBorder: '#E6E3ED',
+    dateNumBg: '#E5E1EE',
+    dateNumText: '#584B75',
+    capsule: '#F8F7FB',
+    text: '#251F33',
+    secondary: '#6A6080',
+    inputPlaceholder: '#9D94B3',
+    inputPlusIcon: '#6A6080',
+    checkboxBorder: '#D8D3E4',
+    checkedCheckboxBg: '#D3CEE0',
+    divider: '#EBE7F2',
+  },
+  coral: {
+    id: 'coral',
+    name: 'Күн шуағы',
+    englishName: 'Sunset Coral',
+    primary: '#FF6B4A',
+    primaryDark: '#E8502C',
+    tintBg: '#FFF3F0',
+    activeHeaderText: '#FFFFFF',
+    today: '#FF6B4A',
+    todayDark: '#E8502C',
+    activeHeaderBg: '#FF6B4A',
+    activeCardBorder: '#FF6B4A',
+    inputFocusedBorder: '#FF6B4A',
+    inputCursor: '#FF6B4A',
+    inputBg: '#FAF6F6',
+    inputBorder: '#EFE6E5',
+    cardHeaderBg: '#F4EFEF',
+    cardBorder: '#EBE2E1',
+    dateNumBg: '#EEDFE0',
+    dateNumText: '#754845',
+    capsule: '#FAF6F6',
+    text: '#311F1F',
+    secondary: '#7D5F5E',
+    inputPlaceholder: '#B09594',
+    inputPlusIcon: '#7D5F5E',
+    checkboxBorder: '#E3D4D3',
+    checkedCheckboxBg: '#DFCECD',
+    divider: '#EFE6E5',
+  },
+  rose: {
+    id: 'rose',
+    name: 'Раушан',
+    englishName: 'Berry Rose',
+    primary: '#F43F5E',
+    primaryDark: '#E11D48',
+    tintBg: '#FFF1F2',
+    activeHeaderText: '#FFFFFF',
+    today: '#F43F5E',
+    todayDark: '#E11D48',
+    activeHeaderBg: '#F43F5E',
+    activeCardBorder: '#F43F5E',
+    inputFocusedBorder: '#F43F5E',
+    inputCursor: '#F43F5E',
+    inputBg: '#FAF5F7',
+    inputBorder: '#EFE5E9',
+    cardHeaderBg: '#F4EEF1',
+    cardBorder: '#EBE1E5',
+    dateNumBg: '#EEDFE6',
+    dateNumText: '#75455E',
+    capsule: '#FAF5F7',
+    text: '#331E29',
+    secondary: '#7F5E6F',
+    inputPlaceholder: '#B192A2',
+    inputPlusIcon: '#7F5E6F',
+    checkboxBorder: '#E3D4DC',
+    checkedCheckboxBg: '#DFCED7',
+    divider: '#EFE5E9',
+  },
+  indigo: {
+    id: 'indigo',
+    name: 'Индиго',
+    englishName: 'Deep Indigo',
+    primary: '#4F46E5',
+    primaryDark: '#4338CA',
+    tintBg: '#EEF2FF',
+    activeHeaderText: '#FFFFFF',
+    today: '#4F46E5',
+    todayDark: '#4338CA',
+    activeHeaderBg: '#4F46E5',
+    activeCardBorder: '#4F46E5',
+    inputFocusedBorder: '#4F46E5',
+    inputCursor: '#4F46E5',
+    inputBg: '#F7F8FB',
+    inputBorder: '#E8EBF3',
+    cardHeaderBg: '#EEF0F5',
+    cardBorder: '#E3E6EE',
+    dateNumBg: '#E1E5F0',
+    dateNumText: '#484F75',
+    capsule: '#F7F8FB',
+    text: '#1E2233',
+    secondary: '#5E6480',
+    inputPlaceholder: '#9299B3',
+    inputPlusIcon: '#5E6480',
+    checkboxBorder: '#D3D8E5',
+    checkedCheckboxBg: '#CED3E0',
+    divider: '#E8EBF3',
+  },
+  amber: {
+    id: 'amber',
+    name: 'Жылы кәріптас',
+    englishName: 'Warm Amber',
+    primary: '#FFAA01',
+    primaryDark: '#E69900',
+    tintBg: '#FFF8E1',
+    activeHeaderText: '#FFFFFF',
+    today: '#FFAA01',
+    todayDark: '#E69900',
+    activeHeaderBg: '#FFAA01',
+    activeCardBorder: '#FFAA01',
+    inputFocusedBorder: '#FFAA01',
+    inputCursor: '#FFAA01',
+    inputBg: '#FAF8F5',
+    inputBorder: '#EFECE6',
+    cardHeaderBg: '#F2F0ED',
+    cardBorder: '#EAE6DF',
+    dateNumBg: '#EAE5DE',
+    dateNumText: '#6E5A44',
+    capsule: '#FAF8F5',
+    text: '#2B251E',
+    secondary: '#7A6E60',
+    inputPlaceholder: '#A89D8F',
+    inputPlusIcon: '#7A6E60',
+    checkboxBorder: '#DCD6CE',
+    checkedCheckboxBg: '#DCD6CE',
+    divider: '#EFECE6',
+  },
+  slate: {
+    id: 'slate',
+    name: 'Графит',
+    englishName: 'Slate Grey',
+    primary: '#475569',
+    primaryDark: '#334155',
+    tintBg: '#F1F5F9',
+    activeHeaderText: '#FFFFFF',
+    today: '#475569',
+    todayDark: '#334155',
+    activeHeaderBg: '#475569',
+    activeCardBorder: '#475569',
+    inputFocusedBorder: '#475569',
+    inputCursor: '#475569',
+    inputBg: '#F8FAFB',
+    inputBorder: '#E8ECEF',
+    cardHeaderBg: '#EFF1F3',
+    cardBorder: '#E4E7EA',
+    dateNumBg: '#E2E6EB',
+    dateNumText: '#475569',
+    capsule: '#F8FAFB',
+    text: '#1E293B',
+    secondary: '#64748B',
+    inputPlaceholder: '#94A3B8',
+    inputPlusIcon: '#64748B',
+    checkboxBorder: '#D0D7DC',
+    checkedCheckboxBg: '#CBD5E1',
+    divider: '#E8ECEF',
+  },
+};
+
+export const THEME_LIST: ThemeConfig[] = Object.values(THEMES);
+
+export type AppColors = ColorPalette & {
+  primary: string;
+  primaryDark: string;
+  tintBg: string;
+};
+
+export function getThemeColors(themeId?: ThemeId): AppColors {
+  const theme = (themeId && THEMES[themeId]) ? THEMES[themeId] : THEMES.ocean;
+  return {
+    ...baseColors,
+    primary: theme.primary,
+    primaryDark: theme.primaryDark,
+    tintBg: theme.tintBg,
+    today: theme.today,
+    todayDark: theme.todayDark,
+    activeHeaderBg: theme.activeHeaderBg,
+    activeCardBorder: theme.activeCardBorder,
+    activeHeaderText: theme.activeHeaderText,
+    inputFocusedBorder: theme.inputFocusedBorder,
+    inputCursor: theme.inputCursor,
+
+    // Hue-harmonized chromatic neutrals
+    inputBg: theme.inputBg,
+    inputBorder: theme.inputBorder,
+    cardHeaderBg: theme.cardHeaderBg,
+    cardBorder: theme.cardBorder,
+    dateNumBg: theme.dateNumBg,
+    dateNumText: theme.dateNumText,
+    capsule: theme.capsule,
+    text: theme.text,
+    secondary: theme.secondary,
+    inputPlaceholder: theme.inputPlaceholder,
+    inputPlusIcon: theme.inputPlusIcon,
+    checkboxBorder: theme.checkboxBorder,
+    checkedCheckboxBg: theme.checkedCheckboxBg,
+    divider: theme.divider,
+  };
+}

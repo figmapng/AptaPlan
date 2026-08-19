@@ -18,7 +18,10 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import Constants from 'expo-constants';
 
 import { colors } from '@/constants/colors';
+import { THEMES, THEME_LIST, type ThemeConfig } from '@/constants/themes';
+import { type ThemeId } from '@/types/settings';
 import { usePlanner } from '@/store/planner-store';
+import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { UserGuideModal } from '@/components/UserGuideModal';
 import { getDatabase } from '@/database/database';
@@ -27,6 +30,7 @@ import { exportBackup, importBackup } from '@/services/backup-service';
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { theme, themeConfig, colors, setTheme } = useTheme();
   const {
     settings,
     setPref,
@@ -38,6 +42,7 @@ export default function SettingsScreen() {
   } = usePlanner();
 
   // Modals for selection settings
+  const [themeModalOpen, setThemeModalOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [placementModalOpen, setPlacementModalOpen] = useState(false);
   const [sortModalOpen, setSortModalOpen] = useState(false);
@@ -160,14 +165,20 @@ export default function SettingsScreen() {
       <View style={styles.header}>
         <AnimatedPressable
           activeScale={0.85}
-          onPress={() => router.back()}
-          style={styles.backButton}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/');
+            }
+          }}
+          style={[styles.backButton, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           accessibilityLabel="Артқа қайту"
         >
           <Ionicons name="chevron-back" size={20} color={colors.inputPlusIcon} style={{ marginLeft: -1 }} />
         </AnimatedPressable>
 
-        <Text style={styles.headerTitle}>Баптаулар</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Баптаулар</Text>
 
         <View style={styles.headerSpacer} />
       </View>
@@ -181,6 +192,33 @@ export default function SettingsScreen() {
       >
         {/* Карточка 1: Негізгі баптаулар */}
         <Section>
+          <SettingRow
+            icon="color-palette-outline"
+            label="Қосымшаның түсі"
+            valueText={themeConfig.name}
+            rightElement={
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 10,
+                    backgroundColor: themeConfig.primary,
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF',
+                    shadowColor: themeConfig.primary,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.35,
+                    shadowRadius: 3,
+                    elevation: 2,
+                  }}
+                />
+                <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+              </View>
+            }
+            onPress={() => setThemeModalOpen(true)}
+          />
+          <Divider />
           <SettingRow
             icon="options-outline"
             label="Әдепкі режим"
@@ -325,6 +363,14 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
 
+      {/* Theme Picker Modal */}
+      <ThemePickerModal
+        visible={themeModalOpen}
+        currentTheme={theme}
+        onClose={() => setThemeModalOpen(false)}
+        onSelectTheme={(t) => void setTheme(t)}
+      />
+
       {/* User Guide Modal */}
       <UserGuideModal visible={guideOpen} onClose={() => setGuideOpen(false)} />
 
@@ -437,8 +483,9 @@ function Section({
 }: {
   children: React.ReactNode;
 }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.card}>{children}</View>
+    <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>{children}</View>
   );
 }
 
@@ -462,7 +509,7 @@ function AppleRemindersIcon({ size = 21 }: { size?: number }) {
 
 function SettingRow({
   icon,
-  iconColor = '#23262D',
+  iconColor,
   customIcon,
   label,
   labelStyle,
@@ -479,27 +526,29 @@ function SettingRow({
   rightElement?: React.ReactNode;
   onPress?: () => void;
 }) {
+  const { colors } = useTheme();
+  const effectiveIconColor = iconColor || colors.text;
   const content = (
     <View style={styles.rowInner}>
       <View style={styles.iconBox}>
         {customIcon ? (
           customIcon
         ) : icon ? (
-          <Ionicons name={icon as any} size={21} color={iconColor} />
+          <Ionicons name={icon as any} size={21} color={effectiveIconColor} />
         ) : null}
       </View>
-      <Text style={[styles.rowLabel, labelStyle]}>
+      <Text style={[styles.rowLabel, { color: colors.text }, labelStyle]}>
         {label}
       </Text>
       {valueText ? (
-        <Text style={styles.valueText} numberOfLines={1}>
+        <Text style={[styles.valueText, { color: colors.secondary }]} numberOfLines={1}>
           {valueText}
         </Text>
       ) : null}
       {rightElement ? (
         rightElement
       ) : onPress ? (
-        <Ionicons name="chevron-forward" size={16} color="#CBD5E1" style={{ marginLeft: 6 }} />
+        <Ionicons name="chevron-forward" size={16} color={colors.secondary} style={{ marginLeft: 6 }} />
       ) : null}
     </View>
   );
@@ -516,7 +565,8 @@ function SettingRow({
 }
 
 function Divider() {
-  return <View style={styles.divider} />;
+  const { colors } = useTheme();
+  return <View style={[styles.divider, { backgroundColor: colors.inputBorder }]} />;
 }
 
 function OptionModal({
@@ -1030,6 +1080,142 @@ function LastDayVisibilityModal({
   );
 }
 
+function ThemePickerModal({
+  visible,
+  currentTheme,
+  onSelectTheme,
+  onClose,
+}: {
+  visible: boolean;
+  currentTheme: ThemeId;
+  onSelectTheme: (theme: ThemeId) => void;
+  onClose: () => void;
+}) {
+  const [selected, setSelected] = useState<ThemeId>(currentTheme || 'ocean');
+
+  useEffect(() => {
+    if (visible) {
+      setSelected(currentTheme || 'ocean');
+    }
+  }, [visible, currentTheme]);
+
+  const handleConfirm = () => {
+    onSelectTheme(selected);
+    onClose();
+  };
+
+  const activeSelectedConfig = THEMES[selected] || THEMES.ocean;
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={[styles.modalContentCard, { maxHeight: '85%' }]}>
+          {/* Header with Title, Subtitle, and Close button */}
+          <View style={styles.modalHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.modalHeaderTitle}>Қосымшаның түсі</Text>
+              <Text style={styles.modalHeaderSubtitle}>
+                Өзіңізге ұнайтын түс темасын таңдаңыз
+              </Text>
+            </View>
+            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
+              <Ionicons name="close" size={18} color="#707684" />
+            </Pressable>
+          </View>
+
+          {/* Themes List / Grid */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.themeGridContent}
+            style={{ maxHeight: 420 }}
+          >
+            <View style={styles.themeGrid}>
+              {THEME_LIST.map((th) => {
+                const isSelected = selected === th.id;
+                return (
+                  <AnimatedPressable
+                    key={th.id}
+                    activeScale={0.97}
+                    style={[
+                      styles.themeCard,
+                      isSelected && {
+                        borderColor: th.primary,
+                        backgroundColor: th.tintBg,
+                        borderWidth: 2,
+                      },
+                    ]}
+                    onPress={() => setSelected(th.id)}
+                  >
+                    {/* Circle Swatch */}
+                    <View
+                      style={[
+                        styles.themeColorCircle,
+                        { backgroundColor: th.primary },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.themeColorSubCircle,
+                          { backgroundColor: th.primaryDark },
+                        ]}
+                      />
+                    </View>
+
+                    {/* Theme Info */}
+                    <View style={styles.themeCardInfo}>
+                      <Text
+                        style={[
+                          styles.themeCardTitle,
+                          isSelected && { color: th.primary, fontWeight: '700' },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {th.name}
+                      </Text>
+                      <Text style={styles.themeCardSubtitle} numberOfLines={1}>
+                        {th.englishName}
+                      </Text>
+                    </View>
+
+                    {/* Radio Indicator */}
+                    <View
+                      style={[
+                        styles.themeRadio,
+                        isSelected && { borderColor: th.primary, backgroundColor: '#FFFFFF' },
+                      ]}
+                    >
+                      {isSelected && (
+                        <View
+                          style={[
+                            styles.themeRadioInner,
+                            { backgroundColor: th.primary },
+                          ]}
+                        />
+                      )}
+                    </View>
+                  </AnimatedPressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+
+          {/* Bottom Action Button */}
+          <Pressable
+            style={[
+              styles.modalContinueButton,
+              { backgroundColor: activeSelectedConfig.primary, marginTop: 16 },
+            ]}
+            onPress={handleConfirm}
+          >
+            <Text style={styles.modalContinueButtonText}>Сақтау</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1237,7 +1423,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   visualCardSelected: {
-    backgroundColor: '#01B7FF08',
+    backgroundColor: colors.tintBg,
     borderColor: colors.today,
   },
   previewBox: {
@@ -1247,7 +1433,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 6,
     borderWidth: 1,
-    borderColor: '#ECEEF2',
+    borderColor: colors.inputBorder,
     marginBottom: 8,
     justifyContent: 'space-between',
     overflow: 'hidden',
@@ -1332,7 +1518,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   verticalVisualCardSelected: {
-    backgroundColor: '#01B7FF08',
+    backgroundColor: colors.tintBg,
     borderColor: colors.today,
   },
   verticalPreviewWrapper: {
@@ -1478,7 +1664,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFE0DC',
   },
   previewMonthDayCellToday: {
-    backgroundColor: '#E5F6FD',
+    backgroundColor: colors.tintBg,
     borderColor: colors.today,
     borderWidth: 0.8,
   },
@@ -1571,5 +1757,76 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.today,
+  },
+  modalHeaderSubtitle: {
+    fontSize: 13,
+    color: colors.secondary,
+    marginTop: 2,
+  },
+  themeGridContent: {
+    paddingVertical: 6,
+  },
+  themeGrid: {
+    gap: 10,
+  },
+  themeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.inputBg,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: colors.inputBorder,
+    padding: 12,
+    gap: 12,
+  },
+  themeColorCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  themeColorSubCircle: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 19,
+    height: 38,
+    borderTopLeftRadius: 0,
+  },
+  themeCardInfo: {
+    flex: 1,
+  },
+  themeCardTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  themeCardSubtitle: {
+    fontSize: 12,
+    color: colors.secondary,
+    marginTop: 2,
+  },
+  themeRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: colors.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  themeRadioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
 });

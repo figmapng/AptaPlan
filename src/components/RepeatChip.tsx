@@ -2,6 +2,7 @@ import { StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
+import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface RepeatChipProps {
@@ -39,6 +40,8 @@ export function getShortRepeatLabel(repeat: TaskRepeat | null, interval = 1): st
 }
 
 export function RepeatChip({ repeat, interval = 1, customLabel, onPress, hapticsEnabled = true }: RepeatChipProps) {
+  const { colors } = useTheme();
+
   const handlePress = async () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -57,12 +60,13 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
       activeScale={0.93}
       style={[
         styles.chip,
-        isActive ? styles.activeChip : undefined,
+        { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+        isActive ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }] : undefined,
         !label ? styles.iconOnly : undefined,
       ]}
     >
-      <RepeatIcon size={16} color={isActive ? '#4B5563' : '#707684'} />
-      {label && <Text style={[styles.text, isActive && styles.activeText]}>{label}</Text>}
+      <RepeatIcon size={16} color={isActive ? colors.text : colors.secondary} />
+      {label && <Text style={[styles.text, { color: colors.text }]}>{label}</Text>}
     </AnimatedPressable>
   );
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface BackButtonProps {
@@ -14,6 +14,7 @@ export function BackButton({
   accessibilityLabel = 'Артқа қайту',
   size = 48,
 }: BackButtonProps) {
+  const { colors } = useTheme();
   const iconSize = Math.round((size * 20) / 48);
   return (
     <AnimatedPressable

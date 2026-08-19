@@ -3,6 +3,7 @@ import { Alert, Animated, Easing, PanResponder, Pressable, StyleSheet, Text, Vie
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
 import { useCardTransition } from './card-transition-provider';
@@ -41,6 +42,7 @@ export const TaskRow = React.memo(function TaskRow({
   singleLine?: boolean;
   showDate?: boolean;
 }) {
+  const { colors } = useTheme();
   const { toggle, remove, settings } = usePlanner();
   const { progress: transitionProgress, activeDate } = useCardTransition();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -394,7 +396,7 @@ export const TaskRow = React.memo(function TaskRow({
       })
     : compact ? 0 : 16;
 
-  const dateColor = isOverdue ? '#E03B2F' : '#8E8E93';
+  const dateColor = isOverdue ? '#E03B2F' : colors.secondary;
 
   return (
     <View style={styles.wrapper}>
@@ -430,8 +432,12 @@ export const TaskRow = React.memo(function TaskRow({
             style={[
               styles.checkbox,
               compact && styles.compactCheckbox,
-              cardBg === '#FAFCFF' && { borderColor: '#DAE6F9', backgroundColor: 'transparent' },
-              task.isCompleted && styles.checkboxCompleted,
+              { borderColor: colors.checkboxBorder, backgroundColor: 'transparent' },
+              task.isCompleted && {
+                borderColor: colors.checkedCheckboxBg,
+                backgroundColor: colors.checkedCheckboxBg,
+              },
+              cardBg === '#FAFCFF' && { borderColor: colors.checkboxBorder, backgroundColor: 'transparent' },
               { transform: [{ scale: boxScale }, { scale: dynamicCheckboxScale }] },
             ]}
           >
@@ -456,7 +462,7 @@ export const TaskRow = React.memo(function TaskRow({
           style={[
             styles.contentStack,
             compact && styles.compactContentStack,
-            !isLast && !compact && styles.contentStackBorderBottom,
+            !isLast && !compact && [styles.contentStackBorderBottom, { borderBottomColor: colors.inputBorder }],
             isActive && { opacity: 0.7 },
           ]}
         >
@@ -467,8 +473,8 @@ export const TaskRow = React.memo(function TaskRow({
               style={[
                 styles.title,
                 compact && styles.compactTitle,
-                task.isCompleted && styles.completedTitle,
-                { fontSize: dynamicTitleFontSize },
+                { color: colors.text, fontSize: dynamicTitleFontSize },
+                task.isCompleted && [styles.completedTitle, { color: colors.secondary }],
               ]}
             >
               {task.title}
@@ -488,7 +494,7 @@ export const TaskRow = React.memo(function TaskRow({
                 {hasDate && (
                   <View style={styles.metaItem}>
                     <CalendarIcon size={13} color={dateColor} />
-                    <Text style={[styles.metaText, isOverdue && styles.overdueText]}>
+                    <Text style={[styles.metaText, { color: isOverdue ? '#E03B2F' : colors.secondary }]}>
                       {formatTaskDisplayDate(task.date)}
                     </Text>
                   </View>
@@ -496,16 +502,16 @@ export const TaskRow = React.memo(function TaskRow({
 
                 {hasTime && (
                   <View style={styles.metaItem}>
-                    <ClockIcon size={13} color="#8E8E93" />
-                    <Text style={styles.metaText}>{task.time}</Text>
+                    <ClockIcon size={13} color={colors.secondary} />
+                    <Text style={[styles.metaText, { color: colors.secondary }]}>{task.time}</Text>
                   </View>
                 )}
 
                 {hasRepeat && (
                   <View style={styles.metaItem}>
-                    <RepeatIcon size={13} color="#8E8E93" />
+                    <RepeatIcon size={13} color={colors.secondary} />
                     {repeatLabel ? (
-                      <Text style={styles.metaText}>{repeatLabel}</Text>
+                      <Text style={[styles.metaText, { color: colors.secondary }]}>{repeatLabel}</Text>
                     ) : null}
                   </View>
                 )}
@@ -607,7 +613,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
+    borderColor: colors.checkboxBorder,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -633,7 +639,7 @@ const styles = StyleSheet.create({
   },
   contentStackBorderBottom: {
     borderBottomWidth: 1,
-    borderBottomColor: '#ECEEF1',
+    borderBottomColor: colors.divider,
   },
   compactContentStack: {
     paddingBottom: 0,
@@ -642,7 +648,7 @@ const styles = StyleSheet.create({
     fontSize: 15.5,
     fontWeight: '400',
     lineHeight: 21,
-    color: '#111827',
+    color: colors.text,
   },
   compactTitle: {
     fontSize: 12,

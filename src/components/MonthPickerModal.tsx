@@ -3,6 +3,7 @@ import { Animated, Dimensions, Easing, Modal, Pressable, ScrollView, StyleSheet,
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 import { months } from '@/services/date-service';
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -22,6 +23,7 @@ export function MonthPickerModal({
   onSelectMonth,
   onClose,
 }: MonthPickerModalProps) {
+  const { colors } = useTheme();
   const [selectedYear, setSelectedYear] = useState(() => currentDate.getFullYear());
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -74,13 +76,17 @@ export function MonthPickerModal({
         </Animated.View>
 
         <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-          <View style={styles.dragPill} />
+          <View style={[styles.dragPill, { backgroundColor: colors.checkboxBorder }]} />
           
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Айды таңдау</Text>
-            <AnimatedPressable activeScale={0.92} style={styles.todayBadge} onPress={handleTodayClick}>
-              <Text style={styles.todayText}>Бүгін</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Айды таңдау</Text>
+            <AnimatedPressable
+              activeScale={0.92}
+              style={[styles.todayBadge, { backgroundColor: `${colors.today}18` }]}
+              onPress={handleTodayClick}
+            >
+              <Text style={[styles.todayText, { color: colors.today }]}>Бүгін</Text>
             </AnimatedPressable>
           </View>
 
@@ -95,11 +101,11 @@ export function MonthPickerModal({
               }}
             >
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                <Path d="M15 18l-6-6 6-6" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M15 18l-6-6 6-6" stroke={colors.text} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </AnimatedPressable>
 
-            <Text style={styles.yearText}>{selectedYear} жыл</Text>
+            <Text style={[styles.yearText, { color: colors.text }]}>{selectedYear} жыл</Text>
 
             <AnimatedPressable
               activeScale={0.88}
@@ -110,7 +116,7 @@ export function MonthPickerModal({
               }}
             >
               <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                <Path d="M9 18l6-6-6-6" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M9 18l6-6-6-6" stroke={colors.text} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </AnimatedPressable>
           </View>
@@ -191,6 +197,7 @@ function MonthGridMatrix({
   today: Date;
   onSelectMonth: (date: Date) => void;
 }) {
+  const { colors } = useTheme();
   const currentMonthIdx = currentDate.getMonth();
   const isCurrentYear = year === currentDate.getFullYear();
 
@@ -206,23 +213,31 @@ function MonthGridMatrix({
             activeScale={0.94}
             style={[
               styles.monthCard,
-              isSelected && styles.monthCardSelected,
-              isActualTodayMonth && !isSelected && styles.monthCardToday,
+              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              isSelected && { backgroundColor: colors.today, borderColor: colors.today },
+              isActualTodayMonth && !isSelected && { borderColor: colors.today },
             ]}
             onPress={() => onSelectMonth(new Date(year, idx, 1))}
           >
             <Text
               style={[
                 styles.monthText,
+                { color: colors.text },
                 isSelected && styles.monthTextSelected,
-                isActualTodayMonth && !isSelected && styles.monthTextToday,
+                isActualTodayMonth && !isSelected && { color: colors.today, fontWeight: '700' },
               ]}
             >
               {monthName[0].toUpperCase() + monthName.slice(1)}
             </Text>
 
             {isActualTodayMonth && (
-              <View style={[styles.todayDot, isSelected && styles.todayDotSelected]} />
+              <View
+                style={[
+                  styles.todayDot,
+                  { backgroundColor: colors.today },
+                  isSelected && styles.todayDotSelected,
+                ]}
+              />
             )}
           </AnimatedPressable>
         );
@@ -275,12 +290,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#01B7FF14',
+    backgroundColor: `${colors.today}14`,
   },
   todayText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#01B7FF',
+    color: colors.today,
   },
   yearRow: {
     flexDirection: 'row',
@@ -323,11 +338,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   monthCardSelected: {
-    backgroundColor: '#01B7FF',
-    borderColor: '#01B7FF',
+    backgroundColor: colors.today,
+    borderColor: colors.today,
   },
   monthCardToday: {
-    borderColor: '#01B7FF',
+    borderColor: colors.today,
   },
   monthText: {
     fontSize: 14,
@@ -339,7 +354,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   monthTextToday: {
-    color: '#01B7FF',
+    color: colors.today,
     fontWeight: '700',
   },
   todayDot: {
@@ -349,7 +364,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#01B7FF',
+    backgroundColor: colors.today,
   },
   todayDotSelected: {
     backgroundColor: '#FFFFFF',

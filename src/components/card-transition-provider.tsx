@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import { addDays, format, isToday } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 import { months, toDateKey, weekdays } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from './task-row';
@@ -97,6 +98,7 @@ const CarouselCard = React.memo(function CarouselCard({
   }, []);
 
   const [localListHeight, setLocalListHeight] = useState(0);
+  const { colors } = useTheme();
   const cardTaskCount = cardTasks.length;
   const taskListHeight = localListHeight > 0 ? localListHeight : (cardTaskCount > 0 ? cardTaskCount * 48 + 12 : 80);
   const rawCardContentHeight = 44 + 8 + taskListHeight;
@@ -109,7 +111,7 @@ const CarouselCard = React.memo(function CarouselCard({
   const isWideOrigin = currentFrame.width > width * 0.7;
 
   const monthCellBg = isTodayCard
-    ? '#E5F6FD'
+    ? colors.tintBg
     : isWeekendCard
     ? '#FFF3F2'
     : '#F6F8FA';
@@ -157,10 +159,10 @@ const CarouselCard = React.memo(function CarouselCard({
           backgroundColor: isMonthOrigin
             ? progress.interpolate({
                 inputRange: [0, 0.4, 1],
-                outputRange: [monthCellBg, isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : '#EDEFF2', isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : '#EDEFF2'],
+                outputRange: [monthCellBg, isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : colors.cardHeaderBg, isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : colors.cardHeaderBg],
                 extrapolate: 'clamp',
               })
-            : isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : '#EDEFF2',
+            : isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : colors.cardHeaderBg,
           borderWidth: isMonthOrigin
             ? progress.interpolate({
                 inputRange: [0, 0.35, 1],
@@ -261,7 +263,7 @@ const CarouselCard = React.memo(function CarouselCard({
           borderRadius: 16,
           borderCurve: 'continuous',
           overflow: 'hidden',
-          backgroundColor: isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : '#EDEFF2',
+          backgroundColor: isTodayCard ? colors.today : isWeekendCard ? '#FFE5E2' : colors.cardHeaderBg,
           opacity: isMonthOrigin
             ? progress.interpolate({
                 inputRange: [0.2, 0.55, 1],
@@ -302,7 +304,7 @@ const CarouselCard = React.memo(function CarouselCard({
                 extrapolate: 'clamp',
               }),
               fontWeight: '600',
-              color: isTodayCard ? '#FFFFFF' : isWeekendCard ? colors.sundayText : '#333C4E',
+              color: isTodayCard ? '#FFFFFF' : isWeekendCard ? colors.sundayText : colors.text,
             }}
           >
             {(weekdays[cardDate.getDay()] ?? '').toUpperCase()}
@@ -384,7 +386,7 @@ const CarouselCard = React.memo(function CarouselCard({
                   }),
                   fontWeight: isTodayCard ? '700' : '600',
                   color: isTodayCard
-                    ? '#049BD6'
+                    ? colors.today
                     : isWeekendCard
                     ? colors.weekendNumText
                     : colors.dateNumText,
@@ -421,7 +423,7 @@ const CarouselCard = React.memo(function CarouselCard({
                   }),
                   fontWeight: isTodayCard ? '700' : '600',
                   color: isTodayCard
-                    ? '#049BD6'
+                    ? colors.today
                     : isWeekendCard
                     ? colors.weekendNumText
                     : colors.dateNumText,
@@ -458,10 +460,10 @@ const CarouselCard = React.memo(function CarouselCard({
                 fontVariant: ['tabular-nums'],
               }}
             >
-              <Text style={{ fontWeight: '700', color: isTodayCard ? '#FFFFFF' : isWeekendCard ? '#7B4545' : '#333C4E' }}>
+              <Text style={{ fontWeight: '700', color: isTodayCard ? '#FFFFFF' : isWeekendCard ? '#7B4545' : colors.text }}>
                 {completedCount}
               </Text>
-              <Text style={{ color: isTodayCard ? 'rgba(255,255,255,0.8)' : isWeekendCard ? 'rgba(123,69,69,0.7)' : '#707684' }}>
+              <Text style={{ color: isTodayCard ? 'rgba(255,255,255,0.8)' : isWeekendCard ? 'rgba(123,69,69,0.7)' : colors.secondary }}>
                 /{cardTasks.length}
               </Text>
             </Animated.Text>
@@ -655,6 +657,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { tasks, settings, loadRange, remove } = usePlanner();
+  const { colors } = useTheme();
 
   const progress = useRef(new Animated.Value(0)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;

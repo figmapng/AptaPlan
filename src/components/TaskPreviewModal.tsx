@@ -15,6 +15,7 @@ import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
 import { formatFullDate } from '@/services/date-service';
@@ -157,6 +158,7 @@ export function TaskPreviewModal({
   onEdit,
   onDelete,
 }: TaskPreviewModalProps) {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { toggle, update, remove, settings } = usePlanner();
 
@@ -335,6 +337,7 @@ export function TaskPreviewModal({
             onPress={handleEdit}
             style={({ pressed }) => [
               styles.taskCard,
+              { backgroundColor: colors.card, borderColor: colors.cardBorder },
               pressed && { opacity: 0.95 },
             ]}
           >
@@ -344,7 +347,11 @@ export function TaskPreviewModal({
                 onPress={handleToggleDone}
                 style={[
                   styles.checkbox,
-                  t.isCompleted && styles.checkboxCompleted,
+                  { borderColor: colors.checkboxBorder, backgroundColor: colors.card },
+                  t.isCompleted && {
+                    backgroundColor: colors.checkedCheckboxBg,
+                    borderColor: colors.checkedCheckboxBg,
+                  },
                 ]}
                 hitSlop={8}
               >
@@ -356,7 +363,8 @@ export function TaskPreviewModal({
               <Text
                 style={[
                   styles.taskTitle,
-                  t.isCompleted && styles.taskTitleCompleted,
+                  { color: colors.text },
+                  t.isCompleted && [styles.taskTitleCompleted, { color: colors.secondary }],
                 ]}
               >
                 {t.title}
@@ -365,7 +373,7 @@ export function TaskPreviewModal({
 
             {/* Note / Description */}
             {t.note ? (
-              <Text style={styles.taskNote}>{t.note}</Text>
+              <Text style={[styles.taskNote, { color: colors.secondary }]}>{t.note}</Text>
             ) : null}
 
             {/* Meta Tags Row */}
@@ -373,11 +381,11 @@ export function TaskPreviewModal({
               {/* Date & Time Text */}
               <Pressable
                 onPress={() => setShowCalendar(true)}
-                style={styles.dateBadge}
+                style={[styles.dateBadge, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
                 hitSlop={4}
               >
                 <CalendarIcon size={14} color={colors.secondary} />
-                <Text style={styles.dateBadgeText}>
+                <Text style={[styles.dateBadgeText, { color: colors.secondary }]}>
                   {formatTaskDisplayDate(t.date)}
                   {t.time ? ` · ${t.time}` : ''}
                 </Text>
@@ -387,11 +395,11 @@ export function TaskPreviewModal({
               {repeatLabel ? (
                 <Pressable
                   onPress={() => setShowRepeatSheet(true)}
-                  style={styles.repeatBadge}
+                  style={[styles.repeatBadge, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
                   hitSlop={4}
                 >
                   <RepeatIcon size={14} color={colors.secondary} />
-                  <Text style={styles.repeatBadgeText}>{repeatLabel}</Text>
+                  <Text style={[styles.repeatBadgeText, { color: colors.secondary }]}>{repeatLabel}</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -400,7 +408,7 @@ export function TaskPreviewModal({
           {/* Floating Action Dock */}
           <View style={styles.actionDockRow}>
             {/* Action Buttons Capsule with vertical dividers */}
-            <View style={styles.actionCapsule}>
+            <View style={[styles.actionCapsule, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
               {/* Date Action */}
               <AnimatedPressable
                 activeScale={0.88}
@@ -410,11 +418,11 @@ export function TaskPreviewModal({
               >
                 <CalendarIcon
                   size={19}
-                  color={t.date ? colors.today : '#5E6778'}
+                  color={t.date ? colors.today : colors.secondary}
                 />
               </AnimatedPressable>
 
-              <View style={styles.dockDivider} />
+              <View style={[styles.dockDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* Time Action */}
               <AnimatedPressable
@@ -425,11 +433,11 @@ export function TaskPreviewModal({
               >
                 <ClockIcon
                   size={19}
-                  color={t.time ? colors.today : '#5E6778'}
+                  color={t.time ? colors.today : colors.secondary}
                 />
               </AnimatedPressable>
 
-              <View style={styles.dockDivider} />
+              <View style={[styles.dockDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* Repeat Action */}
               <AnimatedPressable
@@ -440,11 +448,11 @@ export function TaskPreviewModal({
               >
                 <RepeatIcon
                   size={19}
-                  color={t.repeatType && t.repeatType !== 'none' ? colors.today : '#5E6778'}
+                  color={t.repeatType && t.repeatType !== 'none' ? colors.today : colors.secondary}
                 />
               </AnimatedPressable>
 
-              <View style={styles.dockDivider} />
+              <View style={[styles.dockDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* Edit Full Task Action */}
               <AnimatedPressable
@@ -453,7 +461,7 @@ export function TaskPreviewModal({
                 style={styles.actionIconBtn}
                 hitSlop={6}
               >
-                <EditIcon size={19} color="#5E6778" />
+                <EditIcon size={19} color={colors.secondary} />
               </AnimatedPressable>
             </View>
 
@@ -532,7 +540,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#ECEEF2',
+    borderColor: colors.cardBorder,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.14,
@@ -634,7 +642,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingHorizontal: 6,
     borderWidth: 1,
-    borderColor: '#ECEEF2',
+    borderColor: colors.cardBorder,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
@@ -650,7 +658,7 @@ const styles = StyleSheet.create({
   dockDivider: {
     width: 1,
     height: 20,
-    backgroundColor: '#ECEEF2',
+    backgroundColor: colors.inputBorder,
   },
   deleteButtonStandalone: {
     width: 50,
