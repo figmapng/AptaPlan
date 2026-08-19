@@ -190,84 +190,35 @@ export default function SettingsScreen() {
           { paddingBottom: insets.bottom + 32 },
         ]}
       >
-        {/* Карточка 1: Қосымшаның түсі (Telegram стиліндегі ықшам палитра) */}
+        {/* Карточка 1: Негізгі баптаулар */}
         <Section>
-          <View style={styles.themeSectionHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={styles.iconBox}>
-                <Ionicons name="color-palette-outline" size={21} color={colors.text} />
-              </View>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Қосымшаның түсі</Text>
-            </View>
-            <View style={[styles.themeActiveBadge, { backgroundColor: colors.tintBg }]}>
-              <Text style={[styles.themeActiveBadgeText, { color: colors.today }]}>{themeConfig.name}</Text>
-            </View>
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.telegramThemeScroll}
-          >
-            {THEME_LIST.map((th) => {
-              const isSelected = (settings.theme || 'ocean') === th.id;
-              return (
-                <AnimatedPressable
-                  key={th.id}
-                  activeScale={0.9}
-                  onPress={() => {
-                    if (settings.haptics) {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                    void setPref('theme', th.id);
+          <SettingRow
+            icon="color-palette-outline"
+            label="Сыртқы түрі"
+            valueText={themeConfig.name}
+            rightElement={
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 10,
+                    backgroundColor: themeConfig.primary,
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF',
+                    shadowColor: themeConfig.primary,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.35,
+                    shadowRadius: 3,
+                    elevation: 2,
                   }}
-                  style={styles.telegramThemeItem}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${th.name} темасы`}
-                >
-                  {/* Telegram-style Color Bubble */}
-                  <View
-                    style={[
-                      styles.telegramThemeBubbleOuter,
-                      isSelected && {
-                        borderColor: th.primary,
-                        backgroundColor: '#FFFFFF',
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.telegramThemeBubble,
-                        { backgroundColor: th.primary },
-                      ]}
-                    >
-                      {isSelected && (
-                        <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                      )}
-                    </View>
-                  </View>
-
-                  {/* Theme Name */}
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      styles.telegramThemeTitle,
-                      {
-                        color: isSelected ? colors.text : colors.secondary,
-                        fontWeight: isSelected ? '700' : '500',
-                      },
-                    ]}
-                  >
-                    {th.name}
-                  </Text>
-                </AnimatedPressable>
-              );
-            })}
-          </ScrollView>
-        </Section>
-
-        {/* Карточка 2: Басқа негізгі баптаулар */}
-        <Section>
+                />
+                <Ionicons name="chevron-forward" size={16} color={colors.secondary} />
+              </View>
+            }
+            onPress={() => router.push('/appearance')}
+          />
+          <Divider />
           <SettingRow
             icon="options-outline"
             label="Әдепкі режим"

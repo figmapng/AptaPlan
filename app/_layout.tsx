@@ -31,6 +31,7 @@ export default function Layout() {
             <Stack.Screen name="task/new" options={{ title: 'Жаңа тапсырма', presentation: 'modal' }} />
             <Stack.Screen name="task/[id]" options={{ title: 'Тапсырманы өңдеу', presentation: 'modal' }} />
             <Stack.Screen name="settings" options={{ headerShown: false }} />
+            <Stack.Screen name="appearance" options={{ headerShown: false }} />
           </Stack>
         </CardTransitionProvider>
       </PlannerProvider>
