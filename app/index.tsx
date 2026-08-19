@@ -1407,7 +1407,7 @@ export default function Home() {
             <Animated.View
               style={{
                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                backgroundColor: '#FFFFFF',
+                backgroundColor: colors.background,
                 overflow: 'hidden',
                 ...(fromYearMode
                   ? {
@@ -1450,7 +1450,7 @@ export default function Home() {
         </View>
       )}
 
-      {/* ── Floating input & Pure White Gradient Overlay ─────────── */}
+      {/* ── Floating input & Gradient Overlay ─────────── */}
       {(mode === 'day' || mode === 'week' || mode === 'month' || mode === 'year') && (
         <>
           <View
@@ -1467,10 +1467,10 @@ export default function Home() {
             <Svg width="100%" height="100%">
               <Defs>
                 <LinearGradient id="bottomFadeGradientIndex" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0" />
-                  <Stop offset="0.2" stopColor="#FFFFFF" stopOpacity="0.7" />
-                  <Stop offset="0.45" stopColor="#FFFFFF" stopOpacity="1" />
-                  <Stop offset="1" stopColor="#FFFFFF" stopOpacity="1" />
+                  <Stop offset="0" stopColor={colors.background} stopOpacity="0" />
+                  <Stop offset="0.2" stopColor={colors.background} stopOpacity="0.7" />
+                  <Stop offset="0.45" stopColor={colors.background} stopOpacity="1" />
+                  <Stop offset="1" stopColor={colors.background} stopOpacity="1" />
                 </LinearGradient>
               </Defs>
               <Rect x="0" y="0" width="100%" height="100%" fill="url(#bottomFadeGradientIndex)" />
@@ -1737,7 +1737,7 @@ const MonthGrid = memo(function MonthGridComponent({
         paddingHorizontal: H_PAD,
         paddingTop: TOP_PAD,
         paddingBottom: bottomPadding,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.background,
       }}
     >
       {/* ── Day-of-week labels */}

@@ -160,7 +160,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       {/* iOS-style Navigation Bar */}
       <View style={styles.header}>
         <AnimatedPressable
