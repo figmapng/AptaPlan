@@ -1080,6 +1080,145 @@ function LastDayVisibilityModal({
   );
 }
 
+function ThemeMiniAppPreview({ theme }: { theme: ThemeConfig }) {
+  return (
+    <View
+      style={{
+        width: '100%',
+        height: 74,
+        backgroundColor: theme.background,
+        borderRadius: 10,
+        padding: 5,
+        borderWidth: 1,
+        borderColor: theme.cardBorder,
+        justifyContent: 'space-between',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Top Mini Header */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+          <View style={{ width: 32, height: 4.5, borderRadius: 2.25, backgroundColor: theme.text }} />
+          <View style={{ width: 3.5, height: 3.5, borderRadius: 1.75, backgroundColor: theme.secondary }} />
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 2,
+            backgroundColor: theme.inputBg,
+            borderColor: theme.inputBorder,
+            borderWidth: 0.75,
+            paddingHorizontal: 4,
+            paddingVertical: 1.5,
+            borderRadius: 5,
+          }}
+        >
+          <View style={{ width: 3.5, height: 3.5, borderRadius: 1.75, backgroundColor: theme.today }} />
+          <View style={{ width: 12, height: 3, borderRadius: 1.5, backgroundColor: theme.text }} />
+        </View>
+      </View>
+
+      {/* 2 Day Cards */}
+      <View style={{ flexDirection: 'row', gap: 4, flex: 1, marginVertical: 2.5 }}>
+        {/* Day Card 1: Normal Inactive Day */}
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: '#FFFFFF',
+            borderRadius: 6,
+            borderWidth: 0.75,
+            borderColor: theme.cardBorder,
+            overflow: 'hidden',
+          }}
+        >
+          {/* Inactive Header */}
+          <View
+            style={{
+              backgroundColor: theme.cardHeaderBg,
+              paddingHorizontal: 3.5,
+              paddingVertical: 1.5,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <View style={{ width: 14, height: 2.5, borderRadius: 1.25, backgroundColor: theme.text }} />
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: theme.dateNumBg }} />
+          </View>
+          {/* Content task line */}
+          <View style={{ padding: 2.5, gap: 1.5 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <View style={{ width: 4.5, height: 4.5, borderRadius: 1.25, borderWidth: 0.75, borderColor: theme.checkboxBorder }} />
+              <View style={{ width: 16, height: 2, borderRadius: 1, backgroundColor: theme.text }} />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <View style={{ width: 4.5, height: 4.5, borderRadius: 1.25, borderWidth: 0.75, borderColor: theme.checkboxBorder }} />
+              <View style={{ width: 12, height: 2, borderRadius: 1, backgroundColor: theme.text }} />
+            </View>
+          </View>
+        </View>
+
+        {/* Day Card 2: Active Today Day */}
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: '#FFFFFF',
+            borderRadius: 6,
+            borderWidth: 1,
+            borderColor: theme.activeCardBorder,
+            overflow: 'hidden',
+          }}
+        >
+          {/* Active Today Header */}
+          <View
+            style={{
+              backgroundColor: theme.activeHeaderBg,
+              paddingHorizontal: 3.5,
+              paddingVertical: 1.5,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <View style={{ width: 14, height: 2.5, borderRadius: 1.25, backgroundColor: '#FFFFFF' }} />
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFFFFF' }} />
+          </View>
+          {/* Content task line with completed task */}
+          <View style={{ padding: 2.5, gap: 1.5 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <View style={{ width: 4.5, height: 4.5, borderRadius: 1.25, backgroundColor: theme.checkedCheckboxBg }} />
+              <View style={{ width: 14, height: 2, borderRadius: 1, backgroundColor: theme.secondary }} />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <View style={{ width: 4.5, height: 4.5, borderRadius: 1.25, borderWidth: 0.75, borderColor: theme.checkboxBorder }} />
+              <View style={{ width: 10, height: 2, borderRadius: 1, backgroundColor: theme.text }} />
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Bottom Mini Task Input */}
+      <View
+        style={{
+          height: 8,
+          backgroundColor: theme.inputBg,
+          borderColor: theme.inputBorder,
+          borderWidth: 0.6,
+          borderRadius: 4,
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 3,
+          gap: 2,
+        }}
+      >
+        <View style={{ width: 2.5, height: 2.5, borderRadius: 1.25, backgroundColor: theme.inputPlusIcon }} />
+        <View style={{ width: 20, height: 1.75, borderRadius: 1, backgroundColor: theme.inputPlaceholder }} />
+      </View>
+    </View>
+  );
+}
+
 function ThemePickerModal({
   visible,
   currentTheme,
@@ -1110,13 +1249,13 @@ function ThemePickerModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { maxHeight: '85%' }]}>
+        <View style={[styles.modalContentCard, { maxHeight: '88%' }]}>
           {/* Header with Title, Subtitle, and Close button */}
           <View style={styles.modalHeaderRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.modalHeaderTitle}>Қосымшаның түсі</Text>
               <Text style={styles.modalHeaderSubtitle}>
-                Өзіңізге ұнайтын түс темасын таңдаңыз
+                Әр түстің көрнекі үлгісін көріп, таңдаңыз
               </Text>
             </View>
             <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
@@ -1124,13 +1263,13 @@ function ThemePickerModal({
             </Pressable>
           </View>
 
-          {/* Themes List / Grid */}
+          {/* Themes List / Grid with Visual Previews */}
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.themeGridContent}
-            style={{ maxHeight: 420 }}
+            style={{ maxHeight: 460 }}
           >
-            <View style={styles.themeGrid}>
+            <View style={styles.themeVisualGrid}>
               {THEME_LIST.map((th) => {
                 const isSelected = selected === th.id;
                 return (
@@ -1138,61 +1277,59 @@ function ThemePickerModal({
                     key={th.id}
                     activeScale={0.97}
                     style={[
-                      styles.themeCard,
+                      styles.themeVisualCard,
                       isSelected && {
                         borderColor: th.primary,
-                        backgroundColor: th.tintBg,
                         borderWidth: 2,
+                        backgroundColor: th.tintBg,
                       },
                     ]}
                     onPress={() => setSelected(th.id)}
                   >
-                    {/* Circle Swatch */}
-                    <View
-                      style={[
-                        styles.themeColorCircle,
-                        { backgroundColor: th.primary },
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.themeColorSubCircle,
-                          { backgroundColor: th.primaryDark },
-                        ]}
-                      />
-                    </View>
+                    {/* Realistic Mini-App Screen Preview */}
+                    <ThemeMiniAppPreview theme={th} />
 
-                    {/* Theme Info */}
-                    <View style={styles.themeCardInfo}>
-                      <Text
-                        style={[
-                          styles.themeCardTitle,
-                          isSelected && { color: th.primary, fontWeight: '700' },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {th.name}
-                      </Text>
-                      <Text style={styles.themeCardSubtitle} numberOfLines={1}>
-                        {th.englishName}
-                      </Text>
-                    </View>
-
-                    {/* Radio Indicator */}
-                    <View
-                      style={[
-                        styles.themeRadio,
-                        isSelected && { borderColor: th.primary, backgroundColor: '#FFFFFF' },
-                      ]}
-                    >
-                      {isSelected && (
+                    {/* Theme Info & Radio Row */}
+                    <View style={styles.themeVisualCardFooter}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
                         <View
                           style={[
-                            styles.themeRadioInner,
+                            styles.themeColorDotSmall,
                             { backgroundColor: th.primary },
                           ]}
                         />
-                      )}
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={[
+                              styles.themeVisualCardTitle,
+                              isSelected && { color: th.primary, fontWeight: '700' },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {th.name}
+                          </Text>
+                          <Text style={styles.themeVisualCardSubtitle} numberOfLines={1}>
+                            {th.englishName}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Selection Radio Circle */}
+                      <View
+                        style={[
+                          styles.themeRadio,
+                          isSelected && { borderColor: th.primary, backgroundColor: '#FFFFFF' },
+                        ]}
+                      >
+                        {isSelected && (
+                          <View
+                            style={[
+                              styles.themeRadioInner,
+                              { backgroundColor: th.primary },
+                            ]}
+                          />
+                        )}
+                      </View>
                     </View>
                   </AnimatedPressable>
                 );
@@ -1204,7 +1341,7 @@ function ThemePickerModal({
           <Pressable
             style={[
               styles.modalContinueButton,
-              { backgroundColor: activeSelectedConfig.primary, marginTop: 16 },
+              { backgroundColor: activeSelectedConfig.primary, marginTop: 14 },
             ]}
             onPress={handleConfirm}
           >
@@ -1766,53 +1903,46 @@ const styles = StyleSheet.create({
   themeGridContent: {
     paddingVertical: 6,
   },
-  themeGrid: {
-    gap: 10,
+  themeVisualGrid: {
+    gap: 12,
   },
-  themeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  themeVisualCard: {
     backgroundColor: colors.inputBg,
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: colors.inputBorder,
-    padding: 12,
-    gap: 12,
+    padding: 8,
+    gap: 8,
   },
-  themeColorCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    overflow: 'hidden',
-    position: 'relative',
-    borderWidth: 2,
+  themeVisualCardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    paddingBottom: 2,
+    gap: 8,
+  },
+  themeColorDotSmall: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1.5,
     borderColor: '#FFFFFF',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 1,
   },
-  themeColorSubCircle: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 19,
-    height: 38,
-    borderTopLeftRadius: 0,
-  },
-  themeCardInfo: {
-    flex: 1,
-  },
-  themeCardTitle: {
-    fontSize: 15,
+  themeVisualCardTitle: {
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text,
   },
-  themeCardSubtitle: {
-    fontSize: 12,
+  themeVisualCardSubtitle: {
+    fontSize: 11,
     color: colors.secondary,
-    marginTop: 2,
+    marginTop: 1,
   },
   themeRadio: {
     width: 20,

@@ -7,6 +7,7 @@ export interface ThemeConfig {
   englishName: string;
   primary: string;
   primaryDark: string;
+  background: string;
   tintBg: string;
   activeHeaderText: string;
   today: string;
@@ -40,6 +41,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     englishName: 'Ocean Blue',
     primary: '#01B7FF',
     primaryDark: '#009FD6',
+    background: '#F8FAFC',
     tintBg: '#EAF8FF',
     activeHeaderText: '#FFFFFF',
     today: '#01B7FF',
@@ -69,6 +71,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     englishName: 'Emerald Green',
     primary: '#10B981',
     primaryDark: '#059669',
+    background: '#F7FAF8',
     tintBg: '#ECFDF5',
     activeHeaderText: '#FFFFFF',
     today: '#10B981',
@@ -98,6 +101,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     englishName: 'Royal Violet',
     primary: '#8B5CF6',
     primaryDark: '#7C3AED',
+    background: '#FAF9FC',
     tintBg: '#F5F3FF',
     activeHeaderText: '#FFFFFF',
     today: '#8B5CF6',
@@ -127,6 +131,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     englishName: 'Sunset Coral',
     primary: '#FF6B4A',
     primaryDark: '#E8502C',
+    background: '#FCF9F8',
     tintBg: '#FFF3F0',
     activeHeaderText: '#FFFFFF',
     today: '#FF6B4A',
@@ -156,6 +161,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     englishName: 'Berry Rose',
     primary: '#F43F5E',
     primaryDark: '#E11D48',
+    background: '#FCF8F9',
     tintBg: '#FFF1F2',
     activeHeaderText: '#FFFFFF',
     today: '#F43F5E',
@@ -185,6 +191,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     englishName: 'Deep Indigo',
     primary: '#4F46E5',
     primaryDark: '#4338CA',
+    background: '#F8F9FC',
     tintBg: '#EEF2FF',
     activeHeaderText: '#FFFFFF',
     today: '#4F46E5',
@@ -214,6 +221,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     englishName: 'Warm Amber',
     primary: '#FFAA01',
     primaryDark: '#E69900',
+    background: '#FFFDFA',
     tintBg: '#FFF8E1',
     activeHeaderText: '#FFFFFF',
     today: '#FFAA01',
@@ -243,6 +251,7 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     englishName: 'Slate Grey',
     primary: '#475569',
     primaryDark: '#334155',
+    background: '#F8FAFC',
     tintBg: '#F1F5F9',
     activeHeaderText: '#FFFFFF',
     today: '#475569',
@@ -280,6 +289,7 @@ export function getThemeColors(themeId?: ThemeId): AppColors {
   const theme = (themeId && THEMES[themeId]) ? THEMES[themeId] : THEMES.ocean;
   return {
     ...baseColors,
+    background: theme.background,
     primary: theme.primary,
     primaryDark: theme.primaryDark,
     tintBg: theme.tintBg,
