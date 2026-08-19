@@ -59,6 +59,7 @@ type CarouselCardProps = {
   beginAdding: (targetDate?: Date) => void;
   closeCard: () => void;
   handlePendingDelete: (task: Task) => void;
+  isTransitionSettled?: boolean;
 };
 
 const CarouselCard = React.memo(function CarouselCard({
@@ -83,6 +84,7 @@ const CarouselCard = React.memo(function CarouselCard({
   beginAdding,
   closeCard,
   handlePendingDelete,
+  isTransitionSettled = true,
 }: CarouselCardProps) {
   const cardKey = useMemo(() => toDateKey(cardDate), [cardDate]);
   const cardTasks = useMemo(() => tasks.filter((t: Task) => t.date === cardKey), [tasks, cardKey]);
@@ -590,39 +592,42 @@ const CarouselCard = React.memo(function CarouselCard({
                     if (isCenter) handleListLayout(h);
                   }}
                 >
-                  <SortableTaskList
-                    data={cardTasks}
-                    keyExtractor={(task) => `${task.id}:${task.date}`}
-                    onReorder={(newData) => void handleReorder(newData)}
-                    onScrollEnabledChange={handleScrollEnabled}
-                    onAutoScroll={handleAutoScroll}
-                    isScrollingRef={isScrollingRef}
-                    gap={0}
-                    dragHandleOpacity={progress.interpolate({
-                      inputRange: [0.85, 1],
-                      outputRange: [0, 1],
-                    })}
-                    renderItem={(
-                      task,
-                      isActive,
-                      index,
-                      totalCount,
-                      onSwipeX,
-                      onScrollEnabledChangeItem
-                    ) => (
-                      <TaskRow
-                        task={task}
-                        isLast={index === totalCount - 1}
-                        onPress={() => beginEditing(task)}
-                        onPendingDelete={handlePendingDelete}
-                        isActive={isActive}
-                        onSwipeX={onSwipeX}
-                        onScrollEnabledChange={onScrollEnabledChangeItem}
-                        cardBg="#FFFFFF"
-                        cardSurface
-                      />
-                    )}
-                  />
+                  {isTransitionSettled ? (
+                    <SortableTaskList
+                      data={cardTasks}
+                      keyExtractor={(task) => `${task.id}:${task.date}`}
+                      onReorder={(newData) => void handleReorder(newData)}
+                      onScrollEnabledChange={handleScrollEnabled}
+                      onAutoScroll={handleAutoScroll}
+                      isScrollingRef={isScrollingRef}
+                      gap={0}
+                      renderItem={(
+                        task,
+                        isActive,
+                        index,
+                        totalCount,
+                        onSwipeX,
+                        onScrollEnabledChangeItem
+                      ) => (
+                        <TaskRow
+                          task={task}
+                          isLast={index === totalCount - 1}
+                          onPress={() => beginEditing(task)}
+                          onPendingDelete={handlePendingDelete}
+                          isActive={isActive}
+                          onSwipeX={onSwipeX}
+                          onScrollEnabledChange={onScrollEnabledChangeItem}
+                          cardBg="#FFFFFF"
+                          cardSurface
+                        />
+                      )}
+                    />
+                  ) : (
+                    <TaskListFrame
+                      tasks={cardTasks}
+                      onPress={() => {}}
+                    />
+                  )}
                 </View>
               ) : (
                 <Pressable
@@ -660,32 +665,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const { colors } = useTheme();
 
   const progress = useRef(new Animated.Value(0)).current;
-  const bounceAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(bounceAnim, {
-          toValue: 8,
-          duration: 650,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: false,
-        }),
-        Animated.timing(bounceAnim, {
-          toValue: 0,
-          duration: 650,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: false,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [bounceAnim]);
 
   const origin = useRef<Omit<Transition, 'phase'> | null>(null);
   const transitionRef = useRef<Transition | null>(null);
   const [transition, setTransition] = useState<Transition | null>(null);
+  const [isTransitionSettled, setIsTransitionSettled] = useState(false);
 
   const [pageIndex, setPageIndex] = useState(0);
   const pageIndexRef = useRef(0);
@@ -782,6 +766,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     origin.current = null;
     transitionRef.current = null;
     setTransition(null);
+    setIsTransitionSettled(false);
     setPageIndex(0);
     pageIndexRef.current = 0;
     carouselX.setValue(0);
@@ -790,6 +775,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const openCard = (date: Date, cardTasks: Task[], frame: Frame) => {
     if (transitionRef.current) return;
     isAnimatingRef.current = true;
+    setIsTransitionSettled(false);
     const calcTaskCount = cardTasks.length;
     const calcContentHeight = Math.max(emptyCardHeight, 48 + 8 + calcTaskCount * 48 + 60);
     const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
@@ -807,12 +793,13 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     progress.setValue(0);
     Animated.spring(progress, {
       toValue: 1,
-      damping: 26,
-      stiffness: 240,
-      mass: 0.85,
+      damping: 28,
+      stiffness: 320,
+      mass: 0.7,
       useNativeDriver: false,
     }).start(() => {
       isAnimatingRef.current = false;
+      setIsTransitionSettled(true);
     });
   };
 
@@ -822,11 +809,12 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
       return;
     }
     isAnimatingRef.current = true;
+    setIsTransitionSettled(false);
     transitionRef.current = { ...origin.current, phase: 'closing' };
 
     Animated.timing(progress, {
       toValue: 0,
-      duration: 210,
+      duration: 190,
       easing: Easing.bezier(0.2, 0.8, 0.25, 1),
       useNativeDriver: false,
     }).start(() => {
@@ -1032,7 +1020,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
             </Pressable>
 
             <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
-              {[-1, 0, 1].map((offset) => {
+              {(isTransitionSettled ? [-1, 0, 1] : [0]).map((offset) => {
                 const virtualIndex = pageIndex + offset;
                 const cardDate = addDays(current.date, virtualIndex);
                 const cardKey = toDateKey(cardDate);
@@ -1061,6 +1049,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     beginAdding={beginAdding}
                     closeCard={closeCard}
                     handlePendingDelete={handlePendingDelete}
+                    isTransitionSettled={isTransitionSettled}
                   />
                 );
               })}
