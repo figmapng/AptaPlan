@@ -17,7 +17,6 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { Task, TaskRepeat } from '@/types/task';
-import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { getTodayKey } from '@/utils/dateHelpers';
@@ -352,15 +351,17 @@ export function TaskBottomSheet({
                 onPress={handleSend}
                 style={({ pressed }) => [
                   styles.sendBtn,
-                  isEnabled && { backgroundColor: colors.today, borderColor: colors.todayDark },
-                  !isEnabled && styles.sendBtnDisabled,
+                  {
+                    backgroundColor: isEnabled ? colors.today : colors.inputBorder,
+                    borderColor: isEnabled ? colors.todayDark : 'transparent',
+                  },
                   pressed && isEnabled && styles.sendBtnPressed,
                 ]}
               >
                 {editingTask ? (
-                  <CheckIcon color={isEnabled ? '#FFFFFF' : '#9CA3AF'} />
+                  <CheckIcon color={isEnabled ? '#FFFFFF' : colors.secondary} />
                 ) : (
-                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : '#9CA3AF'} />
+                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : colors.secondary} />
                 )}
               </Pressable>
             </View>
@@ -521,19 +522,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.today,
     borderWidth: 1.5,
-    borderColor: colors.today,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'absolute',
     right: 5,
     bottom: 5,
-  },
-  sendBtnDisabled: {
-    backgroundColor: colors.inputBorder,
-    borderColor: 'transparent',
-    opacity: 1,
   },
   sendBtnPressed: {
     transform: [{ scale: 0.94 }],
