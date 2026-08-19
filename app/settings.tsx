@@ -197,24 +197,16 @@ export default function SettingsScreen() {
             label="Сыртқы түрі"
             valueText={themeConfig.name}
             rightElement={
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 10,
-                    backgroundColor: themeConfig.primary,
-                    borderWidth: 2,
-                    borderColor: '#FFFFFF',
-                    shadowColor: themeConfig.primary,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.35,
-                    shadowRadius: 3,
-                    elevation: 2,
-                  }}
-                />
-                <Ionicons name="chevron-forward" size={16} color={colors.secondary} />
-              </View>
+              <View
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  backgroundColor: themeConfig.primary,
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(0,0,0,0.06)',
+                }}
+              />
             }
             onPress={() => router.push('/appearance')}
           />
@@ -532,16 +524,17 @@ function SettingRow({
       <Text style={[styles.rowLabel, { color: colors.text }, labelStyle]}>
         {label}
       </Text>
-      {valueText ? (
-        <Text style={[styles.valueText, { color: colors.secondary }]} numberOfLines={1}>
-          {valueText}
-        </Text>
-      ) : null}
-      {rightElement ? (
-        rightElement
-      ) : onPress ? (
-        <Ionicons name="chevron-forward" size={16} color={colors.secondary} style={{ marginLeft: 6 }} />
-      ) : null}
+      <View style={styles.rowRight}>
+        {valueText ? (
+          <Text style={[styles.valueText, { color: colors.secondary }]} numberOfLines={1}>
+            {valueText}
+          </Text>
+        ) : null}
+        {rightElement}
+        {onPress ? (
+          <Ionicons name="chevron-forward" size={16} color={colors.secondary} />
+        ) : null}
+      </View>
     </View>
   );
 
@@ -1160,6 +1153,11 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: colors.secondary,
     flexShrink: 0,
+  },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   divider: {
     height: 1,
