@@ -42,6 +42,10 @@ export type ColorTheme = {
   iconSecondary: string;
   headerBackground: string;
   subtext: string;
+  chipBg: string;
+  chipBorder: string;
+  chipActiveText: string;
+  chipText: string;
 };
 
 export const lightColors: ColorTheme = {
@@ -88,6 +92,10 @@ export const lightColors: ColorTheme = {
   iconSecondary: '#707684',
   headerBackground: '#FFFFFF',
   subtext: '#8E8E93',
+  chipBg: '#F3F4F6',
+  chipBorder: '#ECEEF2',
+  chipActiveText: '#4B5563',
+  chipText: '#23262D',
 };
 
 export const darkColors: ColorTheme = {
@@ -134,6 +142,10 @@ export const darkColors: ColorTheme = {
   iconSecondary: '#94A0B4',
   headerBackground: '#10131A',
   subtext: '#94A0B4',
+  chipBg: '#242C3C',
+  chipBorder: '#2C3446',
+  chipActiveText: '#F3F5F9',
+  chipText: '#94A0B4',
 };
 
 // Default export matching lightColors for backward compatibility

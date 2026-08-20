@@ -1,6 +1,7 @@
 import { StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
+import { useTheme } from '@/context/theme-context';
 import type { TaskRepeat } from '@/types/task';
 import { AnimatedPressable } from './AnimatedPressable';
 
