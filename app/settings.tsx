@@ -588,7 +588,7 @@ function OptionModal({
   onClose: () => void;
   options: { label: string; sublabel?: string; selected: boolean; onSelect: () => void }[];
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -635,11 +635,24 @@ function OptionModal({
               return (
                 <Pressable
                   key={i}
-                  style={styles.optionRowItem}
+                  style={[
+                    styles.optionRowItem,
+                    isChecked && {
+                      backgroundColor: isDark ? '#0284C720' : '#EDF9FF',
+                      borderRadius: 14,
+                      paddingHorizontal: 12,
+                    },
+                  ]}
                   onPress={() => setSelectedIdx(i)}
                 >
                   <View style={styles.optionRowLeft}>
-                    <Text style={[styles.optionRowTitle, { color: colors.text }, isChecked && styles.optionRowTitleSelected]}>
+                    <Text
+                      style={[
+                        styles.optionRowTitle,
+                        { color: colors.text },
+                        isChecked && { color: colors.today, fontWeight: '700' },
+                      ]}
+                    >
                       {opt.label}
                     </Text>
                     {opt.sublabel ? (
@@ -648,7 +661,15 @@ function OptionModal({
                       </Text>
                     ) : null}
                   </View>
-                  <View style={[styles.radioButton, { borderColor: colors.cardBorder, backgroundColor: colors.card }, isChecked && styles.radioButtonSelected]}>
+                  <View
+                    style={[
+                      styles.radioButton,
+                      {
+                        borderColor: isChecked ? colors.today : colors.cardBorder,
+                        backgroundColor: colors.card,
+                      },
+                    ]}
+                  >
                     {isChecked && <View style={[styles.radioButtonInner, { backgroundColor: colors.today }]} />}
                   </View>
                 </Pressable>
@@ -867,7 +888,7 @@ function DefaultViewModeModal({
     },
   ];
 
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -893,7 +914,13 @@ function DefaultViewModeModal({
                   style={[
                     styles.visualCard,
                     { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-                    isSelected && [styles.visualCardSelected, { borderColor: colors.today }],
+                    isSelected && [
+                      styles.visualCardSelected,
+                      {
+                        borderColor: colors.today,
+                        backgroundColor: isDark ? '#0284C720' : '#EDF9FF',
+                      },
+                    ],
                   ]}
                   onPress={() => setSelected(opt.mode)}
                 >
@@ -1027,7 +1054,7 @@ function LastDayVisibilityModal({
     },
   ];
 
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -1053,7 +1080,13 @@ function LastDayVisibilityModal({
                   style={[
                     styles.verticalVisualCard,
                     { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-                    isSelected && [styles.verticalVisualCardSelected, { borderColor: colors.today }],
+                    isSelected && [
+                      styles.verticalVisualCardSelected,
+                      {
+                        borderColor: colors.today,
+                        backgroundColor: isDark ? '#0284C720' : '#EDF9FF',
+                      },
+                    ],
                   ]}
                   onPress={() => setSelected(opt.mode)}
                 >
