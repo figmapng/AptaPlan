@@ -336,23 +336,29 @@ export const TaskRow = React.memo(function TaskRow({
       })
     : compact ? 1 : 0;
 
-  const dynamicPaddingHorizontal = 0;
+  const dynamicPaddingHorizontal = isMorphing
+    ? transitionProgress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 6],
+        extrapolate: 'clamp',
+      })
+    : compact ? 0 : 6;
 
   const dynamicGap = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [8, 12],
+        outputRange: [6, 12],
         extrapolate: 'clamp',
       })
-    : compact ? 8 : 12;
+    : compact ? 6 : 12;
 
   const dynamicCheckboxScale = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [16 / 22, 1],
+        outputRange: [0.75, 1],
         extrapolate: 'clamp',
       })
-    : compact ? 16 / 22 : 1;
+    : 1;
 
   const dynamicTitleFontSize = isMorphing
     ? transitionProgress.interpolate({
@@ -399,6 +405,7 @@ export const TaskRow = React.memo(function TaskRow({
         style={[
           styles.rowContainer,
           compact && styles.compactRowContainer,
+          cardSurface && styles.cardRowContainer,
           {
             opacity: rowOpacity,
             minHeight: dynamicMinHeight,
@@ -564,8 +571,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: 'transparent',
+    gap: 12,
+    paddingTop: 11,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+  },
+  cardRowContainer: {
+    width: '100%',
   },
   compactRowContainer: {
+    minHeight: 18,
+    paddingTop: 1,
+    paddingBottom: 1,
+    paddingHorizontal: 0,
+    gap: 8,
     alignItems: 'center',
   },
   checkboxTouch: {
