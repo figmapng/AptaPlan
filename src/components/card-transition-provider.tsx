@@ -114,19 +114,19 @@ const CarouselCard = React.memo(function CarouselCard({
     ? (isDark ? '#0284C720' : '#E5F6FD')
     : isWeekendCard
     ? (isDark ? '#FF5C5C20' : '#FFF3F2')
-    : (isDark ? '#1F2430' : '#F6F8FA');
+    : (isDark ? '#1C222E' : '#F6F8FA');
 
   const monthCellBorder = isTodayCard
     ? colors.today
     : isWeekendCard
     ? (isDark ? '#5A2A30' : '#FFE0DC')
-    : (isDark ? '#2E3440' : '#E8EDF3');
+    : (isDark ? '#2C3446' : '#E8EDF3');
 
   const cardHeaderBg = isTodayCard
     ? colors.today
     : isWeekendCard
-    ? (isDark ? '#4A2328' : '#FFE5E2')
-    : (isDark ? '#242936' : '#EDEFF2');
+    ? (isDark ? '#3D1F24' : '#FFE5E2')
+    : (isDark ? '#262F3E' : '#EDEFF2');
 
   const closedHeaderHeight = isMonthOrigin ? 0 : isWideOrigin ? 35 : 29;
   const closedHeaderPadding = isMonthOrigin ? 4 : isWideOrigin ? 14 : 10;
@@ -169,14 +169,14 @@ const CarouselCard = React.memo(function CarouselCard({
                 extrapolate: 'clamp',
               })
             : cardHeaderBg,
-          borderWidth: isMonthOrigin
+          borderWidth: isDark ? 1 : (isMonthOrigin
             ? progress.interpolate({
                 inputRange: [0, 0.35, 1],
                 outputRange: [isTodayCard ? 1.5 : 0.5, 0, 0],
                 extrapolate: 'clamp',
               })
-            : 0,
-          borderColor: isMonthOrigin ? monthCellBorder : undefined,
+            : 0),
+          borderColor: isDark ? (isTodayCard ? colors.activeCardBorder : colors.cardBorder) : (isMonthOrigin ? monthCellBorder : undefined),
           opacity: 1,
           zIndex: isCenter ? 9999 : 9998,
           transform: [
@@ -488,6 +488,8 @@ const CarouselCard = React.memo(function CarouselCard({
             overflow: 'hidden',
             opacity: 1,
             paddingTop: 0,
+            borderWidth: isDark ? 1 : 0,
+            borderColor: isDark ? '#242D3C' : 'transparent',
           }}
         >
           {/* 1. Compact Grid Replica Layer (matches DayCard 100% during close) */}

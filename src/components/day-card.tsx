@@ -139,14 +139,14 @@ export const DayCard = memo(function DayCardComponent({
       })
     : 1;
 
-  const headerBg = today ? colors.today : isWeekend ? (isDark ? '#381C20' : '#FFE5E2') : (isDark ? '#232834' : '#EDEFF2');
-  const outerBg = today ? colors.today : isWeekend ? (isDark ? '#381C20' : '#FFE5E2') : (isDark ? '#232834' : '#EDEFF2');
-  const cardBorderColor = today ? colors.today : isWeekend ? (isDark ? '#381C20' : '#FFE5E2') : (isDark ? '#232834' : '#EDEFF2');
-  const cardBorderWidth = 0;
+  const headerBg = today ? colors.today : isWeekend ? (isDark ? '#3D1F24' : '#FFE5E2') : (isDark ? '#262F3E' : '#EDEFF2');
+  const outerBg = today ? colors.today : isWeekend ? (isDark ? '#3D1F24' : '#FFE5E2') : (isDark ? '#262F3E' : '#EDEFF2');
+  const cardBorderColor = today ? (isDark ? colors.activeCardBorder : colors.today) : isWeekend ? (isDark ? '#5A2A30' : '#FFE5E2') : (isDark ? '#2C3446' : '#EDEFF2');
+  const cardBorderWidth = isDark ? 1 : 0;
 
-  const numOuterBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
-  const numInnerBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
-  const numTextColor = today ? colors.today : isWeekend ? colors.weekendNumText : colors.dateNumText;
+  const numOuterBg = today ? (isDark ? '#0B2238' : '#FFFFFF') : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
+  const numInnerBg = today ? (isDark ? '#0B2238' : '#FFFFFF') : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
+  const numTextColor = today ? (isDark ? '#38BDF8' : colors.today) : isWeekend ? colors.weekendNumText : colors.dateNumText;
 
   const dayNameColor = today ? '#FFFFFF' : isWeekend ? colors.sundayText : colors.text;
   const progressCountColor = today ? '#FFFFFF' : isWeekend ? (isDark ? '#FFA6A0' : '#7B4545') : colors.text;
@@ -269,6 +269,8 @@ export const DayCard = memo(function DayCardComponent({
           marginHorizontal: 2,
           marginBottom: 2,
           flex: wide ? 1 : undefined,
+          borderWidth: isDark ? 1 : 0,
+          borderColor: isDark ? '#242D3C' : 'transparent',
         },
         wide ? undefined : { height: bodyHeight },
       ]}
