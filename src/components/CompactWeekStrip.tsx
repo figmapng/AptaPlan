@@ -2,7 +2,7 @@ import React from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { addDays, isSameDay, isToday, startOfWeek } from 'date-fns';
 import { weekdaysShort } from '@/services/date-service';
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 
 interface CompactWeekStripProps {

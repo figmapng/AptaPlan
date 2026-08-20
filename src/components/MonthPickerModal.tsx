@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 import { months } from '@/services/date-service';
 import { AnimatedPressable } from './AnimatedPressable';

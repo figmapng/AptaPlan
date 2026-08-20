@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 import { AnimatedPressable } from './AnimatedPressable';
 

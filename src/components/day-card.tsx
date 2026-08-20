@@ -2,7 +2,7 @@ import React, { memo, useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { format, isToday } from 'date-fns';
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 import { months, toDateKey, weekdays } from '@/services/date-service';
 import type { Task } from '@/types/task';

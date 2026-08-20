@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 

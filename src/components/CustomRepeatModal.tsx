@@ -3,7 +3,7 @@ import { Animated, Easing, Pressable, ScrollView, StyleSheet, Switch, Text, View
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { RepeatConfig, RepeatCustomUnit, RepeatMonthlyMode, TaskRepeat } from '@/types/task';
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 import { usePlanner } from '@/store/planner-store';
 import { AnimatedPressable } from './AnimatedPressable';

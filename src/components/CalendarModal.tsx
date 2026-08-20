@@ -3,7 +3,7 @@ import { Animated, Dimensions, Easing, PanResponder, Pressable, ScrollView, Styl
 import Svg, { Circle, Path } from 'react-native-svg';
 import { addMonths } from 'date-fns';
 import * as Haptics from 'expo-haptics';
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/context/theme-context';
 import { fromDateKey, getNextWeekMondayKey, getThisWeekendKey, getTodayKey, getTomorrowKey, kzMonthsFull, toDateKey } from '@/utils/dateHelpers';

@@ -3,7 +3,7 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 import { getShortRepeatLabel, repeatLabels } from './RepeatChip';
 import { AnimatedPressable } from './AnimatedPressable';
