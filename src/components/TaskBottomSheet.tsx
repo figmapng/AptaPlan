@@ -321,6 +321,7 @@ export function TaskBottomSheet({
           style={[
             styles.sheetContainer,
             {
+              backgroundColor: colors.background,
               transform: [{ translateY }],
               paddingBottom: animatedPaddingBottom,
             },
@@ -333,7 +334,7 @@ export function TaskBottomSheet({
 
           {/* Input & Send Button Row (Send button inside input) */}
           <View style={styles.inputRow}>
-              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }, { minHeight: Math.max(52, titleInputHeight + 10) }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: '#FFFFFF', borderColor: colors.inputBorder }, { minHeight: Math.max(52, titleInputHeight + 10) }]}>
                 <View style={styles.inputContent}>
                   <TaskInput
                   ref={inputRef}
@@ -352,7 +353,7 @@ export function TaskBottomSheet({
                 style={({ pressed }) => [
                   styles.sendBtn,
                   {
-                    backgroundColor: isEnabled ? colors.today : colors.inputBorder,
+                    backgroundColor: isEnabled ? colors.today : colors.inputBg,
                     borderColor: isEnabled ? colors.todayDark : 'transparent',
                   },
                   pressed && isEnabled && styles.sendBtnPressed,
