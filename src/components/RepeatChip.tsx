@@ -59,13 +59,12 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
       activeScale={0.93}
       style={[
         styles.chip,
-        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
-        isActive ? styles.activeChip : undefined,
         !label ? styles.iconOnly : undefined,
+        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
       ]}
     >
-      <RepeatIcon size={16} color={isActive ? colors.chipActiveText : colors.chipText} />
-      {label && <Text style={[styles.text, { color: colors.chipActiveText }, isActive && styles.activeText]}>{label}</Text>}
+      <RepeatIcon size={16} color={isActive ? colors.today : colors.chipText} />
+      {label && <Text style={[styles.text, { color: isActive ? colors.today : colors.chipText }, isActive && styles.activeText]}>{label}</Text>}
     </AnimatedPressable>
   );
 }

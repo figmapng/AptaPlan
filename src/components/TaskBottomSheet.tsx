@@ -317,7 +317,6 @@ export function TaskBottomSheet({
         <Pressable style={styles.backdrop} onPress={handleDismissRequest} />
 
         <Animated.View
-          {...panResponder.panHandlers}
           style={[
             styles.sheetContainer,
             {
@@ -328,7 +327,7 @@ export function TaskBottomSheet({
           ]}
         >
           {/* Top Drag Pill Indicator */}
-          <View style={styles.dragHeader}>
+          <View style={styles.dragHeader} {...panResponder.panHandlers}>
             <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
           </View>
 

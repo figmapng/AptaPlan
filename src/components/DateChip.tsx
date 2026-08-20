@@ -30,13 +30,12 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
       activeScale={0.93}
       style={[
         styles.chip,
-        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
-        date ? styles.activeChip : undefined,
         !date ? styles.iconOnly : undefined,
+        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
       ]}
     >
-      <CalendarIcon size={16} color={date ? colors.chipActiveText : colors.chipText} />
-      {displayText && <Text style={[styles.activeText, { color: colors.chipActiveText }]}>{displayText}</Text>}
+      <CalendarIcon size={16} color={date ? colors.today : colors.chipText} />
+      {displayText && <Text style={[styles.activeText, { color: colors.today }]}>{displayText}</Text>}
     </AnimatedPressable>
   );
 }
