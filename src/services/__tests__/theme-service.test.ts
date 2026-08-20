@@ -28,7 +28,7 @@ describe('Theme System', () => {
     const emeraldColors = getThemeColors('emerald');
     expect(emeraldColors.today).toBe('#00A15F');
     expect(emeraldColors.primary).toBe('#00A15F');
-    expect(emeraldColors.background).toBe('#FAFCFA');
+    expect(emeraldColors.background).toBe('#F8FCF9');
     expect(emeraldColors.tintBg).toBe('#E6F7EE');
 
     const amberColors = getThemeColors('amber');
