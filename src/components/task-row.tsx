@@ -42,6 +42,7 @@ export const TaskRow = React.memo(function TaskRow({
   singleLine?: boolean;
   showDate?: boolean;
 }) {
+  const { colors, isDark } = useTheme();
   const { toggle, remove, settings } = usePlanner();
   const { progress: transitionProgress, activeDate } = useCardTransition();
   const [isDeleting, setIsDeleting] = useState(false);
