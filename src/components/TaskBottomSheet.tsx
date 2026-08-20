@@ -266,17 +266,17 @@ export function TaskBottomSheet({
   const isEnabled = title.trim().length > 0;
 
   const openCalendar = () => {
-    Keyboard.dismiss();
+    inputRef.current?.blur();
     setShowCalendar(true);
   };
 
   const openTimePicker = () => {
-    Keyboard.dismiss();
+    inputRef.current?.blur();
     setShowTimePicker(true);
   };
 
   const openRepeatSheet = () => {
-    Keyboard.dismiss();
+    inputRef.current?.blur();
     setShowRepeatSheet(true);
   };
 

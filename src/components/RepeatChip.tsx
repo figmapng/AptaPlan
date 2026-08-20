@@ -41,9 +41,9 @@ export function getShortRepeatLabel(repeat: TaskRepeat | null, interval = 1): st
 
 export function RepeatChip({ repeat, interval = 1, customLabel, onPress, hapticsEnabled = true }: RepeatChipProps) {
   const { colors } = useTheme();
-  const handlePress = async () => {
+  const handlePress = () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     onPress();
   };
@@ -52,20 +52,21 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
   const label = (repeat === 'custom' && customLabel) ? customLabel : getShortRepeatLabel(repeat, interval);
 
   return (
-    <AnimatedPressable
+    <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Қайталау: ${label || 'Орнатылмаған'}`}
       onPress={handlePress}
-      activeScale={0.93}
-      style={[
+      hitSlop={6}
+      style={({ pressed }) => [
         styles.chip,
         !label ? styles.iconOnly : undefined,
         { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
+        pressed && { opacity: 0.75, transform: [{ scale: 0.96 }] },
       ]}
     >
       <RepeatIcon size={16} color={isActive ? colors.today : colors.chipText} />
       {label && <Text style={[styles.text, { color: isActive ? colors.today : colors.chipText }, isActive && styles.activeText]}>{label}</Text>}
-    </AnimatedPressable>
+    </Pressable>
   );
 }
 

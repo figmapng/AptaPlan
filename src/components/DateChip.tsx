@@ -13,9 +13,9 @@ interface DateChipProps {
 
 export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps) {
   const { colors } = useTheme();
-  const handlePress = async () => {
+  const handlePress = () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     onPress();
   };
@@ -23,20 +23,21 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
   const displayText = date ? formatChipDate(date) : null;
 
   return (
-    <AnimatedPressable
+    <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Күн: ${displayText || 'Таңдалмаған'}`}
       onPress={handlePress}
-      activeScale={0.93}
-      style={[
+      hitSlop={6}
+      style={({ pressed }) => [
         styles.chip,
         !date ? styles.iconOnly : undefined,
         { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
+        pressed && { opacity: 0.75, transform: [{ scale: 0.96 }] },
       ]}
     >
       <CalendarIcon size={16} color={date ? colors.today : colors.chipText} />
       {displayText && <Text style={[styles.activeText, { color: colors.today }]}>{displayText}</Text>}
-    </AnimatedPressable>
+    </Pressable>
   );
 }
 

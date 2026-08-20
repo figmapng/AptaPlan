@@ -12,28 +12,29 @@ interface TimeChipProps {
 
 export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps) {
   const { colors } = useTheme();
-  const handlePress = async () => {
+  const handlePress = () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     onPress();
   };
 
   return (
-    <AnimatedPressable
+    <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Уақыт: ${time || 'Таңдалмаған'}`}
       onPress={handlePress}
-      activeScale={0.93}
-      style={[
+      hitSlop={6}
+      style={({ pressed }) => [
         styles.chip,
         !time ? styles.iconOnly : undefined,
         { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
+        pressed && { opacity: 0.75, transform: [{ scale: 0.96 }] },
       ]}
     >
       <ClockIcon size={16} color={time ? colors.today : colors.chipText} />
       {time && <Text style={[styles.activeText, { color: colors.today }]}>{time}</Text>}
-    </AnimatedPressable>
+    </Pressable>
   );
 }
 

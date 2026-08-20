@@ -690,10 +690,13 @@ function ChevronDownIcon({ color = '#1C1C1E' }: { color?: string }) {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end',
     zIndex: 1000,
     elevation: 1000,
+  },
+  backdropBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   backdrop: {
     flex: 1,
