@@ -1007,7 +1007,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
   return (
     <CardTransitionContext.Provider value={value}>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <Animated.View
           style={{
             flex: 1,
@@ -1031,7 +1031,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     backgroundColor: colors.background,
                     opacity: progress.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0, 0.9],
+                      outputRange: [0, 1],
                       extrapolate: 'clamp',
                     }),
                   },
