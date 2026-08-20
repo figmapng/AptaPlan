@@ -64,7 +64,17 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
       ]}
     >
       <RepeatIcon size={16} color={isActive ? colors.today : colors.chipText} />
-      {label && <Text style={[styles.text, { color: isActive ? colors.today : colors.chipText }, isActive && styles.activeText]}>{label}</Text>}
+      {label && (
+        <Text
+          style={[
+            styles.text,
+            isActive && styles.activeText,
+            { color: isActive ? colors.today : colors.chipText },
+          ]}
+        >
+          {label}
+        </Text>
+      )}
     </Pressable>
   );
 }
