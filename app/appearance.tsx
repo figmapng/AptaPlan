@@ -86,8 +86,12 @@ export default function AppearanceScreen() {
           </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
-          <View style={styles.themeGrid}>
+        <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, paddingHorizontal: 0, paddingVertical: 12 }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.themeCarousel}
+          >
             {THEME_LIST.map((th) => {
               const isSelected = (settings.theme || 'ocean') === th.id;
               return (
@@ -95,7 +99,7 @@ export default function AppearanceScreen() {
                   key={th.id}
                   activeScale={0.92}
                   onPress={() => handleSelectTheme(th.id)}
-                  style={styles.themeGridItem}
+                  style={styles.themeCarouselItem}
                   accessibilityRole="button"
                   accessibilityLabel={th.name + ' түсі'}
                 >
@@ -115,27 +119,14 @@ export default function AppearanceScreen() {
                       ]}
                     >
                       {isSelected && (
-                        <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+                        <Ionicons name="checkmark" size={20} color="#FFFFFF" />
                       )}
                     </View>
                   </View>
-
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      styles.themeItemLabel,
-                      {
-                        color: isSelected ? colors.text : colors.secondary,
-                        fontWeight: isSelected ? '700' : '500',
-                      },
-                    ]}
-                  >
-                    {th.name}
-                  </Text>
                 </AnimatedPressable>
               );
             })}
-          </View>
+          </ScrollView>
         </View>
 
         {/* ── Section 2: Режим (Mode: Light / Dark / System) ── */}
@@ -335,16 +326,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
   },
-  themeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 14,
-  },
-  themeGridItem: {
-    width: '23%',
+  themeCarousel: {
+    paddingHorizontal: 16,
+    gap: 12,
     alignItems: 'center',
-    gap: 6,
+  },
+  themeCarouselItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   themeBubbleOuter: {
     width: 48,
@@ -366,10 +355,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.16,
     shadowRadius: 3,
     elevation: 2,
-  },
-  themeItemLabel: {
-    fontSize: 11,
-    textAlign: 'center',
   },
   modeRow: {
     flexDirection: 'row',

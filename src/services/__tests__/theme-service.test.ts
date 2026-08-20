@@ -7,7 +7,7 @@ describe('Theme System', () => {
   });
 
   it('contains all 7 required themes with valid hex colors', () => {
-    const expectedThemes = ['ocean', 'emerald', 'violet', 'coral', 'indigo', 'amber', 'slate'];
+    const expectedThemes = ['pink', 'violet', 'ocean', 'amber', 'emerald', 'coral', 'slate'];
     expect(THEME_LIST.length).toBe(7);
     for (const themeId of expectedThemes) {
       const theme = THEMES[themeId as keyof typeof THEMES];
@@ -21,13 +21,10 @@ describe('Theme System', () => {
 
   it('getThemeColors returns correct colors for specified theme and fallback to ocean', () => {
     const emeraldColors = getThemeColors('emerald');
-    expect(emeraldColors.today).toBe('#10B981');
-    expect(emeraldColors.primary).toBe('#10B981');
-    expect(emeraldColors.background).toBe('#FAFCFB');
-    expect(emeraldColors.tintBg).toBe('#ECFDF5');
-    expect(emeraldColors.cardHeaderBg).toBe('#EDF3F0');
-    expect(emeraldColors.inputBg).toBe('#F6FAF8');
-    expect(emeraldColors.cardBorder).toBe('#E2EBE6');
+    expect(emeraldColors.today).toBe('#00A15F');
+    expect(emeraldColors.primary).toBe('#00A15F');
+    expect(emeraldColors.background).toBe('#FAFCFA');
+    expect(emeraldColors.tintBg).toBe('#E6F7EE');
 
     const amberColors = getThemeColors('amber');
     expect(amberColors.today).toBe('#FFAA01');
@@ -36,13 +33,15 @@ describe('Theme System', () => {
     expect(amberColors.inputBg).toBe('#FAF8F5');
 
     const violetColors = getThemeColors('violet');
-    expect(violetColors.today).toBe('#8B5CF6');
+    expect(violetColors.today).toBe('#906AF4');
     expect(violetColors.background).toBe('#FCFBFE');
-    expect(violetColors.cardHeaderBg).toBe('#F0EEF4');
+
+    const pinkColors = getThemeColors('pink');
+    expect(pinkColors.today).toBe('#FF87C4');
+    expect(pinkColors.primary).toBe('#FF87C4');
 
     const fallbackColors = getThemeColors(undefined as any);
-    expect(fallbackColors.today).toBe('#01B7FF');
-    expect(fallbackColors.background).toBe('#FAFCFD');
-    expect(fallbackColors.cardHeaderBg).toBe('#EDEFF2');
+    expect(fallbackColors.today).toBe('#009096');
+    expect(fallbackColors.background).toBe('#FAFCFC');
   });
 });

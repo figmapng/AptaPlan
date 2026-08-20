@@ -1,10 +1,10 @@
 export type ThemeId =
-  | 'ocean'
-  | 'emerald'
+  | 'pink'
   | 'violet'
-  | 'coral'
-  | 'indigo'
+  | 'ocean'
   | 'amber'
+  | 'emerald'
+  | 'coral'
   | 'slate';
 
 export type PlannerSettings = {
