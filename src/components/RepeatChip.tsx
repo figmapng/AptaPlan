@@ -61,7 +61,7 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
       style={[
         styles.chip,
         { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-        isActive ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }] : undefined,
+        isActive ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }] : undefined,
         !label ? styles.iconOnly : undefined,
       ]}
     >

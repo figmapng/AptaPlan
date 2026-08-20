@@ -348,7 +348,7 @@ export function TaskDetailModal({
               hitSlop={12}
               style={[styles.circleButton, { backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.inputBorder }]}
             >
-              <CloseIcon size={16} color={colors.inputPlusIcon} />
+              <CloseIcon size={16} color={colors.secondary} />
             </TouchableOpacity>
 
             {/* Title */}
@@ -361,7 +361,7 @@ export function TaskDetailModal({
               hitSlop={12}
               style={[styles.circleButton, { backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.inputBorder }]}
             >
-              <MoreHorizontalIcon size={18} color={colors.inputPlusIcon} />
+              <MoreHorizontalIcon size={18} color={colors.secondary} />
             </TouchableOpacity>
           </View>
 

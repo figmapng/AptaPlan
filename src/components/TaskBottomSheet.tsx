@@ -326,11 +326,6 @@ export function TaskBottomSheet({
             },
           ]}
         >
-          {/* Top Drag Pill Indicator */}
-          <View style={styles.dragHeader}>
-            <View style={[styles.dragPill, { backgroundColor: colors.checkboxBorder }]} />
-          </View>
-
           {/* Input & Send Button Row (Send button inside input) */}
           <View style={styles.inputRow}>
               <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }, { minHeight: Math.max(52, titleInputHeight + 10) }]}>
@@ -482,21 +477,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: 20,
     boxShadow: '0 -4px 20px rgba(0,0,0,0.12)',
   },
-  dragHeader: {
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  dragPill: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#D1D5DB',
-  },
   inputRow: {
-    marginTop: 4,
+    marginTop: 0,
     marginBottom: 12,
   },
   inputWrapper: {

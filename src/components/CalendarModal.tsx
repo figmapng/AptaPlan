@@ -254,7 +254,7 @@ export function CalendarModal({
               accessibilityRole="button"
               accessibilityLabel="Жабу"
             >
-              <CloseXIcon color={colors.inputPlusIcon} />
+              <CloseXIcon color={colors.secondary} />
             </AnimatedPressable>
           </View>
 

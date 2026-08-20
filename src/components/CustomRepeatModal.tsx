@@ -358,7 +358,7 @@ export function CustomRepeatModal({
             accessibilityRole="button"
             accessibilityLabel="Артқа қайту"
           >
-            <BackChevronIcon color={colors.inputPlusIcon} />
+            <BackChevronIcon color={colors.secondary} />
           </AnimatedPressable>
 
           <Text style={styles.title}>Реттеу</Text>

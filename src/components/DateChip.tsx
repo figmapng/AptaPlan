@@ -32,7 +32,7 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
       style={[
         styles.chip,
         { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-        date ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }] : undefined,
+        date ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }] : undefined,
         !date ? styles.iconOnly : undefined,
       ]}
     >

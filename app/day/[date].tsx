@@ -336,7 +336,15 @@ export default function DayScreen() {
           gap: 10,
         }}
       >
-        <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>
+        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M12 4.5v15M4.5 12h15"
+            stroke={colors.inputPlusIcon}
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
         <Text style={{ color: colors.inputPlaceholder, fontSize: 14, fontWeight: '500' }}>Тапсырма қосу</Text>
       </AnimatedPressable>
     </View>
@@ -364,11 +372,12 @@ export default function DayScreen() {
 }
 
 function ChevronLeftIcon() {
+  const { colors } = useTheme();
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
       <Path
         d="M15 18l-6-6 6-6"
-        stroke={colors.inputPlusIcon}
+        stroke={colors.secondary}
         strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"

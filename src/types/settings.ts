@@ -6,7 +6,8 @@ export type ThemeId =
   | 'amber'
   | 'emerald'
   | 'coral'
-  | 'slate';
+  | 'slate'
+  | 'minimal';
 
 export type PlannerSettings = {
   completedPlacement: 'keep' | 'bottom';

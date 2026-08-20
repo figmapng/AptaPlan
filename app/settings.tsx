@@ -37,9 +37,6 @@ export default function SettingsScreen() {
     setPref,
     clearAll,
     refresh,
-    syncAppleReminders,
-    enableAppleReminders,
-    disableAppleReminders,
   } = usePlanner();
 
   // Modals for selection settings
@@ -49,83 +46,6 @@ export default function SettingsScreen() {
   const [firstDayModalOpen, setFirstDayModalOpen] = useState(false);
   const [lastDayModalOpen, setLastDayModalOpen] = useState(false);
   const [defaultViewModeModalOpen, setDefaultViewModeModalOpen] = useState(false);
-
-  // Sync state
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncStatusText, setSyncStatusText] = useState<string | null>(null);
-
-  const handleToggleRemindersSync = async (enable: boolean) => {
-    if (enable) {
-      if (Platform.OS !== 'ios') {
-        Alert.alert('Ескерту', 'Apple Reminders тек iOS құрылғыларында қолжетімді.');
-        return;
-      }
-      setIsSyncing(true);
-      try {
-        const res = await enableAppleReminders();
-        if (res.success) {
-          Alert.alert(
-            'Синхрондау қосылды',
-            `Apple Reminders қосымшасынан тапсырмалар жүктелді.\n\n• Қосылды: ${res.importedCount}\n• Жаңартылды: ${res.updatedCount}`
-          );
-        } else {
-          Alert.alert('Рұқсат қажет', res.error || 'Қате орын алды');
-        }
-      } catch (e: any) {
-        Alert.alert('Қате', e?.message || 'Қосу мүмкін болмады');
-      } finally {
-        setIsSyncing(false);
-      }
-    } else {
-      Alert.alert(
-        'Apple Reminders синхрондауын өшіру',
-        'Бұрын синхрондалған барлық еске салғыштар AptaPlan-нан өшіріледі. Қолдан қосылған тапсырмалар сақталады.',
-        [
-          { text: 'Болдырмау', style: 'cancel' },
-          {
-            text: 'Өшіру',
-            style: 'destructive',
-            onPress: async () => {
-              setIsSyncing(true);
-              try {
-                await disableAppleReminders();
-              } finally {
-                setIsSyncing(false);
-              }
-            },
-          },
-        ]
-      );
-    }
-  };
-
-  const handleSyncReminders = async () => {
-    if (isSyncing) return;
-    if (Platform.OS !== 'ios') {
-      Alert.alert('Ескерту', 'Apple Reminders тек iOS құрылғыларында қолжетімді.');
-      return;
-    }
-    setIsSyncing(true);
-    setSyncStatusText(null);
-    try {
-      const res = await syncAppleReminders();
-      if (res.success) {
-        const total = res.importedCount + res.updatedCount;
-        const msg = total > 0 ? `Жаңартылды: ${total}` : 'Жаңа тапсырма жоқ';
-        setSyncStatusText(msg);
-        Alert.alert(
-          'Синхрондау аяқталды',
-          `Apple Reminders-тен тапсырмалар сәтті жүктелді.\n\n• Қосылды: ${res.importedCount}\n• Жаңартылды: ${res.updatedCount}\n• Барлығы табылды: ${res.totalFound}`
-        );
-      } else {
-        Alert.alert('Синхрондау қатесі', res.error || 'Қате орын алды');
-      }
-    } catch (e: any) {
-      Alert.alert('Қате', e?.message || 'Синхрондау мүмкін болмады');
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   const clear = () =>
     Alert.alert(
@@ -175,7 +95,7 @@ export default function SettingsScreen() {
           style={[styles.backButton, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           accessibilityLabel="Артқа қайту"
         >
-          <Ionicons name="chevron-back" size={20} color={colors.inputPlusIcon} style={{ marginLeft: -1 }} />
+          <Ionicons name="chevron-back" size={20} color={colors.secondary} style={{ marginLeft: -1 }} />
         </AnimatedPressable>
 
         <Text style={[styles.headerTitle, { color: colors.text }]}>Баптаулар</Text>
@@ -190,7 +110,7 @@ export default function SettingsScreen() {
           { paddingBottom: insets.bottom + 32 },
         ]}
       >
-        {/* Карточка 1: Негізгі баптаулар */}
+        {/* Бөлім 1: Жекелендіру */}
         <Section>
           <SettingRow
             icon="color-palette-outline"
@@ -210,7 +130,10 @@ export default function SettingsScreen() {
             }
             onPress={() => router.push('/appearance')}
           />
-          <Divider />
+        </Section>
+
+        {/* Бөлім 2: Күнтізбе және көрініс */}
+        <Section>
           <SettingRow
             icon="options-outline"
             label="Әдепкі режим"
@@ -238,18 +161,19 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            icon="pulse-outline"
-            label="Тактильді кері байланыс"
-            rightElement={
-              <Switch
-                value={settings.haptics}
-                onValueChange={(v) => void setPref('haptics', v)}
-                trackColor={{ false: '#E2E5EB', true: colors.today }}
-                thumbColor="#FFFFFF"
-              />
+            icon="eye-outline"
+            label="Соңғы күннің көрінуі"
+            valueText={
+              settings.lastDayVisibility === 'hidden'
+                ? 'Жасырын'
+                : 'Үнемі көрінеді'
             }
+            onPress={() => setLastDayModalOpen(true)}
           />
-          <Divider />
+        </Section>
+
+        {/* Бөлім 3: Тапсырмалар */}
+        <Section>
           <SettingRow
             icon="layers-outline"
             label="Орындалған тапсырмалар"
@@ -267,64 +191,38 @@ export default function SettingsScreen() {
             }
             onPress={() => setSortModalOpen(true)}
           />
-          <Divider />
-          <SettingRow
-            icon="eye-outline"
-            label="Соңғы күннің көрінуі"
-            valueText={
-              settings.lastDayVisibility === 'hidden'
-                ? 'Жасырын'
-                : 'Үнемі көрінеді'
-            }
-            onPress={() => setLastDayModalOpen(true)}
-          />
         </Section>
 
-        {/* Карточка 2: Apple Reminders (Еске салғыштар) синхрондау */}
+        {/* Бөлім 4: Интеграция және жүйе */}
         <Section>
           <SettingRow
-            customIcon={<AppleRemindersIcon size={21} />}
-            label="Apple Reminders синхрондау"
+            icon="extension-puzzle-outline"
+            label="Интеграциялар"
+            valueText={
+              Platform.OS === 'ios'
+                ? settings.syncAppleReminders
+                  ? 'Apple Reminders'
+                  : 'Өшірулі'
+                : 'Күнтізбе'
+            }
+            onPress={() => router.push('/integrations')}
+          />
+          <Divider />
+          <SettingRow
+            icon="pulse-outline"
+            label="Тактильді кері байланыс"
             rightElement={
-              isSyncing ? (
-                <ActivityIndicator size="small" color={colors.today} />
-              ) : (
-                <Switch
-                  value={!!settings.syncAppleReminders}
-                  onValueChange={handleToggleRemindersSync}
-                  trackColor={{ false: '#E2E5EB', true: colors.today }}
-                  thumbColor="#FFFFFF"
-                />
-              )
+              <Switch
+                value={settings.haptics}
+                onValueChange={(v) => void setPref('haptics', v)}
+                trackColor={{ false: '#E2E5EB', true: colors.today }}
+                thumbColor="#FFFFFF"
+              />
             }
           />
-          {settings.syncAppleReminders && (
-            <>
-              <Divider />
-              <SettingRow
-                icon="refresh-circle-outline"
-                label="Авто-синхрондау"
-                rightElement={
-                  <Switch
-                    value={settings.autoSyncAppleReminders !== false}
-                    onValueChange={(v) => void setPref('autoSyncAppleReminders', v)}
-                    trackColor={{ false: '#E2E5EB', true: colors.today }}
-                    thumbColor="#FFFFFF"
-                  />
-                }
-              />
-              <Divider />
-              <SettingRow
-                icon="sync-outline"
-                label="Қазір синхрондау"
-                valueText={isSyncing ? 'Жүктелуде...' : syncStatusText || undefined}
-                onPress={handleSyncReminders}
-              />
-            </>
-          )}
         </Section>
 
-        {/* Карточка 3: Деректер мен сақтық көшірме */}
+        {/* Бөлім 5: Деректер мен сақтық көшірме */}
         <Section>
           <SettingRow
             icon="cloud-upload-outline"
@@ -469,25 +367,9 @@ function Section({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>{children}</View>
-  );
-}
-
-function AppleRemindersIcon({ size = 21 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {/* Top bullet item (Orange) */}
-      <Circle cx="4.5" cy="5" r="2.75" fill="#FF9500" />
-      <Path d="M10 5h11" stroke="#8E8E93" strokeWidth="2.2" strokeLinecap="round" />
-
-      {/* Middle bullet item (Blue) */}
-      <Circle cx="4.5" cy="12" r="2.75" fill="#007AFF" />
-      <Path d="M10 12h11" stroke="#8E8E93" strokeWidth="2.2" strokeLinecap="round" />
-
-      {/* Bottom bullet item (Red) */}
-      <Circle cx="4.5" cy="19" r="2.75" fill="#FF3B30" />
-      <Path d="M10 19h11" stroke="#8E8E93" strokeWidth="2.2" strokeLinecap="round" />
-    </Svg>
+    <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+      {children}
+    </View>
   );
 }
 
@@ -1112,7 +994,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 8,
   },
   card: {
     backgroundColor: colors.inputBg,

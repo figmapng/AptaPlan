@@ -499,15 +499,15 @@ const CarouselCard = React.memo(function CarouselCard({
               paddingTop: 6,
               paddingBottom: 6,
               opacity: progress.interpolate({
-                inputRange: [0, 0.5, 0.9],
-                outputRange: [1, 0.9, 0],
+                inputRange: [0, 0.25, 0.5],
+                outputRange: [1, 0.3, 0],
                 extrapolate: 'clamp',
               }),
             }}
           >
             {cardTasks.length ? (
               <TaskListFrame
-                tasks={cardTasks}
+                tasks={cardTasks.slice(0, 6)}
                 scrollable={isWideOrigin}
                 singleLine
                 onPress={() => {}}
@@ -564,8 +564,8 @@ const CarouselCard = React.memo(function CarouselCard({
             style={{
               flex: 1,
               opacity: progress.interpolate({
-                inputRange: [0.25, 0.7, 1],
-                outputRange: [0, 0.15, 1],
+                inputRange: [0.05, 0.45, 1],
+                outputRange: [0, 0.8, 1],
                 extrapolate: 'clamp',
               }),
             }}
@@ -588,46 +588,39 @@ const CarouselCard = React.memo(function CarouselCard({
                 <View
                   onLayout={(e) => {
                     const h = e.nativeEvent.layout.height;
-                    setLocalListHeight(h);
+                    setLocalListHeight((prev) => (Math.abs(prev - h) > 8 ? h : prev));
                     if (isCenter) handleListLayout(h);
                   }}
                 >
-                  {isTransitionSettled ? (
-                    <SortableTaskList
-                      data={cardTasks}
-                      keyExtractor={(task) => `${task.id}:${task.date}`}
-                      onReorder={(newData) => void handleReorder(newData)}
-                      onScrollEnabledChange={handleScrollEnabled}
-                      onAutoScroll={handleAutoScroll}
-                      isScrollingRef={isScrollingRef}
-                      gap={0}
-                      renderItem={(
-                        task,
-                        isActive,
-                        index,
-                        totalCount,
-                        onSwipeX,
-                        onScrollEnabledChangeItem
-                      ) => (
-                        <TaskRow
-                          task={task}
-                          isLast={index === totalCount - 1}
-                          onPress={() => beginEditing(task)}
-                          onPendingDelete={handlePendingDelete}
-                          isActive={isActive}
-                          onSwipeX={onSwipeX}
-                          onScrollEnabledChange={onScrollEnabledChangeItem}
-                          cardBg="#FFFFFF"
-                          cardSurface
-                        />
-                      )}
-                    />
-                  ) : (
-                    <TaskListFrame
-                      tasks={cardTasks}
-                      onPress={() => {}}
-                    />
-                  )}
+                  <SortableTaskList
+                    data={cardTasks}
+                    keyExtractor={(task) => `${task.id}:${task.date}`}
+                    onReorder={(newData) => void handleReorder(newData)}
+                    onScrollEnabledChange={handleScrollEnabled}
+                    onAutoScroll={handleAutoScroll}
+                    isScrollingRef={isScrollingRef}
+                    gap={0}
+                    renderItem={(
+                      task,
+                      isActive,
+                      index,
+                      totalCount,
+                      onSwipeX,
+                      onScrollEnabledChangeItem
+                    ) => (
+                      <TaskRow
+                        task={task}
+                        isLast={index === totalCount - 1}
+                        onPress={() => beginEditing(task)}
+                        onPendingDelete={handlePendingDelete}
+                        isActive={isActive}
+                        onSwipeX={onSwipeX}
+                        onScrollEnabledChange={onScrollEnabledChangeItem}
+                        cardBg="#FFFFFF"
+                        cardSurface
+                      />
+                    )}
+                  />
                 </View>
               ) : (
                 <Pressable
@@ -1156,7 +1149,15 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   gap: 10,
                 }}
               >
-                <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>
+                <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M12 4.5v15M4.5 12h15"
+                    stroke={colors.inputPlusIcon}
+                    strokeWidth="2.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </Svg>
                 <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>
                   Тапсырма қосу
                 </Text>

@@ -6,9 +6,9 @@ describe('Theme System', () => {
     expect(defaultSettings.theme).toBe('ocean');
   });
 
-  it('contains all 8 required themes with valid hex colors', () => {
-    const expectedThemes = ['ocean', 'pink', 'violet', 'teal', 'amber', 'emerald', 'coral', 'slate'];
-    expect(THEME_LIST.length).toBe(8);
+  it('contains all 9 required themes with valid hex colors', () => {
+    const expectedThemes = ['ocean', 'pink', 'violet', 'teal', 'amber', 'emerald', 'coral', 'slate', 'minimal'];
+    expect(THEME_LIST.length).toBe(9);
     for (const themeId of expectedThemes) {
       const theme = THEMES[themeId as keyof typeof THEMES];
       expect(theme).toBeDefined();
@@ -23,7 +23,7 @@ describe('Theme System', () => {
     const oceanColors = getThemeColors('ocean');
     expect(oceanColors.today).toBe('#01B7FF');
     expect(oceanColors.primary).toBe('#01B7FF');
-    expect(oceanColors.background).toBe('#FBFEFF');
+    expect(oceanColors.background).toBe('#FFFFFF');
 
     const emeraldColors = getThemeColors('emerald');
     expect(emeraldColors.today).toBe('#00A15F');
@@ -47,6 +47,6 @@ describe('Theme System', () => {
 
     const fallbackColors = getThemeColors(undefined as any);
     expect(fallbackColors.today).toBe('#01B7FF');
-    expect(fallbackColors.background).toBe('#FBFEFF');
+    expect(fallbackColors.background).toBe('#FFFFFF');
   });
 });

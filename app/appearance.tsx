@@ -63,7 +63,7 @@ export default function AppearanceScreen() {
           style={[styles.backButton, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           accessibilityLabel="Артқа қайту"
         >
-          <Ionicons name="chevron-back" size={20} color={colors.inputPlusIcon} style={{ marginLeft: -1 }} />
+          <Ionicons name="chevron-back" size={20} color={colors.secondary} style={{ marginLeft: -1 }} />
         </AnimatedPressable>
 
         <Text style={[styles.headerTitle, { color: colors.text }]}>Сыртқы түрі</Text>
@@ -144,7 +144,7 @@ export default function AppearanceScreen() {
             onPress={() => handleSelectMode('light')}
             style={[
               styles.modeCard,
-              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              { backgroundColor: '#FFFFFF', borderColor: 'rgba(0, 0, 0, 0.08)' },
               selectedMode === 'light' && { borderColor: colors.today, borderWidth: 2 },
             ]}
           >
@@ -168,7 +168,7 @@ export default function AppearanceScreen() {
             onPress={() => handleSelectMode('dark')}
             style={[
               styles.modeCard,
-              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              { backgroundColor: '#FFFFFF', borderColor: 'rgba(0, 0, 0, 0.08)' },
               selectedMode === 'dark' && { borderColor: colors.today, borderWidth: 2 },
             ]}
           >
@@ -194,7 +194,7 @@ export default function AppearanceScreen() {
             onPress={() => handleSelectMode('system')}
             style={[
               styles.modeCard,
-              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              { backgroundColor: '#FFFFFF', borderColor: 'rgba(0, 0, 0, 0.08)' },
               selectedMode === 'system' && { borderColor: colors.today, borderWidth: 2 },
             ]}
           >

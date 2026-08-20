@@ -29,7 +29,7 @@ export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps
       style={[
         styles.chip,
         { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-        time ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }] : undefined,
+        time ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }] : undefined,
         !time ? styles.iconOnly : undefined,
       ]}
     >

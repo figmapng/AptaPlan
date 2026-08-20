@@ -113,7 +113,7 @@ export function TimeModal({
             accessibilityRole="button"
             accessibilityLabel="Жабу"
           >
-            <CloseXIcon color={colors.inputPlusIcon} />
+            <CloseXIcon color={colors.secondary} />
           </AnimatedPressable>
         </View>
 
@@ -126,7 +126,7 @@ export function TimeModal({
         >
           {quickTimePresets.map((t) => {
             const isSelected = selectedTime === t || currentHHMM === t;
-            const iconColor = isSelected ? '#FFFFFF' : colors.inputPlusIcon;
+            const iconColor = isSelected ? '#FFFFFF' : colors.secondary;
 
             return (
               <AnimatedPressable
