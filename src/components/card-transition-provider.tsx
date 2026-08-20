@@ -1271,6 +1271,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
           }}
           initialDate={addingDate ? toDateKey(addingDate) : editingTask?.date}
           editingTask={editingTask}
+          onTaskSaved={async (savedTask) => {
+            if (savedTask.date) {
+              await loadRange(savedTask.date, savedTask.date);
+            }
+          }}
         />
       </View>
     </CardTransitionContext.Provider>
