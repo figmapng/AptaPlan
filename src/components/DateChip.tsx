@@ -1,9 +1,8 @@
-import { StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/theme-context';
 import { formatChipDate } from '@/utils/dateHelpers';
-import { AnimatedPressable } from './AnimatedPressable';
 
 interface DateChipProps {
   date: string | null;
