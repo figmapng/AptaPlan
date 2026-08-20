@@ -159,19 +159,19 @@ export const DayCard = memo(function DayCardComponent({
       onPress={open}
       activeScale={0.98}
       style={{
-        height: wide ? 35 : 29,
+        height: 29,
         paddingVertical: 0,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: wide ? 8 : 6,
-        paddingHorizontal: wide ? 14 : 10,
+        gap: 6,
+        paddingHorizontal: 10,
         backgroundColor: headerBg,
       }}
     >
       <Text
         numberOfLines={1}
         style={{
-          fontSize: wide ? 15 : 12,
+          fontSize: 12,
           fontWeight: '600',
           letterSpacing: 0.2,
           color: dayNameColor,
@@ -183,12 +183,12 @@ export const DayCard = memo(function DayCardComponent({
       {/* Outer badge */}
       <View
         style={{
-          minWidth: wide ? 22 : 20,
-          minHeight: wide ? 19 : 17,
+          minWidth: 20,
+          minHeight: 17,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: numOuterBg,
-          borderRadius: wide ? 5 : 5,
+          borderRadius: 5,
           paddingTop: 0,
           paddingRight: 4,
           paddingBottom: 0,
@@ -200,7 +200,7 @@ export const DayCard = memo(function DayCardComponent({
           style={{
             alignSelf: 'stretch',
             flexDirection: 'row',
-            borderRadius: wide ? 4 : 4,
+            borderRadius: 4,
             paddingHorizontal: 0,
             paddingVertical: 0,
             alignItems: 'center',
@@ -211,8 +211,8 @@ export const DayCard = memo(function DayCardComponent({
         >
           <Text
             style={{
-              fontSize: wide ? 13 : 12,
-              lineHeight: wide ? 15 : 13,
+              fontSize: 12,
+              lineHeight: 13,
               fontWeight: today ? '700' : '600',
               color: numTextColor,
               fontVariant: ['tabular-nums'],
@@ -223,8 +223,8 @@ export const DayCard = memo(function DayCardComponent({
           {monthLabel ? (
             <Text
               style={{
-                fontSize: wide ? 10 : 9.5,
-                lineHeight: wide ? 13 : 12,
+                fontSize: 9.5,
+                lineHeight: 12,
                 fontWeight: '600',
                 color: numTextColor,
                 opacity: 0.85,
@@ -239,7 +239,7 @@ export const DayCard = memo(function DayCardComponent({
       <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center' }}>
         <Text
           style={{
-            fontSize: wide ? 12 : 11,
+            fontSize: 11,
             fontWeight: '600',
             fontVariant: ['tabular-nums'],
           }}
