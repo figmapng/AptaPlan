@@ -3,7 +3,6 @@ export type ThemeId =
   | 'emerald'
   | 'violet'
   | 'coral'
-  | 'rose'
   | 'indigo'
   | 'amber'
   | 'slate';
