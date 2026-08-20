@@ -1,7 +1,8 @@
 export type ThemeId =
+  | 'ocean'
   | 'pink'
   | 'violet'
-  | 'ocean'
+  | 'teal'
   | 'amber'
   | 'emerald'
   | 'coral'
