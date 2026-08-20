@@ -18,7 +18,7 @@ import Svg, { Circle, Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 import { usePlanner } from '@/store/planner-store';
 import {

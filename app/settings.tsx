@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Path } from 'react-native-svg';
 import Constants from 'expo-constants';
 
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/context/theme-context';
 import { AnimatedPressable } from '@/components/AnimatedPressable';

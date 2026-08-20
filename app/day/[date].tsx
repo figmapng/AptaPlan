@@ -13,7 +13,7 @@ import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { format, isToday } from 'date-fns';
-import { colors as defaultColors } from '@/constants/colors';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 import { fromDateKey, months, toDateKey, weekdays } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
