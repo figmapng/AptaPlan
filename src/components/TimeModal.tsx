@@ -5,7 +5,8 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/context/theme-context';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface TimeModalProps {
@@ -34,6 +35,7 @@ export function TimeModal({
   onRemoveTime,
   onClose,
 }: TimeModalProps) {
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -94,19 +96,20 @@ export function TimeModal({
         style={[
           styles.sheet,
           {
+            backgroundColor: colors.sheetBg,
             transform: [{ translateY }],
             paddingBottom: Math.max(insets.bottom + 16, 28),
           },
         ]}
       >
-        <View style={styles.dragPill} />
+        <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Уақытты таңдау</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Уақытты таңдау</Text>
           <AnimatedPressable
             activeScale={0.88}
-            style={styles.closeBtn}
+            style={[styles.closeBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
             onPress={handleClose}
             accessibilityRole="button"
             accessibilityLabel="Жабу"
@@ -132,12 +135,13 @@ export function TimeModal({
                 activeScale={0.92}
                 style={[
                   styles.quickBtn,
-                  isSelected && styles.quickBtnActive,
+                  { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+                  isSelected && [styles.quickBtnActive, { backgroundColor: colors.today, borderColor: colors.today }],
                 ]}
                 onPress={() => handlePresetSelect(t)}
               >
                 <ClockIcon color={iconColor} />
-                <Text style={[styles.quickText, isSelected && styles.quickTextActive]}>
+                <Text style={[styles.quickText, { color: colors.text }, isSelected && styles.quickTextActive]}>
                   {t}
                 </Text>
               </AnimatedPressable>
@@ -146,12 +150,12 @@ export function TimeModal({
         </ScrollView>
 
         {/* Time Picker Card Container */}
-        <View style={styles.pickerCard}>
+        <View style={[styles.pickerCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
           <DateTimePicker
             value={date}
             mode="time"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            textColor="#1C1C1E"
+            textColor={colors.text}
             onChange={(_, sel) => {
               if (sel) setDate(sel);
             }}
@@ -164,15 +168,19 @@ export function TimeModal({
           {onRemoveTime && (
             <AnimatedPressable
               activeScale={0.94}
-              style={[styles.removeBtn, !selectedTime && styles.removeBtnDisabled]}
+              style={[
+                styles.removeBtn,
+                { backgroundColor: isDark ? '#361A1D' : '#FFF1F0', borderColor: isDark ? '#522328' : '#FFE0DE' },
+                !selectedTime && [styles.removeBtnDisabled, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }],
+              ]}
               onPress={() => {
                 triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
                 onRemoveTime();
                 handleClose();
               }}
             >
-              <TrashIcon color={selectedTime ? '#FF4B3E' : '#A0A5B1'} />
-              <Text style={[styles.removeText, !selectedTime && styles.removeTextDisabled]}>
+              <TrashIcon color={selectedTime ? colors.weekend : colors.inputPlaceholder} />
+              <Text style={[styles.removeText, { color: colors.weekend }, !selectedTime && styles.removeTextDisabled]}>
                 Уақытты өшіру
               </Text>
             </AnimatedPressable>
@@ -180,7 +188,7 @@ export function TimeModal({
 
           <AnimatedPressable
             activeScale={0.94}
-            style={[styles.confirmBtn, !onRemoveTime && styles.confirmBtnFull]}
+            style={[styles.confirmBtn, { backgroundColor: colors.today, borderColor: colors.today }, !onRemoveTime && styles.confirmBtnFull]}
             onPress={handleConfirm}
           >
             <Text style={styles.confirmText}>Сақтау</Text>

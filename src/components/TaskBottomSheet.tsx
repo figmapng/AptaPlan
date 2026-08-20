@@ -18,6 +18,7 @@ import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
+import { useTheme } from '@/context/theme-context';
 import { getTodayKey } from '@/utils/dateHelpers';
 import { TaskInput } from './TaskInput';
 import { DateChip } from './DateChip';
@@ -46,6 +47,7 @@ export function TaskBottomSheet({
   onTaskSaved,
   onTaskDeleted,
 }: TaskBottomSheetProps) {
+  const { colors, isDark } = useTheme();
   const planner = usePlanner();
 
   const [title, setTitle] = useState('');
@@ -319,6 +321,7 @@ export function TaskBottomSheet({
           style={[
             styles.sheetContainer,
             {
+              backgroundColor: colors.sheetBg,
               transform: [{ translateY }],
               paddingBottom: animatedPaddingBottom,
             },
@@ -326,12 +329,12 @@ export function TaskBottomSheet({
         >
           {/* Top Drag Pill Indicator */}
           <View style={styles.dragHeader}>
-            <View style={styles.dragPill} />
+            <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
           </View>
 
           {/* Input & Send Button Row (Send button inside input) */}
           <View style={styles.inputRow}>
-              <View style={[styles.inputWrapper, { minHeight: Math.max(52, titleInputHeight + 10) }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, minHeight: Math.max(52, titleInputHeight + 10) }]}>
                 <View style={styles.inputContent}>
                   <TaskInput
                   ref={inputRef}
@@ -349,14 +352,15 @@ export function TaskBottomSheet({
                 onPress={handleSend}
                 style={({ pressed }) => [
                   styles.sendBtn,
-                  !isEnabled && styles.sendBtnDisabled,
+                  { backgroundColor: colors.today, borderColor: colors.today },
+                  !isEnabled && [styles.sendBtnDisabled, { backgroundColor: isDark ? '#262A34' : '#E5E7EB' }],
                   pressed && isEnabled && styles.sendBtnPressed,
                 ]}
               >
                 {editingTask ? (
-                  <CheckIcon color={isEnabled ? '#FFFFFF' : '#9CA3AF'} />
+                  <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#5A6275' : '#9CA3AF')} />
                 ) : (
-                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : '#9CA3AF'} />
+                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#5A6275' : '#9CA3AF')} />
                 )}
               </Pressable>
             </View>

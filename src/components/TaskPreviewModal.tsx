@@ -14,7 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/context/theme-context';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
 import { formatFullDate } from '@/services/date-service';
@@ -157,6 +158,7 @@ export function TaskPreviewModal({
   onEdit,
   onDelete,
 }: TaskPreviewModalProps) {
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { toggle, update, remove, settings } = usePlanner();
 
@@ -335,6 +337,7 @@ export function TaskPreviewModal({
             onPress={handleEdit}
             style={({ pressed }) => [
               styles.taskCard,
+              { backgroundColor: colors.card, borderColor: colors.cardBorder },
               pressed && { opacity: 0.95 },
             ]}
           >
@@ -344,7 +347,8 @@ export function TaskPreviewModal({
                 onPress={handleToggleDone}
                 style={[
                   styles.checkbox,
-                  t.isCompleted && styles.checkboxCompleted,
+                  { borderColor: colors.checkboxBorder, backgroundColor: colors.checkboxBg },
+                  t.isCompleted && [styles.checkboxCompleted, { backgroundColor: colors.checkedCheckboxBg, borderColor: colors.checkedCheckboxBg }],
                 ]}
                 hitSlop={8}
               >
@@ -356,7 +360,8 @@ export function TaskPreviewModal({
               <Text
                 style={[
                   styles.taskTitle,
-                  t.isCompleted && styles.taskTitleCompleted,
+                  { color: colors.text },
+                  t.isCompleted && [styles.taskTitleCompleted, { color: colors.checkedTaskText }],
                 ]}
               >
                 {t.title}
@@ -365,7 +370,7 @@ export function TaskPreviewModal({
 
             {/* Note / Description */}
             {t.note ? (
-              <Text style={styles.taskNote}>{t.note}</Text>
+              <Text style={[styles.taskNote, { color: colors.secondary }]}>{t.note}</Text>
             ) : null}
 
             {/* Meta Tags Row */}
@@ -373,11 +378,11 @@ export function TaskPreviewModal({
               {/* Date & Time Text */}
               <Pressable
                 onPress={() => setShowCalendar(true)}
-                style={styles.dateBadge}
+                style={[styles.dateBadge, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
                 hitSlop={4}
               >
                 <CalendarIcon size={14} color={colors.secondary} />
-                <Text style={styles.dateBadgeText}>
+                <Text style={[styles.dateBadgeText, { color: colors.secondary }]}>
                   {formatTaskDisplayDate(t.date)}
                   {t.time ? ` · ${t.time}` : ''}
                 </Text>
@@ -387,11 +392,11 @@ export function TaskPreviewModal({
               {repeatLabel ? (
                 <Pressable
                   onPress={() => setShowRepeatSheet(true)}
-                  style={styles.repeatBadge}
+                  style={[styles.repeatBadge, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
                   hitSlop={4}
                 >
                   <RepeatIcon size={14} color={colors.secondary} />
-                  <Text style={styles.repeatBadgeText}>{repeatLabel}</Text>
+                  <Text style={[styles.repeatBadgeText, { color: colors.secondary }]}>{repeatLabel}</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -400,7 +405,7 @@ export function TaskPreviewModal({
           {/* Floating Action Dock */}
           <View style={styles.actionDockRow}>
             {/* Action Buttons Capsule with vertical dividers */}
-            <View style={styles.actionCapsule}>
+            <View style={[styles.actionCapsule, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
               {/* Date Action */}
               <AnimatedPressable
                 activeScale={0.88}
@@ -410,11 +415,11 @@ export function TaskPreviewModal({
               >
                 <CalendarIcon
                   size={19}
-                  color={t.date ? colors.today : '#5E6778'}
+                  color={t.date ? colors.today : colors.secondary}
                 />
               </AnimatedPressable>
 
-              <View style={styles.dockDivider} />
+              <View style={[styles.dockDivider, { backgroundColor: colors.divider }]} />
 
               {/* Time Action */}
               <AnimatedPressable
@@ -425,11 +430,11 @@ export function TaskPreviewModal({
               >
                 <ClockIcon
                   size={19}
-                  color={t.time ? colors.today : '#5E6778'}
+                  color={t.time ? colors.today : colors.secondary}
                 />
               </AnimatedPressable>
 
-              <View style={styles.dockDivider} />
+              <View style={[styles.dockDivider, { backgroundColor: colors.divider }]} />
 
               {/* Repeat Action */}
               <AnimatedPressable
@@ -440,11 +445,11 @@ export function TaskPreviewModal({
               >
                 <RepeatIcon
                   size={19}
-                  color={t.repeatType && t.repeatType !== 'none' ? colors.today : '#5E6778'}
+                  color={t.repeatType && t.repeatType !== 'none' ? colors.today : colors.secondary}
                 />
               </AnimatedPressable>
 
-              <View style={styles.dockDivider} />
+              <View style={[styles.dockDivider, { backgroundColor: colors.divider }]} />
 
               {/* Edit Full Task Action */}
               <AnimatedPressable
@@ -453,7 +458,7 @@ export function TaskPreviewModal({
                 style={styles.actionIconBtn}
                 hitSlop={6}
               >
-                <EditIcon size={19} color="#5E6778" />
+                <EditIcon size={19} color={colors.secondary} />
               </AnimatedPressable>
             </View>
 
@@ -461,10 +466,13 @@ export function TaskPreviewModal({
             <AnimatedPressable
               activeScale={0.88}
               onPress={handleDelete}
-              style={styles.deleteButtonStandalone}
+              style={[
+                styles.deleteButtonStandalone,
+                { backgroundColor: isDark ? '#361A1D' : '#FFF0F0', borderColor: isDark ? '#522328' : '#FFD8D6' },
+              ]}
               hitSlop={6}
             >
-              <TrashIcon size={20} color="#FF4B3E" />
+              <TrashIcon size={20} color={colors.weekend} />
             </AnimatedPressable>
           </View>
         </Animated.View>

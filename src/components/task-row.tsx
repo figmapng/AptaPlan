@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, Easing, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/context/theme-context';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
 import { useCardTransition } from './card-transition-provider';
@@ -308,35 +309,23 @@ export const TaskRow = React.memo(function TaskRow({
     return getShortRepeatLabel(rep, task.repeatInterval || 1);
   }, [hasRepeat, task.repeatConfig, task.repeat, task.repeatType, task.repeatInterval]);
 
-  if (isDeleting) {
-    return (
-      <Animated.View
-        style={{
-          height: rowHeightAnim.interpolate({ inputRange: [0, 1], outputRange: [0, compact ? 20 : 60] }),
-          opacity: rowOpacityAnim,
-          overflow: 'hidden',
-        }}
-      />
-    );
-  }
-
-  const isMorphing = !compact && activeDate && transitionProgress;
+  const isMorphing = activeDate === task.date;
 
   const dynamicMinHeight = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [18, 44],
+        outputRange: [18, 48],
         extrapolate: 'clamp',
       })
-    : compact ? 18 : 44;
+    : compact ? 18 : 48;
 
   const dynamicPaddingTop = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [1, 10],
+        outputRange: [1, 11],
         extrapolate: 'clamp',
       })
-    : compact ? 1 : 10;
+    : compact ? 1 : 11;
 
   const dynamicPaddingBottom = isMorphing
     ? transitionProgress.interpolate({
@@ -346,21 +335,23 @@ export const TaskRow = React.memo(function TaskRow({
       })
     : compact ? 1 : 0;
 
+  const dynamicPaddingHorizontal = 0;
+
   const dynamicGap = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [6, 12],
+        outputRange: [8, 12],
         extrapolate: 'clamp',
       })
-    : compact ? 6 : 12;
+    : compact ? 8 : 12;
 
   const dynamicCheckboxScale = isMorphing
     ? transitionProgress.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.75, 1],
+        outputRange: [16 / 22, 1],
         extrapolate: 'clamp',
       })
-    : 1;
+    : compact ? 16 / 22 : 1;
 
   const dynamicTitleFontSize = isMorphing
     ? transitionProgress.interpolate({
@@ -369,14 +360,6 @@ export const TaskRow = React.memo(function TaskRow({
         extrapolate: 'clamp',
       })
     : compact ? 12 : 15.5;
-
-  const dynamicPaddingHorizontal = isMorphing
-    ? transitionProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 6],
-        extrapolate: 'clamp',
-      })
-    : compact ? 0 : 6;
 
   const metadataOpacity = isMorphing
     ? transitionProgress.interpolate({
@@ -394,7 +377,19 @@ export const TaskRow = React.memo(function TaskRow({
       })
     : compact ? 0 : 16;
 
-  const dateColor = isOverdue ? '#E03B2F' : '#8E8E93';
+  const dateColor = isOverdue ? '#E03B2F' : colors.secondary;
+
+  if (isDeleting) {
+    return (
+      <Animated.View
+        style={{
+          height: rowHeightAnim.interpolate({ inputRange: [0, 1], outputRange: [0, compact ? 18 : 48] }),
+          opacity: rowOpacityAnim,
+          overflow: 'hidden',
+        }}
+      />
+    );
+  }
 
   return (
     <View style={styles.wrapper}>
@@ -403,7 +398,6 @@ export const TaskRow = React.memo(function TaskRow({
         style={[
           styles.rowContainer,
           compact && styles.compactRowContainer,
-          cardSurface && styles.cardRowContainer,
           {
             opacity: rowOpacity,
             minHeight: dynamicMinHeight,
@@ -415,13 +409,6 @@ export const TaskRow = React.memo(function TaskRow({
         ]}
       >
         <Pressable
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: task.isCompleted }}
-          accessibilityLabel={
-            task.isCompleted
-              ? 'Тапсырманы орындалмаған деп белгілеу'
-              : 'Тапсырманы орындалды деп белгілеу'
-          }
           onPress={onToggle}
           hitSlop={8}
           style={[styles.checkboxTouch, !hasMetadata && { marginTop: 0 }]}
@@ -429,20 +416,14 @@ export const TaskRow = React.memo(function TaskRow({
           <Animated.View
             style={[
               styles.checkbox,
+              { borderColor: colors.checkboxBorder, backgroundColor: colors.checkboxBg },
               compact && styles.compactCheckbox,
-              cardBg === '#FAFCFF' && { borderColor: '#DAE6F9', backgroundColor: 'transparent' },
-              task.isCompleted && styles.checkboxCompleted,
+              task.isCompleted && { borderColor: colors.checkedCheckboxBg, backgroundColor: colors.checkedCheckboxBg },
               { transform: [{ scale: boxScale }, { scale: dynamicCheckboxScale }] },
             ]}
           >
             {task.isCompleted && (
-              <Animated.View
-                style={{
-                  transform: [{ scale: checkScale }],
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+              <Animated.View style={{ transform: [{ scale: checkScale }] }}>
                 <CheckmarkIcon size={compact ? 10 : 13} color="#FFFFFF" />
               </Animated.View>
             )}
@@ -456,7 +437,7 @@ export const TaskRow = React.memo(function TaskRow({
           style={[
             styles.contentStack,
             compact && styles.compactContentStack,
-            !isLast && !compact && styles.contentStackBorderBottom,
+            !isLast && !compact && [styles.contentStackBorderBottom, { borderBottomColor: colors.divider }],
             isActive && { opacity: 0.7 },
           ]}
         >
@@ -466,8 +447,9 @@ export const TaskRow = React.memo(function TaskRow({
               ellipsizeMode={singleLine ? 'tail' : undefined}
               style={[
                 styles.title,
+                { color: colors.text },
                 compact && styles.compactTitle,
-                task.isCompleted && styles.completedTitle,
+                task.isCompleted && { color: colors.checkedTaskText, textDecorationLine: 'line-through' },
                 { fontSize: dynamicTitleFontSize },
               ]}
             >
@@ -488,7 +470,7 @@ export const TaskRow = React.memo(function TaskRow({
                 {hasDate && (
                   <View style={styles.metaItem}>
                     <CalendarIcon size={13} color={dateColor} />
-                    <Text style={[styles.metaText, isOverdue && styles.overdueText]}>
+                    <Text style={[styles.metaText, { color: colors.secondary }, isOverdue && styles.overdueText]}>
                       {formatTaskDisplayDate(task.date)}
                     </Text>
                   </View>
@@ -496,17 +478,15 @@ export const TaskRow = React.memo(function TaskRow({
 
                 {hasTime && (
                   <View style={styles.metaItem}>
-                    <ClockIcon size={13} color="#8E8E93" />
-                    <Text style={styles.metaText}>{task.time}</Text>
+                    <ClockIcon size={13} color={colors.secondary} />
+                    <Text style={[styles.metaText, { color: colors.secondary }]}>{task.time}</Text>
                   </View>
                 )}
 
                 {hasRepeat && (
                   <View style={styles.metaItem}>
-                    <RepeatIcon size={13} color="#8E8E93" />
-                    {repeatLabel ? (
-                      <Text style={styles.metaText}>{repeatLabel}</Text>
-                    ) : null}
+                    <RepeatIcon size={13} color={colors.secondary} />
+                    <Text style={[styles.metaText, { color: colors.secondary }]}>{repeatLabel}</Text>
                   </View>
                 )}
               </Animated.View>
@@ -583,20 +563,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: 'transparent',
-    gap: 12,
-    paddingTop: 11,
-    paddingBottom: 0,
-    paddingHorizontal: 0,
-  },
-  cardRowContainer: {
-    width: '100%',
   },
   compactRowContainer: {
-    minHeight: 18,
-    paddingTop: 1,
-    paddingBottom: 1,
-    paddingHorizontal: 0,
-    gap: 8,
     alignItems: 'center',
   },
   checkboxTouch: {
@@ -607,24 +575,13 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  checkboxCompleted: {
-    borderColor: colors.checkedCheckboxBg,
-    backgroundColor: colors.checkedCheckboxBg,
   },
   compactCheckbox: {
     width: 16,
     height: 16,
     borderRadius: 5,
-    borderWidth: 1.5,
-    borderColor: colors.checkboxBorder,
-    backgroundColor: colors.checkboxBg,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   contentStack: {
     flex: 1,
@@ -633,7 +590,6 @@ const styles = StyleSheet.create({
   },
   contentStackBorderBottom: {
     borderBottomWidth: 1,
-    borderBottomColor: '#ECEEF1',
   },
   compactContentStack: {
     paddingBottom: 0,
@@ -642,17 +598,13 @@ const styles = StyleSheet.create({
     fontSize: 15.5,
     fontWeight: '400',
     lineHeight: 21,
-    color: '#111827',
   },
   compactTitle: {
     fontSize: 12,
     lineHeight: 17,
-    fontWeight: '400',
-    color: colors.text,
   },
   completedTitle: {
     textDecorationLine: 'line-through',
-    color: '#ADB3BD',
   },
   metadataRow: {
     flexDirection: 'row',
@@ -670,7 +622,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '400',
-    color: '#8E8E93',
     fontVariant: ['tabular-nums'],
   },
   overdueText: {

@@ -3,7 +3,8 @@ import { Animated, Easing, Pressable, ScrollView, StyleSheet, Switch, Text, View
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { RepeatConfig, RepeatCustomUnit, RepeatMonthlyMode, TaskRepeat } from '@/types/task';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/context/theme-context';
 import { usePlanner } from '@/store/planner-store';
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -100,33 +101,35 @@ export function describeCustomRepeat(config: RepeatConfig): string {
     if (sorted.length === 0 || sorted.length === 7) {
       return interval === 1 ? 'Апта сайын' : `Әр ${interval} аптада`;
     }
-    const daysText = sorted.map((i) => shortWeekdays[i]).join(', ');
-    return interval === 1 ? `Апта сайын (${daysText})` : `Әр ${interval} аптада (${daysText})`;
+    const daysStr = sorted.map((i) => shortWeekdays[i]).join(', ');
+    return interval === 1 ? `Апта сайын (${daysStr})` : `Әр ${interval} аптада (${daysStr})`;
   }
 
   if (unit === 'monthly') {
-    if (config.monthlyMode === 'dayOfWeek') {
-      const pos = posShort[config.selectedPosIdx ?? 0];
-      const dayText = kzWeekdaysFull[config.selectedDayIdx ?? 1].toLowerCase();
-      return interval === 1 ? `Ай сайын (${pos} ${dayText})` : `Әр ${interval} айда (${pos} ${dayText})`;
+    if (config.monthlyMode === 'dayOfWeek' && config.selectedPosIdx !== undefined && config.selectedDayIdx !== undefined) {
+      const posStr = posShort[config.selectedPosIdx] ?? '';
+      const dayStr = shortWeekdays[config.selectedDayIdx] ?? '';
+      return interval === 1
+        ? `Ай сайын (${posStr} ${dayStr})`
+        : `Әр ${interval} айда (${posStr} ${dayStr})`;
     }
     const d = config.selectedMonthDate ?? 1;
-    return interval === 1 ? `Ай сайын (${d}-күні)` : `Әр ${interval} айда (${d}-күні)`;
+    return interval === 1 ? `Ай сайын (${d}-ші күн)` : `Әр ${interval} айда (${d}-ші күн)`;
   }
 
   if (unit === 'yearly') {
-    const mShort = kzMonthsShort[config.selectedYearlyMonth ?? 0];
-    if (config.yearlyEnableWeekdays) {
-      const pos = posShort[config.selectedPosIdx ?? 0];
-      const dayText = kzWeekdaysFull[config.selectedDayIdx ?? 1].toLowerCase();
+    const m = kzMonthsShort[config.selectedYearlyMonth ?? 0] ?? '';
+    if (config.yearlyEnableWeekdays && config.selectedPosIdx !== undefined && config.selectedDayIdx !== undefined) {
+      const posStr = posShort[config.selectedPosIdx] ?? '';
+      const dayStr = shortWeekdays[config.selectedDayIdx] ?? '';
       return interval === 1
-        ? `Жыл сайын (${pos} ${dayText}, ${mShort})`
-        : `Әр ${interval} жылда (${pos} ${dayText}, ${mShort})`;
+        ? `Жыл сайын (${m}, ${posStr} ${dayStr})`
+        : `Әр ${interval} жылда (${m}, ${posStr} ${dayStr})`;
     }
-    return interval === 1 ? `Жыл сайын (${mShort})` : `Әр ${interval} жылда (${mShort})`;
+    return interval === 1 ? `Жыл сайын (${m})` : `Әр ${interval} жылда (${m})`;
   }
 
-  return interval === 1 ? 'Күнде' : `Әр ${interval} күнде`;
+  return 'Арнайы';
 }
 
 export function CustomRepeatModal({
@@ -344,22 +347,22 @@ export function CustomRepeatModal({
   return (
     <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
       <Pressable style={styles.backdrop} onPress={handleClose} />
-      <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-        <View style={styles.dragPill} />
+      <Animated.View style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}>
+        <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
 
         {/* Header with Back Button, Title, and Blue Circular Checkmark Button */}
         <View style={styles.header}>
           <AnimatedPressable
             activeScale={0.88}
-            style={styles.backBtn}
+            style={[styles.backBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
             onPress={handleClose}
             accessibilityRole="button"
             accessibilityLabel="Артқа қайту"
           >
-            <BackChevronIcon color={colors.inputPlusIcon} />
+            <BackChevronIcon color={colors.text} />
           </AnimatedPressable>
 
-          <Text style={styles.title}>Реттеу</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Реттеу</Text>
 
           <AnimatedPressable
             activeScale={0.88}
@@ -378,7 +381,7 @@ export function CustomRepeatModal({
           style={{ width: '100%' }}
         >
           {/* Card 1: Frequency & Every Stepper */}
-          <View style={styles.groupedCard}>
+          <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
             {/* Frequency Dropdown Row */}
             <Pressable
               style={styles.formRow}
@@ -387,22 +390,22 @@ export function CustomRepeatModal({
                 setShowUnitMenu((prev) => !prev);
               }}
             >
-              <Text style={styles.rowLabel}>Жиілігі</Text>
+              <Text style={[styles.rowLabel, { color: colors.text }]}>Жиілігі</Text>
               <View style={styles.selectorBtn}>
-                <Text style={styles.selectorText}>{unitLabels[unit]}</Text>
-                <SelectorChevronIcon color="#01B7FF" />
+                <Text style={[styles.selectorText, { color: colors.today }]}>{unitLabels[unit]}</Text>
+                <SelectorChevronIcon color={colors.today} />
               </View>
             </Pressable>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
             {/* Every Stepper Row */}
             <View style={styles.formRow}>
-              <Text style={styles.rowLabel}>Әрбір</Text>
-              <View style={styles.stepperContainer}>
+              <Text style={[styles.rowLabel, { color: colors.text }]}>Әрбір</Text>
+              <View style={[styles.stepperContainer, { backgroundColor: isDark ? '#232836' : colors.inputBorder }]}>
                 <AnimatedPressable
                   activeScale={0.85}
-                  style={[styles.stepBtn, interval <= 1 && styles.stepBtnDisabled]}
+                  style={[styles.stepBtn, { backgroundColor: colors.card }, interval <= 1 && styles.stepBtnDisabled]}
                   onPress={handleDecrement}
                   disabled={interval <= 1}
                 >
@@ -410,10 +413,10 @@ export function CustomRepeatModal({
                 </AnimatedPressable>
 
                 <View style={styles.numBox}>
-                  <Text style={styles.numText}>{interval}</Text>
+                  <Text style={[styles.numText, { color: colors.text }]}>{interval}</Text>
                 </View>
 
-                <AnimatedPressable activeScale={0.85} style={styles.stepBtn} onPress={handleIncrement}>
+                <AnimatedPressable activeScale={0.85} style={[styles.stepBtn, { backgroundColor: colors.card }]} onPress={handleIncrement}>
                   <PlusIcon color={colors.today} />
                 </AnimatedPressable>
               </View>
@@ -421,22 +424,22 @@ export function CustomRepeatModal({
           </View>
 
           {/* Footer Summary Sentence */}
-          <Text style={styles.summaryText}>{getSummarySentence()}</Text>
+          <Text style={[styles.summaryText, { color: colors.secondary }]}>{getSummarySentence()}</Text>
 
           {/* Card 2 (Conditional per unit) */}
 
           {/* WEEKLY: Weekdays Picker List */}
           {unit === 'weekly' && (
-            <View style={[styles.groupedCard, { marginTop: 16 }]}>
+            <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, marginTop: 16 }]}>
               {orderedWeekdayIndices.map((dayIdx, i) => {
                 const dayName = kzWeekdaysFull[dayIdx];
                 const isSelected = selectedWeekdays.includes(dayIdx);
                 return (
                   <View key={dayName}>
-                    {i > 0 && <View style={styles.divider} />}
+                    {i > 0 && <View style={[styles.divider, { backgroundColor: colors.divider }]} />}
                     <Pressable style={styles.formRow} onPress={() => toggleWeekday(dayIdx)}>
-                      <Text style={styles.rowLabel}>{dayName}</Text>
-                      {isSelected && <CheckIcon color="#01B7FF" />}
+                      <Text style={[styles.rowLabel, { color: colors.text }]}>{dayName}</Text>
+                      {isSelected && <CheckIcon color={colors.today} />}
                     </Pressable>
                   </View>
                 );
@@ -446,21 +449,21 @@ export function CustomRepeatModal({
 
           {/* MONTHLY: Dates Grid or Day of Week Mode */}
           {unit === 'monthly' && (
-            <View style={[styles.groupedCard, { marginTop: 16 }]}>
+            <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, marginTop: 16 }]}>
               <Pressable style={styles.formRow} onPress={() => { triggerHaptic(); setMonthlyMode('dates'); }}>
-                <Text style={styles.rowLabel}>Даталарды таңдау</Text>
-                {monthlyMode === 'dates' && <CheckIcon color="#01B7FF" />}
+                <Text style={[styles.rowLabel, { color: colors.text }]}>Даталарды таңдау</Text>
+                {monthlyMode === 'dates' && <CheckIcon color={colors.today} />}
               </Pressable>
 
-              <View style={styles.divider} />
+              <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
               <Pressable style={styles.formRow} onPress={() => { triggerHaptic(); setMonthlyMode('dayOfWeek'); }}>
-                <Text style={styles.rowLabel}>Апта күнін таңдау</Text>
-                {monthlyMode === 'dayOfWeek' && <CheckIcon color="#01B7FF" />}
+                <Text style={[styles.rowLabel, { color: colors.text }]}>Апта күнін таңдау</Text>
+                {monthlyMode === 'dayOfWeek' && <CheckIcon color={colors.today} />}
               </Pressable>
 
               {monthlyMode === 'dates' && (
-                <View style={styles.daysGridContainer}>
+                <View style={[styles.daysGridContainer, { borderTopColor: colors.divider }]}>
                   {Array.from({ length: 5 }, (_, rowIdx) => {
                     const rowDates = Array.from({ length: 7 }, (__, colIdx) => {
                       const d = rowIdx * 7 + colIdx + 1;
@@ -476,13 +479,22 @@ export function CustomRepeatModal({
                           return (
                             <Pressable
                               key={d}
-                              style={[styles.dayGridCell, isSelected && styles.dayGridCellSelected]}
+                              style={[
+                                styles.dayGridCell,
+                                isSelected && [styles.dayGridCellSelected, { backgroundColor: colors.today }],
+                              ]}
                               onPress={() => {
                                 triggerHaptic();
                                 setSelectedMonthDate(d);
                               }}
                             >
-                              <Text style={[styles.dayGridText, isSelected && styles.dayGridTextSelected]}>
+                              <Text
+                                style={[
+                                  styles.dayGridText,
+                                  { color: colors.text },
+                                  isSelected && styles.dayGridTextSelected,
+                                ]}
+                              >
                                 {d}
                               </Text>
                             </Pressable>
@@ -495,7 +507,7 @@ export function CustomRepeatModal({
               )}
 
               {monthlyMode === 'dayOfWeek' && (
-                <View style={styles.pickerWheelBox}>
+                <View style={[styles.pickerWheelBox, { backgroundColor: colors.inputBg, borderTopColor: colors.divider }]}>
                   <WheelPickerColumn
                     data={weekPositions}
                     selectedIndex={selectedPosIdx}
@@ -516,20 +528,30 @@ export function CustomRepeatModal({
           {/* YEARLY: 12-Month Grid + Weekdays Switch & Picker Wheel */}
           {unit === 'yearly' && (
             <>
-              <View style={[styles.groupedCard, { marginTop: 16 }]}>
+              <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, marginTop: 16 }]}>
                 <View style={styles.monthsGridContainer}>
                   {kzMonthsShort.map((mShort, mIdx) => {
                     const isSelected = selectedYearlyMonth === mIdx;
                     return (
                       <Pressable
                         key={mShort}
-                        style={[styles.monthGridCell, isSelected && styles.monthGridCellSelected]}
+                        style={[
+                          styles.monthGridCell,
+                          { borderColor: colors.cardBorder },
+                          isSelected && [styles.monthGridCellSelected, { backgroundColor: colors.today }],
+                        ]}
                         onPress={() => {
                           triggerHaptic();
                           setSelectedYearlyMonth(mIdx);
                         }}
                       >
-                        <Text style={[styles.monthGridText, isSelected && styles.monthGridTextSelected]}>
+                        <Text
+                          style={[
+                            styles.monthGridText,
+                            { color: colors.text },
+                            isSelected && styles.monthGridTextSelected,
+                          ]}
+                        >
                           {mShort}
                         </Text>
                       </Pressable>
@@ -538,9 +560,9 @@ export function CustomRepeatModal({
                 </View>
               </View>
 
-              <View style={[styles.groupedCard, { marginTop: 14 }]}>
+              <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, marginTop: 14 }]}>
                 <View style={styles.formRow}>
-                  <Text style={styles.rowLabel}>Апта күндері</Text>
+                  <Text style={[styles.rowLabel, { color: colors.text }]}>Апта күндері</Text>
                   <View style={styles.switchWrapper}>
                     <Switch
                       value={yearlyEnableWeekdays}
@@ -548,15 +570,15 @@ export function CustomRepeatModal({
                         triggerHaptic();
                         setYearlyEnableWeekdays(v);
                       }}
-                      trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-                      ios_backgroundColor="#E5E5EA"
+                      trackColor={{ false: isDark ? '#3D4452' : '#E5E5EA', true: '#34C759' }}
+                      ios_backgroundColor={isDark ? '#3D4452' : '#E5E5EA'}
                       style={{ transform: [{ scaleX: 0.88 }, { scaleY: 0.88 }] }}
                     />
                   </View>
                 </View>
 
                 {yearlyEnableWeekdays && (
-                  <View style={styles.pickerWheelBox}>
+                  <View style={[styles.pickerWheelBox, { backgroundColor: colors.inputBg, borderTopColor: colors.divider }]}>
                     <WheelPickerColumn
                       data={weekPositions}
                       selectedIndex={selectedPosIdx}
@@ -579,7 +601,7 @@ export function CustomRepeatModal({
         {/* iOS Popover Dropdown Menu */}
         {showUnitMenu && (
           <Pressable style={styles.popoverOverlay} onPress={() => setShowUnitMenu(false)}>
-            <View style={styles.popoverMenu}>
+            <View style={[styles.popoverMenu, { backgroundColor: colors.sheetBg, borderColor: colors.inputBorder }]}>
               <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
                 {(['daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u, idx, arr) => {
                   const isSelected = unit === u;
@@ -590,7 +612,7 @@ export function CustomRepeatModal({
                       key={u}
                       style={[
                         styles.menuItem,
-                        isSelected && styles.menuItemActive,
+                        isSelected && [styles.menuItemActive, { backgroundColor: isDark ? '#262C38' : '#F2F2F7' }],
                         isFirst && styles.menuItemFirst,
                         isLast && styles.menuItemLast,
                       ]}
@@ -600,10 +622,16 @@ export function CustomRepeatModal({
                         setShowUnitMenu(false);
                       }}
                     >
-                      <Text style={[styles.menuItemText, isSelected && styles.menuItemTextActive]}>
+                      <Text
+                        style={[
+                          styles.menuItemText,
+                          { color: colors.text },
+                          isSelected && [styles.menuItemTextActive, { color: colors.today }],
+                        ]}
+                      >
                         {unitLabels[u]}
                       </Text>
-                      {isSelected && <CheckIcon color="#01B7FF" />}
+                      {isSelected && <CheckIcon color={colors.today} />}
                     </Pressable>
                   );
                 })}
@@ -1000,6 +1028,7 @@ function WheelPickerColumn<T>({
   onSelect,
   getLabel,
 }: WheelPickerColumnProps<T>) {
+  const { colors, isDark } = useTheme();
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -1008,7 +1037,7 @@ function WheelPickerColumn<T>({
 
   return (
     <View style={styles.wheelColumnContainer}>
-      <View pointerEvents="none" style={styles.wheelCenterHighlight} />
+      <View pointerEvents="none" style={[styles.wheelCenterHighlight, { backgroundColor: isDark ? '#282F3E' : '#E5E5EA80' }]} />
 
       <ScrollView
         ref={scrollRef}
@@ -1038,7 +1067,13 @@ function WheelPickerColumn<T>({
                 scrollRef.current?.scrollTo({ y: idx * WHEEL_ITEM_HEIGHT, animated: true });
               }}
             >
-              <Text style={[styles.wheelItemText, isSelected && styles.wheelItemTextSelected]}>
+              <Text
+                style={[
+                  styles.wheelItemText,
+                  { color: colors.secondary },
+                  isSelected && [styles.wheelItemTextSelected, { color: colors.today }],
+                ]}
+              >
                 {getLabel(item)}
               </Text>
             </Pressable>

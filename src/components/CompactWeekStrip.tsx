@@ -2,7 +2,8 @@ import React from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { addDays, isSameDay, isToday, startOfWeek } from 'date-fns';
 import { weekdaysShort } from '@/services/date-service';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/context/theme-context';
 
 interface CompactWeekStripProps {
   selectedDate: Date;
@@ -19,6 +20,7 @@ export function CompactWeekStrip({
   screenWidth = 375,
   pageIndex = 0,
 }: CompactWeekStripProps) {
+  const { colors, isDark } = useTheme();
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -55,9 +57,9 @@ export function CompactWeekStrip({
     : false;
 
   const activeBorderColor = selectedIsToday
-    ? '#90CBFF'
+    ? (isDark ? '#0284C7' : '#90CBFF')
     : selectedIsWeekend
-    ? '#FFCDC8'
+    ? (isDark ? '#8A3B42' : '#FFCDC8')
     : colors.cardBorder;
 
   return (
@@ -97,14 +99,14 @@ export function CompactWeekStrip({
                 style={[
                   styles.cellNum,
                   isDayToday
-                    ? styles.cellNumToday
+                    ? [styles.cellNumToday, { color: colors.today }]
                     : isSelected
                     ? isWeekend
-                      ? styles.cellNumSelectedWeekend
-                      : styles.cellNumSelected
+                      ? [styles.cellNumSelectedWeekend, { color: colors.weekend }]
+                      : [styles.cellNumSelected, { color: colors.text }]
                     : isWeekend
-                    ? styles.cellNumWeekend
-                    : styles.cellNumUnselected,
+                    ? [styles.cellNumWeekend, { color: colors.weekend }]
+                    : [styles.cellNumUnselected, { color: colors.secondary }],
                 ]}
               >
                 {dayNum}
@@ -113,14 +115,14 @@ export function CompactWeekStrip({
                 style={[
                   styles.cellLabel,
                   isDayToday
-                    ? styles.cellLabelToday
+                    ? [styles.cellLabelToday, { color: colors.today }]
                     : isSelected
                     ? isWeekend
-                      ? styles.cellLabelSelectedWeekend
-                      : styles.cellLabelSelected
+                      ? [styles.cellLabelSelectedWeekend, { color: colors.weekend }]
+                      : [styles.cellLabelSelected, { color: colors.text }]
                     : isWeekend
-                    ? styles.cellLabelWeekend
-                    : styles.cellLabelUnselected,
+                    ? [styles.cellLabelWeekend, { color: colors.weekendNumText }]
+                    : [styles.cellLabelUnselected, { color: colors.secondary }],
                   opticalLabelStyle,
                 ]}
               >

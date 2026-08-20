@@ -1,6 +1,7 @@
 import { StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
+import { useTheme } from '@/context/theme-context';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface TimeChipProps {
@@ -10,6 +11,7 @@ interface TimeChipProps {
 }
 
 export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps) {
+  const { colors } = useTheme();
   const handlePress = async () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -25,12 +27,13 @@ export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps
       activeScale={0.93}
       style={[
         styles.chip,
+        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
         time ? styles.activeChip : undefined,
         !time ? styles.iconOnly : undefined,
       ]}
     >
-      <ClockIcon size={16} color={time ? '#4B5563' : '#707684'} />
-      {time && <Text style={styles.activeText}>{time}</Text>}
+      <ClockIcon size={16} color={time ? colors.chipActiveText : colors.chipText} />
+      {time && <Text style={[styles.activeText, { color: colors.chipActiveText }]}>{time}</Text>}
     </AnimatedPressable>
   );
 }

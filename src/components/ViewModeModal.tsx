@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/context/theme-context';
 import { AnimatedPressable } from './AnimatedPressable';
 
 export type ViewMode = 'day' | 'week' | 'month' | 'year';
@@ -24,6 +25,7 @@ export function ViewModeModal({
   buttonBounds,
   topOffset = 60,
 }: ViewModeModalProps) {
+  const { colors, isDark } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -97,20 +99,23 @@ export function ViewModeModal({
         >
           {/* Callout arrow pointing upward — SVG rounded */}
           <View style={[styles.arrowWrapper, { left: arrowLeft }]}>
-            <CalloutArrow />
+            <CalloutArrow color={colors.card} />
           </View>
-          <View style={styles.dropdownCard}>
-
+          <View style={[styles.dropdownCard, { backgroundColor: colors.card }]}>
 
           {/* Option 1: Week */}
           <AnimatedPressable
             activeScale={0.96}
-            style={[styles.optionItem, currentMode === 'week' && styles.optionItemActive]}
+            style={[
+              styles.optionItem,
+              { backgroundColor: colors.inputBg },
+              currentMode === 'week' && [styles.optionItemActive, { backgroundColor: isDark ? '#0284C725' : '#01B7FF12' }],
+            ]}
             onPress={() => handleSelect('week')}
           >
             <View style={styles.optionLeft}>
               <WeekViewIcon color={currentMode === 'week' ? colors.today : colors.text} />
-              <Text style={[styles.optionText, currentMode === 'week' && styles.optionTextActive]}>
+              <Text style={[styles.optionText, { color: colors.text }, currentMode === 'week' && [styles.optionTextActive, { color: colors.today }]]}>
                 Апта
               </Text>
             </View>
@@ -122,12 +127,16 @@ export function ViewModeModal({
           {/* Option 2: Month */}
           <AnimatedPressable
             activeScale={0.96}
-            style={[styles.optionItem, currentMode === 'month' && styles.optionItemActive]}
+            style={[
+              styles.optionItem,
+              { backgroundColor: colors.inputBg },
+              currentMode === 'month' && [styles.optionItemActive, { backgroundColor: isDark ? '#0284C725' : '#01B7FF12' }],
+            ]}
             onPress={() => handleSelect('month')}
           >
             <View style={styles.optionLeft}>
               <MonthViewIcon color={currentMode === 'month' ? colors.today : colors.text} />
-              <Text style={[styles.optionText, currentMode === 'month' && styles.optionTextActive]}>
+              <Text style={[styles.optionText, { color: colors.text }, currentMode === 'month' && [styles.optionTextActive, { color: colors.today }]]}>
                 Ай
               </Text>
             </View>
@@ -139,12 +148,16 @@ export function ViewModeModal({
           {/* Option 3: Year */}
           <AnimatedPressable
             activeScale={0.96}
-            style={[styles.optionItem, currentMode === 'year' && styles.optionItemActive]}
+            style={[
+              styles.optionItem,
+              { backgroundColor: colors.inputBg },
+              currentMode === 'year' && [styles.optionItemActive, { backgroundColor: isDark ? '#0284C725' : '#01B7FF12' }],
+            ]}
             onPress={() => handleSelect('year')}
           >
             <View style={styles.optionLeft}>
               <YearViewIcon color={currentMode === 'year' ? colors.today : colors.text} />
-              <Text style={[styles.optionText, currentMode === 'year' && styles.optionTextActive]}>
+              <Text style={[styles.optionText, { color: colors.text }, currentMode === 'year' && [styles.optionTextActive, { color: colors.today }]]}>
                 Жыл
               </Text>
             </View>
@@ -216,12 +229,12 @@ function CheckmarkIcon({ color }: { color: string }) {
 }
 
 /** Rounded callout arrow — smooth bezier tip and base corners, like the reference */
-function CalloutArrow() {
+function CalloutArrow({ color = '#FFFFFF' }: { color?: string }) {
   return (
     <Svg width={30} height={15} viewBox="0 0 30 15">
       <Path
         d="M0 15 C5 15, 10 8, 13 3 Q15 0 17 3 C20 8, 25 15, 30 15 Z"
-        fill={colors.background}
+        fill={color}
       />
     </Svg>
   );

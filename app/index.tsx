@@ -18,7 +18,8 @@ import Svg, { Circle, Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/context/theme-context';
 import { usePlanner } from '@/store/planner-store';
 import {
   addDays,
@@ -72,6 +73,7 @@ type DerivedWeekData = {
 };
 
 export default function Home() {
+  const { colors, isDark } = useTheme();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { openCard } = useCardTransition();
@@ -1082,8 +1084,8 @@ export default function Home() {
     );
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#18181A' }}>
-      <StatusBar style={isMotivationalOpen ? 'light' : 'dark'} animated />
+    <View style={{ flex: 1, backgroundColor: isDark ? colors.background : '#18181A' }}>
+      <StatusBar style={isMotivationalOpen ? 'light' : (isDark ? 'light' : 'dark')} animated />
       {/* ── Dark Motivational Header Reveal ────────────────────────── */}
       <Animated.View
         style={{
@@ -1211,8 +1213,8 @@ export default function Home() {
                     {done}/{total} орындалды
                   </Text>
                   {done === total && total > 0 && (
-                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#E6F9F0', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 9, color: '#059669', fontWeight: '800' }}>✓</Text>
+                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: isDark ? '#064E3B' : '#E6F9F0', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 9, color: isDark ? '#34D399' : '#059669', fontWeight: '800' }}>✓</Text>
                     </View>
                   )}
                 </View>
@@ -1250,7 +1252,7 @@ export default function Home() {
                 gap: 6,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.06,
+                shadowOpacity: isDark ? 0.2 : 0.06,
                 shadowRadius: 2,
                 elevation: 1,
               }}
@@ -1405,7 +1407,7 @@ export default function Home() {
             <Animated.View
               style={{
                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                backgroundColor: '#FFFFFF',
+                backgroundColor: colors.background,
                 overflow: 'hidden',
                 ...(fromYearMode
                   ? {
@@ -1448,7 +1450,7 @@ export default function Home() {
         </View>
       )}
 
-      {/* ── Floating input & Pure White Gradient Overlay ─────────── */}
+      {/* ── Floating input & Gradient Overlay ─────────── */}
       {(mode === 'day' || mode === 'week' || mode === 'month' || mode === 'year') && (
         <>
           <View
@@ -1465,10 +1467,10 @@ export default function Home() {
             <Svg width="100%" height="100%">
               <Defs>
                 <LinearGradient id="bottomFadeGradientIndex" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0" />
-                  <Stop offset="0.2" stopColor="#FFFFFF" stopOpacity="0.7" />
-                  <Stop offset="0.45" stopColor="#FFFFFF" stopOpacity="1" />
-                  <Stop offset="1" stopColor="#FFFFFF" stopOpacity="1" />
+                  <Stop offset="0" stopColor={colors.background} stopOpacity="0" />
+                  <Stop offset="0.2" stopColor={colors.background} stopOpacity="0.7" />
+                  <Stop offset="0.45" stopColor={colors.background} stopOpacity="1" />
+                  <Stop offset="1" stopColor={colors.background} stopOpacity="1" />
                 </LinearGradient>
               </Defs>
               <Rect x="0" y="0" width="100%" height="100%" fill="url(#bottomFadeGradientIndex)" />
@@ -1559,6 +1561,7 @@ export default function Home() {
 
 function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Task; targetLayout: { x: number; y: number; width: number; height: number } } | null; onComplete: () => void }) {
   const { width: sw, height: sh } = useWindowDimensions();
+  const { colors } = useTheme();
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -1578,29 +1581,33 @@ function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Tas
   const ty = targetLayout.y + targetLayout.height / 2 - 18;
   return (
     <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, zIndex: 99999, width: 180, opacity: anim.interpolate({ inputRange: [0, 0.08, 0.82, 1], outputRange: [0, 1, 1, 0] }), transform: [{ translateX: anim.interpolate({ inputRange: [0, 1], outputRange: [sx, tx] }) }, { translateY: anim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [sy, Math.min(sy, ty) - 36, ty] }) }, { scale: anim.interpolate({ inputRange: [0, 0.35, 0.8, 1], outputRange: [0.95, 1.05, 0.65, 0.3] }) }, { rotate: anim.interpolate({ inputRange: [0, 0.4, 0.8, 1], outputRange: ['-6deg', '-2deg', '4deg', '0deg'] }) }] }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: '#E5E7EB', boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
-        <View style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 2, borderColor: '#9CA3AF' }} />
-        <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '600', color: '#1F2937', flex: 1 }}>{task.title}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: colors.card, borderRadius: 14, borderWidth: 1, borderColor: colors.cardBorder, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
+        <View style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 2, borderColor: colors.inputPlaceholder }} />
+        <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '600', color: colors.text, flex: 1 }}>{task.title}</Text>
       </View>
     </Animated.View>
   );
 }
 
-function CalendarIcon({ color = colors.text }: { color?: string }) {
+function CalendarIcon({ color }: { color?: string }) {
+  const { colors } = useTheme();
+  const strokeColor = color ?? colors.text;
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Rect x="3" y="4" width="18" height="17" rx="3" stroke={color} strokeWidth="2" />
-      <Path d="M3 9h18M8 2v4M16 2v4" stroke={color} strokeWidth="2" strokeLinecap="round" />
-      <Path d="M7 14h2M11 14h2M15 14h2" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Rect x="3" y="4" width="18" height="17" rx="3" stroke={strokeColor} strokeWidth="2" />
+      <Path d="M3 9h18M8 2v4M16 2v4" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
+      <Path d="M7 14h2M11 14h2M15 14h2" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
     </Svg>
   );
 }
 
-function SelectorChevronIcon({ color = colors.today }: { color?: string }) {
+function SelectorChevronIcon({ color }: { color?: string }) {
+  const { colors } = useTheme();
+  const strokeColor = color ?? colors.today;
   return (
     <Svg width={12} height={16} viewBox="0 0 24 24" fill="none">
-      <Path d="M7 9l5-5 5 5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M7 15l5 5 5-5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7 9l5-5 5 5" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7 15l5 5 5-5" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
@@ -1633,6 +1640,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
 });
 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
+  const { colors } = useTheme();
   return (
     <AnimatedPressable
       accessibilityRole="button"
@@ -1719,6 +1727,8 @@ const MonthGrid = memo(function MonthGridComponent({
     return ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жс'];
   }, [firstDay]);
 
+  const { colors, isDark } = useTheme();
+
   return (
     <View
       style={{
@@ -1726,7 +1736,7 @@ const MonthGrid = memo(function MonthGridComponent({
         paddingHorizontal: H_PAD,
         paddingTop: TOP_PAD,
         paddingBottom: bottomPadding,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.background,
       }}
     >
       {/* ── Day-of-week labels */}
@@ -1740,7 +1750,7 @@ const MonthGrid = memo(function MonthGridComponent({
               fontSize: 11,
               fontWeight: '600',
               letterSpacing: 0.1,
-              color: i >= 5 ? '#FF5959' : '#94A3B8',
+              color: i >= 5 ? colors.weekend : colors.textMuted,
             }}
           >
             {label}
@@ -1762,7 +1772,7 @@ const MonthGrid = memo(function MonthGridComponent({
                   marginHorizontal: -2,
                   borderRadius: 10,
                   borderWidth: 1,
-                  borderColor: '#CBD5E1',
+                  borderColor: colors.cardBorder,
                 },
               ]}
             >
@@ -1801,6 +1811,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
   cellH: number;
   todayKey: string;
 }) {
+  const { colors, isDark } = useTheme();
   const { openCard } = useCardTransition();
   const cellRef = useRef<View>(null);
   const key = toDateKey(day);
@@ -1829,20 +1840,16 @@ const MonthDayCell = memo(function MonthDayCellComponent({
   };
 
   const cellBg = isToday
-    ? '#E5F6FD'
+    ? (isDark ? '#0C3247' : '#E5F6FD')
     : isWeekend
-    ? isOffMonth
-      ? '#FFF8F7'
-      : '#FFF3F2'
-    : isOffMonth
-    ? '#FAFBFC'
-    : '#F6F8FA';
+    ? (isDark ? (isOffMonth ? '#261719' : '#2D1A1D') : (isOffMonth ? '#FFF8F7' : '#FFF3F2'))
+    : (isDark ? (isOffMonth ? '#151820' : '#1A1E26') : (isOffMonth ? '#FAFBFC' : '#F6F8FA'));
 
   const cellBorderColor = isToday
     ? colors.today
     : isWeekend
-    ? '#FFE0DC'
-    : '#E8EDF3';
+    ? (isDark ? '#4A2328' : '#FFE0DC')
+    : (isDark ? '#282D3B' : '#E8EDF3');
 
   return (
     <Pressable
@@ -1867,7 +1874,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
           fontSize: isToday ? 13 : 12,
           fontWeight: isToday ? '800' : '600',
           lineHeight: 16,
-          color: isToday ? colors.today : isWeekend ? colors.weekend : '#2D3748',
+          color: isToday ? colors.today : isWeekend ? colors.weekend : colors.text,
           fontVariant: ['tabular-nums'],
           textAlign: 'center',
           marginBottom: 2,
@@ -1886,7 +1893,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
               fontSize: 9,
               fontWeight: '400',
               lineHeight: 12,
-              color: task.isCompleted ? '#A0AEC0' : '#4A5568',
+              color: task.isCompleted ? colors.checkedTaskText : (isDark ? '#D1D5DB' : '#4A5568'),
               textDecorationLine: task.isCompleted ? 'line-through' : 'none',
             }}
           >
@@ -1896,7 +1903,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
         {overflow > 0 && (
           <View
             style={{
-              backgroundColor: isToday ? `${colors.today}25` : '#E2E8F0',
+              backgroundColor: isToday ? `${colors.today}25` : (isDark ? '#2B313F' : '#E2E8F0'),
               borderRadius: 3.5,
               paddingHorizontal: 3.5,
               paddingVertical: 0.5,
@@ -1909,7 +1916,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
                 fontSize: 8.5,
                 fontWeight: '700',
                 lineHeight: 11,
-                color: isToday ? colors.today : '#4A5568',
+                color: isToday ? colors.today : (isDark ? '#E5E7EB' : '#4A5568'),
                 fontVariant: ['tabular-nums'],
               }}
             >
@@ -1935,6 +1942,7 @@ const YearView = memo(function YearViewComponent({
   onSelect: (i: number) => void;
   isSwipingRef?: React.RefObject<boolean>;
 }) {
+  const { colors, isDark } = useTheme();
   const today = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => toDateKey(today), [today]);
 
@@ -1990,7 +1998,7 @@ const YearView = memo(function YearViewComponent({
                 key={monthIndex}
                 style={[
                   yearStyles.monthBlock,
-                  { height: monthBlockHeight },
+                  { height: monthBlockHeight, backgroundColor: colors.card, borderColor: isCurrentMonth ? colors.today : colors.cardBorder },
                   isCurrentMonth && yearStyles.monthBlockActive,
                 ]}
                 onPress={() => {
@@ -1999,7 +2007,7 @@ const YearView = memo(function YearViewComponent({
                 }}
               >
                 {/* Month name */}
-                <Text style={[yearStyles.monthName, isCurrentMonth && yearStyles.monthNameActive]}>
+                <Text style={[yearStyles.monthName, { color: isCurrentMonth ? colors.today : colors.text }]}>
                   {months[monthIndex][0].toUpperCase() + months[monthIndex].slice(1)}
                 </Text>
 
@@ -2009,7 +2017,8 @@ const YearView = memo(function YearViewComponent({
                       key={i}
                       style={[
                         yearStyles.dowLabel,
-                        i >= 5 && { color: '#FF7B75' },
+                        { color: colors.textMuted },
+                        i >= 5 && { color: colors.weekend },
                       ]}
                     >
                       {d}
@@ -2030,12 +2039,13 @@ const YearView = memo(function YearViewComponent({
                         <View key={di} style={yearStyles.dayCell}>
                           <View style={[
                             yearStyles.dayInner,
-                            isT && yearStyles.todayCircle,
+                            isT && [yearStyles.todayCircle, { backgroundColor: colors.today }],
                           ]}>
                             <Text style={[
                               yearStyles.dayNum,
+                              { color: colors.text },
                               isT ? yearStyles.todayNum
-                              : isWeekend ? { color: '#FF6B6B' }
+                              : isWeekend ? { color: colors.weekend }
                               : hasTasks ? { color: colors.today, fontWeight: '700' }
                               : undefined,
                             ]}>
@@ -2151,6 +2161,7 @@ const yearStyles = StyleSheet.create({
 
 
 function Center({ children }: { children: React.ReactNode }) {
+  const { colors } = useTheme();
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: colors.background, padding: 24 }}>
       {children}
@@ -2169,6 +2180,7 @@ function AnimatedYearTitle({
   screenWidth: number;
   small: boolean;
 }) {
+  const { colors } = useTheme();
   const fontSize = small ? 32 : 38;
   const lineHeight = small ? 38 : 44;
   const slideOffset = small ? 95 : 115;

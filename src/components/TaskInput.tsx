@@ -1,5 +1,6 @@
 import { forwardRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent, type NativeSyntheticEvent, type TextInputContentSizeChangeEventData, type TextInputProps } from 'react-native';
+import { useTheme } from '@/context/theme-context';
 
 interface TaskInputProps extends TextInputProps {
   value: string;
@@ -9,6 +10,7 @@ interface TaskInputProps extends TextInputProps {
 }
 
 export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChangeText, onSubmit, onContentSizeChange, onHeightChange, style, ...props }, ref) => {
+  const { colors } = useTheme();
   const [contentHeight, setContentHeight] = useState(24);
 
   const updateHeight = (height: number) => {
@@ -33,7 +35,7 @@ export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChang
         value={value}
         onChangeText={onChangeText}
         placeholder="Не істеуіңіз керек?"
-        placeholderTextColor="#8E95A2"
+        placeholderTextColor={colors.inputPlaceholder}
         multiline
         scrollEnabled={contentHeight >= 128}
         onContentSizeChange={handleContentSizeChange}
@@ -41,9 +43,9 @@ export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChang
         returnKeyType="default"
         blurOnSubmit={false}
         onSubmitEditing={onSubmit}
-        selectionColor="#01B7FF"
-        cursorColor="#01B7FF"
-        style={[styles.input, style, { height: contentHeight, textAlign: 'left' }]}
+        selectionColor={colors.today}
+        cursorColor={colors.today}
+        style={[styles.input, { color: colors.text }, style, { height: contentHeight, textAlign: 'left' }]}
         {...props}
       />
       <Text

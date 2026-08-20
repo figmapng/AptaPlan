@@ -3,8 +3,9 @@ import { Animated, Dimensions, Easing, PanResponder, Pressable, ScrollView, Styl
 import Svg, { Circle, Path } from 'react-native-svg';
 import { addMonths } from 'date-fns';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
+import { useTheme } from '@/context/theme-context';
 import { fromDateKey, getNextWeekMondayKey, getThisWeekendKey, getTodayKey, getTomorrowKey, kzMonthsFull, toDateKey } from '@/utils/dateHelpers';
 import { AnimatedPressable } from './AnimatedPressable';
 import { MonthPickerModal } from './MonthPickerModal';
@@ -65,6 +66,7 @@ export function CalendarModal({
   onRemoveDate,
   onClose,
 }: CalendarModalProps) {
+  const { colors, isDark } = useTheme();
   const planner = usePlanner();
   const firstDayOfWeek = (planner?.settings?.firstDayOfWeek as 'mon' | 'sat' | 'sun') || 'mon';
   const weekdayHeaders = getWeekdayHeaders(firstDayOfWeek);
@@ -180,8 +182,8 @@ export function CalendarModal({
       label: 'Бүгін',
       icon: SunIcon,
       color: colors.today,
-      activeBg: '#EDF9FF',
-      activeBorder: '#BCE8FF',
+      activeBg: isDark ? '#0C3247' : '#EDF9FF',
+      activeBorder: isDark ? '#0369A1' : '#BCE8FF',
       textColor: colors.today,
     },
     {
@@ -189,27 +191,27 @@ export function CalendarModal({
       label: 'Ертең',
       icon: TomorrowIcon,
       color: '#FF9500',
-      activeBg: '#FFF6EB',
-      activeBorder: '#FED7AA',
-      textColor: '#F97316',
+      activeBg: isDark ? '#3D2508' : '#FFF6EB',
+      activeBorder: isDark ? '#854D0E' : '#FED7AA',
+      textColor: isDark ? '#FB923C' : '#F97316',
     },
     {
       key: weekendKey,
       label: 'Демалыс күні',
       icon: WeekendIcon,
-      color: '#FF4B3E',
-      activeBg: '#FFF1F0',
-      activeBorder: '#FFE0DE',
-      textColor: '#FF4B3E',
+      color: colors.weekend,
+      activeBg: isDark ? '#361A1D' : '#FFF1F0',
+      activeBorder: isDark ? '#7F1D1D' : '#FFE0DE',
+      textColor: colors.weekend,
     },
     {
       key: nextWeekKey,
       label: 'Келесі апта',
       icon: NextWeekIcon,
       color: '#8B5CF6',
-      activeBg: '#F5F3FF',
-      activeBorder: '#DDD6FE',
-      textColor: '#7C3AED',
+      activeBg: isDark ? '#2E1A47' : '#F5F3FF',
+      activeBorder: isDark ? '#6B21A8' : '#DDD6FE',
+      textColor: isDark ? '#A78BFA' : '#7C3AED',
     },
   ];
 
@@ -219,35 +221,29 @@ export function CalendarModal({
   const monthName = kzMonthsFull[currMonthIdx];
   const capitalizedMonthTitle = `${monthName[0].toUpperCase()}${monthName.slice(1)} ${currYear}`;
 
-  const matchedQuickOption = quickOptions.find((opt) => opt.key === tempSelectedDate);
-  const selectedOptionStyle = matchedQuickOption
-    ? {
-        activeBg: matchedQuickOption.activeBg,
-        activeBorder: matchedQuickOption.activeBorder,
-        textColor: matchedQuickOption.textColor,
-      }
-    : {
-        activeBg: '#EDF9FF',
-        activeBorder: '#BCE8FF',
-        textColor: colors.today,
-      };
+  const selectedOptionStyle = quickOptions.find((opt) => opt.key === tempSelectedDate) || {
+    activeBg: isDark ? '#0C3247' : '#EDF9FF',
+    activeBorder: isDark ? '#0369A1' : '#BCE8FF',
+    textColor: colors.today,
+  };
 
   return (
     <>
-      <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
+      <View style={styles.overlay} pointerEvents="box-none">
+        <Animated.View style={[styles.backdropBackground, { opacity: backdropOpacity }]} />
         <Pressable style={styles.backdrop} onPress={handleClose} />
         <Animated.View
-          style={[styles.sheet, { transform: [{ translateY }] }]}
+          style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}
           {...sheetPanResponder.panHandlers}
         >
-          <View style={styles.dragPill} />
+          <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
 
           {/* Top Sheet Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Күнді таңдау</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Күнді таңдау</Text>
             <AnimatedPressable
               activeScale={0.88}
-              style={styles.closeBtn}
+              style={[styles.closeBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
               onPress={handleClose}
               accessibilityRole="button"
               accessibilityLabel="Жабу"
@@ -274,6 +270,7 @@ export function CalendarModal({
                   activeScale={0.92}
                   style={[
                     styles.quickBtn,
+                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
                     isSelected && {
                       backgroundColor: opt.activeBg,
                       borderColor: opt.activeBorder,
@@ -285,6 +282,7 @@ export function CalendarModal({
                   <Text
                     style={[
                       styles.quickText,
+                      { color: colors.text },
                       isSelected && { color: opt.textColor, fontWeight: '700' },
                     ]}
                   >
@@ -296,12 +294,12 @@ export function CalendarModal({
           </ScrollView>
 
           {/* Calendar Card Container */}
-          <View style={styles.calendarCard}>
+          <View style={[styles.calendarCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
             {/* 1. FIXED STATIC MONTH HEADER (Clickable to open Month & Year Picker) */}
             <View style={styles.monthHeader}>
               <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handlePrevMonth}>
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                  <Path d="M15 18l-6-6 6-6" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M15 18l-6-6 6-6" stroke={colors.text} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </AnimatedPressable>
 
@@ -315,13 +313,13 @@ export function CalendarModal({
                 accessibilityRole="button"
                 accessibilityLabel="Ай мен жылды таңдау"
               >
-                <Text style={styles.monthTitle}>{capitalizedMonthTitle}</Text>
-                <ChevronDownIcon color="#1C1C1E" />
+                <Text style={[styles.monthTitle, { color: colors.text }]}>{capitalizedMonthTitle}</Text>
+                <ChevronDownIcon color={colors.text} />
               </AnimatedPressable>
 
               <AnimatedPressable activeScale={0.88} style={styles.arrowBtn} onPress={handleNextMonth}>
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                  <Path d="M9 18l6-6-6-6" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M9 18l6-6-6-6" stroke={colors.text} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </AnimatedPressable>
             </View>
@@ -333,6 +331,7 @@ export function CalendarModal({
                   key={`${w.label}-${idx}`}
                   style={[
                     styles.weekTitle,
+                    { color: colors.textMuted },
                     w.isWeekend && styles.weekTitleWeekend,
                   ]}
                 >
@@ -341,12 +340,13 @@ export function CalendarModal({
               ))}
             </View>
 
-            {/* 3. HORIZONTAL DAYS GRID CAROUSEL */}
+            {/* 3. INFINITE 3-PAGE SNAP CAROUSEL */}
             <ScrollView
               ref={scrollViewRef}
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
+              bounces={false}
               decelerationRate="fast"
               snapToInterval={ITEM_WIDTH}
               snapToAlignment="center"
@@ -404,15 +404,19 @@ export function CalendarModal({
             {onRemoveDate && (
               <AnimatedPressable
                 activeScale={0.94}
-                style={[styles.removeBtn, !tempSelectedDate && styles.removeBtnDisabled]}
+                style={[
+                  styles.removeBtn,
+                  { backgroundColor: isDark ? '#361A1D' : '#FFF1F0', borderColor: isDark ? '#522328' : '#FFE0DE' },
+                  !tempSelectedDate && [styles.removeBtnDisabled, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }],
+                ]}
                 onPress={() => {
                   triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
                   onRemoveDate();
                   handleClose();
                 }}
               >
-                <TrashIcon color={tempSelectedDate ? '#FF4B3E' : '#A0A5B1'} />
-                <Text style={[styles.removeText, !tempSelectedDate && styles.removeTextDisabled]}>
+                <TrashIcon color={tempSelectedDate ? colors.weekend : colors.inputPlaceholder} />
+                <Text style={[styles.removeText, { color: colors.weekend }, !tempSelectedDate && styles.removeTextDisabled]}>
                   Күнді өшіру
                 </Text>
               </AnimatedPressable>
@@ -420,14 +424,14 @@ export function CalendarModal({
 
             <AnimatedPressable
               activeScale={0.94}
-              style={[styles.confirmBtn, !onRemoveDate && styles.confirmBtnFull]}
+              style={[styles.confirmBtn, { backgroundColor: colors.today, borderColor: colors.today }, !onRemoveDate && styles.confirmBtnFull]}
               onPress={handleConfirm}
             >
               <Text style={styles.confirmText}>Сақтау</Text>
             </AnimatedPressable>
           </View>
         </Animated.View>
-      </Animated.View>
+      </View>
 
       {/* Month & Year Selection Modal */}
       <MonthPickerModal
@@ -474,24 +478,25 @@ function DaysGridMatrix({
 
   // Generate days for fixed 6-week matrix (42 cells)
   const firstDay = new Date(year, month, 1);
-  const rawDayOfWeek = firstDay.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-
-  let startOffset = 0;
-  if (firstDayOfWeek === 'mon') {
-    startOffset = (rawDayOfWeek + 6) % 7;
-  } else if (firstDayOfWeek === 'sat') {
-    startOffset = (rawDayOfWeek + 1) % 7;
-  } else {
-    startOffset = rawDayOfWeek;
-  }
-
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const prevMonthDays = new Date(year, month, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+
+  // Calculate leading days from previous month based on user's firstDayOfWeek
+  let leadingDays = 0;
+  if (firstDayOfWeek === 'sun') {
+    leadingDays = firstDayOfMonth; // Sun=0, Mon=1, ..., Sat=6
+  } else if (firstDayOfWeek === 'sat') {
+    leadingDays = (firstDayOfMonth + 1) % 7; // Sat=0, Sun=1, Mon=2, ...
+  } else {
+    // Default 'mon'
+    leadingDays = (firstDayOfMonth + 6) % 7; // Mon=0, Tue=1, ..., Sun=6
+  }
 
   const days: { dateStr: string; dayNum: number; isCurrentMonth: boolean; isWeekend: boolean }[] = [];
 
   // Trailing days from previous month
-  for (let i = startOffset - 1; i >= 0; i--) {
+  const prevMonthDays = new Date(year, month, 0).getDate();
+  for (let i = leadingDays - 1; i >= 0; i--) {
     const d = prevMonthDays - i;
     const prevDate = new Date(year, month - 1, d);
     const dayOfWeek = prevDate.getDay();
@@ -558,15 +563,19 @@ function DaysGridMatrix({
                       borderWidth: 1.5,
                       borderColor: selectedOptionStyle.activeBorder,
                     },
-                    isToday && !isSelected && styles.dayBadgeToday,
+                    isToday && !isSelected && [
+                      styles.dayBadgeToday,
+                      { backgroundColor: isDark ? '#0284C725' : '#40C9FF18', borderColor: colors.today },
+                    ],
                   ]}
                 >
                   <Text
                     style={[
                       styles.dayText,
-                      item.isWeekend && item.isCurrentMonth && styles.dayTextWeekend,
-                      !item.isCurrentMonth && (item.isWeekend ? styles.dayTextOtherMonthWeekend : styles.dayTextOtherMonth),
-                      isToday && !isSelected && styles.dayTextToday,
+                      { color: colors.text },
+                      item.isWeekend && item.isCurrentMonth && { color: colors.weekend },
+                      !item.isCurrentMonth && (item.isWeekend ? { color: isDark ? '#8A3B42' : '#FFB8B3' } : { color: colors.textMuted }),
+                      isToday && !isSelected && { color: colors.today, fontWeight: '700' },
                       isSelected && {
                         color: selectedOptionStyle.textColor,
                         fontWeight: '700',

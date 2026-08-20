@@ -13,7 +13,8 @@ import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { format, isToday } from 'date-fns';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/context/theme-context';
 import { fromDateKey, months, toDateKey, weekdays } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from '@/components/task-row';
@@ -28,6 +29,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getDatabase } from '@/database/database';
 
 export default function DayScreen() {
+  const { colors, isDark } = useTheme();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { date, add } = useLocalSearchParams<{ date: string; add?: string }>();
@@ -98,7 +100,7 @@ export default function DayScreen() {
   const completedCount = dayTasks.filter((task) => task.isCompleted).length;
   const isWeekend = selectedDate.getDay() === 0 || selectedDate.getDay() === 6;
   const isSelectedToday = isToday(selectedDate);
-  const activeDayColor = '#9FAABA';
+  const activeDayColor = isDark ? colors.today : '#9FAABA';
   const [measuredListHeight, setMeasuredListHeight] = useState(0);
   const emptyCardHeight = Math.round(windowHeight * 0.42);
   const cardMaxHeight = windowHeight - insets.top - (insets.bottom + 88) - 12;
@@ -189,8 +191,8 @@ export default function DayScreen() {
             backgroundColor: isSelectedToday ? activeDayColor : colors.card,
           }}
         >
-          <View style={{ backgroundColor: isSelectedToday ? 'white' : '#F0F0F2', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
-            <Text style={{ color: isWeekend ? colors.weekend : colors.text, fontSize: 14, fontWeight: '600' }}>
+          <View style={{ backgroundColor: isSelectedToday ? (isDark ? 'rgba(255,255,255,0.2)' : 'white') : (isDark ? '#262B38' : '#F0F0F2'), borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
+            <Text style={{ color: isSelectedToday ? 'white' : isWeekend ? colors.weekend : colors.text, fontSize: 14, fontWeight: '600' }}>
               {months[selectedDate.getMonth()][0].toUpperCase() + months[selectedDate.getMonth()].slice(1)}
             </Text>
           </View>
@@ -278,7 +280,7 @@ export default function DayScreen() {
           bottom: Math.max(insets.bottom + 68, 76),
           height: 48,
           borderRadius: 18,
-          backgroundColor: '#23262D',
+          backgroundColor: isDark ? '#262C38' : '#23262D',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -314,7 +316,7 @@ export default function DayScreen() {
           borderColor: colors.inputBorder,
         }}
       >
-        <ChevronLeftIcon />
+        <ChevronLeftIcon color={colors.iconPrimary} />
       </AnimatedPressable>
       <AnimatedPressable
         accessibilityRole="button"
@@ -361,12 +363,12 @@ export default function DayScreen() {
   );
 }
 
-function ChevronLeftIcon() {
+function ChevronLeftIcon({ color = '#7D8796' }: { color?: string }) {
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
       <Path
         d="M15 18l-6-6 6-6"
-        stroke={colors.inputPlusIcon}
+        stroke={color}
         strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"

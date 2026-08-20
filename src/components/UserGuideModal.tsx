@@ -9,7 +9,8 @@ import {
   View,
 } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/context/theme-context';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 
 interface UserGuideModalProps {
@@ -80,6 +81,7 @@ const SLIDES = [
 ];
 
 export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
+  const { colors, isDark } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);
   const { width } = useWindowDimensions();
 
@@ -100,21 +102,21 @@ export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
       <View style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
         
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.card }]}>
           {/* Header Bar */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Пайдалану Гиды</Text>
-            <AnimatedPressable onPress={onClose} style={styles.closeBtn}>
-              <Text style={styles.closeText}>✕</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Пайдалану Гиды</Text>
+            <AnimatedPressable onPress={onClose} style={[styles.closeBtn, { backgroundColor: colors.inputBg }]}>
+              <Text style={[styles.closeText, { color: colors.secondary }]}>✕</Text>
             </AnimatedPressable>
           </View>
 
           {/* Slide Content */}
           <View style={styles.slideCard}>
-            <View style={styles.iconContainer}>{currentSlide.icon}</View>
-            <Text style={styles.slideTitle}>{currentSlide.title}</Text>
-            <Text style={styles.slideSubtitle}>{currentSlide.subtitle}</Text>
-            <Text style={styles.slideDescription}>{currentSlide.description}</Text>
+            <View style={[styles.iconContainer, { backgroundColor: isDark ? '#0284C725' : '#EFF6FF' }]}>{currentSlide.icon}</View>
+            <Text style={[styles.slideTitle, { color: colors.text }]}>{currentSlide.title}</Text>
+            <Text style={[styles.slideSubtitle, { color: colors.today }]}>{currentSlide.subtitle}</Text>
+            <Text style={[styles.slideDescription, { color: colors.secondary }]}>{currentSlide.description}</Text>
           </View>
 
           {/* Pagination Indicators */}
@@ -124,7 +126,9 @@ export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
                 key={idx}
                 style={[
                   styles.dot,
-                  idx === activeIndex ? styles.activeDot : styles.inactiveDot,
+                  idx === activeIndex
+                    ? [styles.activeDot, { backgroundColor: colors.today }]
+                    : [styles.inactiveDot, { backgroundColor: isDark ? '#2E3440' : '#E2E8F0' }],
                 ]}
               />
             ))}
@@ -134,13 +138,13 @@ export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
           <View style={styles.actions}>
             {activeIndex < SLIDES.length - 1 ? (
               <Pressable onPress={onClose} style={styles.skipBtn}>
-                <Text style={styles.skipText}>Секіру</Text>
+                <Text style={[styles.skipText, { color: colors.secondary }]}>Секіру</Text>
               </Pressable>
             ) : (
               <View style={{ flex: 1 }} />
             )}
 
-            <AnimatedPressable onPress={handleNext} style={styles.nextBtn}>
+            <AnimatedPressable onPress={handleNext} style={[styles.nextBtn, { backgroundColor: colors.today }]}>
               <Text style={styles.nextText}>
                 {activeIndex === SLIDES.length - 1 ? 'Түсінікті!' : 'Келесі →'}
               </Text>

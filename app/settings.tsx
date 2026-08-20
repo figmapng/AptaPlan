@@ -17,8 +17,9 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Path } from 'react-native-svg';
 import Constants from 'expo-constants';
 
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
+import { useTheme } from '@/context/theme-context';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { UserGuideModal } from '@/components/UserGuideModal';
 import { getDatabase } from '@/database/database';
@@ -27,6 +28,7 @@ import { exportBackup, importBackup } from '@/services/backup-service';
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const {
     settings,
     setPref,
@@ -39,11 +41,13 @@ export default function SettingsScreen() {
 
   // Modals for selection settings
   const [guideOpen, setGuideOpen] = useState(false);
+  const [themeModalOpen, setThemeModalOpen] = useState(false);
   const [placementModalOpen, setPlacementModalOpen] = useState(false);
   const [sortModalOpen, setSortModalOpen] = useState(false);
   const [firstDayModalOpen, setFirstDayModalOpen] = useState(false);
   const [lastDayModalOpen, setLastDayModalOpen] = useState(false);
   const [defaultViewModeModalOpen, setDefaultViewModeModalOpen] = useState(false);
+
 
   // Sync state
   const [isSyncing, setIsSyncing] = useState(false);
@@ -155,19 +159,19 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       {/* iOS-style Navigation Bar */}
       <View style={styles.header}>
         <AnimatedPressable
           activeScale={0.85}
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           accessibilityLabel="Артқа қайту"
         >
-          <Ionicons name="chevron-back" size={20} color={colors.inputPlusIcon} style={{ marginLeft: -1 }} />
+          <Ionicons name="chevron-back" size={20} color={colors.iconPrimary} style={{ marginLeft: -1 }} />
         </AnimatedPressable>
 
-        <Text style={styles.headerTitle}>Баптаулар</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Баптаулар</Text>
 
         <View style={styles.headerSpacer} />
       </View>
@@ -248,6 +252,19 @@ export default function SettingsScreen() {
             }
             onPress={() => setLastDayModalOpen(true)}
           />
+          <Divider />
+          <SettingRow
+            icon="moon-outline"
+            label="Тақырып"
+            valueText={
+              settings.theme === 'dark'
+                ? 'Күңгірт'
+                : settings.theme === 'light'
+                ? 'Ашық'
+                : 'Жүйелік'
+            }
+            onPress={() => setThemeModalOpen(true)}
+          />
         </Section>
 
         {/* Карточка 2: Apple Reminders (Еске салғыштар) синхрондау */}
@@ -327,6 +344,42 @@ export default function SettingsScreen() {
 
       {/* User Guide Modal */}
       <UserGuideModal visible={guideOpen} onClose={() => setGuideOpen(false)} />
+
+      {/* Theme Modal */}
+      <OptionModal
+        visible={themeModalOpen}
+        title="Тақырып"
+        onClose={() => setThemeModalOpen(false)}
+        options={[
+          {
+            label: 'Жүйелік',
+            sublabel: 'Құрылғы режиміне сәйкес',
+            selected: !settings.theme || settings.theme === 'system',
+            onSelect: () => {
+              void setPref('theme', 'system');
+              setThemeModalOpen(false);
+            },
+          },
+          {
+            label: 'Ашық',
+            sublabel: 'Жарық түстер',
+            selected: settings.theme === 'light',
+            onSelect: () => {
+              void setPref('theme', 'light');
+              setThemeModalOpen(false);
+            },
+          },
+          {
+            label: 'Күңгірт',
+            sublabel: 'Қараңғы түстер',
+            selected: settings.theme === 'dark',
+            onSelect: () => {
+              void setPref('theme', 'dark');
+              setThemeModalOpen(false);
+            },
+          },
+        ]}
+      />
 
       {/* Visual Default View Mode Modal */}
       <DefaultViewModeModal
@@ -437,8 +490,9 @@ function Section({
 }: {
   children: React.ReactNode;
 }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.card}>{children}</View>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>{children}</View>
   );
 }
 
@@ -462,7 +516,7 @@ function AppleRemindersIcon({ size = 21 }: { size?: number }) {
 
 function SettingRow({
   icon,
-  iconColor = '#23262D',
+  iconColor,
   customIcon,
   label,
   labelStyle,
@@ -479,27 +533,30 @@ function SettingRow({
   rightElement?: React.ReactNode;
   onPress?: () => void;
 }) {
+  const { colors } = useTheme();
+  const effectiveIconColor = iconColor ?? colors.text;
+
   const content = (
     <View style={styles.rowInner}>
       <View style={styles.iconBox}>
         {customIcon ? (
           customIcon
         ) : icon ? (
-          <Ionicons name={icon as any} size={21} color={iconColor} />
+          <Ionicons name={icon as any} size={21} color={effectiveIconColor} />
         ) : null}
       </View>
-      <Text style={[styles.rowLabel, labelStyle]}>
+      <Text style={[styles.rowLabel, { color: colors.text }, labelStyle]}>
         {label}
       </Text>
       {valueText ? (
-        <Text style={styles.valueText} numberOfLines={1}>
+        <Text style={[styles.valueText, { color: colors.secondary }]} numberOfLines={1}>
           {valueText}
         </Text>
       ) : null}
       {rightElement ? (
         rightElement
       ) : onPress ? (
-        <Ionicons name="chevron-forward" size={16} color="#CBD5E1" style={{ marginLeft: 6 }} />
+        <Ionicons name="chevron-forward" size={16} color={colors.iconSecondary} style={{ marginLeft: 6 }} />
       ) : null}
     </View>
   );
@@ -516,7 +573,8 @@ function SettingRow({
 }
 
 function Divider() {
-  return <View style={styles.divider} />;
+  const { colors } = useTheme();
+  return <View style={[styles.divider, { backgroundColor: colors.divider }]} />;
 }
 
 function OptionModal({
@@ -530,6 +588,7 @@ function OptionModal({
   onClose: () => void;
   options: { label: string; sublabel?: string; selected: boolean; onSelect: () => void }[];
 }) {
+  const { colors } = useTheme();
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -558,13 +617,13 @@ function OptionModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-        <View style={styles.modalContentCard}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderColor: colors.sheetBorder }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalHeaderTitle}>{title}</Text>
-            <Pressable onPress={handleClose} style={styles.closeButton} hitSlop={8}>
+            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{title}</Text>
+            <Pressable onPress={handleClose} style={[styles.closeButton, { backgroundColor: colors.inputBg }]} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
           </View>
@@ -580,12 +639,17 @@ function OptionModal({
                   onPress={() => setSelectedIdx(i)}
                 >
                   <View style={styles.optionRowLeft}>
-                    <Text style={[styles.optionRowTitle, isChecked && styles.optionRowTitleSelected]}>
+                    <Text style={[styles.optionRowTitle, { color: colors.text }, isChecked && styles.optionRowTitleSelected]}>
                       {opt.label}
                     </Text>
+                    {opt.sublabel ? (
+                      <Text style={{ fontSize: 12, color: colors.secondary, marginTop: 2 }}>
+                        {opt.sublabel}
+                      </Text>
+                    ) : null}
                   </View>
-                  <View style={[styles.radioButton, isChecked && styles.radioButtonSelected]}>
-                    {isChecked && <View style={styles.radioButtonInner} />}
+                  <View style={[styles.radioButton, { borderColor: colors.cardBorder, backgroundColor: colors.card }, isChecked && styles.radioButtonSelected]}>
+                    {isChecked && <View style={[styles.radioButtonInner, { backgroundColor: colors.today }]} />}
                   </View>
                 </Pressable>
               );
@@ -593,7 +657,7 @@ function OptionModal({
           </View>
 
           {/* Bottom Action Button */}
-          <Pressable style={styles.modalContinueButton} onPress={handleConfirm}>
+          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
             <Text style={styles.modalContinueButtonText}>Растау</Text>
           </Pressable>
         </View>
@@ -803,15 +867,17 @@ function DefaultViewModeModal({
     },
   ];
 
+  const { colors } = useTheme();
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.modalContentCard}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderColor: colors.sheetBorder }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalHeaderTitle}>Әдепкі режим</Text>
-            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
+            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Әдепкі режим</Text>
+            <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.inputBg }]} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
           </View>
@@ -826,7 +892,8 @@ function DefaultViewModeModal({
                   activeScale={0.95}
                   style={[
                     styles.visualCard,
-                    isSelected && styles.visualCardSelected,
+                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+                    isSelected && [styles.visualCardSelected, { borderColor: colors.today }],
                   ]}
                   onPress={() => setSelected(opt.mode)}
                 >
@@ -837,15 +904,16 @@ function DefaultViewModeModal({
                   <Text
                     style={[
                       styles.visualCardLabel,
-                      isSelected && styles.visualCardLabelSelected,
+                      { color: colors.text },
+                      isSelected && [styles.visualCardLabelSelected, { color: colors.today }],
                     ]}
                   >
                     {opt.label}
                   </Text>
 
                   {/* Radio Indicator */}
-                  <View style={[styles.visualRadio, isSelected && styles.visualRadioSelected]}>
-                    {isSelected && <View style={styles.visualRadioInner} />}
+                  <View style={[styles.visualRadio, { borderColor: colors.cardBorder, backgroundColor: colors.card }, isSelected && [styles.visualRadioSelected, { borderColor: colors.today }]]}>
+                    {isSelected && <View style={[styles.visualRadioInner, { backgroundColor: colors.today }]} />}
                   </View>
                 </AnimatedPressable>
               );
@@ -853,7 +921,7 @@ function DefaultViewModeModal({
           </View>
 
           {/* Confirm Button */}
-          <Pressable style={styles.modalContinueButton} onPress={handleConfirm}>
+          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
             <Text style={styles.modalContinueButtonText}>Сақтау</Text>
           </Pressable>
         </View>
@@ -959,15 +1027,17 @@ function LastDayVisibilityModal({
     },
   ];
 
+  const { colors } = useTheme();
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.modalContentCard}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderColor: colors.sheetBorder }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
-            <Text style={styles.modalHeaderTitle}>Соңғы күннің көрінуі</Text>
-            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
+            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Соңғы күннің көрінуі</Text>
+            <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.inputBg }]} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
           </View>
@@ -982,7 +1052,8 @@ function LastDayVisibilityModal({
                   activeScale={0.97}
                   style={[
                     styles.verticalVisualCard,
-                    isSelected && styles.verticalVisualCardSelected,
+                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+                    isSelected && [styles.verticalVisualCardSelected, { borderColor: colors.today }],
                   ]}
                   onPress={() => setSelected(opt.mode)}
                 >
@@ -996,12 +1067,13 @@ function LastDayVisibilityModal({
                     <Text
                       style={[
                         styles.verticalCardLabel,
-                        isSelected && styles.verticalCardLabelSelected,
+                        { color: colors.text },
+                        isSelected && [styles.verticalCardLabelSelected, { color: colors.today }],
                       ]}
                     >
                       {opt.label}
                     </Text>
-                    <Text style={styles.verticalCardSublabel}>
+                    <Text style={[styles.verticalCardSublabel, { color: colors.secondary }]}>
                       {opt.sublabel}
                     </Text>
                   </View>
@@ -1010,10 +1082,11 @@ function LastDayVisibilityModal({
                   <View
                     style={[
                       styles.visualRadio,
-                      isSelected && styles.visualRadioSelected,
+                      { borderColor: colors.cardBorder, backgroundColor: colors.card },
+                      isSelected && [styles.visualRadioSelected, { borderColor: colors.today }],
                     ]}
                   >
-                    {isSelected && <View style={styles.visualRadioInner} />}
+                    {isSelected && <View style={[styles.visualRadioInner, { backgroundColor: colors.today }]} />}
                   </View>
                 </AnimatedPressable>
               );
@@ -1021,7 +1094,7 @@ function LastDayVisibilityModal({
           </View>
 
           {/* Confirm Button */}
-          <Pressable style={styles.modalContinueButton} onPress={handleConfirm}>
+          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
             <Text style={styles.modalContinueButtonText}>Сақтау</Text>
           </Pressable>
         </View>

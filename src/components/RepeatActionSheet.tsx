@@ -3,7 +3,8 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-nativ
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
-import { colors } from '@/constants/colors';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/context/theme-context';
 import { getShortRepeatLabel, repeatLabels } from './RepeatChip';
 import { AnimatedPressable } from './AnimatedPressable';
 import { CustomRepeatConfig, CustomRepeatModal, CustomUnit } from './CustomRepeatModal';
@@ -46,6 +47,7 @@ export function RepeatActionSheet({
   onSelectRepeat,
   onClose,
 }: RepeatActionSheetProps) {
+  const { colors, isDark } = useTheme();
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const onCloseRef = useRef(onClose);
@@ -98,20 +100,20 @@ export function RepeatActionSheet({
     <>
       <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
         <Pressable style={styles.backdrop} onPress={handleClose} />
-        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-          <View style={styles.dragPill} />
+        <Animated.View style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}>
+          <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
 
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Қайталау жиілігі</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Қайталау жиілігі</Text>
             <AnimatedPressable
               activeScale={0.88}
-              style={styles.closeBtn}
+              style={[styles.closeBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
               onPress={handleClose}
               accessibilityRole="button"
               accessibilityLabel="Жабу"
             >
-              <CloseXIcon color="#1C1C1E" />
+              <CloseXIcon color={colors.text} />
             </AnimatedPressable>
           </View>
 
@@ -127,24 +129,28 @@ export function RepeatActionSheet({
                   ? `Арнайы (${shortCustomLabel})`
                   : repeatLabels[opt];
 
-              const iconColor = isSelected ? '#01B7FF' : '#8E8E93';
+              const iconColor = isSelected ? colors.today : colors.secondary;
 
               return (
                 <AnimatedPressable
                   key={opt}
                   activeScale={0.97}
-                  style={[styles.optionItem, isSelected && styles.optionItemActive]}
+                  style={[
+                    styles.optionItem,
+                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+                    isSelected && [styles.optionItemActive, { backgroundColor: isDark ? '#0284C725' : '#01B7FF12', borderColor: colors.today }],
+                  ]}
                   onPress={() => handleOptionClick(opt)}
                 >
                   <View style={styles.optionLeftContent}>
                     <OptionIcon opt={opt} color={iconColor} />
-                    <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>
+                    <Text style={[styles.optionText, { color: colors.text }, isSelected && [styles.optionTextActive, { color: colors.today }]]}>
                       {labelText}
                     </Text>
                   </View>
                   {isSelected && (
                     <View style={styles.checkmarkBadge}>
-                      <CheckIcon color="#01B7FF" />
+                      <CheckIcon color={colors.today} />
                     </View>
                   )}
                 </AnimatedPressable>
