@@ -31,8 +31,8 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
       activeScale={0.93}
       style={[
         styles.chip,
-        { backgroundColor: '#FFFFFF', borderColor: colors.inputBorder },
-        date ? [styles.activeChip, { backgroundColor: '#FFFFFF', borderColor: colors.cardBorder }] : undefined,
+        { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+        date ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }] : undefined,
         !date ? styles.iconOnly : undefined,
       ]}
     >
