@@ -141,6 +141,7 @@ export function CustomRepeatModal({
   onConfirm,
   onClose,
 }: CustomRepeatModalProps) {
+  const { colors, isDark } = useTheme();
   const planner = usePlanner();
   const firstDayOfWeek = planner.settings?.firstDayOfWeek || 'mon';
   const orderedWeekdayIndices = getOrderedWeekdayIndices(firstDayOfWeek);

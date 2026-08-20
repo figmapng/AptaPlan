@@ -465,14 +465,15 @@ function DaysGridMatrix({
   monthDate,
   selectedDate,
   todayKey,
-  firstDayOfWeek,
+  firstDayOfWeek = 'mon',
   onSelectDay,
   selectedOptionStyle = {
     activeBg: '#EDF9FF',
     activeBorder: '#BCE8FF',
-    textColor: colors.today,
+    textColor: '#0284C7',
   },
 }: DaysGridMatrixProps) {
+  const { colors, isDark } = useTheme();
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
 
