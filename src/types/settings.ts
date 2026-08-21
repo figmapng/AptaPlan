@@ -1,3 +1,5 @@
+export type ThemeMode = 'system' | 'light' | 'dark';
+
 export type ThemeId =
   | 'ocean'
   | 'pink'
@@ -17,6 +19,8 @@ export type PlannerSettings = {
   lastDayVisibility?: 'visible' | 'hidden';
   defaultViewMode?: 'day' | 'week' | 'month' | 'year';
   theme?: ThemeId;
+  themeMode?: ThemeMode;
+  appIcon?: string;
   syncAppleReminders?: boolean;
   autoSyncAppleReminders?: boolean;
   lastRemindersSyncTime?: string;
@@ -30,6 +34,7 @@ export const defaultSettings: PlannerSettings = {
   lastDayVisibility: 'visible',
   defaultViewMode: 'week',
   theme: 'ocean',
+  themeMode: 'system',
   syncAppleReminders: false,
   autoSyncAppleReminders: true,
 };

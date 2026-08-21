@@ -99,10 +99,10 @@ export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
         
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.container, { backgroundColor: colors.card }]}>
           {/* Header Bar */}
           <View style={styles.header}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>Пайдалану Гиды</Text>
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: 'white',
+    backgroundColor: defaultColors.card,
     borderRadius: 24,
     padding: 24,
     boxShadow: '0 12px 32px rgba(15, 23, 42, 0.2)',

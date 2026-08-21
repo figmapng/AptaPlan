@@ -60,13 +60,13 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
       activeScale={0.93}
       style={[
         styles.chip,
-        { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-        isActive ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }] : undefined,
+        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
+        isActive ? { backgroundColor: colors.tintBg, borderColor: colors.today } : undefined,
         !label ? styles.iconOnly : undefined,
       ]}
     >
-      <RepeatIcon size={16} color={isActive ? colors.text : colors.secondary} />
-      {label && <Text style={[styles.text, { color: colors.text }]}>{label}</Text>}
+      <RepeatIcon size={16} color={isActive ? colors.today : colors.chipText} />
+      {label && <Text style={[styles.text, { color: isActive ? colors.today : colors.chipText, fontWeight: isActive ? '600' : '500' }]}>{label}</Text>}
     </AnimatedPressable>
   );
 }

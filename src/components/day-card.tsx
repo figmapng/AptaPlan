@@ -50,7 +50,7 @@ export const DayCard = memo(function DayCardComponent({
   const isSaturday = date.getDay() === 6;
   const isWeekend = isSunday || isSaturday;
 
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const completedCount = tasks.filter((task) => task.isCompleted).length;
   const cardRef = useRef<View>(null);
   const { openCard, activeDate, progress: transitionProgress, originFrame } = useCardTransition();
@@ -139,18 +139,18 @@ export const DayCard = memo(function DayCardComponent({
       })
     : 1;
 
-  const headerBg = today ? colors.today : isWeekend ? '#FFE5E2' : colors.cardHeaderBg;
-  const outerBg = today ? colors.today : isWeekend ? '#FFE5E2' : colors.cardHeaderBg;
-  const cardBorderColor = today ? colors.today : isWeekend ? '#FFE5E2' : colors.cardBorder;
+  const headerBg = today ? colors.activeHeaderBg : isWeekend ? (isDark ? '#351B1E' : '#FFE5E2') : colors.cardHeaderBg;
+  const outerBg = today ? colors.activeCardBorder : isWeekend ? (isDark ? '#351B1E' : '#FFE5E2') : colors.cardHeaderBg;
+  const cardBorderColor = today ? colors.activeCardBorder : isWeekend ? (isDark ? '#522328' : '#F2D2CF') : colors.cardBorder;
   const cardBorderWidth = 0;
 
   const numOuterBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
   const numInnerBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
-  const numTextColor = today ? colors.today : isWeekend ? colors.weekendNumText : colors.dateNumText;
+  const numTextColor = today ? (isDark && colors.today === '#E4E4E7' ? '#18181B' : colors.today) : isWeekend ? colors.weekendNumText : colors.dateNumText;
 
-  const dayNameColor = today ? '#FFFFFF' : isWeekend ? colors.sundayText : colors.text;
-  const progressCountColor = today ? '#FFFFFF' : isWeekend ? '#7B4545' : colors.text;
-  const progressTotalColor = today ? 'rgba(255, 255, 255, 0.8)' : isWeekend ? 'rgba(123, 69, 69, 0.7)' : colors.secondary;
+  const dayNameColor = today ? (colors.activeHeaderText || '#FFFFFF') : isWeekend ? colors.sundayText : colors.text;
+  const progressCountColor = today ? (colors.activeHeaderText || '#FFFFFF') : isWeekend ? (isDark ? '#FFAAA4' : '#7B4545') : colors.text;
+  const progressTotalColor = today ? (colors.activeHeaderText === '#18181B' ? 'rgba(24, 24, 27, 0.7)' : 'rgba(255, 255, 255, 0.8)') : isWeekend ? (isDark ? 'rgba(255, 170, 164, 0.7)' : 'rgba(123, 69, 69, 0.7)') : colors.secondary;
 
   const dayName = weekdays[date.getDay()] ?? '';
   const cardHeader = (
@@ -263,11 +263,11 @@ export const DayCard = memo(function DayCardComponent({
       style={[
         {
           overflow: 'hidden',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.card,
           borderRadius: 12,
           borderCurve: 'continuous',
-          marginHorizontal: 2,
-          marginBottom: 2,
+          marginHorizontal: 1.5,
+          marginBottom: 1.5,
           flex: wide ? 1 : undefined,
         },
         wide ? undefined : { height: bodyHeight },

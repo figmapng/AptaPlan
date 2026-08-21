@@ -59,7 +59,7 @@ export function CompactWeekStrip({
   const activeBorderColor = selectedIsToday
     ? colors.today
     : selectedIsWeekend
-    ? '#FFCDC8'
+    ? colors.weekendNumBg
     : colors.cardBorder;
 
   return (

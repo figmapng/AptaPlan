@@ -17,6 +17,7 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { Task, TaskRepeat } from '@/types/task';
+import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { getTodayKey } from '@/utils/dateHelpers';
@@ -313,7 +314,7 @@ export function TaskBottomSheet({
       }}
       onRequestClose={handleDismissRequest}
     >
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
         <Pressable style={styles.backdrop} onPress={handleDismissRequest} />
 
         <Animated.View
@@ -321,6 +322,7 @@ export function TaskBottomSheet({
           style={[
             styles.sheetContainer,
             {
+              backgroundColor: colors.sheetBg,
               transform: [{ translateY }],
               paddingBottom: animatedPaddingBottom,
             },
@@ -473,7 +475,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.sheetBg,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 16,
@@ -488,12 +490,12 @@ const styles = StyleSheet.create({
     position: 'relative',
     minHeight: 52,
     borderWidth: 1,
-    borderColor: '#E5E8EB',
+    borderColor: colors.inputBorder,
     borderRadius: 26,
     paddingLeft: 16,
     paddingRight: 5,
     paddingVertical: 5,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.inputBg,
   },
   inputContent: {
     position: 'absolute',

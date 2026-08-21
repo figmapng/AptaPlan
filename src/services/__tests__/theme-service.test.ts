@@ -2,8 +2,9 @@ import { THEMES, THEME_LIST, getThemeColors } from '@/constants/themes';
 import { defaultSettings } from '@/types/settings';
 
 describe('Theme System', () => {
-  it('has default ocean theme configured in defaultSettings', () => {
+  it('has default ocean theme and system themeMode configured in defaultSettings', () => {
     expect(defaultSettings.theme).toBe('ocean');
+    expect(defaultSettings.themeMode).toBe('system');
   });
 
   it('contains all 9 required themes with valid hex colors', () => {
@@ -28,18 +29,18 @@ describe('Theme System', () => {
     const emeraldColors = getThemeColors('emerald');
     expect(emeraldColors.today).toBe('#00A15F');
     expect(emeraldColors.primary).toBe('#00A15F');
-    expect(emeraldColors.background).toBe('#FAFEFB');
-    expect(emeraldColors.tintBg).toBe('#E6F7EE');
+    expect(emeraldColors.background).toBe('#FFFFFF');
+    expect(emeraldColors.tintBg).toBe('#F0FAF4');
 
     const amberColors = getThemeColors('amber');
     expect(amberColors.today).toBe('#FFAA01');
-    expect(amberColors.background).toBe('#FFFEFC');
+    expect(amberColors.background).toBe('#FFFFFF');
     expect(amberColors.cardHeaderBg).toBe('#F2F0ED');
-    expect(amberColors.inputBg).toBe('#FAF8F5');
+    expect(amberColors.inputBg).toBe('#FCFAF7');
 
     const violetColors = getThemeColors('violet');
     expect(violetColors.today).toBe('#906AF4');
-    expect(violetColors.background).toBe('#FDFDFF');
+    expect(violetColors.background).toBe('#FFFFFF');
 
     const pinkColors = getThemeColors('pink');
     expect(pinkColors.today).toBe('#FF87C4');
@@ -48,5 +49,28 @@ describe('Theme System', () => {
     const fallbackColors = getThemeColors(undefined as any);
     expect(fallbackColors.today).toBe('#01B7FF');
     expect(fallbackColors.background).toBe('#FFFFFF');
+  });
+
+  it('getThemeColors with isDark=true returns dark palette with theme accent', () => {
+    const darkOcean = getThemeColors('ocean', true);
+    expect(darkOcean.background).toBe('#10131A');
+    expect(darkOcean.card).toBe('#1C222E');
+    expect(darkOcean.text).toBe('#F3F5F9');
+    expect(darkOcean.today).toBe('#01B7FF');
+
+    const darkEmerald = getThemeColors('emerald', true);
+    expect(darkEmerald.background).toBe('#10131A');
+    expect(darkEmerald.card).toBe('#1C222E');
+    expect(darkEmerald.today).toBe('#00A15F');
+
+    const darkMinimal = getThemeColors('minimal', true);
+    expect(darkMinimal.today).toBe('#E4E4E7');
+    expect(darkMinimal.activeCardBorder).toBe('#A1A1AA');
+    expect(darkMinimal.activeHeaderBg).toBe('#3F485A');
+    expect(darkMinimal.activeHeaderText).toBe('#FFFFFF');
+
+    const darkSlate = getThemeColors('slate', true);
+    expect(darkSlate.today).toBe('#94A3B8');
+    expect(darkSlate.activeCardBorder).toBe('#94A3B8');
   });
 });

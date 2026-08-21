@@ -98,9 +98,9 @@ export function ViewModeModal({
         >
           {/* Callout arrow pointing upward — SVG rounded */}
           <View style={[styles.arrowWrapper, { left: arrowLeft }]}>
-            <CalloutArrow fill="#FFFFFF" />
+            <CalloutArrow fill={colors.card} />
           </View>
-          <View style={[styles.dropdownCard, { backgroundColor: '#FFFFFF' }]}>
+          <View style={[styles.dropdownCard, { backgroundColor: colors.card }]}>
 
 
           {/* Option 1: Week */}

@@ -28,13 +28,13 @@ export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps
       activeScale={0.93}
       style={[
         styles.chip,
-        { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-        time ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }] : undefined,
+        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
+        time ? { backgroundColor: colors.tintBg, borderColor: colors.today } : undefined,
         !time ? styles.iconOnly : undefined,
       ]}
     >
-      <ClockIcon size={16} color={time ? colors.text : colors.secondary} />
-      {time && <Text style={[styles.activeText, { color: colors.text }]}>{time}</Text>}
+      <ClockIcon size={16} color={time ? colors.today : colors.chipText} />
+      {time && <Text style={[styles.activeText, { color: colors.today, fontWeight: '600' }]}>{time}</Text>}
     </AnimatedPressable>
   );
 }

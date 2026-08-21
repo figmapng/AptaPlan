@@ -47,7 +47,7 @@ export function RepeatActionSheet({
   onSelectRepeat,
   onClose,
 }: RepeatActionSheetProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const onCloseRef = useRef(onClose);
@@ -134,7 +134,7 @@ export function RepeatActionSheet({
                   ? `Арнайы (${shortCustomLabel})`
                   : repeatLabels[opt];
 
-              const iconColor = isSelected ? colors.today : '#8E8E93';
+              const iconColor = isSelected ? colors.today : colors.secondary;
 
               return (
                 <AnimatedPressable
@@ -143,7 +143,7 @@ export function RepeatActionSheet({
                   style={[
                     styles.optionItem,
                     { backgroundColor: colors.inputBg, borderColor: 'transparent' },
-                    isSelected && { backgroundColor: `${colors.today}14`, borderColor: colors.today },
+                    isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today },
                   ]}
                   onPress={() => handleOptionClick(opt)}
                 >
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#23262D',
+    color: colors.text,
   },
   optionTextActive: {
     color: colors.today,

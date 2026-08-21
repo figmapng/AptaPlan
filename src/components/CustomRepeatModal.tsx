@@ -344,16 +344,16 @@ export function CustomRepeatModal({
   };
 
   return (
-    <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
+    <Animated.View style={[styles.overlay, { opacity: backdropOpacity, backgroundColor: colors.modalOverlay }]}>
       <Pressable style={styles.backdrop} onPress={handleClose} />
-      <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-        <View style={styles.dragPill} />
+      <Animated.View style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}>
+        <View style={[styles.dragPill, { backgroundColor: colors.dragPill }]} />
 
         {/* Header with Back Button, Title, and Blue Circular Checkmark Button */}
         <View style={styles.header}>
           <AnimatedPressable
             activeScale={0.88}
-            style={styles.backBtn}
+            style={[styles.backBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
             onPress={handleClose}
             accessibilityRole="button"
             accessibilityLabel="Артқа қайту"
@@ -361,7 +361,7 @@ export function CustomRepeatModal({
             <BackChevronIcon color={colors.secondary} />
           </AnimatedPressable>
 
-          <Text style={styles.title}>Реттеу</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Реттеу</Text>
 
           <AnimatedPressable
             activeScale={0.88}
@@ -478,7 +478,7 @@ export function CustomRepeatModal({
                           return (
                             <Pressable
                               key={d}
-                              style={[styles.dayGridCell, isSelected && styles.dayGridCellSelected]}
+                              style={[styles.dayGridCell, isSelected && { backgroundColor: colors.today, borderRadius: 8 }]}
                               onPress={() => {
                                 triggerHaptic();
                                 setSelectedMonthDate(d);
@@ -917,7 +917,7 @@ const styles = StyleSheet.create({
     top: 92,
     right: 20,
     width: 190,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -1005,6 +1005,7 @@ function WheelPickerColumn<T>({
   onSelect,
   getLabel,
 }: WheelPickerColumnProps<T>) {
+  const { colors, isDark } = useTheme();
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -1013,7 +1014,7 @@ function WheelPickerColumn<T>({
 
   return (
     <View style={styles.wheelColumnContainer}>
-      <View pointerEvents="none" style={styles.wheelCenterHighlight} />
+      <View pointerEvents="none" style={[styles.wheelCenterHighlight, { backgroundColor: isDark ? '#282F3E' : '#E5E5EA80' }]} />
 
       <ScrollView
         ref={scrollRef}
@@ -1043,7 +1044,13 @@ function WheelPickerColumn<T>({
                 scrollRef.current?.scrollTo({ y: idx * WHEEL_ITEM_HEIGHT, animated: true });
               }}
             >
-              <Text style={[styles.wheelItemText, isSelected && styles.wheelItemTextSelected]}>
+              <Text
+                style={[
+                  styles.wheelItemText,
+                  { color: colors.secondary },
+                  isSelected && [styles.wheelItemTextSelected, { color: colors.today }],
+                ]}
+              >
                 {getLabel(item)}
               </Text>
             </Pressable>

@@ -964,7 +964,6 @@ function LastDayVisibilityModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -986,7 +985,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#1C1C1E',
+    color: colors.text,
     textAlign: 'center',
   },
   headerSpacer: {
@@ -1027,7 +1026,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 15,
     fontWeight: '500',
-    color: '#1C1C1E',
+    color: colors.text,
     marginRight: 8,
   },
   valueText: {
@@ -1054,19 +1053,19 @@ const styles = StyleSheet.create({
   footerVersionText: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#8E8E93',
+    color: colors.secondary,
     textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.40)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end',
     paddingHorizontal: 16,
     paddingBottom: 24,
   },
   modalContentCard: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.sheetBg,
     borderRadius: 32,
     borderCurve: 'continuous',
     paddingHorizontal: 20,
@@ -1130,11 +1129,11 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.checkboxBg,
   },
   radioButtonSelected: {
     borderColor: colors.today,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.checkboxBg,
   },
   radioButtonInner: {
     width: 12,

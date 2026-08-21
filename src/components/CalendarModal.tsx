@@ -66,7 +66,7 @@ export function CalendarModal({
   onRemoveDate,
   onClose,
 }: CalendarModalProps) {
-  const { colors } = useTheme();
+  const { theme, colors, isDark } = useTheme();
   const planner = usePlanner();
   const firstDayOfWeek = (planner?.settings?.firstDayOfWeek as 'mon' | 'sat' | 'sun') || 'mon';
   const weekdayHeaders = getWeekdayHeaders(firstDayOfWeek);
@@ -176,6 +176,37 @@ export function CalendarModal({
   const prevMonthDate = addMonths(currentMonthDate, -1);
   const nextMonthDate = addMonths(currentMonthDate, 1);
 
+  const isWarmOrRedTheme = theme === 'amber' || theme === 'coral';
+  const isVioletTheme = theme === 'violet';
+
+  const tomorrowConfig = isWarmOrRedTheme
+    ? {
+        color: '#0284C7',
+        activeBg: isDark ? '#102A45' : '#F0F9FF',
+        activeBorder: isDark ? '#0369A1' : '#BAE6FD',
+        textColor: isDark ? '#38BDF8' : '#0284C7',
+      }
+    : {
+        color: '#FF9500',
+        activeBg: isDark ? '#3D2814' : '#FFF6EB',
+        activeBorder: isDark ? '#6B4219' : '#FED7AA',
+        textColor: isDark ? '#FFAA47' : '#F97316',
+      };
+
+  const nextWeekConfig = isVioletTheme
+    ? {
+        color: '#059669',
+        activeBg: isDark ? '#133529' : '#ECFDF5',
+        activeBorder: isDark ? '#047857' : '#A7F3D0',
+        textColor: isDark ? '#34D399' : '#059669',
+      }
+    : {
+        color: '#8B5CF6',
+        activeBg: isDark ? '#271E3D' : '#F5F3FF',
+        activeBorder: isDark ? '#46326E' : '#DDD6FE',
+        textColor: isDark ? '#BCA5FF' : '#7C3AED',
+      };
+
   const quickOptions = [
     {
       key: todayKey,
@@ -190,28 +221,22 @@ export function CalendarModal({
       key: tomorrowKey,
       label: 'Ертең',
       icon: TomorrowIcon,
-      color: '#FF9500',
-      activeBg: '#FFF6EB',
-      activeBorder: '#FED7AA',
-      textColor: '#F97316',
+      ...tomorrowConfig,
     },
     {
       key: weekendKey,
       label: 'Демалыс күні',
       icon: WeekendIcon,
       color: '#FF4B3E',
-      activeBg: '#FFF1F0',
-      activeBorder: '#FFE0DE',
-      textColor: '#FF4B3E',
+      activeBg: isDark ? '#361A1D' : '#FFF1F0',
+      activeBorder: isDark ? '#522328' : '#FFE0DE',
+      textColor: isDark ? '#FFAAA4' : '#FF4B3E',
     },
     {
       key: nextWeekKey,
       label: 'Келесі апта',
       icon: NextWeekIcon,
-      color: '#8B5CF6',
-      activeBg: '#F5F3FF',
-      activeBorder: '#DDD6FE',
-      textColor: '#7C3AED',
+      ...nextWeekConfig,
     },
   ];
 
@@ -236,13 +261,13 @@ export function CalendarModal({
 
   return (
     <>
-      <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
+      <Animated.View style={[styles.overlay, { opacity: backdropOpacity, backgroundColor: colors.modalOverlay }]}>
         <Pressable style={styles.backdrop} onPress={handleClose} />
         <Animated.View
-          style={[styles.sheet, { transform: [{ translateY }] }]}
+          style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}
           {...sheetPanResponder.panHandlers}
         >
-          <View style={styles.dragPill} />
+          <View style={[styles.dragPill, { backgroundColor: colors.dragPill }]} />
 
           {/* Top Sheet Header */}
           <View style={styles.header}>
@@ -410,8 +435,8 @@ export function CalendarModal({
                 activeScale={0.94}
                 style={[
                   styles.removeBtn,
-                  { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-                  !tempSelectedDate && styles.removeBtnDisabled,
+                  { backgroundColor: isDark ? '#361A1D' : '#FFF1F0', borderColor: isDark ? '#522328' : '#FFE0DE' },
+                  !tempSelectedDate && [styles.removeBtnDisabled, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }],
                 ]}
                 onPress={() => {
                   triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -419,8 +444,8 @@ export function CalendarModal({
                   handleClose();
                 }}
               >
-                <TrashIcon color={tempSelectedDate ? '#FF4B3E' : colors.secondary} />
-                <Text style={[styles.removeText, { color: colors.secondary }, !tempSelectedDate && styles.removeTextDisabled]}>
+                <TrashIcon color={tempSelectedDate ? colors.weekend : colors.inputPlaceholder} />
+                <Text style={[styles.removeText, { color: colors.weekend }, !tempSelectedDate && styles.removeTextDisabled]}>
                   Күнді өшіру
                 </Text>
               </AnimatedPressable>
@@ -477,7 +502,7 @@ function DaysGridMatrix({
   onSelectDay,
   selectedOptionStyle,
 }: DaysGridMatrixProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const effectiveOptionStyle = selectedOptionStyle || {
     activeBg: colors.tintBg,
     activeBorder: colors.today,
@@ -582,8 +607,9 @@ function DaysGridMatrix({
                   <Text
                     style={[
                       styles.dayText,
-                      item.isWeekend && item.isCurrentMonth && styles.dayTextWeekend,
-                      !item.isCurrentMonth && (item.isWeekend ? styles.dayTextOtherMonthWeekend : styles.dayTextOtherMonth),
+                      { color: colors.text },
+                      item.isWeekend && item.isCurrentMonth && { color: colors.weekend },
+                      !item.isCurrentMonth && (item.isWeekend ? { color: isDark ? '#8A3B42' : '#FFB8B3' } : { color: colors.textMuted }),
                       isToday && !isSelected && { color: colors.today, fontWeight: '700' },
                       isSelected && {
                         color: effectiveOptionStyle.textColor,
@@ -708,7 +734,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.sheetBg,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
@@ -725,7 +751,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: colors.dragPill,
     marginBottom: 12,
   },
   header: {

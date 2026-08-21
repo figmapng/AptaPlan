@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { format } from 'date-fns';
 import { months, shortMonths, weekdays, toDateKey } from '@/services/date-service';
+import { useTheme } from '@/hooks/use-theme';
 import type { Task } from '@/types/task';
 
 const MOTIVATIONAL_QUOTES = [
@@ -31,6 +32,7 @@ interface MotivationalHeaderProps {
 }
 
 export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: MotivationalHeaderProps) {
+  const { colors, isDark } = useTheme();
   const fallbackAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = anim || fallbackAnim;
 

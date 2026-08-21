@@ -77,7 +77,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const { openCard } = useCardTransition();
   const { ready, error, tasks, loadRange, create, settings } = usePlanner();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const firstDay = settings.firstDayOfWeek ?? 'mon';
   const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
   const [weekStart, setWeekStart] = useState(() => getStartOfWeekWith(new Date(), weekStartsOn));
@@ -1084,8 +1084,8 @@ export default function Home() {
     );
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#18181A' }}>
-      <StatusBar style={isMotivationalOpen ? 'light' : 'dark'} animated />
+    <View style={{ flex: 1, backgroundColor: isDark ? colors.background : '#18181A' }}>
+      <StatusBar style={isMotivationalOpen || isDark ? 'light' : 'dark'} animated />
       {/* ── Dark Motivational Header Reveal ────────────────────────── */}
       <Animated.View
         style={{
@@ -1575,14 +1575,15 @@ function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Tas
 
   if (!flyingTask) return null;
   const { task, targetLayout } = flyingTask;
+  const { colors } = useTheme();
   const sx = sw / 2 - 90, sy = sh - 160;
   const tx = targetLayout.x + targetLayout.width / 2 - 90;
   const ty = targetLayout.y + targetLayout.height / 2 - 18;
   return (
     <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, zIndex: 99999, width: 180, opacity: anim.interpolate({ inputRange: [0, 0.08, 0.82, 1], outputRange: [0, 1, 1, 0] }), transform: [{ translateX: anim.interpolate({ inputRange: [0, 1], outputRange: [sx, tx] }) }, { translateY: anim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [sy, Math.min(sy, ty) - 36, ty] }) }, { scale: anim.interpolate({ inputRange: [0, 0.35, 0.8, 1], outputRange: [0.95, 1.05, 0.65, 0.3] }) }, { rotate: anim.interpolate({ inputRange: [0, 0.4, 0.8, 1], outputRange: ['-6deg', '-2deg', '4deg', '0deg'] }) }] }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: '#E5E7EB', boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
-        <View style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 2, borderColor: '#9CA3AF' }} />
-        <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '600', color: '#1F2937', flex: 1 }}>{task.title}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: colors.card, borderRadius: 14, borderWidth: 1, borderColor: colors.cardBorder, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
+        <View style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 2, borderColor: colors.checkboxBorder }} />
+        <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '600', color: colors.text, flex: 1 }}>{task.title}</Text>
       </View>
     </Animated.View>
   );
@@ -1825,7 +1826,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
   todayKey: string;
 }) {
   const { openCard } = useCardTransition();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const cellRef = useRef<View>(null);
   const key = toDateKey(day);
   const isToday = key === todayKey;
@@ -1852,21 +1853,24 @@ const MonthDayCell = memo(function MonthDayCellComponent({
     }
   };
 
+  const normalCellBg = isDark ? colors.card : colors.capsule;
+  const normalCellBorder = colors.cardBorder;
+
   const cellBg = isToday
-    ? colors.tintBg
+    ? (isDark ? `${colors.today}25` : colors.tintBg)
     : isWeekend
     ? isOffMonth
-      ? '#FFF8F7'
-      : '#FFF3F2'
+      ? (isDark ? '#201618' : '#FFF7F6')
+      : (isDark ? '#2D1A1D' : '#FFF0EE')
     : isOffMonth
     ? colors.background
-    : colors.inputBg;
+    : normalCellBg;
 
   const cellBorderColor = isToday
     ? colors.today
     : isWeekend
-    ? '#FFE0DC'
-    : colors.inputBorder;
+    ? (isDark ? '#522328' : '#FAD2CE')
+    : normalCellBorder;
 
   return (
     <Pressable
@@ -1877,7 +1881,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
         height: cellH,
         backgroundColor: cellBg,
         borderRadius: 8,
-        borderWidth: isToday ? 1.5 : 0.5,
+        borderWidth: isToday ? 1.8 : 0.8,
         borderColor: cellBorderColor,
         paddingHorizontal: 4,
         paddingVertical: 4,
@@ -1959,7 +1963,7 @@ const YearView = memo(function YearViewComponent({
   onSelect: (i: number) => void;
   isSwipingRef?: React.RefObject<boolean>;
 }) {
-  const { colors } = useTheme();
+  const { theme, colors, isDark } = useTheme();
   const today = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => toDateKey(today), [today]);
 
@@ -1984,7 +1988,10 @@ const YearView = memo(function YearViewComponent({
   return (
     <ScrollView
       scrollEnabled={false}
-      style={{ height: availableHeight }}
+      style={{
+        height: availableHeight,
+        backgroundColor: colors.background,
+      }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 8, paddingTop: 6 }}
     >
@@ -2017,8 +2024,8 @@ const YearView = memo(function YearViewComponent({
                   yearStyles.monthBlock,
                   {
                     height: monthBlockHeight,
-                    backgroundColor: colors.card,
-                    borderColor: isCurrentMonth ? colors.today : colors.inputBorder,
+                    backgroundColor: isCurrentMonth ? (isDark ? `${colors.today}25` : colors.tintBg) : colors.card,
+                    borderColor: isCurrentMonth ? colors.today : colors.cardBorder,
                     borderWidth: isCurrentMonth ? 1.5 : 1,
                   },
                 ]}

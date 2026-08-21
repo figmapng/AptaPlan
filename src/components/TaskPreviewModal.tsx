@@ -158,7 +158,7 @@ export function TaskPreviewModal({
   onEdit,
   onDelete,
 }: TaskPreviewModalProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { toggle, update, remove, settings } = usePlanner();
 
@@ -318,7 +318,7 @@ export function TaskPreviewModal({
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <View style={styles.modalRoot}>
         {/* Backdrop */}
-        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity, backgroundColor: colors.modalOverlay }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
 
@@ -469,7 +469,13 @@ export function TaskPreviewModal({
             <AnimatedPressable
               activeScale={0.88}
               onPress={handleDelete}
-              style={styles.deleteButtonStandalone}
+              style={[
+                styles.deleteButtonStandalone,
+                {
+                  backgroundColor: isDark ? '#361A1D' : '#FFF0F0',
+                  borderColor: isDark ? '#522328' : '#FFD8D6',
+                },
+              ]}
               hitSlop={6}
             >
               <TrashIcon size={20} color="#FF4B3E" />
@@ -536,7 +542,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   taskCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
@@ -557,11 +563,11 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
+    borderColor: colors.checkboxBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.checkboxBg,
   },
   checkboxCompleted: {
     backgroundColor: colors.checkedCheckboxBg,

@@ -71,12 +71,12 @@ export function MonthPickerModal({
   return (
     <Modal transparent visible animationType="none" onRequestClose={handleClose}>
       <View style={styles.container}>
-        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity, backgroundColor: colors.modalOverlay }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         </Animated.View>
 
-        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-          <View style={[styles.dragPill, { backgroundColor: colors.checkboxBorder }]} />
+        <Animated.View style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}>
+          <View style={[styles.dragPill, { backgroundColor: colors.dragPill }]} />
           
           {/* Header */}
           <View style={styles.header}>
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.sheetBg,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: colors.dragPill,
     alignSelf: 'center',
     marginBottom: 8,
   },

@@ -19,12 +19,11 @@ import { AnimatedPressable } from '@/components/AnimatedPressable';
 export default function AppearanceScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, themeMode, setThemeMode } = useTheme();
   const { settings, setPref } = usePlanner();
 
-  // Mode and Icon states (ready for future expansion)
-  const [selectedMode, setSelectedMode] = useState<'light' | 'dark' | 'system'>('light');
-  const [selectedIcon, setSelectedIcon] = useState<string>('default');
+  // App icon state (ready for future expansion)
+  const [selectedIcon, setSelectedIcon] = useState<string>(settings.appIcon || 'default');
 
   const handleSelectTheme = (themeId: ThemeId) => {
     if (settings.haptics) {
@@ -37,7 +36,7 @@ export default function AppearanceScreen() {
     if (settings.haptics) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    setSelectedMode(mode);
+    void setThemeMode(mode);
   };
 
   const handleSelectIcon = (iconId: string) => {
@@ -45,6 +44,7 @@ export default function AppearanceScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     setSelectedIcon(iconId);
+    void setPref('appIcon' as any, iconId);
   };
 
   return (
@@ -144,8 +144,8 @@ export default function AppearanceScreen() {
             onPress={() => handleSelectMode('light')}
             style={[
               styles.modeCard,
-              { backgroundColor: '#FFFFFF', borderColor: 'rgba(0, 0, 0, 0.08)' },
-              selectedMode === 'light' && { borderColor: colors.today, borderWidth: 2 },
+              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              themeMode === 'light' && { borderColor: colors.today, borderWidth: 2 },
             ]}
           >
             {/* Light Mockup Preview */}
@@ -157,7 +157,7 @@ export default function AppearanceScreen() {
               <View style={styles.modePreviewCardLight} />
               <View style={[styles.modePreviewCardLight, { width: '70%' }]} />
             </View>
-            <Text style={[styles.modeLabel, { color: colors.text }, selectedMode === 'light' && { fontWeight: '700', color: colors.today }]}>
+            <Text style={[styles.modeLabel, { color: colors.text }, themeMode === 'light' && { fontWeight: '700', color: colors.today }]}>
               Жарық
             </Text>
           </AnimatedPressable>
@@ -168,8 +168,8 @@ export default function AppearanceScreen() {
             onPress={() => handleSelectMode('dark')}
             style={[
               styles.modeCard,
-              { backgroundColor: '#FFFFFF', borderColor: 'rgba(0, 0, 0, 0.08)' },
-              selectedMode === 'dark' && { borderColor: colors.today, borderWidth: 2 },
+              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              themeMode === 'dark' && { borderColor: colors.today, borderWidth: 2 },
             ]}
           >
             {/* Dark Mockup Preview */}
@@ -182,7 +182,7 @@ export default function AppearanceScreen() {
               <View style={[styles.modePreviewCardDark, { width: '70%' }]} />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={[styles.modeLabel, { color: colors.text }, selectedMode === 'dark' && { fontWeight: '700', color: colors.today }]}>
+              <Text style={[styles.modeLabel, { color: colors.text }, themeMode === 'dark' && { fontWeight: '700', color: colors.today }]}>
                 Қараңғы
               </Text>
             </View>
@@ -194,8 +194,8 @@ export default function AppearanceScreen() {
             onPress={() => handleSelectMode('system')}
             style={[
               styles.modeCard,
-              { backgroundColor: '#FFFFFF', borderColor: 'rgba(0, 0, 0, 0.08)' },
-              selectedMode === 'system' && { borderColor: colors.today, borderWidth: 2 },
+              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              themeMode === 'system' && { borderColor: colors.today, borderWidth: 2 },
             ]}
           >
             {/* System Split Mockup Preview */}
@@ -209,7 +209,7 @@ export default function AppearanceScreen() {
                 <View style={{ width: '80%', height: 10, borderRadius: 2, backgroundColor: '#334155' }} />
               </View>
             </View>
-            <Text style={[styles.modeLabel, { color: colors.text }, selectedMode === 'system' && { fontWeight: '700', color: colors.today }]}>
+            <Text style={[styles.modeLabel, { color: colors.text }, themeMode === 'system' && { fontWeight: '700', color: colors.today }]}>
               Жүйелік
             </Text>
           </AnimatedPressable>

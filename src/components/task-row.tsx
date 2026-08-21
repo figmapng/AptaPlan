@@ -41,7 +41,7 @@ export const TaskRow = React.memo(function TaskRow({
   singleLine?: boolean;
   showDate?: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { toggle, remove, settings } = usePlanner();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     borderWidth: 1.5,
     borderColor: colors.checkboxBorder,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.checkboxBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
   },
   completedTitle: {
     textDecorationLine: 'line-through',
-    color: '#ADB3BD',
+    color: colors.secondary,
   },
   metadataRow: {
     flexDirection: 'row',
@@ -586,10 +586,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '400',
-    color: '#8E8E93',
+    color: colors.secondary,
     fontVariant: ['tabular-nums'],
   },
   overdueText: {
     color: '#E03B2F',
   },
 });
+

@@ -31,13 +31,13 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
       activeScale={0.93}
       style={[
         styles.chip,
-        { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-        date ? [styles.activeChip, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }] : undefined,
+        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
+        date ? { backgroundColor: colors.tintBg, borderColor: colors.today } : undefined,
         !date ? styles.iconOnly : undefined,
       ]}
     >
-      <CalendarIcon size={16} color={date ? colors.text : colors.secondary} />
-      {displayText && <Text style={[styles.activeText, { color: colors.text }]}>{displayText}</Text>}
+      <CalendarIcon size={16} color={date ? colors.today : colors.chipText} />
+      {displayText && <Text style={[styles.activeText, { color: colors.today, fontWeight: '600' }]}>{displayText}</Text>}
     </AnimatedPressable>
   );
 }
@@ -71,9 +71,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#F3F4F6',
     borderWidth: 1,
-    borderColor: '#ECEEF2',
   },
   iconOnly: {
     width: 34,
@@ -81,15 +79,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressed: {
-    backgroundColor: '#E5E7EB',
+    opacity: 0.8,
   },
-  activeChip: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#E5E7EB',
-  },
+  activeChip: {},
   activeText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#4B5563',
   },
 });

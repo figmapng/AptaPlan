@@ -2,6 +2,7 @@ import { ScrollView, View } from 'react-native';
 import type React from 'react';
 import type { Task } from '@/types/task';
 import { TaskRow } from './task-row';
+import { useTheme } from '@/hooks/use-theme';
 
 interface TaskListFrameProps {
   tasks: Task[];
@@ -24,6 +25,7 @@ export function TaskListFrame({
   isSwipingRef,
   singleLine = false,
 }: TaskListFrameProps) {
+  const { colors } = useTheme();
   const rows = (
     <View style={{ gap: 2 }}>
       {tasks.map((task) => (
@@ -34,7 +36,7 @@ export function TaskListFrame({
           onPress={onPress}
           onInteraction={onInteraction}
           isSwipingRef={isSwipingRef}
-          cardBg="#FFFFFF"
+          cardBg={colors.card}
           singleLine={singleLine}
         />
       ))}
