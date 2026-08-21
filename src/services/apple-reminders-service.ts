@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import * as Calendar from 'expo-calendar';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { createTask, deleteSyncedTasks, getTaskByExternalId, updateTask } from '@/database/task-repository';
+import { createTask, deleteTask, deleteSyncedTasks, getTaskByExternalId, updateTask } from '@/database/task-repository';
 import { cancelReminder } from '@/services/notification-service';
 import { toDateKey } from '@/utils/dateHelpers';
 
@@ -95,36 +95,55 @@ export async function syncAppleRemindersToAptaPlan(db: SQLiteDatabase): Promise<
     for (const rem of reminders) {
       if (!rem.title || rem.title.trim() === '') continue;
 
-      let taskDate = toDateKey(new Date());
-      let taskTime: string | null = null;
-
-      if (rem.dueDate) {
-        const d = new Date(rem.dueDate);
-        if (!isNaN(d.getTime())) {
-          taskDate = toDateKey(d);
-          const hh = String(d.getHours()).padStart(2, '0');
-          const mm = String(d.getMinutes()).padStart(2, '0');
-          if (hh !== '00' || mm !== '00') {
-            taskTime = `${hh}:${mm}`;
-          }
-        }
-      } else if (rem.startDate) {
-        const d = new Date(rem.startDate);
-        if (!isNaN(d.getTime())) {
-          taskDate = toDateKey(d);
-          const hh = String(d.getHours()).padStart(2, '0');
-          const mm = String(d.getMinutes()).padStart(2, '0');
-          if (hh !== '00' || mm !== '00') {
-            taskTime = `${hh}:${mm}`;
-          }
-        }
-      }
-
       const externalId = rem.id;
       if (!externalId) continue;
       const isCompleted = rem.completed ?? false;
       const note = rem.notes || null;
       const title = rem.title.trim();
+
+      // Find the specific date for the task
+      let targetDate: Date | null = null;
+      let taskTime: string | null = null;
+
+      if (rem.dueDate) {
+        const d = new Date(rem.dueDate);
+        if (!isNaN(d.getTime())) {
+          targetDate = d;
+        }
+      } else if (isCompleted && rem.completionDate) {
+        const d = new Date(rem.completionDate);
+        if (!isNaN(d.getTime())) {
+          targetDate = d;
+        }
+      } else if (rem.startDate) {
+        const d = new Date(rem.startDate);
+        if (!isNaN(d.getTime())) {
+          targetDate = d;
+        }
+      }
+
+      // If a task is already completed and has NO due date, completion date, or start date,
+      // do NOT import it to today. Remove if previously synced to prevent clogging today's list.
+      if (isCompleted && !targetDate) {
+        const existing = await getTaskByExternalId(db, externalId);
+        if (existing) {
+          await deleteTask(db, existing.id);
+        }
+        continue;
+      }
+
+      let taskDate = toDateKey(new Date());
+      if (targetDate) {
+        taskDate = toDateKey(targetDate);
+        const hh = String(targetDate.getHours()).padStart(2, '0');
+        const mm = String(targetDate.getMinutes()).padStart(2, '0');
+        if (hh !== '00' || mm !== '00') {
+          taskTime = `${hh}:${mm}`;
+        }
+      } else {
+        // Active (uncompleted) task with no explicit date defaults to today
+        taskDate = toDateKey(new Date());
+      }
 
       const existing = await getTaskByExternalId(db, externalId);
 
