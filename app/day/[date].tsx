@@ -14,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { format, isToday } from 'date-fns';
 import { colors } from '@/constants/colors';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 import { fromDateKey, months, toDateKey, weekdays } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from '@/components/task-row';
@@ -32,6 +32,7 @@ export default function DayScreen() {
   const { colors, isDark } = useTheme();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const { date, add } = useLocalSearchParams<{ date: string; add?: string }>();
   const { tasks, settings, loadRange, refresh, remove } = usePlanner();
   const { closeCard, beginInteractiveClose, updateInteractiveClose, endInteractiveClose } = useCardTransition();
@@ -81,13 +82,12 @@ export default function DayScreen() {
     await db.withTransactionAsync(async () => {
       for (let i = 0; i < newData.length; i++) {
         await db.runAsync(
-          'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
-          i,
-          updatedAt,
-          newData[i].id,
+          'UPDATE tasks SET sort_order = ?, updated_at = ? WHERE id = ?;',
+          [i, updatedAt, newData[i].id]
         );
       }
     });
+
     await refresh();
   }, [refresh]);
 
@@ -100,7 +100,7 @@ export default function DayScreen() {
   const completedCount = dayTasks.filter((task) => task.isCompleted).length;
   const isWeekend = selectedDate.getDay() === 0 || selectedDate.getDay() === 6;
   const isSelectedToday = isToday(selectedDate);
-  const activeDayColor = isDark ? colors.today : '#9FAABA';
+  const activeDayColor = colors.activeHeaderBg;
   const [measuredListHeight, setMeasuredListHeight] = useState(0);
   const emptyCardHeight = Math.round(windowHeight * 0.42);
   const cardMaxHeight = windowHeight - insets.top - (insets.bottom + 88) - 12;
@@ -191,20 +191,65 @@ export default function DayScreen() {
             backgroundColor: isSelectedToday ? activeDayColor : colors.card,
           }}
         >
-          <View style={{ backgroundColor: isSelectedToday ? (isDark ? 'rgba(255,255,255,0.2)' : 'white') : (isDark ? '#262B38' : '#F0F0F2'), borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
-            <Text style={{ color: isSelectedToday ? 'white' : isWeekend ? colors.weekend : colors.text, fontSize: 14, fontWeight: '600' }}>
+          <View style={{
+            backgroundColor: isSelectedToday
+              ? (isDark && colors.today === '#E4E4E7' ? '#FFFFFF' : (isDark ? colors.card : 'white'))
+              : isWeekend ? colors.weekendNumBg : colors.dateNumBg,
+            borderRadius: 6,
+            paddingHorizontal: 8,
+            paddingVertical: 4
+          }}>
+            <Text style={{
+              color: isSelectedToday
+                ? (isDark && colors.today === '#E4E4E7' ? '#18181B' : colors.today)
+                : isWeekend ? colors.weekendNumText : colors.dateNumText,
+              fontSize: 14,
+              fontWeight: '600'
+            }}>
               {months[selectedDate.getMonth()][0].toUpperCase() + months[selectedDate.getMonth()].slice(1)}
             </Text>
           </View>
-          <Text style={{ color: isSelectedToday ? 'white' : isWeekend ? colors.weekend : colors.text, fontSize: 16, fontWeight: '600' }}>
+          <Text style={{
+            color: isSelectedToday
+              ? (colors.activeHeaderText || '#FFFFFF')
+              : isWeekend ? colors.sundayText : colors.text,
+            fontSize: 16,
+            fontWeight: '600'
+          }}>
             {weekdays[selectedDate.getDay()]}
           </Text>
           <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 14, height: 14, marginRight: 6, borderRadius: 4, borderWidth: 1.25, borderColor: isSelectedToday ? 'white' : colors.text, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: isSelectedToday ? 'white' : colors.text, fontSize: 9, fontWeight: '800', lineHeight: 10 }}>✓</Text>
+            <View style={{
+              width: 14,
+              height: 14,
+              marginRight: 6,
+              borderRadius: 4,
+              borderWidth: 1.25,
+              borderColor: isSelectedToday ? (colors.activeHeaderText || '#FFFFFF') : colors.text,
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Text style={{
+                color: isSelectedToday ? (colors.activeHeaderText || '#FFFFFF') : colors.text,
+                fontSize: 9,
+                fontWeight: '800',
+                lineHeight: 10
+              }}>✓</Text>
             </View>
-            <Text style={{ color: isSelectedToday ? 'white' : colors.text, fontSize: 12, fontWeight: '600', fontVariant: ['tabular-nums'] }}>{completedCount}</Text>
-            <Text style={{ color: isSelectedToday ? 'rgba(255,255,255,0.72)' : colors.secondary, fontSize: 12, fontWeight: '600', fontVariant: ['tabular-nums'] }}>/{dayTasks.length}</Text>
+            <Text style={{
+              color: isSelectedToday ? (colors.activeHeaderText || '#FFFFFF') : colors.text,
+              fontSize: 12,
+              fontWeight: '600',
+              fontVariant: ['tabular-nums']
+            }}>{completedCount}</Text>
+            <Text style={{
+              color: isSelectedToday
+                ? (colors.activeHeaderText === '#18181B' ? 'rgba(24, 24, 27, 0.65)' : 'rgba(255,255,255,0.72)')
+                : colors.secondary,
+              fontSize: 12,
+              fontWeight: '600',
+              fontVariant: ['tabular-nums']
+            }}>/{dayTasks.length}</Text>
           </View>
         </View>
 
@@ -280,7 +325,9 @@ export default function DayScreen() {
           bottom: Math.max(insets.bottom + 68, 76),
           height: 48,
           borderRadius: 18,
-          backgroundColor: isDark ? '#262C38' : '#23262D',
+          backgroundColor: isDark ? '#1C222E' : '#23262D',
+          borderWidth: isDark ? 1 : 0,
+          borderColor: colors.cardBorder,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -289,11 +336,11 @@ export default function DayScreen() {
           boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
         }}
       >
-        <Text style={{ color: 'white', fontSize: 14, fontWeight: '500' }}>
+        <Text style={{ color: isDark ? colors.text : 'white', fontSize: 14, fontWeight: '500' }}>
           Тапсырма өшірілді
         </Text>
         <Pressable accessibilityRole="button" accessibilityLabel="Өшіруді болдырмау" onPress={handleUndo}>
-          <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700' }}>
+          <Text style={{ color: colors.today, fontSize: 14, fontWeight: '700' }}>
             Болдырмау
           </Text>
         </Pressable>
@@ -336,7 +383,15 @@ export default function DayScreen() {
           gap: 10,
         }}
       >
-        <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>
+        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M12 4.5v15M4.5 12h15"
+            stroke={colors.inputPlusIcon}
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
         <Text style={{ color: colors.inputPlaceholder, fontSize: 14, fontWeight: '500' }}>Тапсырма қосу</Text>
       </AnimatedPressable>
     </View>
@@ -363,12 +418,13 @@ export default function DayScreen() {
   );
 }
 
-function ChevronLeftIcon({ color = '#7D8796' }: { color?: string }) {
+function ChevronLeftIcon() {
+  const { colors } = useTheme();
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
       <Path
         d="M15 18l-6-6 6-6"
-        stroke={color}
+        stroke={colors.secondary}
         strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"

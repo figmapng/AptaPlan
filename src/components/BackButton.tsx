@@ -1,7 +1,6 @@
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
-import { colors } from '@/constants/colors';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface BackButtonProps {
@@ -37,7 +36,7 @@ export function BackButton({
       <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
         <Path
           d="M15 18l-6-6 6-6"
-          stroke={colors.inputPlusIcon}
+          stroke={colors.secondary}
           strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -46,3 +45,4 @@ export function BackButton({
     </AnimatedPressable>
   );
 }
+

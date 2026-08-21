@@ -21,6 +21,7 @@ import { router } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 import { usePlanner } from '@/store/planner-store';
+import { useTheme } from '@/hooks/use-theme';
 import {
   addDays,
   formatWeekRange,
@@ -78,6 +79,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const { openCard } = useCardTransition();
   const { ready, error, tasks, loadRange, create, settings } = usePlanner();
+  const { colors, isDark } = useTheme();
   const firstDay = settings.firstDayOfWeek ?? 'mon';
   const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
   const [weekStart, setWeekStart] = useState(() => getStartOfWeekWith(new Date(), weekStartsOn));
@@ -1085,7 +1087,7 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1, backgroundColor: isDark ? colors.background : '#18181A' }}>
-      <StatusBar style={isMotivationalOpen ? 'light' : (isDark ? 'light' : 'dark')} animated />
+      <StatusBar style={isMotivationalOpen || isDark ? 'light' : 'dark'} animated />
       {/* ── Dark Motivational Header Reveal ────────────────────────── */}
       <Animated.View
         style={{
@@ -1576,13 +1578,14 @@ function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Tas
 
   if (!flyingTask) return null;
   const { task, targetLayout } = flyingTask;
+  const { colors } = useTheme();
   const sx = sw / 2 - 90, sy = sh - 160;
   const tx = targetLayout.x + targetLayout.width / 2 - 90;
   const ty = targetLayout.y + targetLayout.height / 2 - 18;
   return (
     <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, zIndex: 99999, width: 180, opacity: anim.interpolate({ inputRange: [0, 0.08, 0.82, 1], outputRange: [0, 1, 1, 0] }), transform: [{ translateX: anim.interpolate({ inputRange: [0, 1], outputRange: [sx, tx] }) }, { translateY: anim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [sy, Math.min(sy, ty) - 36, ty] }) }, { scale: anim.interpolate({ inputRange: [0, 0.35, 0.8, 1], outputRange: [0.95, 1.05, 0.65, 0.3] }) }, { rotate: anim.interpolate({ inputRange: [0, 0.4, 0.8, 1], outputRange: ['-6deg', '-2deg', '4deg', '0deg'] }) }] }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: colors.card, borderRadius: 14, borderWidth: 1, borderColor: colors.cardBorder, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
-        <View style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 2, borderColor: colors.inputPlaceholder }} />
+        <View style={{ width: 16, height: 16, borderRadius: 4, borderWidth: 2, borderColor: colors.checkboxBorder }} />
         <Text numberOfLines={1} style={{ fontSize: 13, fontWeight: '600', color: colors.text, flex: 1 }}>{task.title}</Text>
       </View>
     </Animated.View>
@@ -1659,7 +1662,15 @@ function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => v
         gap: 10,
       }}
     >
-      <Text style={{ color: colors.inputPlusIcon, fontSize: 20, lineHeight: 22, fontWeight: '300' }}>+</Text>
+      <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+        <Path
+          d="M12 4.5v15M4.5 12h15"
+          stroke={colors.inputPlusIcon}
+          strokeWidth="2.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
       <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>Тапсырма қосу</Text>
     </AnimatedPressable>
   );
@@ -1677,6 +1688,7 @@ const MonthGrid = memo(function MonthGridComponent({
   bottomPadding: number;
 }) {
   const { settings } = usePlanner();
+  const { colors } = useTheme();
   const firstDay = settings.firstDayOfWeek ?? 'mon';
   const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
 
@@ -1727,7 +1739,12 @@ const MonthGrid = memo(function MonthGridComponent({
     return ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жс'];
   }, [firstDay]);
 
-  const { colors, isDark } = useTheme();
+  const todayDowIndex = useMemo(() => {
+    const day = new Date().getDay();
+    if (firstDay === 'sun') return day;
+    if (firstDay === 'sat') return (day + 1) % 7;
+    return (day + 6) % 7;
+  }, [firstDay]);
 
   return (
     <View
@@ -1741,21 +1758,25 @@ const MonthGrid = memo(function MonthGridComponent({
     >
       {/* ── Day-of-week labels */}
       <View style={{ flexDirection: 'row', height: DAY_LABEL_H, alignItems: 'center', marginBottom: 3 }}>
-        {DAY_LABELS.map((label, i) => (
-          <Text
-            key={label}
-            style={{
-              flex: 1,
-              textAlign: 'center',
-              fontSize: 11,
-              fontWeight: '600',
-              letterSpacing: 0.1,
-              color: i >= 5 ? colors.weekend : colors.textMuted,
-            }}
-          >
-            {label}
-          </Text>
-        ))}
+        {DAY_LABELS.map((label, i) => {
+          const isTodayDow = i === todayDowIndex;
+          const isWeekend = firstDay === 'mon' ? i >= 5 : firstDay === 'sun' ? (i === 0 || i === 6) : (i === 0 || i === 1);
+          return (
+            <Text
+              key={label}
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                fontSize: 11,
+                fontWeight: isTodayDow ? '700' : '600',
+                letterSpacing: 0.1,
+                color: isTodayDow ? colors.today : isWeekend ? colors.weekend : colors.secondary,
+              }}
+            >
+              {label}
+            </Text>
+          );
+        })}
       </View>
 
       {/* ── Week rows */}
@@ -1813,6 +1834,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
 }) {
   const { colors, isDark } = useTheme();
   const { openCard } = useCardTransition();
+  const { colors, isDark } = useTheme();
   const cellRef = useRef<View>(null);
   const key = toDateKey(day);
   const isToday = key === todayKey;
@@ -1839,17 +1861,24 @@ const MonthDayCell = memo(function MonthDayCellComponent({
     }
   };
 
+  const normalCellBg = isDark ? colors.card : colors.capsule;
+  const normalCellBorder = colors.cardBorder;
+
   const cellBg = isToday
-    ? (isDark ? '#0C3247' : '#E5F6FD')
+    ? (isDark ? `${colors.today}25` : colors.tintBg)
     : isWeekend
-    ? (isDark ? (isOffMonth ? '#261719' : '#2D1A1D') : (isOffMonth ? '#FFF8F7' : '#FFF3F2'))
-    : (isDark ? (isOffMonth ? '#151820' : '#1A1E26') : (isOffMonth ? '#FAFBFC' : '#F6F8FA'));
+    ? isOffMonth
+      ? (isDark ? '#201618' : '#FFF7F6')
+      : (isDark ? '#2D1A1D' : '#FFF0EE')
+    : isOffMonth
+    ? colors.background
+    : normalCellBg;
 
   const cellBorderColor = isToday
     ? colors.today
     : isWeekend
-    ? (isDark ? '#4A2328' : '#FFE0DC')
-    : (isDark ? '#282D3B' : '#E8EDF3');
+    ? (isDark ? '#522328' : '#FAD2CE')
+    : normalCellBorder;
 
   return (
     <Pressable
@@ -1860,7 +1889,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
         height: cellH,
         backgroundColor: cellBg,
         borderRadius: 8,
-        borderWidth: isToday ? 1.5 : 0.5,
+        borderWidth: isToday ? 1.8 : 0.8,
         borderColor: cellBorderColor,
         paddingHorizontal: 4,
         paddingVertical: 4,
@@ -1893,7 +1922,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
               fontSize: 9,
               fontWeight: '400',
               lineHeight: 12,
-              color: task.isCompleted ? colors.checkedTaskText : (isDark ? '#D1D5DB' : '#4A5568'),
+              color: task.isCompleted ? colors.checkedTaskText : colors.text,
               textDecorationLine: task.isCompleted ? 'line-through' : 'none',
             }}
           >
@@ -1903,7 +1932,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
         {overflow > 0 && (
           <View
             style={{
-              backgroundColor: isToday ? `${colors.today}25` : (isDark ? '#2B313F' : '#E2E8F0'),
+              backgroundColor: isToday ? `${colors.today}25` : colors.inputBorder,
               borderRadius: 3.5,
               paddingHorizontal: 3.5,
               paddingVertical: 0.5,
@@ -1916,7 +1945,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
                 fontSize: 8.5,
                 fontWeight: '700',
                 lineHeight: 11,
-                color: isToday ? colors.today : (isDark ? '#E5E7EB' : '#4A5568'),
+                color: isToday ? colors.today : colors.secondary,
                 fontVariant: ['tabular-nums'],
               }}
             >
@@ -1942,7 +1971,7 @@ const YearView = memo(function YearViewComponent({
   onSelect: (i: number) => void;
   isSwipingRef?: React.RefObject<boolean>;
 }) {
-  const { colors, isDark } = useTheme();
+  const { theme, colors, isDark } = useTheme();
   const today = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => toDateKey(today), [today]);
 
@@ -1967,7 +1996,10 @@ const YearView = memo(function YearViewComponent({
   return (
     <ScrollView
       scrollEnabled={false}
-      style={{ height: availableHeight }}
+      style={{
+        height: availableHeight,
+        backgroundColor: colors.background,
+      }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 8, paddingTop: 6 }}
     >
@@ -1998,8 +2030,12 @@ const YearView = memo(function YearViewComponent({
                 key={monthIndex}
                 style={[
                   yearStyles.monthBlock,
-                  { height: monthBlockHeight, backgroundColor: colors.card, borderColor: isCurrentMonth ? colors.today : colors.cardBorder },
-                  isCurrentMonth && yearStyles.monthBlockActive,
+                  {
+                    height: monthBlockHeight,
+                    backgroundColor: isCurrentMonth ? (isDark ? `${colors.today}25` : colors.tintBg) : colors.card,
+                    borderColor: isCurrentMonth ? colors.today : colors.cardBorder,
+                    borderWidth: isCurrentMonth ? 1.5 : 1,
+                  },
                 ]}
                 onPress={() => {
                   if (isSwipingRef?.current) return;
@@ -2007,7 +2043,12 @@ const YearView = memo(function YearViewComponent({
                 }}
               >
                 {/* Month name */}
-                <Text style={[yearStyles.monthName, { color: isCurrentMonth ? colors.today : colors.text }]}>
+                <Text
+                  style={[
+                    yearStyles.monthName,
+                    { color: isCurrentMonth ? colors.today : colors.text },
+                  ]}
+                >
                   {months[monthIndex][0].toUpperCase() + months[monthIndex].slice(1)}
                 </Text>
 
@@ -2017,8 +2058,8 @@ const YearView = memo(function YearViewComponent({
                       key={i}
                       style={[
                         yearStyles.dowLabel,
-                        { color: colors.textMuted },
-                        i >= 5 && { color: colors.weekend },
+                        { color: colors.secondary },
+                        i >= 5 && { color: '#FF7B75' },
                       ]}
                     >
                       {d}
@@ -2037,18 +2078,25 @@ const YearView = memo(function YearViewComponent({
                       const isWeekend = di >= 5;
                       return (
                         <View key={di} style={yearStyles.dayCell}>
-                          <View style={[
-                            yearStyles.dayInner,
-                            isT && [yearStyles.todayCircle, { backgroundColor: colors.today }],
-                          ]}>
-                            <Text style={[
-                              yearStyles.dayNum,
-                              { color: colors.text },
-                              isT ? yearStyles.todayNum
-                              : isWeekend ? { color: colors.weekend }
-                              : hasTasks ? { color: colors.today, fontWeight: '700' }
-                              : undefined,
-                            ]}>
+                          <View
+                            style={[
+                              yearStyles.dayInner,
+                              isT && { backgroundColor: colors.today },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                yearStyles.dayNum,
+                                { color: colors.text },
+                                isT
+                                  ? yearStyles.todayNum
+                                  : isWeekend
+                                  ? { color: '#FF6B6B' }
+                                  : hasTasks
+                                  ? { color: colors.today, fontWeight: '700' }
+                                  : undefined,
+                              ]}
+                            >
                               {day}
                             </Text>
                           </View>
@@ -2064,18 +2112,6 @@ const YearView = memo(function YearViewComponent({
       ))}
     </ScrollView>
   );
-}, (prev, next) => {
-  if (prev.year !== next.year) return false;
-  if (prev.availableHeight !== next.availableHeight) return false;
-  if (prev.tasks.length !== next.tasks.length) return false;
-  for (let i = 0; i < prev.tasks.length; i++) {
-    const p = prev.tasks[i];
-    const n = next.tasks[i];
-    if (p.id !== n.id || p.isCompleted !== n.isCompleted || p.title !== n.title || p.date !== n.date) {
-      return false;
-    }
-  }
-  return true;
 });
 
 const yearStyles = StyleSheet.create({
@@ -2097,9 +2133,9 @@ const yearStyles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#D8DEE8',
+    borderColor: colors.cardBorder,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     overflow: 'hidden',
   },
   monthBlockActive: {
@@ -2109,7 +2145,7 @@ const yearStyles = StyleSheet.create({
   monthName: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#1E293B',
+    color: colors.text,
     marginBottom: 4,
     letterSpacing: 0.1,
   },
@@ -2126,7 +2162,7 @@ const yearStyles = StyleSheet.create({
     fontSize: 7.5,
     lineHeight: 9,
     fontWeight: '500',
-    color: '#8A94A6',
+    color: colors.secondary,
   },
   weekRow: {
     flexDirection: 'row',
@@ -2150,7 +2186,7 @@ const yearStyles = StyleSheet.create({
     fontSize: 8,
     lineHeight: 10,
     fontWeight: '500',
-    color: '#334155',
+    color: colors.text,
     textAlign: 'center',
   },
   todayNum: {

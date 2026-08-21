@@ -15,7 +15,7 @@ import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
 import { formatFullDate } from '@/services/date-service';
@@ -318,7 +318,7 @@ export function TaskPreviewModal({
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <View style={styles.modalRoot}>
         {/* Backdrop */}
-        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity, backgroundColor: colors.modalOverlay }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         </Animated.View>
 
@@ -347,8 +347,11 @@ export function TaskPreviewModal({
                 onPress={handleToggleDone}
                 style={[
                   styles.checkbox,
-                  { borderColor: colors.checkboxBorder, backgroundColor: colors.checkboxBg },
-                  t.isCompleted && [styles.checkboxCompleted, { backgroundColor: colors.checkedCheckboxBg, borderColor: colors.checkedCheckboxBg }],
+                  { borderColor: colors.checkboxBorder, backgroundColor: colors.card },
+                  t.isCompleted && {
+                    backgroundColor: colors.checkedCheckboxBg,
+                    borderColor: colors.checkedCheckboxBg,
+                  },
                 ]}
                 hitSlop={8}
               >
@@ -361,7 +364,7 @@ export function TaskPreviewModal({
                 style={[
                   styles.taskTitle,
                   { color: colors.text },
-                  t.isCompleted && [styles.taskTitleCompleted, { color: colors.checkedTaskText }],
+                  t.isCompleted && [styles.taskTitleCompleted, { color: colors.secondary }],
                 ]}
               >
                 {t.title}
@@ -419,7 +422,7 @@ export function TaskPreviewModal({
                 />
               </AnimatedPressable>
 
-              <View style={[styles.dockDivider, { backgroundColor: colors.divider }]} />
+              <View style={[styles.dockDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* Time Action */}
               <AnimatedPressable
@@ -434,7 +437,7 @@ export function TaskPreviewModal({
                 />
               </AnimatedPressable>
 
-              <View style={[styles.dockDivider, { backgroundColor: colors.divider }]} />
+              <View style={[styles.dockDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* Repeat Action */}
               <AnimatedPressable
@@ -449,7 +452,7 @@ export function TaskPreviewModal({
                 />
               </AnimatedPressable>
 
-              <View style={[styles.dockDivider, { backgroundColor: colors.divider }]} />
+              <View style={[styles.dockDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* Edit Full Task Action */}
               <AnimatedPressable
@@ -468,7 +471,10 @@ export function TaskPreviewModal({
               onPress={handleDelete}
               style={[
                 styles.deleteButtonStandalone,
-                { backgroundColor: isDark ? '#361A1D' : '#FFF0F0', borderColor: isDark ? '#522328' : '#FFD8D6' },
+                {
+                  backgroundColor: isDark ? '#361A1D' : '#FFF0F0',
+                  borderColor: isDark ? '#522328' : '#FFD8D6',
+                },
               ]}
               hitSlop={6}
             >
@@ -536,11 +542,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   taskCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#ECEEF2',
+    borderColor: colors.cardBorder,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.14,
@@ -557,11 +563,11 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
+    borderColor: colors.checkboxBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.checkboxBg,
   },
   checkboxCompleted: {
     backgroundColor: colors.checkedCheckboxBg,
@@ -642,7 +648,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingHorizontal: 6,
     borderWidth: 1,
-    borderColor: '#ECEEF2',
+    borderColor: colors.cardBorder,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
@@ -658,7 +664,7 @@ const styles = StyleSheet.create({
   dockDivider: {
     width: 1,
     height: 20,
-    backgroundColor: '#ECEEF2',
+    backgroundColor: colors.inputBorder,
   },
   deleteButtonStandalone: {
     width: 50,

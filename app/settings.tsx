@@ -16,10 +16,13 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Path } from 'react-native-svg';
 import Constants from 'expo-constants';
+import * as Haptics from 'expo-haptics';
 
 import { colors } from '@/constants/colors';
+import { THEMES, THEME_LIST, type ThemeConfig } from '@/constants/themes';
+import { type ThemeId } from '@/types/settings';
 import { usePlanner } from '@/store/planner-store';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { UserGuideModal } from '@/components/UserGuideModal';
 import { getDatabase } from '@/database/database';
@@ -28,15 +31,12 @@ import { exportBackup, importBackup } from '@/services/backup-service';
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { colors, isDark } = useTheme();
+  const { theme, themeConfig, colors, setTheme } = useTheme();
   const {
     settings,
     setPref,
     clearAll,
     refresh,
-    syncAppleReminders,
-    enableAppleReminders,
-    disableAppleReminders,
   } = usePlanner();
 
   // Modals for selection settings
@@ -47,84 +47,6 @@ export default function SettingsScreen() {
   const [firstDayModalOpen, setFirstDayModalOpen] = useState(false);
   const [lastDayModalOpen, setLastDayModalOpen] = useState(false);
   const [defaultViewModeModalOpen, setDefaultViewModeModalOpen] = useState(false);
-
-
-  // Sync state
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncStatusText, setSyncStatusText] = useState<string | null>(null);
-
-  const handleToggleRemindersSync = async (enable: boolean) => {
-    if (enable) {
-      if (Platform.OS !== 'ios') {
-        Alert.alert('Ескерту', 'Apple Reminders тек iOS құрылғыларында қолжетімді.');
-        return;
-      }
-      setIsSyncing(true);
-      try {
-        const res = await enableAppleReminders();
-        if (res.success) {
-          Alert.alert(
-            'Синхрондау қосылды',
-            `Apple Reminders қосымшасынан тапсырмалар жүктелді.\n\n• Қосылды: ${res.importedCount}\n• Жаңартылды: ${res.updatedCount}`
-          );
-        } else {
-          Alert.alert('Рұқсат қажет', res.error || 'Қате орын алды');
-        }
-      } catch (e: any) {
-        Alert.alert('Қате', e?.message || 'Қосу мүмкін болмады');
-      } finally {
-        setIsSyncing(false);
-      }
-    } else {
-      Alert.alert(
-        'Apple Reminders синхрондауын өшіру',
-        'Бұрын синхрондалған барлық еске салғыштар AptaPlan-нан өшіріледі. Қолдан қосылған тапсырмалар сақталады.',
-        [
-          { text: 'Болдырмау', style: 'cancel' },
-          {
-            text: 'Өшіру',
-            style: 'destructive',
-            onPress: async () => {
-              setIsSyncing(true);
-              try {
-                await disableAppleReminders();
-              } finally {
-                setIsSyncing(false);
-              }
-            },
-          },
-        ]
-      );
-    }
-  };
-
-  const handleSyncReminders = async () => {
-    if (isSyncing) return;
-    if (Platform.OS !== 'ios') {
-      Alert.alert('Ескерту', 'Apple Reminders тек iOS құрылғыларында қолжетімді.');
-      return;
-    }
-    setIsSyncing(true);
-    setSyncStatusText(null);
-    try {
-      const res = await syncAppleReminders();
-      if (res.success) {
-        const total = res.importedCount + res.updatedCount;
-        const msg = total > 0 ? `Жаңартылды: ${total}` : 'Жаңа тапсырма жоқ';
-        setSyncStatusText(msg);
-        Alert.alert(
-          'Синхрондау аяқталды',
-          `Apple Reminders-тен тапсырмалар сәтті жүктелді.\n\n• Қосылды: ${res.importedCount}\n• Жаңартылды: ${res.updatedCount}\n• Барлығы табылды: ${res.totalFound}`
-        );
-      } else {
-        Alert.alert('Синхрондау қатесі', res.error || 'Қате орын алды');
-      }
-    } catch (e: any) {
-      Alert.alert('Қате', e?.message || 'Синхрондау мүмкін болмады');
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   const clear = () =>
     Alert.alert(
@@ -164,11 +86,17 @@ export default function SettingsScreen() {
       <View style={styles.header}>
         <AnimatedPressable
           activeScale={0.85}
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/');
+            }
+          }}
           style={[styles.backButton, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
           accessibilityLabel="Артқа қайту"
         >
-          <Ionicons name="chevron-back" size={20} color={colors.iconPrimary} style={{ marginLeft: -1 }} />
+          <Ionicons name="chevron-back" size={20} color={colors.secondary} style={{ marginLeft: -1 }} />
         </AnimatedPressable>
 
         <Text style={[styles.headerTitle, { color: colors.text }]}>Баптаулар</Text>
@@ -183,7 +111,29 @@ export default function SettingsScreen() {
           { paddingBottom: insets.bottom + 32 },
         ]}
       >
-        {/* Карточка 1: Негізгі баптаулар */}
+        {/* Бөлім 1: Жекелендіру */}
+        <Section>
+          <SettingRow
+            icon="color-palette-outline"
+            label="Сыртқы түрі"
+            valueText={themeConfig.name}
+            rightElement={
+              <View
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  backgroundColor: themeConfig.primary,
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(0,0,0,0.06)',
+                }}
+              />
+            }
+            onPress={() => router.push('/appearance')}
+          />
+        </Section>
+
+        {/* Бөлім 2: Күнтізбе және көрініс */}
         <Section>
           <SettingRow
             icon="options-outline"
@@ -212,18 +162,19 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            icon="pulse-outline"
-            label="Тактильді кері байланыс"
-            rightElement={
-              <Switch
-                value={settings.haptics}
-                onValueChange={(v) => void setPref('haptics', v)}
-                trackColor={{ false: '#E2E5EB', true: colors.today }}
-                thumbColor="#FFFFFF"
-              />
+            icon="eye-outline"
+            label="Соңғы күннің көрінуі"
+            valueText={
+              settings.lastDayVisibility === 'hidden'
+                ? 'Жасырын'
+                : 'Үнемі көрінеді'
             }
+            onPress={() => setLastDayModalOpen(true)}
           />
-          <Divider />
+        </Section>
+
+        {/* Бөлім 3: Тапсырмалар */}
+        <Section>
           <SettingRow
             icon="layers-outline"
             label="Орындалған тапсырмалар"
@@ -241,77 +192,38 @@ export default function SettingsScreen() {
             }
             onPress={() => setSortModalOpen(true)}
           />
-          <Divider />
-          <SettingRow
-            icon="eye-outline"
-            label="Соңғы күннің көрінуі"
-            valueText={
-              settings.lastDayVisibility === 'hidden'
-                ? 'Жасырын'
-                : 'Үнемі көрінеді'
-            }
-            onPress={() => setLastDayModalOpen(true)}
-          />
-          <Divider />
-          <SettingRow
-            icon="moon-outline"
-            label="Тақырып"
-            valueText={
-              settings.theme === 'dark'
-                ? 'Күңгірт'
-                : settings.theme === 'light'
-                ? 'Ашық'
-                : 'Жүйелік'
-            }
-            onPress={() => setThemeModalOpen(true)}
-          />
         </Section>
 
-        {/* Карточка 2: Apple Reminders (Еске салғыштар) синхрондау */}
+        {/* Бөлім 4: Интеграция және жүйе */}
         <Section>
           <SettingRow
-            customIcon={<AppleRemindersIcon size={21} />}
-            label="Apple Reminders синхрондау"
+            icon="extension-puzzle-outline"
+            label="Интеграциялар"
+            valueText={
+              Platform.OS === 'ios'
+                ? settings.syncAppleReminders
+                  ? 'Apple Reminders'
+                  : 'Өшірулі'
+                : 'Күнтізбе'
+            }
+            onPress={() => router.push('/integrations')}
+          />
+          <Divider />
+          <SettingRow
+            icon="pulse-outline"
+            label="Тактильді кері байланыс"
             rightElement={
-              isSyncing ? (
-                <ActivityIndicator size="small" color={colors.today} />
-              ) : (
-                <Switch
-                  value={!!settings.syncAppleReminders}
-                  onValueChange={handleToggleRemindersSync}
-                  trackColor={{ false: '#E2E5EB', true: colors.today }}
-                  thumbColor="#FFFFFF"
-                />
-              )
+              <Switch
+                value={settings.haptics}
+                onValueChange={(v) => void setPref('haptics', v)}
+                trackColor={{ false: '#E2E5EB', true: colors.today }}
+                thumbColor="#FFFFFF"
+              />
             }
           />
-          {settings.syncAppleReminders && (
-            <>
-              <Divider />
-              <SettingRow
-                icon="refresh-circle-outline"
-                label="Авто-синхрондау"
-                rightElement={
-                  <Switch
-                    value={settings.autoSyncAppleReminders !== false}
-                    onValueChange={(v) => void setPref('autoSyncAppleReminders', v)}
-                    trackColor={{ false: '#E2E5EB', true: colors.today }}
-                    thumbColor="#FFFFFF"
-                  />
-                }
-              />
-              <Divider />
-              <SettingRow
-                icon="sync-outline"
-                label="Қазір синхрондау"
-                valueText={isSyncing ? 'Жүктелуде...' : syncStatusText || undefined}
-                onPress={handleSyncReminders}
-              />
-            </>
-          )}
         </Section>
 
-        {/* Карточка 3: Деректер мен сақтық көшірме */}
+        {/* Бөлім 5: Деректер мен сақтық көшірме */}
         <Section>
           <SettingRow
             icon="cloud-upload-outline"
@@ -492,25 +404,9 @@ function Section({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>{children}</View>
-  );
-}
-
-function AppleRemindersIcon({ size = 21 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {/* Top bullet item (Orange) */}
-      <Circle cx="4.5" cy="5" r="2.75" fill="#FF9500" />
-      <Path d="M10 5h11" stroke="#8E8E93" strokeWidth="2.2" strokeLinecap="round" />
-
-      {/* Middle bullet item (Blue) */}
-      <Circle cx="4.5" cy="12" r="2.75" fill="#007AFF" />
-      <Path d="M10 12h11" stroke="#8E8E93" strokeWidth="2.2" strokeLinecap="round" />
-
-      {/* Bottom bullet item (Red) */}
-      <Circle cx="4.5" cy="19" r="2.75" fill="#FF3B30" />
-      <Path d="M10 19h11" stroke="#8E8E93" strokeWidth="2.2" strokeLinecap="round" />
-    </Svg>
+    <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+      {children}
+    </View>
   );
 }
 
@@ -534,8 +430,7 @@ function SettingRow({
   onPress?: () => void;
 }) {
   const { colors } = useTheme();
-  const effectiveIconColor = iconColor ?? colors.text;
-
+  const effectiveIconColor = iconColor || colors.text;
   const content = (
     <View style={styles.rowInner}>
       <View style={styles.iconBox}>
@@ -548,16 +443,17 @@ function SettingRow({
       <Text style={[styles.rowLabel, { color: colors.text }, labelStyle]}>
         {label}
       </Text>
-      {valueText ? (
-        <Text style={[styles.valueText, { color: colors.secondary }]} numberOfLines={1}>
-          {valueText}
-        </Text>
-      ) : null}
-      {rightElement ? (
-        rightElement
-      ) : onPress ? (
-        <Ionicons name="chevron-forward" size={16} color={colors.iconSecondary} style={{ marginLeft: 6 }} />
-      ) : null}
+      <View style={styles.rowRight}>
+        {valueText ? (
+          <Text style={[styles.valueText, { color: colors.secondary }]} numberOfLines={1}>
+            {valueText}
+          </Text>
+        ) : null}
+        {rightElement}
+        {onPress ? (
+          <Ionicons name="chevron-forward" size={16} color={colors.secondary} />
+        ) : null}
+      </View>
     </View>
   );
 
@@ -574,7 +470,7 @@ function SettingRow({
 
 function Divider() {
   const { colors } = useTheme();
-  return <View style={[styles.divider, { backgroundColor: colors.divider }]} />;
+  return <View style={[styles.divider, { backgroundColor: colors.inputBorder }]} />;
 }
 
 function OptionModal({
@@ -588,7 +484,7 @@ function OptionModal({
   onClose: () => void;
   options: { label: string; sublabel?: string; selected: boolean; onSelect: () => void }[];
 }) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -619,11 +515,11 @@ function OptionModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderColor: colors.sheetBorder }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{title}</Text>
-            <Pressable onPress={handleClose} style={[styles.closeButton, { backgroundColor: colors.inputBg }]} hitSlop={8}>
+            <Pressable onPress={handleClose} style={styles.closeButton} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
           </View>
@@ -646,13 +542,7 @@ function OptionModal({
                   onPress={() => setSelectedIdx(i)}
                 >
                   <View style={styles.optionRowLeft}>
-                    <Text
-                      style={[
-                        styles.optionRowTitle,
-                        { color: colors.text },
-                        isChecked && { color: colors.today, fontWeight: '700' },
-                      ]}
-                    >
+                    <Text style={[styles.optionRowTitle, { color: colors.text }, isChecked && { fontWeight: '700' }]}>
                       {opt.label}
                     </Text>
                     {opt.sublabel ? (
@@ -661,15 +551,11 @@ function OptionModal({
                       </Text>
                     ) : null}
                   </View>
-                  <View
-                    style={[
-                      styles.radioButton,
-                      {
-                        borderColor: isChecked ? colors.today : colors.cardBorder,
-                        backgroundColor: colors.card,
-                      },
-                    ]}
-                  >
+                  <View style={[
+                    styles.radioButton,
+                    { borderColor: colors.cardBorder },
+                    isChecked && { borderColor: colors.today },
+                  ]}>
                     {isChecked && <View style={[styles.radioButtonInner, { backgroundColor: colors.today }]} />}
                   </View>
                 </Pressable>
@@ -686,6 +572,7 @@ function OptionModal({
     </Modal>
   );
 }
+
 
 function WeekLayoutPreview() {
   return (
@@ -857,6 +744,7 @@ function DefaultViewModeModal({
   onSelectMode: (mode: 'week' | 'month' | 'year') => void;
   onClose: () => void;
 }) {
+  const { colors } = useTheme();
   const [selected, setSelected] = useState<'week' | 'month' | 'year'>(currentMode || 'week');
 
   useEffect(() => {
@@ -894,11 +782,11 @@ function DefaultViewModeModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderColor: colors.sheetBorder }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Әдепкі режим</Text>
-            <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.inputBg }]} hitSlop={8}>
+            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
           </View>
@@ -914,13 +802,7 @@ function DefaultViewModeModal({
                   style={[
                     styles.visualCard,
                     { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-                    isSelected && [
-                      styles.visualCardSelected,
-                      {
-                        borderColor: colors.today,
-                        backgroundColor: isDark ? '#0284C720' : '#EDF9FF',
-                      },
-                    ],
+                    isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today },
                   ]}
                   onPress={() => setSelected(opt.mode)}
                 >
@@ -932,14 +814,14 @@ function DefaultViewModeModal({
                     style={[
                       styles.visualCardLabel,
                       { color: colors.text },
-                      isSelected && [styles.visualCardLabelSelected, { color: colors.today }],
+                      isSelected && { color: colors.today, fontWeight: '700' },
                     ]}
                   >
                     {opt.label}
                   </Text>
 
                   {/* Radio Indicator */}
-                  <View style={[styles.visualRadio, { borderColor: colors.cardBorder, backgroundColor: colors.card }, isSelected && [styles.visualRadioSelected, { borderColor: colors.today }]]}>
+                  <View style={[styles.visualRadio, { borderColor: colors.cardBorder }, isSelected && { borderColor: colors.today }]}>
                     {isSelected && <View style={[styles.visualRadioInner, { backgroundColor: colors.today }]} />}
                   </View>
                 </AnimatedPressable>
@@ -1026,6 +908,7 @@ function LastDayVisibilityModal({
   onSelectValue: (val: 'visible' | 'hidden') => void;
   onClose: () => void;
 }) {
+  const { colors } = useTheme();
   const [selected, setSelected] = useState<'visible' | 'hidden'>(currentValue || 'visible');
 
   useEffect(() => {
@@ -1060,11 +943,11 @@ function LastDayVisibilityModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderColor: colors.sheetBorder }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Соңғы күннің көрінуі</Text>
-            <Pressable onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.inputBg }]} hitSlop={8}>
+            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
           </View>
@@ -1080,13 +963,7 @@ function LastDayVisibilityModal({
                   style={[
                     styles.verticalVisualCard,
                     { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-                    isSelected && [
-                      styles.verticalVisualCardSelected,
-                      {
-                        borderColor: colors.today,
-                        backgroundColor: isDark ? '#0284C720' : '#EDF9FF',
-                      },
-                    ],
+                    isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today },
                   ]}
                   onPress={() => setSelected(opt.mode)}
                 >
@@ -1101,7 +978,7 @@ function LastDayVisibilityModal({
                       style={[
                         styles.verticalCardLabel,
                         { color: colors.text },
-                        isSelected && [styles.verticalCardLabelSelected, { color: colors.today }],
+                        isSelected && { color: colors.today, fontWeight: '700' },
                       ]}
                     >
                       {opt.label}
@@ -1115,8 +992,8 @@ function LastDayVisibilityModal({
                   <View
                     style={[
                       styles.visualRadio,
-                      { borderColor: colors.cardBorder, backgroundColor: colors.card },
-                      isSelected && [styles.visualRadioSelected, { borderColor: colors.today }],
+                      { borderColor: colors.cardBorder },
+                      isSelected && { borderColor: colors.today },
                     ]}
                   >
                     {isSelected && <View style={[styles.visualRadioInner, { backgroundColor: colors.today }]} />}
@@ -1136,10 +1013,10 @@ function LastDayVisibilityModal({
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -1161,7 +1038,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#1C1C1E',
+    color: colors.text,
     textAlign: 'center',
   },
   headerSpacer: {
@@ -1169,7 +1046,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 8,
   },
   card: {
     backgroundColor: colors.inputBg,
@@ -1202,7 +1079,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 15,
     fontWeight: '500',
-    color: '#1C1C1E',
+    color: colors.text,
     marginRight: 8,
   },
   valueText: {
@@ -1210,6 +1087,11 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: colors.secondary,
     flexShrink: 0,
+  },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   divider: {
     height: 1,
@@ -1224,19 +1106,19 @@ const styles = StyleSheet.create({
   footerVersionText: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#8E8E93',
+    color: colors.secondary,
     textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.40)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end',
     paddingHorizontal: 16,
     paddingBottom: 24,
   },
   modalContentCard: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.sheetBg,
     borderRadius: 32,
     borderCurve: 'continuous',
     paddingHorizontal: 20,
@@ -1300,11 +1182,11 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.checkboxBg,
   },
   radioButtonSelected: {
     borderColor: colors.today,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.checkboxBg,
   },
   radioButtonInner: {
     width: 12,
@@ -1343,7 +1225,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   visualCardSelected: {
-    backgroundColor: '#01B7FF08',
+    backgroundColor: colors.tintBg,
     borderColor: colors.today,
   },
   previewBox: {
@@ -1353,7 +1235,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 6,
     borderWidth: 1,
-    borderColor: '#ECEEF2',
+    borderColor: colors.inputBorder,
     marginBottom: 8,
     justifyContent: 'space-between',
     overflow: 'hidden',
@@ -1438,7 +1320,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   verticalVisualCardSelected: {
-    backgroundColor: '#01B7FF08',
+    backgroundColor: colors.tintBg,
     borderColor: colors.today,
   },
   verticalPreviewWrapper: {
@@ -1584,7 +1466,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFE0DC',
   },
   previewMonthDayCellToday: {
-    backgroundColor: '#E5F6FD',
+    backgroundColor: colors.tintBg,
     borderColor: colors.today,
     borderWidth: 0.8,
   },
@@ -1677,5 +1559,58 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.today,
+  },
+  themeSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
+  },
+  themeActiveBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3.5,
+    borderRadius: 10,
+  },
+  themeActiveBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  telegramThemeScroll: {
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    paddingTop: 2,
+    gap: 12,
+  },
+  telegramThemeItem: {
+    alignItems: 'center',
+    width: 68,
+    gap: 6,
+  },
+  telegramThemeBubbleOuter: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2.5,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  telegramThemeBubble: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  telegramThemeTitle: {
+    fontSize: 11,
+    textAlign: 'center',
   },
 });

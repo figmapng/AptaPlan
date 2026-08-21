@@ -3,6 +3,8 @@ import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/context/theme-context';
 import { formatChipDate } from '@/utils/dateHelpers';
+import { useTheme } from '@/hooks/use-theme';
+import { AnimatedPressable } from './AnimatedPressable';
 
 interface DateChipProps {
   date: string | null;
@@ -12,7 +14,8 @@ interface DateChipProps {
 
 export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps) {
   const { colors } = useTheme();
-  const handlePress = () => {
+
+  const handlePress = async () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -29,14 +32,16 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
       hitSlop={6}
       style={({ pressed }) => [
         styles.chip,
+        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
+        date ? { backgroundColor: colors.tintBg, borderColor: colors.today } : undefined,
         !date ? styles.iconOnly : undefined,
         { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
         pressed && { opacity: 0.75, transform: [{ scale: 0.96 }] },
       ]}
     >
       <CalendarIcon size={16} color={date ? colors.today : colors.chipText} />
-      {displayText && <Text style={[styles.activeText, { color: colors.today }]}>{displayText}</Text>}
-    </Pressable>
+      {displayText && <Text style={[styles.activeText, { color: colors.today, fontWeight: '600' }]}>{displayText}</Text>}
+    </AnimatedPressable>
   );
 }
 
@@ -69,9 +74,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#F3F4F6',
     borderWidth: 1,
-    borderColor: '#ECEEF2',
   },
   iconOnly: {
     width: 34,
@@ -79,15 +82,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pressed: {
-    backgroundColor: '#E5E7EB',
+    opacity: 0.8,
   },
-  activeChip: {
-    backgroundColor: '#F3F4F6',
-    borderColor: '#E5E7EB',
-  },
+  activeChip: {},
   activeText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#4B5563',
   },
 });

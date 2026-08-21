@@ -6,6 +6,7 @@ import type { RepeatConfig, RepeatCustomUnit, RepeatMonthlyMode, TaskRepeat } fr
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/context/theme-context';
 import { usePlanner } from '@/store/planner-store';
+import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 export type CustomUnit = RepeatCustomUnit;
@@ -141,7 +142,7 @@ export function CustomRepeatModal({
   onConfirm,
   onClose,
 }: CustomRepeatModalProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const planner = usePlanner();
   const firstDayOfWeek = planner.settings?.firstDayOfWeek || 'mon';
   const orderedWeekdayIndices = getOrderedWeekdayIndices(firstDayOfWeek);
@@ -346,10 +347,10 @@ export function CustomRepeatModal({
   };
 
   return (
-    <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
+    <Animated.View style={[styles.overlay, { opacity: backdropOpacity, backgroundColor: colors.modalOverlay }]}>
       <Pressable style={styles.backdrop} onPress={handleClose} />
       <Animated.View style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}>
-        <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
+        <View style={[styles.dragPill, { backgroundColor: colors.dragPill }]} />
 
         {/* Header with Back Button, Title, and Blue Circular Checkmark Button */}
         <View style={styles.header}>
@@ -360,14 +361,14 @@ export function CustomRepeatModal({
             accessibilityRole="button"
             accessibilityLabel="Артқа қайту"
           >
-            <BackChevronIcon color={colors.text} />
+            <BackChevronIcon color={colors.secondary} />
           </AnimatedPressable>
 
           <Text style={[styles.title, { color: colors.text }]}>Реттеу</Text>
 
           <AnimatedPressable
             activeScale={0.88}
-            style={styles.checkCircleBtn}
+            style={[styles.checkCircleBtn, { backgroundColor: colors.today, borderColor: colors.today }]}
             onPress={handleConfirm}
             accessibilityRole="button"
             accessibilityLabel="Қолдану"
@@ -398,12 +399,12 @@ export function CustomRepeatModal({
               </View>
             </Pressable>
 
-            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+            <View style={[styles.divider, { backgroundColor: colors.inputBorder }]} />
 
             {/* Every Stepper Row */}
             <View style={styles.formRow}>
-              <Text style={[styles.rowLabel, { color: colors.text }]}>Әрбір</Text>
-              <View style={[styles.stepperContainer, { backgroundColor: isDark ? '#232836' : colors.inputBorder }]}>
+              <Text style={styles.rowLabel}>Әрбір</Text>
+              <View style={[styles.stepperContainer, { backgroundColor: colors.card, borderColor: colors.inputBorder }]}>
                 <AnimatedPressable
                   activeScale={0.85}
                   style={[styles.stepBtn, { backgroundColor: colors.card }, interval <= 1 && styles.stepBtnDisabled]}
@@ -437,9 +438,9 @@ export function CustomRepeatModal({
                 const isSelected = selectedWeekdays.includes(dayIdx);
                 return (
                   <View key={dayName}>
-                    {i > 0 && <View style={[styles.divider, { backgroundColor: colors.divider }]} />}
+                    {i > 0 && <View style={[styles.divider, { backgroundColor: colors.inputBorder }]} />}
                     <Pressable style={styles.formRow} onPress={() => toggleWeekday(dayIdx)}>
-                      <Text style={[styles.rowLabel, { color: colors.text }]}>{dayName}</Text>
+                      <Text style={styles.rowLabel}>{dayName}</Text>
                       {isSelected && <CheckIcon color={colors.today} />}
                     </Pressable>
                   </View>
@@ -452,14 +453,14 @@ export function CustomRepeatModal({
           {unit === 'monthly' && (
             <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, marginTop: 16 }]}>
               <Pressable style={styles.formRow} onPress={() => { triggerHaptic(); setMonthlyMode('dates'); }}>
-                <Text style={[styles.rowLabel, { color: colors.text }]}>Даталарды таңдау</Text>
+                <Text style={styles.rowLabel}>Даталарды таңдау</Text>
                 {monthlyMode === 'dates' && <CheckIcon color={colors.today} />}
               </Pressable>
 
-              <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+              <View style={[styles.divider, { backgroundColor: colors.inputBorder }]} />
 
               <Pressable style={styles.formRow} onPress={() => { triggerHaptic(); setMonthlyMode('dayOfWeek'); }}>
-                <Text style={[styles.rowLabel, { color: colors.text }]}>Апта күнін таңдау</Text>
+                <Text style={styles.rowLabel}>Апта күнін таңдау</Text>
                 {monthlyMode === 'dayOfWeek' && <CheckIcon color={colors.today} />}
               </Pressable>
 
@@ -480,10 +481,7 @@ export function CustomRepeatModal({
                           return (
                             <Pressable
                               key={d}
-                              style={[
-                                styles.dayGridCell,
-                                isSelected && [styles.dayGridCellSelected, { backgroundColor: colors.today }],
-                              ]}
+                              style={[styles.dayGridCell, isSelected && { backgroundColor: colors.today, borderRadius: 8 }]}
                               onPress={() => {
                                 triggerHaptic();
                                 setSelectedMonthDate(d);
@@ -538,8 +536,7 @@ export function CustomRepeatModal({
                         key={mShort}
                         style={[
                           styles.monthGridCell,
-                          { borderColor: colors.cardBorder },
-                          isSelected && [styles.monthGridCellSelected, { backgroundColor: colors.today }],
+                          isSelected && { backgroundColor: colors.today },
                         ]}
                         onPress={() => {
                           triggerHaptic();
@@ -571,8 +568,8 @@ export function CustomRepeatModal({
                         triggerHaptic();
                         setYearlyEnableWeekdays(v);
                       }}
-                      trackColor={{ false: isDark ? '#3D4452' : '#E5E5EA', true: '#34C759' }}
-                      ios_backgroundColor={isDark ? '#3D4452' : '#E5E5EA'}
+                      trackColor={{ false: colors.inputBorder, true: colors.today }}
+                      ios_backgroundColor={colors.inputBorder}
                       style={{ transform: [{ scaleX: 0.88 }, { scaleY: 0.88 }] }}
                     />
                   </View>
@@ -602,7 +599,7 @@ export function CustomRepeatModal({
         {/* iOS Popover Dropdown Menu */}
         {showUnitMenu && (
           <Pressable style={styles.popoverOverlay} onPress={() => setShowUnitMenu(false)}>
-            <View style={[styles.popoverMenu, { backgroundColor: colors.sheetBg, borderColor: colors.inputBorder }]}>
+            <View style={[styles.popoverMenu, { backgroundColor: colors.card, borderColor: colors.inputBorder }]}>
               <ScrollView style={{ maxHeight: 220 }} showsVerticalScrollIndicator={false}>
                 {(['daily', 'weekly', 'monthly', 'yearly'] as CustomUnit[]).map((u, idx, arr) => {
                   const isSelected = unit === u;
@@ -613,7 +610,7 @@ export function CustomRepeatModal({
                       key={u}
                       style={[
                         styles.menuItem,
-                        isSelected && [styles.menuItemActive, { backgroundColor: isDark ? '#262C38' : '#F2F2F7' }],
+                        { backgroundColor: isSelected ? `${colors.today}14` : 'transparent' },
                         isFirst && styles.menuItemFirst,
                         isLast && styles.menuItemLast,
                       ]}
@@ -623,13 +620,7 @@ export function CustomRepeatModal({
                         setShowUnitMenu(false);
                       }}
                     >
-                      <Text
-                        style={[
-                          styles.menuItemText,
-                          { color: colors.text },
-                          isSelected && [styles.menuItemTextActive, { color: colors.today }],
-                        ]}
-                      >
+                      <Text style={[styles.menuItemText, isSelected && { color: colors.today, fontWeight: '700' }]}>
                         {unitLabels[u]}
                       </Text>
                       {isSelected && <CheckIcon color={colors.today} />}
@@ -670,7 +661,7 @@ function CheckIcon({ color }: { color: string }) {
   );
 }
 
-function SelectorChevronIcon({ color = '#01B7FF' }: { color?: string }) {
+function SelectorChevronIcon({ color = colors.today }: { color?: string }) {
   return (
     <Svg width={12} height={16} viewBox="0 0 24 24" fill="none">
       <Path d="M7 9l5-5 5 5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -763,7 +754,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     backgroundColor: colors.today,
     borderWidth: 1.5,
-    borderColor: '#40C9FF',
+    borderColor: colors.today,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -849,7 +840,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     fontSize: 13,
     fontWeight: '400',
-    color: '#8E8E93',
+    color: colors.secondary,
     lineHeight: 18,
     marginTop: 6,
   },
@@ -877,7 +868,7 @@ const styles = StyleSheet.create({
   dayGridText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: colors.text,
   },
   dayGridTextSelected: {
     color: '#FFFFFF',
@@ -896,12 +887,12 @@ const styles = StyleSheet.create({
     borderColor: colors.inputBorder,
   },
   monthGridCellSelected: {
-    backgroundColor: '#01B7FF',
+    backgroundColor: colors.today,
   },
   monthGridText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000000',
+    color: colors.text,
   },
   monthGridTextSelected: {
     color: '#FFFFFF',
@@ -911,7 +902,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: colors.inputBorder,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     paddingVertical: 4,
   },
   pickerWheelRow: {
@@ -920,14 +911,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   pickerWheelRowActive: {
-    backgroundColor: '#F2F2F7',
+    backgroundColor: colors.inputBg,
   },
   pickerWheelText: {
     fontSize: 15,
     color: '#8E8E93',
   },
   pickerWheelTextActive: {
-    color: '#01B7FF',
+    color: colors.today,
     fontWeight: '700',
   },
   popoverOverlay: {
@@ -941,7 +932,7 @@ const styles = StyleSheet.create({
     top: 92,
     right: 20,
     width: 190,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -976,7 +967,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   menuItemTextActive: {
-    color: '#01B7FF',
+    color: colors.today,
     fontWeight: '600',
   },
   wheelColumnContainer: {
@@ -1009,7 +1000,7 @@ const styles = StyleSheet.create({
   wheelItemTextSelected: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#01B7FF',
+    color: colors.today,
     opacity: 1,
   },
 });

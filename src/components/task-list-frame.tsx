@@ -3,6 +3,7 @@ import type React from 'react';
 import type { Task } from '@/types/task';
 import { useTheme } from '@/context/theme-context';
 import { TaskRow } from './task-row';
+import { useTheme } from '@/hooks/use-theme';
 
 interface TaskListFrameProps {
   tasks: Task[];
@@ -26,7 +27,6 @@ export function TaskListFrame({
   singleLine = false,
 }: TaskListFrameProps) {
   const { colors } = useTheme();
-
   const rows = (
     <View style={{ gap: 2 }}>
       {tasks.map((task) => (

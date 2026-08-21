@@ -20,7 +20,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
 import { formatFullDate, weekdays } from '@/services/date-service';
@@ -47,6 +47,7 @@ export function TaskDetailModal({
 }: TaskDetailModalProps) {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const { update, remove, toggle, create, settings } = usePlanner();
 
   const [title, setTitle] = useState('');
@@ -337,7 +338,7 @@ export function TaskDetailModal({
         >
           {/* Header Handle Bar */}
           <View {...panResponder.panHandlers} style={[styles.handleContainer, { backgroundColor: colors.sheetBg }]}>
-            <View style={[styles.handlePill, { backgroundColor: isDark ? '#3D4452' : '#E5E7EB' }]} />
+            <View style={[styles.handlePill, { backgroundColor: colors.dragPill }]} />
           </View>
 
           {/* Top Action Bar (Close & More Options) */}
@@ -347,9 +348,9 @@ export function TaskDetailModal({
               activeOpacity={0.7}
               onPress={handleClose}
               hitSlop={12}
-              style={[styles.circleButton, { backgroundColor: colors.inputBg }]}
+              style={[styles.circleButton, { backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.inputBorder }]}
             >
-              <CloseIcon size={16} color={colors.text} />
+              <CloseIcon size={16} color={colors.secondary} />
             </TouchableOpacity>
 
             {/* Title */}
@@ -360,9 +361,9 @@ export function TaskDetailModal({
               activeOpacity={0.7}
               onPress={openActionMenu}
               hitSlop={12}
-              style={[styles.circleButton, { backgroundColor: colors.inputBg }]}
+              style={[styles.circleButton, { backgroundColor: colors.inputBg, borderWidth: 1, borderColor: colors.inputBorder }]}
             >
-              <MoreHorizontalIcon size={18} color={colors.text} />
+              <MoreHorizontalIcon size={18} color={colors.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -372,7 +373,7 @@ export function TaskDetailModal({
             contentContainerStyle={[styles.scrollContent, { backgroundColor: colors.sheetBg }]}
           >
             {/* Main Parameters Card */}
-            <View style={[styles.mainCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <View style={[styles.mainCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
               {/* Checkbox & Title Row */}
               <View style={styles.titleRow}>
                 <Animated.View style={{ transform: [{ scale: checkScale }] }}>
@@ -381,8 +382,8 @@ export function TaskDetailModal({
                     hitSlop={8}
                     style={[
                       styles.checkbox,
-                      { borderColor: colors.checkboxBorder, backgroundColor: colors.checkboxBg },
-                      isCompleted && [styles.checkboxCompleted, { borderColor: colors.checkedCheckboxBg, backgroundColor: colors.checkedCheckboxBg }],
+                      { borderColor: colors.checkboxBorder, backgroundColor: colors.card },
+                      isCompleted && { borderColor: colors.checkedCheckboxBg, backgroundColor: colors.checkedCheckboxBg },
                     ]}
                   >
                     {isCompleted && <CheckmarkIcon size={12} color="#FFFFFF" />}
@@ -399,12 +400,12 @@ export function TaskDetailModal({
                   style={[
                     styles.titleInput,
                     { color: colors.text },
-                    isCompleted && [styles.completedTitleText, { color: colors.checkedTaskText }],
+                    isCompleted && styles.completedTitleText,
                   ]}
                 />
               </View>
 
-              <View style={[styles.cardDivider, { backgroundColor: colors.divider }]} />
+              <View style={[styles.cardDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* 📅 Date Row */}
               <TouchableOpacity
@@ -419,12 +420,12 @@ export function TaskDetailModal({
                   <Text style={[styles.propertyLabel, { color: colors.text }]}>Күні</Text>
                 </View>
                 <View style={styles.propertyRight}>
-                  <Text style={[styles.propertyValue, { color: colors.secondary }]}>{formattedDateText}</Text>
-                  <ChevronRightIcon size={16} color={colors.textMuted} />
+                  <Text style={[styles.propertyValue, { color: colors.text }]}>{formattedDateText}</Text>
+                  <ChevronRightIcon size={16} color={colors.secondary} />
                 </View>
               </TouchableOpacity>
 
-              <View style={[styles.cardDivider, { backgroundColor: colors.divider }]} />
+              <View style={[styles.cardDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* 🕒 Time Row */}
               <TouchableOpacity
@@ -439,14 +440,7 @@ export function TaskDetailModal({
                   <Text style={[styles.propertyLabel, { color: colors.text }]}>Уақыты</Text>
                 </View>
                 <View style={styles.propertyRight}>
-                  <Text
-                    style={[
-                      styles.propertyValue,
-                      { color: colors.secondary },
-                      !selectedTime && [styles.propertyPlaceholder, { color: colors.textMuted }],
-                      selectedTime && [styles.propertyValueActive, { color: colors.text }],
-                    ]}
-                  >
+                  <Text style={[styles.propertyValue, { color: colors.text }, !selectedTime && styles.propertyPlaceholder, selectedTime && { color: colors.today, fontWeight: '700' }]}>
                     {selectedTime || 'Таңдалмаған'}
                   </Text>
                   {selectedTime ? (
@@ -461,12 +455,12 @@ export function TaskDetailModal({
                       <CloseIcon size={12} color={colors.secondary} />
                     </TouchableOpacity>
                   ) : (
-                    <ChevronRightIcon size={16} color={colors.textMuted} />
+                    <ChevronRightIcon size={16} color={colors.secondary} />
                   )}
                 </View>
               </TouchableOpacity>
 
-              <View style={[styles.cardDivider, { backgroundColor: colors.divider }]} />
+              <View style={[styles.cardDivider, { backgroundColor: colors.inputBorder }]} />
 
               {/* 🔁 Repeat Row */}
               <TouchableOpacity
@@ -481,17 +475,10 @@ export function TaskDetailModal({
                   <Text style={[styles.propertyLabel, { color: colors.text }]}>Қайталау</Text>
                 </View>
                 <View style={styles.propertyRight}>
-                  <Text
-                    style={[
-                      styles.propertyValue,
-                      { color: colors.secondary },
-                      selectedRepeat === 'none' && [styles.propertyPlaceholder, { color: colors.textMuted }],
-                      selectedRepeat !== 'none' && [styles.propertyValueActive, { color: colors.today }],
-                    ]}
-                  >
+                  <Text style={[styles.propertyValue, { color: colors.text }, selectedRepeat === 'none' && styles.propertyPlaceholder, selectedRepeat !== 'none' && { color: colors.today, fontWeight: '700' }]}>
                     {repeatText}
                   </Text>
-                  <ChevronRightIcon size={16} color={colors.textMuted} />
+                  <ChevronRightIcon size={16} color={colors.secondary} />
                 </View>
               </TouchableOpacity>
             </View>

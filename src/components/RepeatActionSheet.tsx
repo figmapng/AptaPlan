@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
 import { colors } from '@/constants/colors';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 import { getShortRepeatLabel, repeatLabels } from './RepeatChip';
 import { AnimatedPressable } from './AnimatedPressable';
 import { CustomRepeatConfig, CustomRepeatModal, CustomUnit } from './CustomRepeatModal';
@@ -80,38 +80,43 @@ export function RepeatActionSheet({
       backdropOpacity.setValue(0);
       setShowCustomModal(false);
     }
-  }, [visible, translateY, backdropOpacity]);
+  }, [visible, backdropOpacity, translateY]);
+
+  const handleOptionClick = (opt: TaskRepeat | 'custom') => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    if (opt === 'custom') {
+      setShowCustomModal(true);
+      return;
+    }
+    onSelectRepeat(opt as TaskRepeat, 1);
+    handleClose();
+  };
 
   if (!visible) return null;
 
   const current = selectedRepeat || 'none';
 
-  const handleOptionClick = (opt: TaskRepeat) => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    if (opt === 'custom') {
-      setShowCustomModal(true);
-    } else {
-      onSelectRepeat(opt, 1, undefined, undefined, undefined);
-      handleClose();
-    }
-  };
-
   return (
-    <>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={handleClose}
+      statusBarTranslucent
+    >
       <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
         <Pressable style={styles.backdrop} onPress={handleClose} />
-        <Animated.View style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}>
-          <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
 
-          {/* Header */}
+        <Animated.View style={[styles.sheet, { transform: [{ translateY }], backgroundColor: colors.background }]}>
+          <View style={[styles.dragPill, { backgroundColor: colors.secondary }]} />
+
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>Қайталау жиілігі</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Қайталау</Text>
             <AnimatedPressable
+              hitSlop={12}
               activeScale={0.88}
-              style={[styles.closeBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
               onPress={handleClose}
-              accessibilityRole="button"
-              accessibilityLabel="Жабу"
+              style={[styles.closeBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
             >
               <CloseXIcon color={colors.text} />
             </AnimatedPressable>
@@ -137,14 +142,14 @@ export function RepeatActionSheet({
                   activeScale={0.97}
                   style={[
                     styles.optionItem,
-                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-                    isSelected && [styles.optionItemActive, { backgroundColor: isDark ? '#0284C725' : '#01B7FF12', borderColor: colors.today }],
+                    { backgroundColor: colors.inputBg, borderColor: 'transparent' },
+                    isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today },
                   ]}
                   onPress={() => handleOptionClick(opt)}
                 >
                   <View style={styles.optionLeftContent}>
                     <OptionIcon opt={opt} color={iconColor} />
-                    <Text style={[styles.optionText, { color: colors.text }, isSelected && [styles.optionTextActive, { color: colors.today }]]}>
+                    <Text style={[styles.optionText, { color: colors.text }, isSelected && { color: colors.today, fontWeight: '700' }]}>
                       {labelText}
                     </Text>
                   </View>
@@ -174,7 +179,7 @@ export function RepeatActionSheet({
         }}
         onClose={() => setShowCustomModal(false)}
       />
-    </>
+    </Modal>
   );
 }
 
@@ -377,16 +382,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionItemActive: {
-    backgroundColor: '#01B7FF12',
-    borderColor: '#01B7FF',
+    backgroundColor: `${colors.today}12`,
+    borderColor: colors.today,
   },
   optionText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#23262D',
+    color: colors.text,
   },
   optionTextActive: {
-    color: '#01B7FF',
+    color: colors.today,
     fontWeight: '700',
   },
   checkmarkBadge: {

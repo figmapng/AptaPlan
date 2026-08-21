@@ -1,10 +1,12 @@
-export type ColorTheme = {
+export type ColorPalette = {
   background: string;
   card: string;
   cardBorder: string;
+  cardHeaderBg: string;
   text: string;
   textMuted: string;
   secondary: string;
+  subtext: string;
   dateNumBg: string;
   dateNumText: string;
   weekendNumBg: string;
@@ -30,6 +32,7 @@ export type ColorTheme = {
   divider: string;
   today: string;
   todayDark: string;
+  tintBg: string;
   weekend: string;
   capsule: string;
   control: string;
@@ -41,26 +44,29 @@ export type ColorTheme = {
   iconPrimary: string;
   iconSecondary: string;
   headerBackground: string;
-  subtext: string;
   chipBg: string;
   chipBorder: string;
   chipActiveText: string;
   chipText: string;
 };
 
-export const lightColors: ColorTheme = {
+export type ColorTheme = ColorPalette;
+
+export const lightColors: ColorPalette = {
   background: '#FFFFFF',
   card: '#FFFFFF',
   cardBorder: '#D9DDE5',
+  cardHeaderBg: '#EDEFF2',
   text: '#23262D',
   textMuted: '#94A3B8',
   secondary: '#707684',
+  subtext: '#8E8E93',
   dateNumBg: '#DCE0E5',
   dateNumText: '#565B66',
   weekendNumBg: '#FFCDC8',
   weekendNumText: '#B25147',
-  activeHeaderBg: '#40C9FF',
-  activeCardBorder: '#40C9FF',
+  activeHeaderBg: '#01B7FF',
+  activeCardBorder: '#01B7FF',
   activeHeaderText: '#FFFFFF',
   sundayText: '#FF4B3E',
   sundayNumBg: '#FFF0EE',
@@ -70,16 +76,17 @@ export const lightColors: ColorTheme = {
   checkedCheckboxCheck: '#FFFFFF',
   checkedTaskText: '#ADB3BD',
   strikeLine: '#8F97A4',
-  inputBg: '#F7F8FA',
-  inputBorder: '#ECEEF2',
+  inputBg: '#F8FAFC',
+  inputBorder: '#EDF1F5',
   inputPlaceholder: '#9AA1AF',
-  inputPlusIcon: '#7D8796',
-  inputFocusedBorder: '#40C9FF',
+  inputPlusIcon: '#01B7FF',
+  inputFocusedBorder: '#01B7FF',
   inputEnteredText: '#23262D',
-  inputCursor: '#40C9FF',
+  inputCursor: '#01B7FF',
   divider: '#D9DDE5',
-  today: '#40C9FF',
-  todayDark: '#00AEEF',
+  today: '#01B7FF',
+  todayDark: '#009FD6',
+  tintBg: '#EAF8FF',
   weekend: '#FF4B3E',
   capsule: '#F1F3F6',
   control: '#EDEFF2',
@@ -91,12 +98,65 @@ export const lightColors: ColorTheme = {
   iconPrimary: '#23262D',
   iconSecondary: '#707684',
   headerBackground: '#FFFFFF',
-  subtext: '#8E8E93',
   chipBg: '#F3F4F6',
   chipBorder: '#ECEEF2',
   chipActiveText: '#4B5563',
   chipText: '#23262D',
 };
+
+export const darkColors: ColorPalette = {
+  background: '#10131A',
+  card: '#1C222E',
+  cardBorder: '#2C3446',
+  cardHeaderBg: '#232B3A',
+  text: '#F3F5F9',
+  textMuted: '#7E8B9F',
+  secondary: '#94A0B4',
+  subtext: '#94A0B4',
+  dateNumBg: '#2A3344',
+  dateNumText: '#C4CCD9',
+  weekendNumBg: '#3F1F24',
+  weekendNumText: '#FFAAA4',
+  activeHeaderBg: '#0284C7',
+  activeCardBorder: '#38BDF8',
+  activeHeaderText: '#FFFFFF',
+  sundayText: '#FF6B61',
+  sundayNumBg: '#351B1E',
+  checkboxBorder: '#4A556B',
+  checkboxBg: '#242C3C',
+  checkedCheckboxBg: '#3D485C',
+  checkedCheckboxCheck: '#BAC5D5',
+  checkedTaskText: '#707C92',
+  strikeLine: '#546075',
+  inputBg: '#1C222E',
+  inputBorder: '#2C3446',
+  inputPlaceholder: '#7A869A',
+  inputPlusIcon: '#94A0B4',
+  inputFocusedBorder: '#38BDF8',
+  inputEnteredText: '#F3F5F9',
+  inputCursor: '#38BDF8',
+  divider: '#283142',
+  today: '#38BDF8',
+  todayDark: '#0284C7',
+  tintBg: '#162032',
+  weekend: '#FF5959',
+  capsule: '#242C3C',
+  control: '#283142',
+  danger: '#FF5959',
+  modalOverlay: 'rgba(0, 0, 0, 0.72)',
+  sheetBg: '#1C222E',
+  sheetBorder: '#2C3446',
+  dragPill: '#4E5A70',
+  iconPrimary: '#F3F5F9',
+  iconSecondary: '#94A0B4',
+  headerBackground: '#10131A',
+  chipBg: '#242C3C',
+  chipBorder: '#2C3446',
+  chipActiveText: '#F3F5F9',
+  chipText: '#94A0B4',
+};
+
+export const colors: ColorPalette = lightColors;
 
 export const darkColors: ColorTheme = {
   background: '#10131A',

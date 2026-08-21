@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface TimeModalProps {
@@ -65,13 +65,8 @@ export function TimeModal({
         Animated.timing(backdropOpacity, { toValue: 1, duration: 220, useNativeDriver: false }),
         Animated.spring(translateY, { toValue: 0, friction: 8, tension: 85, useNativeDriver: false }),
       ]).start();
-    } else {
-      translateY.setValue(420);
-      backdropOpacity.setValue(0);
     }
-  }, [visible, selectedTime, translateY, backdropOpacity]);
-
-  if (!visible) return null;
+  }, [visible, selectedTime]);
 
   const handleConfirm = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -89,8 +84,10 @@ export function TimeModal({
 
   const currentHHMM = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
+  if (!visible) return null;
+
   return (
-    <Animated.View style={[styles.overlay, { opacity: backdropOpacity }]}>
+    <Animated.View style={[styles.overlay, { opacity: backdropOpacity, backgroundColor: colors.modalOverlay }]}>
       <Pressable style={styles.backdrop} onPress={handleClose} />
       <Animated.View
         style={[
@@ -102,7 +99,7 @@ export function TimeModal({
           },
         ]}
       >
-        <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
+        <View style={[styles.dragPill, { backgroundColor: colors.dragPill }]} />
 
         {/* Header */}
         <View style={styles.header}>
@@ -114,7 +111,7 @@ export function TimeModal({
             accessibilityRole="button"
             accessibilityLabel="Жабу"
           >
-            <CloseXIcon color={colors.inputPlusIcon} />
+            <CloseXIcon color={colors.secondary} />
           </AnimatedPressable>
         </View>
 
@@ -127,7 +124,7 @@ export function TimeModal({
         >
           {quickTimePresets.map((t) => {
             const isSelected = selectedTime === t || currentHHMM === t;
-            const iconColor = isSelected ? '#FFFFFF' : colors.inputPlusIcon;
+            const iconColor = isSelected ? colors.today : colors.secondary;
 
             return (
               <AnimatedPressable
@@ -136,12 +133,21 @@ export function TimeModal({
                 style={[
                   styles.quickBtn,
                   { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-                  isSelected && [styles.quickBtnActive, { backgroundColor: colors.today, borderColor: colors.today }],
+                  isSelected && {
+                    backgroundColor: colors.tintBg,
+                    borderColor: colors.today,
+                  },
                 ]}
                 onPress={() => handlePresetSelect(t)}
               >
                 <ClockIcon color={iconColor} />
-                <Text style={[styles.quickText, { color: colors.text }, isSelected && styles.quickTextActive]}>
+                <Text
+                  style={[
+                    styles.quickText,
+                    { color: colors.text },
+                    isSelected && { color: colors.today, fontWeight: '700' },
+                  ]}
+                >
                   {t}
                 </Text>
               </AnimatedPressable>
@@ -188,7 +194,11 @@ export function TimeModal({
 
           <AnimatedPressable
             activeScale={0.94}
-            style={[styles.confirmBtn, { backgroundColor: colors.today, borderColor: colors.today }, !onRemoveTime && styles.confirmBtnFull]}
+            style={[
+              styles.confirmBtn,
+              { backgroundColor: colors.today, borderColor: colors.today },
+              !onRemoveTime && styles.confirmBtnFull,
+            ]}
             onPress={handleConfirm}
           >
             <Text style={styles.confirmText}>Сақтау</Text>
@@ -249,7 +259,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.sheetBg,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
@@ -266,7 +276,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: colors.dragPill,
     marginBottom: 12,
   },
   header: {
@@ -277,9 +287,9 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   title: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#1C1C1E',
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.text,
     letterSpacing: -0.3,
   },
   closeBtn: {
@@ -380,9 +390,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
-    backgroundColor: '#01B7FF',
+    backgroundColor: colors.today,
     borderWidth: 1,
-    borderColor: '#01B7FF',
+    borderColor: colors.today,
   },
   confirmBtnFull: {
     flex: 1,

@@ -2,8 +2,8 @@ import React from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { addDays, isSameDay, isToday, startOfWeek } from 'date-fns';
 import { weekdaysShort } from '@/services/date-service';
-import { colors } from '@/constants/colors';
-import { useTheme } from '@/context/theme-context';
+import { colors as defaultColors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 
 interface CompactWeekStripProps {
   selectedDate: Date;
@@ -20,7 +20,7 @@ export function CompactWeekStrip({
   screenWidth = 375,
   pageIndex = 0,
 }: CompactWeekStripProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -57,9 +57,9 @@ export function CompactWeekStrip({
     : false;
 
   const activeBorderColor = selectedIsToday
-    ? (isDark ? '#0284C7' : '#90CBFF')
+    ? colors.today
     : selectedIsWeekend
-    ? (isDark ? '#8A3B42' : '#FFCDC8')
+    ? colors.weekendNumBg
     : colors.cardBorder;
 
   return (
@@ -102,10 +102,10 @@ export function CompactWeekStrip({
                     ? [styles.cellNumToday, { color: colors.today }]
                     : isSelected
                     ? isWeekend
-                      ? [styles.cellNumSelectedWeekend, { color: colors.weekend }]
+                      ? styles.cellNumSelectedWeekend
                       : [styles.cellNumSelected, { color: colors.text }]
                     : isWeekend
-                    ? [styles.cellNumWeekend, { color: colors.weekend }]
+                    ? styles.cellNumWeekend
                     : [styles.cellNumUnselected, { color: colors.secondary }],
                 ]}
               >
@@ -118,10 +118,10 @@ export function CompactWeekStrip({
                     ? [styles.cellLabelToday, { color: colors.today }]
                     : isSelected
                     ? isWeekend
-                      ? [styles.cellLabelSelectedWeekend, { color: colors.weekend }]
+                      ? styles.cellLabelSelectedWeekend
                       : [styles.cellLabelSelected, { color: colors.text }]
                     : isWeekend
-                    ? [styles.cellLabelWeekend, { color: colors.weekendNumText }]
+                    ? styles.cellLabelWeekend
                     : [styles.cellLabelUnselected, { color: colors.secondary }],
                   opticalLabelStyle,
                 ]}
@@ -182,23 +182,23 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
   cellNumToday: {
-    color: '#01B7FF',
+    color: defaultColors.today,
     fontWeight: '800',
   },
   cellNumSelected: {
-    color: colors.text,
+    color: defaultColors.text,
     fontWeight: '700',
   },
   cellNumSelectedWeekend: {
-    color: colors.weekend,
+    color: defaultColors.weekend,
     fontWeight: '700',
   },
   cellNumUnselected: {
-    color: colors.secondary,
+    color: defaultColors.secondary,
     fontWeight: '500',
   },
   cellNumWeekend: {
-    color: colors.weekend,
+    color: defaultColors.weekend,
     fontWeight: '500',
   },
   cellLabel: {
@@ -211,23 +211,23 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
   cellLabelToday: {
-    color: '#01B7FF',
+    color: defaultColors.today,
     fontWeight: '800',
   },
   cellLabelSelected: {
-    color: colors.text,
+    color: defaultColors.text,
     fontWeight: '700',
   },
   cellLabelSelectedWeekend: {
-    color: colors.weekend,
+    color: defaultColors.weekend,
     fontWeight: '700',
   },
   cellLabelUnselected: {
-    color: colors.secondary,
+    color: defaultColors.secondary,
     fontWeight: '600',
   },
   cellLabelWeekend: {
-    color: colors.weekendNumText,
+    color: defaultColors.weekendNumText,
     fontWeight: '600',
   },
 });

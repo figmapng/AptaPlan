@@ -1,5 +1,16 @@
 export type ThemeMode = 'system' | 'light' | 'dark';
 
+export type ThemeId =
+  | 'ocean'
+  | 'pink'
+  | 'violet'
+  | 'teal'
+  | 'amber'
+  | 'emerald'
+  | 'coral'
+  | 'slate'
+  | 'minimal';
+
 export type PlannerSettings = {
   completedPlacement: 'keep' | 'bottom';
   haptics: boolean;
@@ -7,7 +18,9 @@ export type PlannerSettings = {
   firstDayOfWeek?: 'mon' | 'sat' | 'sun';
   lastDayVisibility?: 'visible' | 'hidden';
   defaultViewMode?: 'day' | 'week' | 'month' | 'year';
-  theme?: ThemeMode;
+  theme?: ThemeId;
+  themeMode?: ThemeMode;
+  appIcon?: string;
   syncAppleReminders?: boolean;
   autoSyncAppleReminders?: boolean;
   lastRemindersSyncTime?: string;
@@ -20,7 +33,8 @@ export const defaultSettings: PlannerSettings = {
   firstDayOfWeek: 'mon',
   lastDayVisibility: 'visible',
   defaultViewMode: 'week',
-  theme: 'system',
+  theme: 'ocean',
+  themeMode: 'system',
   syncAppleReminders: false,
   autoSyncAppleReminders: true,
 };

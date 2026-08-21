@@ -1,6 +1,6 @@
 import { forwardRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent, type NativeSyntheticEvent, type TextInputContentSizeChangeEventData, type TextInputProps } from 'react-native';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 
 interface TaskInputProps extends TextInputProps {
   value: string;
@@ -12,6 +12,7 @@ interface TaskInputProps extends TextInputProps {
 export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChangeText, onSubmit, onContentSizeChange, onHeightChange, style, ...props }, ref) => {
   const { colors } = useTheme();
   const [contentHeight, setContentHeight] = useState(24);
+  const { colors } = useTheme();
 
   const updateHeight = (height: number) => {
     const nextHeight = Math.max(24, Math.min(128, Math.ceil(height)));
@@ -43,9 +44,9 @@ export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChang
         returnKeyType="default"
         blurOnSubmit={false}
         onSubmitEditing={onSubmit}
-        selectionColor={colors.today}
-        cursorColor={colors.today}
-        style={[styles.input, { color: colors.text }, style, { height: contentHeight, textAlign: 'left' }]}
+        selectionColor={colors.inputCursor}
+        cursorColor={colors.inputCursor}
+        style={[styles.input, style, { height: contentHeight, textAlign: 'left', color: colors.text }]}
         {...props}
       />
       <Text

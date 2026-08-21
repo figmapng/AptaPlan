@@ -7,6 +7,7 @@ import { useTheme } from '@/context/theme-context';
 import { months, toDateKey, weekdays } from '@/services/date-service';
 import type { Task } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
+import { useTheme } from '@/hooks/use-theme';
 import { TaskListFrame } from './task-list-frame';
 import { useCardTransition } from './card-transition-provider';
 import { AnimatedPressable } from './AnimatedPressable';
@@ -51,6 +52,7 @@ export const DayCard = memo(function DayCardComponent({
   const isSaturday = date.getDay() === 6;
   const isWeekend = isSunday || isSaturday;
 
+  const { colors, isDark } = useTheme();
   const completedCount = tasks.filter((task) => task.isCompleted).length;
   const cardRef = useRef<View>(null);
   const { openCard, activeDate, progress: transitionProgress, originFrame } = useCardTransition();
@@ -139,18 +141,18 @@ export const DayCard = memo(function DayCardComponent({
       })
     : 1;
 
-  const headerBg = today ? colors.today : isWeekend ? (isDark ? '#3D1F24' : '#FFE5E2') : (isDark ? '#262F3E' : '#EDEFF2');
-  const outerBg = today ? colors.today : isWeekend ? (isDark ? '#3D1F24' : '#FFE5E2') : (isDark ? '#262F3E' : '#EDEFF2');
-  const cardBorderColor = today ? (isDark ? colors.activeCardBorder : colors.today) : isWeekend ? (isDark ? '#5A2A30' : '#FFE5E2') : (isDark ? '#2C3446' : '#EDEFF2');
-  const cardBorderWidth = isDark ? 1 : 0;
+  const headerBg = today ? colors.activeHeaderBg : isWeekend ? (isDark ? '#351B1E' : '#FFE5E2') : colors.cardHeaderBg;
+  const outerBg = today ? colors.activeCardBorder : isWeekend ? (isDark ? '#351B1E' : '#FFE5E2') : colors.cardHeaderBg;
+  const cardBorderColor = today ? colors.activeCardBorder : isWeekend ? (isDark ? '#522328' : '#F2D2CF') : colors.cardBorder;
+  const cardBorderWidth = 0;
 
-  const numOuterBg = today ? (isDark ? '#0B2238' : '#FFFFFF') : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
-  const numInnerBg = today ? (isDark ? '#0B2238' : '#FFFFFF') : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
-  const numTextColor = today ? (isDark ? '#38BDF8' : colors.today) : isWeekend ? colors.weekendNumText : colors.dateNumText;
+  const numOuterBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
+  const numInnerBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
+  const numTextColor = today ? (isDark && colors.today === '#E4E4E7' ? '#18181B' : colors.today) : isWeekend ? colors.weekendNumText : colors.dateNumText;
 
-  const dayNameColor = today ? '#FFFFFF' : isWeekend ? colors.sundayText : colors.text;
-  const progressCountColor = today ? '#FFFFFF' : isWeekend ? (isDark ? '#FFA6A0' : '#7B4545') : colors.text;
-  const progressTotalColor = today ? 'rgba(255, 255, 255, 0.8)' : isWeekend ? (isDark ? 'rgba(255, 166, 160, 0.7)' : 'rgba(123, 69, 69, 0.7)') : colors.secondary;
+  const dayNameColor = today ? (colors.activeHeaderText || '#FFFFFF') : isWeekend ? colors.sundayText : colors.text;
+  const progressCountColor = today ? (colors.activeHeaderText || '#FFFFFF') : isWeekend ? (isDark ? '#FFAAA4' : '#7B4545') : colors.text;
+  const progressTotalColor = today ? (colors.activeHeaderText === '#18181B' ? 'rgba(24, 24, 27, 0.7)' : 'rgba(255, 255, 255, 0.8)') : isWeekend ? (isDark ? 'rgba(255, 170, 164, 0.7)' : 'rgba(123, 69, 69, 0.7)') : colors.secondary;
 
   const dayName = weekdays[date.getDay()] ?? '';
   const cardHeader = (
@@ -159,19 +161,19 @@ export const DayCard = memo(function DayCardComponent({
       onPress={open}
       activeScale={0.98}
       style={{
-        height: wide ? 35 : 29,
+        height: 29,
         paddingVertical: 0,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: wide ? 8 : 6,
-        paddingHorizontal: wide ? 14 : 10,
+        gap: 6,
+        paddingHorizontal: 10,
         backgroundColor: headerBg,
       }}
     >
       <Text
         numberOfLines={1}
         style={{
-          fontSize: wide ? 15 : 12,
+          fontSize: 12,
           fontWeight: '600',
           letterSpacing: 0.2,
           color: dayNameColor,
@@ -183,12 +185,12 @@ export const DayCard = memo(function DayCardComponent({
       {/* Outer badge */}
       <View
         style={{
-          minWidth: wide ? 22 : 20,
-          minHeight: wide ? 19 : 17,
+          minWidth: 20,
+          minHeight: 17,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: numOuterBg,
-          borderRadius: wide ? 5 : 5,
+          borderRadius: 5,
           paddingTop: 0,
           paddingRight: 4,
           paddingBottom: 0,
@@ -200,7 +202,7 @@ export const DayCard = memo(function DayCardComponent({
           style={{
             alignSelf: 'stretch',
             flexDirection: 'row',
-            borderRadius: wide ? 4 : 4,
+            borderRadius: 4,
             paddingHorizontal: 0,
             paddingVertical: 0,
             alignItems: 'center',
@@ -211,8 +213,8 @@ export const DayCard = memo(function DayCardComponent({
         >
           <Text
             style={{
-              fontSize: wide ? 13 : 12,
-              lineHeight: wide ? 15 : 13,
+              fontSize: 12,
+              lineHeight: 13,
               fontWeight: today ? '700' : '600',
               color: numTextColor,
               fontVariant: ['tabular-nums'],
@@ -223,8 +225,8 @@ export const DayCard = memo(function DayCardComponent({
           {monthLabel ? (
             <Text
               style={{
-                fontSize: wide ? 10 : 9.5,
-                lineHeight: wide ? 13 : 12,
+                fontSize: 9.5,
+                lineHeight: 12,
                 fontWeight: '600',
                 color: numTextColor,
                 opacity: 0.85,
@@ -239,7 +241,7 @@ export const DayCard = memo(function DayCardComponent({
       <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center' }}>
         <Text
           style={{
-            fontSize: wide ? 12 : 11,
+            fontSize: 11,
             fontWeight: '600',
             fontVariant: ['tabular-nums'],
           }}
@@ -266,8 +268,8 @@ export const DayCard = memo(function DayCardComponent({
           backgroundColor: colors.card,
           borderRadius: 12,
           borderCurve: 'continuous',
-          marginHorizontal: 2,
-          marginBottom: 2,
+          marginHorizontal: 1.5,
+          marginBottom: 1.5,
           flex: wide ? 1 : undefined,
           borderWidth: isDark ? 1 : 0,
           borderColor: isDark ? '#242D3C' : 'transparent',

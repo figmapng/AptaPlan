@@ -3,14 +3,16 @@ import { Animated, Easing, PanResponder, Pressable, StyleSheet, Text, TouchableO
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 
 function DragHandle({ active, opacity }: { active: boolean; opacity?: any }) {
+  const { colors, isDark } = useTheme();
   return (
     <Animated.View style={[styles.invisibleHandle, opacity !== undefined && { opacity }]}> 
       <Svg width={14} height={14} viewBox="0 0 16 16" fill="none">
         <Path
           d="M2.5 5h11M2.5 8h11M2.5 11h11"
-          stroke={active ? '#374151' : '#9CA3AF'}
+          stroke={active ? colors.text : (isDark ? '#4E5A70' : '#9CA3AF')}
           strokeWidth="1.5"
           strokeLinecap="round"
         />
@@ -83,6 +85,7 @@ function SortableRowItem<T>({
   onRelease,
   onTerminate,
 }: RowItemProps<T>) {
+  const { colors: themeColors, isDark } = useTheme();
   const [swipeXAnim, setSwipeXAnim] = useState<Animated.Value | null>(null);
   const onDeleteRef = useRef<(() => void) | null>(null);
   const longPressRef = useRef(false);
@@ -279,7 +282,7 @@ function SortableRowItem<T>({
               <TrashIcon color="white" />
             </Animated.View>
             {/* Soft Grey Text Below */}
-            <Text style={{ color: '#8E8E93', fontSize: 10, fontWeight: '400', marginTop: 2 }}>Өшіру</Text>
+            <Text style={{ color: themeColors.secondary, fontSize: 10, fontWeight: '400', marginTop: 2 }}>Өшіру</Text>
           </Animated.View>
         </TouchableOpacity>
       </Animated.View>

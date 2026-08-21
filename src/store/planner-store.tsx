@@ -319,3 +319,7 @@ export function usePlanner() {
   if (!ctx) throw new Error('usePlanner must be used within PlannerProvider');
   return ctx;
 }
+
+export function useOptionalPlanner() {
+  return use(Context);
+}

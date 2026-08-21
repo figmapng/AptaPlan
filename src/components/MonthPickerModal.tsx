@@ -3,7 +3,7 @@ import { Animated, Dimensions, Easing, Modal, Pressable, ScrollView, StyleSheet,
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 import { months } from '@/services/date-service';
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -23,7 +23,7 @@ export function MonthPickerModal({
   onSelectMonth,
   onClose,
 }: MonthPickerModalProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const [selectedYear, setSelectedYear] = useState(() => currentDate.getFullYear());
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -71,19 +71,19 @@ export function MonthPickerModal({
   return (
     <Modal transparent visible animationType="none" onRequestClose={handleClose}>
       <View style={styles.container}>
-        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
+        <Animated.View style={[styles.backdrop, { opacity: backdropOpacity, backgroundColor: colors.modalOverlay }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         </Animated.View>
 
         <Animated.View style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}>
-          <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
+          <View style={[styles.dragPill, { backgroundColor: colors.dragPill }]} />
           
           {/* Header */}
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.text }]}>Айды таңдау</Text>
             <AnimatedPressable
               activeScale={0.92}
-              style={[styles.todayBadge, { backgroundColor: isDark ? '#0284C725' : '#01B7FF14' }]}
+              style={[styles.todayBadge, { backgroundColor: `${colors.today}18` }]}
               onPress={handleTodayClick}
             >
               <Text style={[styles.todayText, { color: colors.today }]}>Бүгін</Text>
@@ -231,7 +231,13 @@ function MonthGridMatrix({
             </Text>
 
             {isActualTodayMonth && (
-              <View style={[styles.todayDot, { backgroundColor: colors.today }, isSelected && styles.todayDotSelected]} />
+              <View
+                style={[
+                  styles.todayDot,
+                  { backgroundColor: colors.today },
+                  isSelected && styles.todayDotSelected,
+                ]}
+              />
             )}
           </AnimatedPressable>
         );
@@ -250,7 +256,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.sheetBg,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
@@ -263,7 +269,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: colors.dragPill,
     alignSelf: 'center',
     marginBottom: 8,
   },
@@ -284,12 +290,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#01B7FF14',
+    backgroundColor: `${colors.today}14`,
   },
   todayText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#01B7FF',
+    color: colors.today,
   },
   yearRow: {
     flexDirection: 'row',
@@ -332,11 +338,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   monthCardSelected: {
-    backgroundColor: '#01B7FF',
-    borderColor: '#01B7FF',
+    backgroundColor: colors.today,
+    borderColor: colors.today,
   },
   monthCardToday: {
-    borderColor: '#01B7FF',
+    borderColor: colors.today,
   },
   monthText: {
     fontSize: 14,
@@ -348,7 +354,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   monthTextToday: {
-    color: '#01B7FF',
+    color: colors.today,
     fontWeight: '700',
   },
   todayDot: {
@@ -358,7 +364,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#01B7FF',
+    backgroundColor: colors.today,
   },
   todayDotSelected: {
     backgroundColor: '#FFFFFF',

@@ -17,8 +17,9 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { Task, TaskRepeat } from '@/types/task';
+import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 import { getTodayKey } from '@/utils/dateHelpers';
 import { TaskInput } from './TaskInput';
 import { DateChip } from './DateChip';
@@ -49,6 +50,7 @@ export function TaskBottomSheet({
 }: TaskBottomSheetProps) {
   const { colors, isDark } = useTheme();
   const planner = usePlanner();
+  const { colors } = useTheme();
 
   const [title, setTitle] = useState('');
   const [titleInputHeight, setTitleInputHeight] = useState(24);
@@ -313,7 +315,7 @@ export function TaskBottomSheet({
       }}
       onRequestClose={handleDismissRequest}
     >
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
         <Pressable style={styles.backdrop} onPress={handleDismissRequest} />
 
         <Animated.View
@@ -326,14 +328,9 @@ export function TaskBottomSheet({
             },
           ]}
         >
-          {/* Top Drag Pill Indicator */}
-          <View style={styles.dragHeader} {...panResponder.panHandlers}>
-            <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
-          </View>
-
           {/* Input & Send Button Row (Send button inside input) */}
           <View style={styles.inputRow}>
-              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, minHeight: Math.max(52, titleInputHeight + 10) }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }, { minHeight: Math.max(52, titleInputHeight + 10) }]}>
                 <View style={styles.inputContent}>
                   <TaskInput
                   ref={inputRef}
@@ -351,15 +348,17 @@ export function TaskBottomSheet({
                 onPress={handleSend}
                 style={({ pressed }) => [
                   styles.sendBtn,
-                  { backgroundColor: colors.today, borderColor: colors.today },
-                  !isEnabled && [styles.sendBtnDisabled, { backgroundColor: isDark ? '#262A34' : '#E5E7EB' }],
+                  {
+                    backgroundColor: isEnabled ? colors.today : colors.inputBorder,
+                    borderColor: isEnabled ? colors.todayDark : 'transparent',
+                  },
                   pressed && isEnabled && styles.sendBtnPressed,
                 ]}
               >
                 {editingTask ? (
-                  <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#5A6275' : '#9CA3AF')} />
+                  <CheckIcon color={isEnabled ? '#FFFFFF' : colors.inputPlaceholder} />
                 ) : (
-                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#5A6275' : '#9CA3AF')} />
+                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : colors.inputPlaceholder} />
                 )}
               </Pressable>
             </View>
@@ -476,38 +475,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.sheetBg,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: 20,
     boxShadow: '0 -4px 20px rgba(0,0,0,0.12)',
   },
-  dragHeader: {
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  dragPill: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#D1D5DB',
-  },
   inputRow: {
-    marginTop: 4,
+    marginTop: 0,
     marginBottom: 12,
   },
   inputWrapper: {
     minHeight: 52,
     borderWidth: 1,
-    borderColor: '#E5E8EB',
+    borderColor: colors.inputBorder,
     borderRadius: 26,
     paddingLeft: 16,
-    paddingRight: 6,
-    paddingVertical: 6,
-    backgroundColor: '#F3F4F6',
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingRight: 5,
+    paddingVertical: 5,
+    backgroundColor: colors.inputBg,
   },
   inputContent: {
     flex: 1,
@@ -518,16 +505,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#01B7FF',
     borderWidth: 1.5,
-    borderColor: '#40C9FF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  sendBtnDisabled: {
-    backgroundColor: '#E5E7EB',
-    borderColor: 'transparent',
-    opacity: 1,
   },
   sendBtnPressed: {
     transform: [{ scale: 0.94 }],

@@ -5,7 +5,7 @@ import { addMonths } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
-import { useTheme } from '@/context/theme-context';
+import { useTheme } from '@/hooks/use-theme';
 import { fromDateKey, getNextWeekMondayKey, getThisWeekendKey, getTodayKey, getTomorrowKey, kzMonthsFull, toDateKey } from '@/utils/dateHelpers';
 import { AnimatedPressable } from './AnimatedPressable';
 import { MonthPickerModal } from './MonthPickerModal';
@@ -66,7 +66,7 @@ export function CalendarModal({
   onRemoveDate,
   onClose,
 }: CalendarModalProps) {
-  const { colors, isDark } = useTheme();
+  const { theme, colors, isDark } = useTheme();
   const planner = usePlanner();
   const firstDayOfWeek = (planner?.settings?.firstDayOfWeek as 'mon' | 'sat' | 'sun') || 'mon';
   const weekdayHeaders = getWeekdayHeaders(firstDayOfWeek);
@@ -176,42 +176,67 @@ export function CalendarModal({
   const prevMonthDate = addMonths(currentMonthDate, -1);
   const nextMonthDate = addMonths(currentMonthDate, 1);
 
+  const isWarmOrRedTheme = theme === 'amber' || theme === 'coral';
+  const isVioletTheme = theme === 'violet';
+
+  const tomorrowConfig = isWarmOrRedTheme
+    ? {
+        color: '#0284C7',
+        activeBg: isDark ? '#102A45' : '#F0F9FF',
+        activeBorder: isDark ? '#0369A1' : '#BAE6FD',
+        textColor: isDark ? '#38BDF8' : '#0284C7',
+      }
+    : {
+        color: '#FF9500',
+        activeBg: isDark ? '#3D2814' : '#FFF6EB',
+        activeBorder: isDark ? '#6B4219' : '#FED7AA',
+        textColor: isDark ? '#FFAA47' : '#F97316',
+      };
+
+  const nextWeekConfig = isVioletTheme
+    ? {
+        color: '#059669',
+        activeBg: isDark ? '#133529' : '#ECFDF5',
+        activeBorder: isDark ? '#047857' : '#A7F3D0',
+        textColor: isDark ? '#34D399' : '#059669',
+      }
+    : {
+        color: '#8B5CF6',
+        activeBg: isDark ? '#271E3D' : '#F5F3FF',
+        activeBorder: isDark ? '#46326E' : '#DDD6FE',
+        textColor: isDark ? '#BCA5FF' : '#7C3AED',
+      };
+
   const quickOptions = [
     {
       key: todayKey,
       label: 'Бүгін',
       icon: SunIcon,
       color: colors.today,
-      activeBg: isDark ? '#0C3247' : '#EDF9FF',
-      activeBorder: isDark ? '#0369A1' : '#BCE8FF',
+      activeBg: colors.tintBg,
+      activeBorder: colors.today,
       textColor: colors.today,
     },
     {
       key: tomorrowKey,
       label: 'Ертең',
       icon: TomorrowIcon,
-      color: '#FF9500',
-      activeBg: isDark ? '#3D2508' : '#FFF6EB',
-      activeBorder: isDark ? '#854D0E' : '#FED7AA',
-      textColor: isDark ? '#FB923C' : '#F97316',
+      ...tomorrowConfig,
     },
     {
       key: weekendKey,
       label: 'Демалыс күні',
       icon: WeekendIcon,
-      color: colors.weekend,
+      color: '#FF4B3E',
       activeBg: isDark ? '#361A1D' : '#FFF1F0',
-      activeBorder: isDark ? '#7F1D1D' : '#FFE0DE',
-      textColor: colors.weekend,
+      activeBorder: isDark ? '#522328' : '#FFE0DE',
+      textColor: isDark ? '#FFAAA4' : '#FF4B3E',
     },
     {
       key: nextWeekKey,
       label: 'Келесі апта',
       icon: NextWeekIcon,
-      color: '#8B5CF6',
-      activeBg: isDark ? '#2E1A47' : '#F5F3FF',
-      activeBorder: isDark ? '#6B21A8' : '#DDD6FE',
-      textColor: isDark ? '#A78BFA' : '#7C3AED',
+      ...nextWeekConfig,
     },
   ];
 
@@ -221,22 +246,28 @@ export function CalendarModal({
   const monthName = kzMonthsFull[currMonthIdx];
   const capitalizedMonthTitle = `${monthName[0].toUpperCase()}${monthName.slice(1)} ${currYear}`;
 
-  const selectedOptionStyle = quickOptions.find((opt) => opt.key === tempSelectedDate) || {
-    activeBg: isDark ? '#0C3247' : '#EDF9FF',
-    activeBorder: isDark ? '#0369A1' : '#BCE8FF',
-    textColor: colors.today,
-  };
+  const matchedQuickOption = quickOptions.find((opt) => opt.key === tempSelectedDate);
+  const selectedOptionStyle = matchedQuickOption
+    ? {
+        activeBg: matchedQuickOption.activeBg,
+        activeBorder: matchedQuickOption.activeBorder,
+        textColor: matchedQuickOption.textColor,
+      }
+    : {
+        activeBg: colors.tintBg,
+        activeBorder: colors.today,
+        textColor: colors.today,
+      };
 
   return (
     <>
-      <View style={styles.overlay} pointerEvents="box-none">
-        <Animated.View style={[styles.backdropBackground, { opacity: backdropOpacity }]} />
+      <Animated.View style={[styles.overlay, { opacity: backdropOpacity, backgroundColor: colors.modalOverlay }]}>
         <Pressable style={styles.backdrop} onPress={handleClose} />
         <Animated.View
           style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}
           {...sheetPanResponder.panHandlers}
         >
-          <View style={[styles.dragPill, { backgroundColor: isDark ? '#3D4452' : '#D1D5DB' }]} />
+          <View style={[styles.dragPill, { backgroundColor: colors.dragPill }]} />
 
           {/* Top Sheet Header */}
           <View style={styles.header}>
@@ -248,7 +279,7 @@ export function CalendarModal({
               accessibilityRole="button"
               accessibilityLabel="Жабу"
             >
-              <CloseXIcon color={colors.inputPlusIcon} />
+              <CloseXIcon color={colors.secondary} />
             </AnimatedPressable>
           </View>
 
@@ -424,7 +455,11 @@ export function CalendarModal({
 
             <AnimatedPressable
               activeScale={0.94}
-              style={[styles.confirmBtn, { backgroundColor: colors.today, borderColor: colors.today }, !onRemoveDate && styles.confirmBtnFull]}
+              style={[
+                styles.confirmBtn,
+                { backgroundColor: colors.today, borderColor: colors.today },
+                !onRemoveDate && styles.confirmBtnFull,
+              ]}
               onPress={handleConfirm}
             >
               <Text style={styles.confirmText}>Сақтау</Text>
@@ -467,13 +502,14 @@ function DaysGridMatrix({
   todayKey,
   firstDayOfWeek = 'mon',
   onSelectDay,
-  selectedOptionStyle = {
-    activeBg: '#EDF9FF',
-    activeBorder: '#BCE8FF',
-    textColor: '#0284C7',
-  },
+  selectedOptionStyle,
 }: DaysGridMatrixProps) {
   const { colors, isDark } = useTheme();
+  const effectiveOptionStyle = selectedOptionStyle || {
+    activeBg: colors.tintBg,
+    activeBorder: colors.today,
+    textColor: colors.today,
+  };
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
 
@@ -560,14 +596,15 @@ function DaysGridMatrix({
                   style={[
                     styles.dayBadge,
                     isSelected && {
-                      backgroundColor: selectedOptionStyle.activeBg,
+                      backgroundColor: effectiveOptionStyle.activeBg,
                       borderWidth: 1.5,
-                      borderColor: selectedOptionStyle.activeBorder,
+                      borderColor: effectiveOptionStyle.activeBorder,
                     },
-                    isToday && !isSelected && [
-                      styles.dayBadgeToday,
-                      { backgroundColor: isDark ? '#0284C725' : '#40C9FF18', borderColor: colors.today },
-                    ],
+                    isToday && !isSelected && {
+                      backgroundColor: `${colors.today}18`,
+                      borderWidth: 1.5,
+                      borderColor: colors.today,
+                    },
                   ]}
                 >
                   <Text
@@ -578,7 +615,7 @@ function DaysGridMatrix({
                       !item.isCurrentMonth && (item.isWeekend ? { color: isDark ? '#8A3B42' : '#FFB8B3' } : { color: colors.textMuted }),
                       isToday && !isSelected && { color: colors.today, fontWeight: '700' },
                       isSelected && {
-                        color: selectedOptionStyle.textColor,
+                        color: effectiveOptionStyle.textColor,
                         fontWeight: '700',
                       },
                     ]}
@@ -703,7 +740,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.sheetBg,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
@@ -720,7 +757,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: colors.dragPill,
     marginBottom: 12,
   },
   header: {
@@ -733,7 +770,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 19,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: colors.text,
     letterSpacing: -0.3,
   },
   closeBtn: {
@@ -769,8 +806,8 @@ const styles = StyleSheet.create({
     borderColor: colors.inputBorder,
   },
   quickBtnActive: {
-    backgroundColor: '#01B7FF',
-    borderColor: '#01B7FF',
+    backgroundColor: colors.today,
+    borderColor: colors.today,
   },
   quickText: {
     fontSize: 13,
@@ -812,7 +849,7 @@ const styles = StyleSheet.create({
   monthTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1C1C1E',
+    color: colors.text,
   },
   arrowBtn: {
     width: 34,
@@ -833,7 +870,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontWeight: '600',
-    color: '#707684',
+    color: colors.secondary,
   },
   weekTitleWeekend: {
     color: colors.weekend,
@@ -865,21 +902,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.today,
   },
   dayBadgeToday: {
-    backgroundColor: '#40C9FF18',
+    backgroundColor: `${colors.today}18`,
     borderWidth: 1.5,
     borderColor: colors.today,
   },
   dayText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#23262D',
+    color: colors.text,
   },
   dayTextWeekend: {
     color: colors.weekend,
     fontWeight: '600',
   },
   dayTextOtherMonth: {
-    color: '#CBD5E1',
+    color: colors.secondary,
     fontWeight: '400',
   },
   dayTextOtherMonthWeekend: {
