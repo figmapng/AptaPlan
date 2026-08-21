@@ -41,7 +41,6 @@ export default function SettingsScreen() {
 
   // Modals for selection settings
   const [guideOpen, setGuideOpen] = useState(false);
-  const [themeModalOpen, setThemeModalOpen] = useState(false);
   const [placementModalOpen, setPlacementModalOpen] = useState(false);
   const [sortModalOpen, setSortModalOpen] = useState(false);
   const [firstDayModalOpen, setFirstDayModalOpen] = useState(false);
@@ -129,7 +128,7 @@ export default function SettingsScreen() {
                 }}
               />
             }
-            onPress={() => router.push('/appearance')}
+            onPress={() => router.push('/appearance' as any)}
           />
         </Section>
 
@@ -206,7 +205,7 @@ export default function SettingsScreen() {
                   : 'Өшірулі'
                 : 'Күнтізбе'
             }
-            onPress={() => router.push('/integrations')}
+            onPress={() => router.push('/integrations' as any)}
           />
           <Divider />
           <SettingRow
@@ -256,42 +255,6 @@ export default function SettingsScreen() {
 
       {/* User Guide Modal */}
       <UserGuideModal visible={guideOpen} onClose={() => setGuideOpen(false)} />
-
-      {/* Theme Modal */}
-      <OptionModal
-        visible={themeModalOpen}
-        title="Тақырып"
-        onClose={() => setThemeModalOpen(false)}
-        options={[
-          {
-            label: 'Жүйелік',
-            sublabel: 'Құрылғы режиміне сәйкес',
-            selected: !settings.theme || settings.theme === 'system',
-            onSelect: () => {
-              void setPref('theme', 'system');
-              setThemeModalOpen(false);
-            },
-          },
-          {
-            label: 'Ашық',
-            sublabel: 'Жарық түстер',
-            selected: settings.theme === 'light',
-            onSelect: () => {
-              void setPref('theme', 'light');
-              setThemeModalOpen(false);
-            },
-          },
-          {
-            label: 'Күңгірт',
-            sublabel: 'Қараңғы түстер',
-            selected: settings.theme === 'dark',
-            onSelect: () => {
-              void setPref('theme', 'dark');
-              setThemeModalOpen(false);
-            },
-          },
-        ]}
-      />
 
       {/* Visual Default View Mode Modal */}
       <DefaultViewModeModal
@@ -513,7 +476,7 @@ function OptionModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
+      <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}
@@ -531,25 +494,13 @@ function OptionModal({
               return (
                 <Pressable
                   key={i}
-                  style={[
-                    styles.optionRowItem,
-                    isChecked && {
-                      backgroundColor: isDark ? '#0284C720' : '#EDF9FF',
-                      borderRadius: 14,
-                      paddingHorizontal: 12,
-                    },
-                  ]}
+                  style={styles.optionRowItem}
                   onPress={() => setSelectedIdx(i)}
                 >
                   <View style={styles.optionRowLeft}>
                     <Text style={[styles.optionRowTitle, { color: colors.text }, isChecked && { fontWeight: '700' }]}>
                       {opt.label}
                     </Text>
-                    {opt.sublabel ? (
-                      <Text style={{ fontSize: 12, color: colors.secondary, marginTop: 2 }}>
-                        {opt.sublabel}
-                      </Text>
-                    ) : null}
                   </View>
                   <View style={[
                     styles.radioButton,
@@ -776,11 +727,9 @@ function DefaultViewModeModal({
     },
   ];
 
-  const { colors, isDark } = useTheme();
-
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
+      <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}
@@ -937,11 +886,9 @@ function LastDayVisibilityModal({
     },
   ];
 
-  const { colors, isDark } = useTheme();
-
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
+      <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}

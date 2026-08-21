@@ -478,7 +478,7 @@ export function TaskPreviewModal({
               ]}
               hitSlop={6}
             >
-              <TrashIcon size={20} color={colors.weekend} />
+              <TrashIcon size={20} color="#FF4B3E" />
             </AnimatedPressable>
           </View>
         </Animated.View>

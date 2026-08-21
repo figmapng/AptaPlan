@@ -29,7 +29,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getDatabase } from '@/database/database';
 
 export default function DayScreen() {
-  const { colors, isDark } = useTheme();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -363,7 +362,7 @@ export default function DayScreen() {
           borderColor: colors.inputBorder,
         }}
       >
-        <ChevronLeftIcon color={colors.iconPrimary} />
+        <ChevronLeftIcon />
       </AnimatedPressable>
       <AnimatedPressable
         accessibilityRole="button"

@@ -1,7 +1,6 @@
 import { ScrollView, View } from 'react-native';
 import type React from 'react';
 import type { Task } from '@/types/task';
-import { useTheme } from '@/context/theme-context';
 import { TaskRow } from './task-row';
 import { useTheme } from '@/hooks/use-theme';
 

@@ -45,7 +45,6 @@ export function TaskDetailModal({
   onClose,
   onTaskDeleted,
 }: TaskDetailModalProps) {
-  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { update, remove, toggle, create, settings } = usePlanner();
@@ -325,7 +324,7 @@ export function TaskDetailModal({
           <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
         </Animated.View>
 
-        {/* Sheet Content Container */}
+        {/* Bottom Sheet Container */}
         <Animated.View
           style={[
             styles.sheetContainer,
@@ -450,7 +449,7 @@ export function TaskDetailModal({
                         setSelectedTime(null);
                         void saveChanges({ time: null });
                       }}
-                      style={[styles.clearChip, { backgroundColor: colors.inputBg }]}
+                      style={styles.clearChip}
                     >
                       <CloseIcon size={12} color={colors.secondary} />
                     </TouchableOpacity>

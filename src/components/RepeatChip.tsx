@@ -1,7 +1,6 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '@/context/theme-context';
 import type { TaskRepeat } from '@/types/task';
 import { useTheme } from '@/hooks/use-theme';
 import { AnimatedPressable } from './AnimatedPressable';
@@ -45,7 +44,7 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
 
   const handlePress = async () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     onPress();
   };
@@ -54,18 +53,16 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
   const label = (repeat === 'custom' && customLabel) ? customLabel : getShortRepeatLabel(repeat, interval);
 
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       accessibilityLabel={`Қайталау: ${label || 'Орнатылмаған'}`}
       onPress={handlePress}
-      hitSlop={6}
-      style={({ pressed }) => [
+      activeScale={0.93}
+      style={[
         styles.chip,
         { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
         isActive ? { backgroundColor: colors.tintBg, borderColor: colors.today } : undefined,
         !label ? styles.iconOnly : undefined,
-        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
-        pressed && { opacity: 0.75, transform: [{ scale: 0.96 }] },
       ]}
     >
       <RepeatIcon size={16} color={isActive ? colors.today : colors.chipText} />

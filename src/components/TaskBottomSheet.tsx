@@ -48,7 +48,6 @@ export function TaskBottomSheet({
   onTaskSaved,
   onTaskDeleted,
 }: TaskBottomSheetProps) {
-  const { colors, isDark } = useTheme();
   const planner = usePlanner();
   const { colors } = useTheme();
 
@@ -268,17 +267,17 @@ export function TaskBottomSheet({
   const isEnabled = title.trim().length > 0;
 
   const openCalendar = () => {
-    inputRef.current?.blur();
+    Keyboard.dismiss();
     setShowCalendar(true);
   };
 
   const openTimePicker = () => {
-    inputRef.current?.blur();
+    Keyboard.dismiss();
     setShowTimePicker(true);
   };
 
   const openRepeatSheet = () => {
-    inputRef.current?.blur();
+    Keyboard.dismiss();
     setShowRepeatSheet(true);
   };
 
@@ -319,6 +318,7 @@ export function TaskBottomSheet({
         <Pressable style={styles.backdrop} onPress={handleDismissRequest} />
 
         <Animated.View
+          {...panResponder.panHandlers}
           style={[
             styles.sheetContainer,
             {
@@ -487,6 +487,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   inputWrapper: {
+    position: 'relative',
     minHeight: 52,
     borderWidth: 1,
     borderColor: colors.inputBorder,
@@ -497,9 +498,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.inputBg,
   },
   inputContent: {
-    flex: 1,
+    position: 'absolute',
+    top: 5,
+    right: 52,
+    bottom: 5,
+    left: 16,
     justifyContent: 'center',
-    paddingRight: 8,
   },
   sendBtn: {
     width: 40,
@@ -508,6 +512,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'absolute',
+    right: 5,
+    bottom: 5,
   },
   sendBtnPressed: {
     transform: [{ scale: 0.94 }],

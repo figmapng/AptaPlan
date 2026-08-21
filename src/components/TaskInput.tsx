@@ -10,7 +10,6 @@ interface TaskInputProps extends TextInputProps {
 }
 
 export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChangeText, onSubmit, onContentSizeChange, onHeightChange, style, ...props }, ref) => {
-  const { colors } = useTheme();
   const [contentHeight, setContentHeight] = useState(24);
   const { colors } = useTheme();
 
@@ -68,7 +67,6 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 24,
     position: 'relative',
-    justifyContent: 'center',
   },
   input: {
     fontSize: 16,
@@ -80,8 +78,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     minHeight: 24,
     backgroundColor: 'transparent',
-    textAlign: 'left',
-    textAlignVertical: 'center',
+    textAlign: 'center',
+    textAlignVertical: 'top',
   },
   measureText: {
     position: 'absolute',

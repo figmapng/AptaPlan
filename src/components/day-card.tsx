@@ -3,7 +3,6 @@ import { Animated, Pressable, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { format, isToday } from 'date-fns';
 import { colors } from '@/constants/colors';
-import { useTheme } from '@/context/theme-context';
 import { months, toDateKey, weekdays } from '@/services/date-service';
 import type { Task } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
@@ -45,7 +44,6 @@ export const DayCard = memo(function DayCardComponent({
   scrollEnabled = true,
   monthLabel,
 }: DayCardProps) {
-  const { colors, isDark } = useTheme();
   const key = toDateKey(date);
   const today = isToday(date);
   const isSunday = date.getDay() === 0;
@@ -271,8 +269,6 @@ export const DayCard = memo(function DayCardComponent({
           marginHorizontal: 1.5,
           marginBottom: 1.5,
           flex: wide ? 1 : undefined,
-          borderWidth: isDark ? 1 : 0,
-          borderColor: isDark ? '#242D3C' : 'transparent',
         },
         wide ? undefined : { height: bodyHeight },
       ]}

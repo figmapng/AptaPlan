@@ -81,7 +81,6 @@ const getSlides = (accentColor: string) => [
 ];
 
 export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
-  const { colors, isDark } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);
   const { colors } = useTheme();
 

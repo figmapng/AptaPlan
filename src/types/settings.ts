@@ -38,4 +38,3 @@ export const defaultSettings: PlannerSettings = {
   syncAppleReminders: false,
   autoSyncAppleReminders: true,
 };
-

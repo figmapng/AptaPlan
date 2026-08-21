@@ -86,7 +86,6 @@ const CarouselCard = React.memo(function CarouselCard({
   handlePendingDelete,
   isTransitionSettled = true,
 }: CarouselCardProps) {
-  const { colors, isDark } = useTheme();
   const cardKey = useMemo(() => toDateKey(cardDate), [cardDate]);
   const cardTasks = useMemo(() => tasks.filter((t: Task) => t.date === cardKey), [tasks, cardKey]);
   const completedCount = useMemo(() => cardTasks.filter((t: Task) => t.isCompleted).length, [cardTasks]);
@@ -172,8 +171,8 @@ const CarouselCard = React.memo(function CarouselCard({
                 outputRange: [isTodayCard ? 1.5 : 0.5, 0, 0],
                 extrapolate: 'clamp',
               })
-            : 0),
-          borderColor: isDark ? (isTodayCard ? colors.activeCardBorder : colors.cardBorder) : (isMonthOrigin ? monthCellBorder : undefined),
+            : 0,
+          borderColor: isMonthOrigin ? monthCellBorder : undefined,
           opacity: 1,
           zIndex: isCenter ? 9999 : 9998,
           transform: [
@@ -208,7 +207,7 @@ const CarouselCard = React.memo(function CarouselCard({
               fontSize: isTodayCard ? 13 : 12,
               fontWeight: isTodayCard ? '800' : '600',
               lineHeight: 16,
-              color: isTodayCard ? colors.today : isWeekendCard ? colors.weekend : colors.text,
+              color: isTodayCard ? colors.today : isWeekendCard ? colors.weekend : '#2D3748',
               fontVariant: ['tabular-nums'],
               textAlign: 'center',
               marginBottom: 2,
@@ -225,7 +224,7 @@ const CarouselCard = React.memo(function CarouselCard({
                   fontSize: 9,
                   fontWeight: '400',
                   lineHeight: 12,
-                  color: task.isCompleted ? colors.checkedTaskText : colors.text,
+                  color: task.isCompleted ? '#A0AEC0' : '#4A5568',
                   textDecorationLine: task.isCompleted ? 'line-through' : 'none',
                 }}
               >
@@ -235,7 +234,7 @@ const CarouselCard = React.memo(function CarouselCard({
             {cardTasks.length > 3 && (
               <View
                 style={{
-                  backgroundColor: isTodayCard ? `${colors.today}25` : colors.inputBg,
+                  backgroundColor: isTodayCard ? `${colors.today}25` : '#E2E8F0',
                   borderRadius: 3.5,
                   paddingHorizontal: 3.5,
                   paddingVertical: 0.5,
@@ -248,7 +247,7 @@ const CarouselCard = React.memo(function CarouselCard({
                     fontSize: 8.5,
                     fontWeight: '700',
                     lineHeight: 11,
-                    color: isTodayCard ? colors.today : colors.secondary,
+                    color: isTodayCard ? colors.today : '#4A5568',
                     fontVariant: ['tabular-nums'],
                   }}
                 >
@@ -339,7 +338,7 @@ const CarouselCard = React.memo(function CarouselCard({
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: isTodayCard
-                ? (isDark ? '#0B2238' : '#FFFFFF')
+                ? '#FFFFFF'
                 : isWeekendCard
                 ? colors.weekendNumBg
                 : colors.dateNumBg,
@@ -367,7 +366,7 @@ const CarouselCard = React.memo(function CarouselCard({
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: isTodayCard
-                  ? (isDark ? '#0B2238' : '#FFFFFF')
+                  ? '#FFFFFF'
                   : isWeekendCard
                   ? colors.weekendNumBg
                   : colors.dateNumBg,
@@ -486,8 +485,6 @@ const CarouselCard = React.memo(function CarouselCard({
             overflow: 'hidden',
             opacity: 1,
             paddingTop: 0,
-            borderWidth: isDark ? 1 : 0,
-            borderColor: isDark ? '#242D3C' : 'transparent',
           }}
         >
           {/* 1. Compact Grid Replica Layer (matches DayCard 100% during close) */}
@@ -620,7 +617,7 @@ const CarouselCard = React.memo(function CarouselCard({
                         isActive={isActive}
                         onSwipeX={onSwipeX}
                         onScrollEnabledChange={onScrollEnabledChangeItem}
-                        cardBg={colors.card}
+                        cardBg="#FFFFFF"
                         cardSurface
                       />
                     )}
@@ -656,7 +653,6 @@ const CarouselCard = React.memo(function CarouselCard({
 });
 
 export function CardTransitionProvider({ children }: { children: React.ReactNode }) {
-  const { colors, isDark } = useTheme();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { tasks, settings, loadRange, remove } = usePlanner();
@@ -985,7 +981,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
   return (
     <CardTransitionContext.Provider value={value}>
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1 }}>
         <Animated.View
           style={{
             flex: 1,
@@ -1009,7 +1005,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     backgroundColor: colors.background,
                     opacity: progress.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0, 1],
+                      outputRange: [0, 0.9],
                       extrapolate: 'clamp',
                     }),
                   },
@@ -1183,7 +1179,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
               >
                 <View
                   style={{
-                    backgroundColor: isDark ? '#232936' : '#1E293B',
+                    backgroundColor: '#1E293B',
                     borderRadius: 14,
                     paddingHorizontal: 16,
                     paddingVertical: 14,
@@ -1200,7 +1196,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   <Text
                     numberOfLines={1}
                     style={{
-                      color: isDark ? '#F1F3F7' : '#F8FAFC',
+                      color: '#F8FAFC',
                       fontSize: 14,
                       fontWeight: '500',
                       flex: 1,
@@ -1215,13 +1211,13 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       opacity: pressed ? 0.7 : 1,
                       paddingHorizontal: 12,
                       paddingVertical: 6,
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.15)',
+                      backgroundColor: 'rgba(255,255,255,0.15)',
                       borderRadius: 8,
                     })}
                   >
                     <Text
                       style={{
-                        color: colors.today,
+                        color: '#38BDF8',
                         fontSize: 14,
                         fontWeight: '700',
                       }}
@@ -1260,11 +1256,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
           }}
           initialDate={addingDate ? toDateKey(addingDate) : editingTask?.date}
           editingTask={editingTask}
-          onTaskSaved={async (savedTask) => {
-            if (savedTask.date) {
-              await loadRange(savedTask.date, savedTask.date);
-            }
-          }}
         />
       </View>
     </CardTransitionContext.Provider>

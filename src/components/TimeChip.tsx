@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/use-theme';
@@ -15,24 +15,22 @@ export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps
 
   const handlePress = async () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     onPress();
   };
 
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       accessibilityLabel={`Уақыт: ${time || 'Таңдалмаған'}`}
       onPress={handlePress}
-      hitSlop={6}
-      style={({ pressed }) => [
+      activeScale={0.93}
+      style={[
         styles.chip,
         { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
         time ? { backgroundColor: colors.tintBg, borderColor: colors.today } : undefined,
         !time ? styles.iconOnly : undefined,
-        { backgroundColor: colors.chipBg, borderColor: colors.chipBorder },
-        pressed && { opacity: 0.75, transform: [{ scale: 0.96 }] },
       ]}
     >
       <ClockIcon size={16} color={time ? colors.today : colors.chipText} />

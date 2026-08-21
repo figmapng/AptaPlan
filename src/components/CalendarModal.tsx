@@ -362,7 +362,6 @@ export function CalendarModal({
                   key={`${w.label}-${idx}`}
                   style={[
                     styles.weekTitle,
-                    { color: colors.textMuted },
                     w.isWeekend && styles.weekTitleWeekend,
                   ]}
                 >
@@ -371,13 +370,12 @@ export function CalendarModal({
               ))}
             </View>
 
-            {/* 3. INFINITE 3-PAGE SNAP CAROUSEL */}
+            {/* 3. HORIZONTAL DAYS GRID CAROUSEL */}
             <ScrollView
               ref={scrollViewRef}
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              bounces={false}
               decelerationRate="fast"
               snapToInterval={ITEM_WIDTH}
               snapToAlignment="center"
@@ -466,7 +464,7 @@ export function CalendarModal({
             </AnimatedPressable>
           </View>
         </Animated.View>
-      </View>
+      </Animated.View>
 
       {/* Month & Year Selection Modal */}
       <MonthPickerModal
@@ -500,7 +498,7 @@ function DaysGridMatrix({
   monthDate,
   selectedDate,
   todayKey,
-  firstDayOfWeek = 'mon',
+  firstDayOfWeek,
   onSelectDay,
   selectedOptionStyle,
 }: DaysGridMatrixProps) {
@@ -515,25 +513,24 @@ function DaysGridMatrix({
 
   // Generate days for fixed 6-week matrix (42 cells)
   const firstDay = new Date(year, month, 1);
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const rawDayOfWeek = firstDay.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
 
-  // Calculate leading days from previous month based on user's firstDayOfWeek
-  let leadingDays = 0;
-  if (firstDayOfWeek === 'sun') {
-    leadingDays = firstDayOfMonth; // Sun=0, Mon=1, ..., Sat=6
+  let startOffset = 0;
+  if (firstDayOfWeek === 'mon') {
+    startOffset = (rawDayOfWeek + 6) % 7;
   } else if (firstDayOfWeek === 'sat') {
-    leadingDays = (firstDayOfMonth + 1) % 7; // Sat=0, Sun=1, Mon=2, ...
+    startOffset = (rawDayOfWeek + 1) % 7;
   } else {
-    // Default 'mon'
-    leadingDays = (firstDayOfMonth + 6) % 7; // Mon=0, Tue=1, ..., Sun=6
+    startOffset = rawDayOfWeek;
   }
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const prevMonthDays = new Date(year, month, 0).getDate();
 
   const days: { dateStr: string; dayNum: number; isCurrentMonth: boolean; isWeekend: boolean }[] = [];
 
   // Trailing days from previous month
-  const prevMonthDays = new Date(year, month, 0).getDate();
-  for (let i = leadingDays - 1; i >= 0; i--) {
+  for (let i = startOffset - 1; i >= 0; i--) {
     const d = prevMonthDays - i;
     const prevDate = new Date(year, month - 1, d);
     const dayOfWeek = prevDate.getDay();
@@ -728,13 +725,10 @@ function ChevronDownIcon({ color = '#1C1C1E' }: { color?: string }) {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end',
     zIndex: 1000,
     elevation: 1000,
-  },
-  backdropBackground: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   backdrop: {
     flex: 1,

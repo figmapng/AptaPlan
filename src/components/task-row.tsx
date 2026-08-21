@@ -336,6 +336,13 @@ export const TaskRow = React.memo(function TaskRow({
         ]}
       >
         <Pressable
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: task.isCompleted }}
+          accessibilityLabel={
+            task.isCompleted
+              ? 'Тапсырманы орындалмаған деп белгілеу'
+              : 'Тапсырманы орындалды деп белгілеу'
+          }
           onPress={onToggle}
           hitSlop={8}
           style={[styles.checkboxTouch, !hasMetadata && { marginTop: 0 }]}
@@ -343,7 +350,6 @@ export const TaskRow = React.memo(function TaskRow({
           <Animated.View
             style={[
               styles.checkbox,
-              { borderColor: colors.checkboxBorder, backgroundColor: colors.checkboxBg },
               compact && styles.compactCheckbox,
               { borderColor: colors.checkboxBorder, backgroundColor: 'transparent' },
               task.isCompleted && {
@@ -355,7 +361,13 @@ export const TaskRow = React.memo(function TaskRow({
             ]}
           >
             {task.isCompleted && (
-              <Animated.View style={{ transform: [{ scale: checkScale }] }}>
+              <Animated.View
+                style={{
+                  transform: [{ scale: checkScale }],
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <CheckmarkIcon size={compact ? 10 : 13} color="#FFFFFF" />
               </Animated.View>
             )}
@@ -379,7 +391,6 @@ export const TaskRow = React.memo(function TaskRow({
               ellipsizeMode={singleLine ? 'tail' : undefined}
               style={[
                 styles.title,
-                { color: colors.text },
                 compact && styles.compactTitle,
                 { color: colors.text },
                 task.isCompleted && [styles.completedTitle, { color: colors.secondary }],
@@ -517,10 +528,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  checkboxCompleted: {
+    borderColor: colors.checkedCheckboxBg,
+    backgroundColor: colors.checkedCheckboxBg,
+  },
   compactCheckbox: {
     width: 16,
     height: 16,
     borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: colors.checkboxBorder,
+    backgroundColor: colors.checkboxBg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   contentStack: {
     flex: 1,
@@ -543,6 +563,8 @@ const styles = StyleSheet.create({
   compactTitle: {
     fontSize: 12,
     lineHeight: 17,
+    fontWeight: '400',
+    color: colors.text,
   },
   completedTitle: {
     textDecorationLine: 'line-through',

@@ -19,7 +19,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { useTheme } from '@/context/theme-context';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -74,7 +73,6 @@ type DerivedWeekData = {
 };
 
 export default function Home() {
-  const { colors, isDark } = useTheme();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { openCard } = useCardTransition();
@@ -1215,8 +1213,8 @@ export default function Home() {
                     {done}/{total} орындалды
                   </Text>
                   {done === total && total > 0 && (
-                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: isDark ? '#064E3B' : '#E6F9F0', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 9, color: isDark ? '#34D399' : '#059669', fontWeight: '800' }}>✓</Text>
+                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#E6F9F0', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 9, color: '#059669', fontWeight: '800' }}>✓</Text>
                     </View>
                   )}
                 </View>
@@ -1254,7 +1252,7 @@ export default function Home() {
                 gap: 6,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: isDark ? 0.2 : 0.06,
+                shadowOpacity: 0.06,
                 shadowRadius: 2,
                 elevation: 1,
               }}
@@ -1563,7 +1561,6 @@ export default function Home() {
 
 function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Task; targetLayout: { x: number; y: number; width: number; height: number } } | null; onComplete: () => void }) {
   const { width: sw, height: sh } = useWindowDimensions();
-  const { colors } = useTheme();
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -1592,25 +1589,21 @@ function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Tas
   );
 }
 
-function CalendarIcon({ color }: { color?: string }) {
-  const { colors } = useTheme();
-  const strokeColor = color ?? colors.text;
+function CalendarIcon({ color = colors.text }: { color?: string }) {
   return (
     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Rect x="3" y="4" width="18" height="17" rx="3" stroke={strokeColor} strokeWidth="2" />
-      <Path d="M3 9h18M8 2v4M16 2v4" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
-      <Path d="M7 14h2M11 14h2M15 14h2" stroke={strokeColor} strokeWidth="2" strokeLinecap="round" />
+      <Rect x="3" y="4" width="18" height="17" rx="3" stroke={color} strokeWidth="2" />
+      <Path d="M3 9h18M8 2v4M16 2v4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Path d="M7 14h2M11 14h2M15 14h2" stroke={color} strokeWidth="2" strokeLinecap="round" />
     </Svg>
   );
 }
 
-function SelectorChevronIcon({ color }: { color?: string }) {
-  const { colors } = useTheme();
-  const strokeColor = color ?? colors.today;
+function SelectorChevronIcon({ color = colors.today }: { color?: string }) {
   return (
     <Svg width={12} height={16} viewBox="0 0 24 24" fill="none">
-      <Path d="M7 9l5-5 5 5" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <Path d="M7 15l5 5 5-5" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7 9l5-5 5 5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7 15l5 5 5-5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
 }
@@ -1832,7 +1825,6 @@ const MonthDayCell = memo(function MonthDayCellComponent({
   cellH: number;
   todayKey: string;
 }) {
-  const { colors, isDark } = useTheme();
   const { openCard } = useCardTransition();
   const { colors, isDark } = useTheme();
   const cellRef = useRef<View>(null);
@@ -2197,7 +2189,6 @@ const yearStyles = StyleSheet.create({
 
 
 function Center({ children }: { children: React.ReactNode }) {
-  const { colors } = useTheme();
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: colors.background, padding: 24 }}>
       {children}
