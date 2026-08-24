@@ -24,13 +24,17 @@
     ],
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.nurserikz.aptaplan",
+      "buildNumber": "1",
       "infoPlist": {
         "NSRemindersUsageDescription": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет.",
         "NSRemindersFullAccessUsageDescription": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет."
       }
     },
     "android": {
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.nurserikz.aptaplan",
+      "versionCode": 1
     },
     "experiments": {
       "typedRoutes": true

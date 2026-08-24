@@ -7,6 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface TimeModalProps {
@@ -36,6 +37,7 @@ export function TimeModal({
   onClose,
 }: TimeModalProps) {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -103,13 +105,13 @@ export function TimeModal({
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Уақытты таңдау</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t.time.pickTime}</Text>
           <AnimatedPressable
             activeScale={0.88}
             style={[styles.closeBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
             onPress={handleClose}
             accessibilityRole="button"
-            accessibilityLabel="Жабу"
+            accessibilityLabel={t.common.close}
           >
             <CloseXIcon color={colors.secondary} />
           </AnimatedPressable>
@@ -122,13 +124,13 @@ export function TimeModal({
           style={styles.quickScrollView}
           contentContainerStyle={styles.quickRowContent}
         >
-          {quickTimePresets.map((t) => {
-            const isSelected = selectedTime === t || currentHHMM === t;
+          {quickTimePresets.map((tVal) => {
+            const isSelected = selectedTime === tVal || currentHHMM === tVal;
             const iconColor = isSelected ? colors.today : colors.secondary;
 
             return (
               <AnimatedPressable
-                key={t}
+                key={tVal}
                 activeScale={0.92}
                 style={[
                   styles.quickBtn,
@@ -138,7 +140,7 @@ export function TimeModal({
                     borderColor: colors.today,
                   },
                 ]}
-                onPress={() => handlePresetSelect(t)}
+                onPress={() => handlePresetSelect(tVal)}
               >
                 <ClockIcon color={iconColor} />
                 <Text
@@ -148,7 +150,7 @@ export function TimeModal({
                     isSelected && { color: colors.today, fontWeight: '700' },
                   ]}
                 >
-                  {t}
+                  {tVal}
                 </Text>
               </AnimatedPressable>
             );
@@ -187,7 +189,7 @@ export function TimeModal({
             >
               <TrashIcon color={selectedTime ? colors.weekend : colors.inputPlaceholder} />
               <Text style={[styles.removeText, { color: colors.weekend }, !selectedTime && styles.removeTextDisabled]}>
-                Уақытты өшіру
+                {t.time.removeTime}
               </Text>
             </AnimatedPressable>
           )}
@@ -201,13 +203,14 @@ export function TimeModal({
             ]}
             onPress={handleConfirm}
           >
-            <Text style={styles.confirmText}>Сақтау</Text>
+            <Text style={styles.confirmText}>{t.common.save}</Text>
           </AnimatedPressable>
         </View>
       </Animated.View>
     </Animated.View>
   );
 }
+
 
 // Icons
 function ClockIcon({ color }: { color: string }) {

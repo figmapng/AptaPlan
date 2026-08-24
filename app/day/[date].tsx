@@ -15,7 +15,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { format, isToday } from 'date-fns';
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
-import { fromDateKey, months, toDateKey, weekdays } from '@/services/date-service';
+import { fromDateKey, toDateKey } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
 import { TaskRow } from '@/components/task-row';
 import { useCardTransition } from '@/components/card-transition-provider';
@@ -24,6 +24,7 @@ import { TaskPreviewModal } from '@/components/TaskPreviewModal';
 import { SortableTaskList } from '@/components/SortableTaskList';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { CompactWeekStrip } from '@/components/CompactWeekStrip';
+import { useI18n } from '@/i18n/use-i18n';
 import type { Task } from '@/types/task';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getDatabase } from '@/database/database';
@@ -32,6 +33,7 @@ export default function DayScreen() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const { date, add } = useLocalSearchParams<{ date: string; add?: string }>();
   const { tasks, settings, loadRange, refresh, remove } = usePlanner();
   const { closeCard, beginInteractiveClose, updateInteractiveClose, endInteractiveClose } = useCardTransition();
@@ -205,7 +207,7 @@ export default function DayScreen() {
               fontSize: 14,
               fontWeight: '600'
             }}>
-              {months[selectedDate.getMonth()][0].toUpperCase() + months[selectedDate.getMonth()].slice(1)}
+              {t.date.monthsFull[selectedDate.getMonth()][0].toUpperCase() + t.date.monthsFull[selectedDate.getMonth()].slice(1)}
             </Text>
           </View>
           <Text style={{
@@ -215,7 +217,7 @@ export default function DayScreen() {
             fontSize: 16,
             fontWeight: '600'
           }}>
-            {weekdays[selectedDate.getDay()]}
+            {t.date.weekdays[selectedDate.getDay()]}
           </Text>
           <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center' }}>
             <View style={{
@@ -298,7 +300,7 @@ export default function DayScreen() {
               style={{ flex: 1, minHeight: 220, justifyContent: 'center', alignItems: 'center' }}
             >
               <Text style={{ color: colors.secondary, fontSize: 17, paddingVertical: 28, textAlign: 'center' }}>
-                Тапсырма жоқ
+                {t.common.noTasks}
               </Text>
             </Pressable>
           )}
@@ -307,7 +309,7 @@ export default function DayScreen() {
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Басты бетке оралу"
+        accessibilityLabel={t.common.back}
         onPress={returnToList}
         style={{ flex: 1, minHeight: 1, backgroundColor: colors.background }}
       />
@@ -336,11 +338,11 @@ export default function DayScreen() {
         }}
       >
         <Text style={{ color: isDark ? colors.text : 'white', fontSize: 14, fontWeight: '500' }}>
-          Тапсырма өшірілді
+          {t.alerts.taskDeleted}
         </Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Өшіруді болдырмау" onPress={handleUndo}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t.common.undo} onPress={handleUndo}>
           <Text style={{ color: colors.today, fontSize: 14, fontWeight: '700' }}>
-            Болдырмау
+            {t.common.undo}
           </Text>
         </Pressable>
       </View>
@@ -348,7 +350,7 @@ export default function DayScreen() {
     <View pointerEvents="box-none" style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), height: 48, flexDirection: 'row', alignItems: 'center', gap: 10, zIndex: 30 }}>
       <AnimatedPressable
         accessibilityRole="button"
-        accessibilityLabel="Артқа оралу"
+        accessibilityLabel={t.common.back}
         onPress={returnToList}
         activeScale={0.92}
         style={{
@@ -366,7 +368,7 @@ export default function DayScreen() {
       </AnimatedPressable>
       <AnimatedPressable
         accessibilityRole="button"
-        accessibilityLabel="Тапсырма қосу"
+        accessibilityLabel={t.common.addTask}
         onPress={beginAdding}
         activeScale={0.97}
         style={{
@@ -391,20 +393,20 @@ export default function DayScreen() {
             strokeLinejoin="round"
           />
         </Svg>
-        <Text style={{ color: colors.inputPlaceholder, fontSize: 14, fontWeight: '500' }}>Тапсырма қосу</Text>
+        <Text style={{ color: colors.inputPlaceholder, fontSize: 14, fontWeight: '500' }}>{t.common.addTask}</Text>
       </AnimatedPressable>
     </View>
     <TaskPreviewModal
       visible={!!previewTask}
       task={previewTask}
       onClose={() => setPreviewTask(null)}
-      onEdit={(t) => {
+      onEdit={(tVal) => {
         setPreviewTask(null);
-        beginEditing(t);
+        beginEditing(tVal);
       }}
-      onDelete={(t) => {
+      onDelete={(tVal) => {
         setPreviewTask(null);
-        handlePendingDelete(t);
+        handlePendingDelete(tVal);
       }}
     />
     <TaskBottomSheet
@@ -416,6 +418,7 @@ export default function DayScreen() {
     </View>
   );
 }
+
 
 function ChevronLeftIcon() {
   const { colors } = useTheme();

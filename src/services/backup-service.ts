@@ -1,6 +1,8 @@
 import { Alert, Share } from 'react-native';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { format } from 'date-fns';
+import type { Language } from '@/types/settings';
+import { getTranslations } from '@/i18n/formatters';
 
 export interface BackupData {
   version: number;
@@ -39,7 +41,8 @@ function getDocumentPicker() {
  * Exports all database tables (tasks, task_occurrences, settings) into a formatted JSON backup file
  * and triggers the system share sheet.
  */
-export async function exportBackup(db: SQLiteDatabase): Promise<boolean> {
+export async function exportBackup(db: SQLiteDatabase, lang: Language = 'kk'): Promise<boolean> {
+  const t = getTranslations(lang);
   try {
     const tasks = await db.getAllAsync('SELECT * FROM tasks');
     const occurrences = await db.getAllAsync('SELECT * FROM task_occurrences');
@@ -74,7 +77,7 @@ export async function exportBackup(db: SQLiteDatabase): Promise<boolean> {
       if (Sharing && (await Sharing.isAvailableAsync())) {
         await Sharing.shareAsync(filePath, {
           mimeType: 'application/json',
-          dialogTitle: 'AptaPlan Деректерді Экспорттау',
+          dialogTitle: `${t.settings.exportBackup}`,
           UTI: 'public.json',
         });
         return true;
@@ -88,7 +91,7 @@ export async function exportBackup(db: SQLiteDatabase): Promise<boolean> {
     });
     return true;
   } catch (error) {
-    Alert.alert('Экспорт қатесі', error instanceof Error ? error.message : 'Деректерді экспорттау мүмкін болмады');
+    Alert.alert(t.alerts.exportErrorTitle, error instanceof Error ? error.message : t.alerts.exportErrorMessage);
     return false;
   }
 }
@@ -98,14 +101,16 @@ export async function exportBackup(db: SQLiteDatabase): Promise<boolean> {
  */
 export async function importBackup(
   db: SQLiteDatabase,
-  onSuccess: () => Promise<void>
+  onSuccess: () => Promise<void>,
+  lang: Language = 'kk'
 ): Promise<boolean> {
+  const t = getTranslations(lang);
   try {
     const DocumentPicker = getDocumentPicker();
     const FileSystem = getFileSystem();
 
     if (!DocumentPicker || !FileSystem) {
-      Alert.alert('Импорт қатесі', 'Файлдарды танңдау модулі дайын емес');
+      Alert.alert(t.alerts.importErrorTitle, t.alerts.importModuleNotReady);
       return false;
     }
 
@@ -126,35 +131,35 @@ export async function importBackup(
     try {
       payload = JSON.parse(content);
     } catch {
-      Alert.alert('Импорт қатесі', 'Таңдалған файл дұрыс JSON форматында емес');
+      Alert.alert(t.alerts.importErrorTitle, t.alerts.importInvalidJson);
       return false;
     }
 
     if (!payload.tasks || !Array.isArray(payload.tasks)) {
-      Alert.alert('Импорт қатесі', 'Файлда АптаПлан тапсырмалар құрылымы табылмады');
+      Alert.alert(t.alerts.importErrorTitle, t.alerts.importInvalidStructure);
       return false;
     }
 
     return new Promise((resolve) => {
       Alert.alert(
-        'Деректерді қалпына келтіру',
-        `Файлда ${payload.tasks.length} тапсырма бар. Барлық тапсырмалар мен баптауларды импорттауды растайсыз ба?`,
+        t.alerts.restoreBackupTitle,
+        t.alerts.restoreBackupMessage(payload.tasks.length),
         [
-          { text: 'Болдырмау', style: 'cancel', onPress: () => resolve(false) },
+          { text: t.common.cancel, style: 'cancel', onPress: () => resolve(false) },
           {
-            text: 'Импорттау',
+            text: t.settings.importBackup,
             style: 'destructive',
             onPress: async () => {
               try {
                 await db.withTransactionAsync(async () => {
                   await db.execAsync('DELETE FROM task_occurrences; DELETE FROM tasks; DELETE FROM settings;');
 
-                  for (const t of payload.tasks) {
+                  for (const taskItem of payload.tasks) {
                     const repeatConfig =
-                      typeof t.repeatConfig === 'string'
-                        ? t.repeatConfig
-                        : t.repeatConfig
-                        ? JSON.stringify(t.repeatConfig)
+                      typeof taskItem.repeatConfig === 'string'
+                        ? taskItem.repeatConfig
+                        : taskItem.repeatConfig
+                        ? JSON.stringify(taskItem.repeatConfig)
                         : null;
                     await db.runAsync(
                       `INSERT OR REPLACE INTO tasks (
@@ -163,22 +168,22 @@ export async function importBackup(
                         sortOrder, createdAt, updatedAt, deletedAt
                       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                       [
-                        t.id,
-                        t.title,
-                        t.note ?? null,
-                        t.date,
-                        t.time ?? null,
-                        t.isCompleted ?? 0,
-                        t.priority ?? 'normal',
-                        t.repeatType ?? 'none',
-                        t.repeatInterval ?? 1,
+                        taskItem.id,
+                        taskItem.title,
+                        taskItem.note ?? null,
+                        taskItem.date,
+                        taskItem.time ?? null,
+                        taskItem.isCompleted ?? 0,
+                        taskItem.priority ?? 'normal',
+                        taskItem.repeatType ?? 'none',
+                        taskItem.repeatInterval ?? 1,
                         repeatConfig,
-                        t.notificationOffset ?? null,
-                        t.notificationId ?? null,
-                        t.sortOrder ?? 0,
-                        t.createdAt ?? new Date().toISOString(),
-                        t.updatedAt ?? new Date().toISOString(),
-                        t.deletedAt ?? null,
+                        taskItem.notificationOffset ?? null,
+                        taskItem.notificationId ?? null,
+                        taskItem.sortOrder ?? 0,
+                        taskItem.createdAt ?? new Date().toISOString(),
+                        taskItem.updatedAt ?? new Date().toISOString(),
+                        taskItem.deletedAt ?? null,
                       ]
                     );
                   }
@@ -205,10 +210,10 @@ export async function importBackup(
                 });
 
                 await onSuccess();
-                Alert.alert('Сәтті орындалды', 'Деректер мен баптаулар сәтті қалпына келтірілді');
+                Alert.alert(t.alerts.importSuccessTitle, t.alerts.importSuccessMessage);
                 resolve(true);
               } catch (e) {
-                Alert.alert('Импорт қатесі', e instanceof Error ? e.message : 'Дерекқорға жазу мүмкін болмады');
+                Alert.alert(t.alerts.importErrorTitle, e instanceof Error ? e.message : t.alerts.importErrorMessage);
                 resolve(false);
               }
             },
@@ -217,7 +222,8 @@ export async function importBackup(
       );
     });
   } catch (error) {
-    Alert.alert('Импорт қатесі', error instanceof Error ? error.message : 'Файлды оқу мүмкін болмады');
+    Alert.alert(t.alerts.importErrorTitle, error instanceof Error ? error.message : t.alerts.importErrorMessage);
     return false;
   }
 }
+

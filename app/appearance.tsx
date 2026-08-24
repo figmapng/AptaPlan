@@ -14,12 +14,14 @@ import { THEME_LIST } from '@/constants/themes';
 import { type ThemeId } from '@/types/settings';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 
 export default function AppearanceScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { colors, themeMode, setThemeMode } = useTheme();
+  const { t } = useI18n();
   const { settings, setPref } = usePlanner();
 
   // App icon state (ready for future expansion)
@@ -47,6 +49,13 @@ export default function AppearanceScreen() {
     void setPref('appIcon' as any, iconId);
   };
 
+  const appIcons = [
+    { id: 'default', label: t.settings.iconNames.default || 'Default', bg: '#01B7FF', mark: '#FFFFFF' },
+    { id: 'amber', label: t.settings.iconNames.amber || 'Amber', bg: '#FFAA01', mark: '#FFFFFF' },
+    { id: 'emerald', label: t.settings.iconNames.emerald || 'Emerald', bg: '#10B981', mark: '#FFFFFF' },
+    { id: 'dark', label: t.settings.iconNames.dark || 'Dark', bg: '#1E293B', mark: '#01B7FF' },
+  ];
+
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       {/* Top Header */}
@@ -61,12 +70,12 @@ export default function AppearanceScreen() {
             }
           }}
           style={[styles.backButton, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
-          accessibilityLabel="Артқа қайту"
+          accessibilityLabel={t.common.back}
         >
           <Ionicons name="chevron-back" size={20} color={colors.secondary} style={{ marginLeft: -1 }} />
         </AnimatedPressable>
 
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Сыртқы түрі</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t.settings.appearance}</Text>
 
         <View style={styles.headerSpacer} />
       </View>
@@ -80,9 +89,9 @@ export default function AppearanceScreen() {
       >
         {/* ── Section 1: Акцент түсі (Accent Color) ── */}
         <View style={styles.sectionHeaderContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Акцент түсі</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.settings.accentColor}</Text>
           <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>
-            Қосымшаның негізгі түс тақырыбы
+            {t.settings.accentColorSubtitle}
           </Text>
         </View>
 
@@ -94,6 +103,7 @@ export default function AppearanceScreen() {
           >
             {THEME_LIST.map((th) => {
               const isSelected = (settings.theme || 'ocean') === th.id;
+              const localizedName = t.settings.themeNames[th.id] || th.name;
               return (
                 <AnimatedPressable
                   key={th.id}
@@ -101,7 +111,7 @@ export default function AppearanceScreen() {
                   onPress={() => handleSelectTheme(th.id)}
                   style={styles.themeCarouselItem}
                   accessibilityRole="button"
-                  accessibilityLabel={th.name + ' түсі'}
+                  accessibilityLabel={localizedName}
                 >
                   <View
                     style={[
@@ -131,9 +141,9 @@ export default function AppearanceScreen() {
 
         {/* ── Section 2: Режим (Mode: Light / Dark / System) ── */}
         <View style={[styles.sectionHeaderContainer, { marginTop: 24 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Режим</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.settings.themeMode}</Text>
           <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>
-            Интерфейстің жарық немесе қараңғы көрінісі
+            {t.settings.themeModeSubtitle}
           </Text>
         </View>
 
@@ -158,7 +168,7 @@ export default function AppearanceScreen() {
               <View style={[styles.modePreviewCardLight, { width: '70%' }]} />
             </View>
             <Text style={[styles.modeLabel, { color: colors.text }, themeMode === 'light' && { fontWeight: '700', color: colors.today }]}>
-              Жарық
+              {t.settings.modeLight}
             </Text>
           </AnimatedPressable>
 
@@ -183,7 +193,7 @@ export default function AppearanceScreen() {
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Text style={[styles.modeLabel, { color: colors.text }, themeMode === 'dark' && { fontWeight: '700', color: colors.today }]}>
-                Қараңғы
+                {t.settings.modeDark}
               </Text>
             </View>
           </AnimatedPressable>
@@ -210,27 +220,22 @@ export default function AppearanceScreen() {
               </View>
             </View>
             <Text style={[styles.modeLabel, { color: colors.text }, themeMode === 'system' && { fontWeight: '700', color: colors.today }]}>
-              Жүйелік
+              {t.settings.modeSystem}
             </Text>
           </AnimatedPressable>
         </View>
 
         {/* ── Section 3: Қосымша белгішесі (App Icon) ── */}
         <View style={[styles.sectionHeaderContainer, { marginTop: 24 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Қосымша белгішесі</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.settings.appIcon}</Text>
           <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>
-            Басты экрандағы иконка стилі
+            {t.settings.appIconSubtitle}
           </Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
           <View style={styles.iconGrid}>
-            {[
-              { id: 'default', label: 'Әдепкі', bg: '#01B7FF', mark: '#FFFFFF' },
-              { id: 'amber', label: 'Кәріптас', bg: '#FFAA01', mark: '#FFFFFF' },
-              { id: 'emerald', label: 'Изумруд', bg: '#10B981', mark: '#FFFFFF' },
-              { id: 'dark', label: 'Қараңғы', bg: '#1E293B', mark: '#01B7FF' },
-            ].map((ico) => {
+            {appIcons.map((ico) => {
               const isSelected = selectedIcon === ico.id;
               return (
                 <AnimatedPressable
@@ -239,7 +244,7 @@ export default function AppearanceScreen() {
                   onPress={() => handleSelectIcon(ico.id)}
                   style={styles.iconGridItem}
                   accessibilityRole="button"
-                  accessibilityLabel={ico.label + ' иконкасы'}
+                  accessibilityLabel={ico.label}
                 >
                   <View
                     style={[
@@ -276,6 +281,7 @@ export default function AppearanceScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

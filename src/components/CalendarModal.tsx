@@ -6,7 +6,8 @@ import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
-import { fromDateKey, getNextWeekMondayKey, getThisWeekendKey, getTodayKey, getTomorrowKey, kzMonthsFull, toDateKey } from '@/utils/dateHelpers';
+import { useI18n } from '@/i18n/use-i18n';
+import { fromDateKey, getNextWeekMondayKey, getThisWeekendKey, getTodayKey, getTomorrowKey, toDateKey } from '@/utils/dateHelpers';
 import { AnimatedPressable } from './AnimatedPressable';
 import { MonthPickerModal } from './MonthPickerModal';
 
@@ -24,38 +25,38 @@ const ITEM_WIDTH = CARD_WIDTH - 14; // exact internal container width for each m
 
 type WeekdayHeaderInfo = { label: string; isWeekend: boolean; dayIndex: number };
 
-function getWeekdayHeaders(firstDayOfWeek: 'mon' | 'sat' | 'sun'): WeekdayHeaderInfo[] {
+function getWeekdayHeaders(firstDayOfWeek: 'mon' | 'sat' | 'sun', weekdaysShort: string[]): WeekdayHeaderInfo[] {
   if (firstDayOfWeek === 'sun') {
     return [
-      { label: 'Жс', isWeekend: true, dayIndex: 0 },
-      { label: 'Дс', isWeekend: false, dayIndex: 1 },
-      { label: 'Сс', isWeekend: false, dayIndex: 2 },
-      { label: 'Ср', isWeekend: false, dayIndex: 3 },
-      { label: 'Бс', isWeekend: false, dayIndex: 4 },
-      { label: 'Жм', isWeekend: false, dayIndex: 5 },
-      { label: 'Сб', isWeekend: true, dayIndex: 6 },
+      { label: weekdaysShort[0], isWeekend: true, dayIndex: 0 },
+      { label: weekdaysShort[1], isWeekend: false, dayIndex: 1 },
+      { label: weekdaysShort[2], isWeekend: false, dayIndex: 2 },
+      { label: weekdaysShort[3], isWeekend: false, dayIndex: 3 },
+      { label: weekdaysShort[4], isWeekend: false, dayIndex: 4 },
+      { label: weekdaysShort[5], isWeekend: false, dayIndex: 5 },
+      { label: weekdaysShort[6], isWeekend: true, dayIndex: 6 },
     ];
   }
   if (firstDayOfWeek === 'sat') {
     return [
-      { label: 'Сб', isWeekend: true, dayIndex: 6 },
-      { label: 'Жс', isWeekend: true, dayIndex: 0 },
-      { label: 'Дс', isWeekend: false, dayIndex: 1 },
-      { label: 'Сс', isWeekend: false, dayIndex: 2 },
-      { label: 'Ср', isWeekend: false, dayIndex: 3 },
-      { label: 'Бс', isWeekend: false, dayIndex: 4 },
-      { label: 'Жм', isWeekend: false, dayIndex: 5 },
+      { label: weekdaysShort[6], isWeekend: true, dayIndex: 6 },
+      { label: weekdaysShort[0], isWeekend: true, dayIndex: 0 },
+      { label: weekdaysShort[1], isWeekend: false, dayIndex: 1 },
+      { label: weekdaysShort[2], isWeekend: false, dayIndex: 2 },
+      { label: weekdaysShort[3], isWeekend: false, dayIndex: 3 },
+      { label: weekdaysShort[4], isWeekend: false, dayIndex: 4 },
+      { label: weekdaysShort[5], isWeekend: false, dayIndex: 5 },
     ];
   }
   // Default 'mon'
   return [
-    { label: 'Дс', isWeekend: false, dayIndex: 1 },
-    { label: 'Сс', isWeekend: false, dayIndex: 2 },
-    { label: 'Ср', isWeekend: false, dayIndex: 3 },
-    { label: 'Бс', isWeekend: false, dayIndex: 4 },
-    { label: 'Жм', isWeekend: false, dayIndex: 5 },
-    { label: 'Сб', isWeekend: true, dayIndex: 6 },
-    { label: 'Жс', isWeekend: true, dayIndex: 0 },
+    { label: weekdaysShort[1], isWeekend: false, dayIndex: 1 },
+    { label: weekdaysShort[2], isWeekend: false, dayIndex: 2 },
+    { label: weekdaysShort[3], isWeekend: false, dayIndex: 3 },
+    { label: weekdaysShort[4], isWeekend: false, dayIndex: 4 },
+    { label: weekdaysShort[5], isWeekend: false, dayIndex: 5 },
+    { label: weekdaysShort[6], isWeekend: true, dayIndex: 6 },
+    { label: weekdaysShort[0], isWeekend: true, dayIndex: 0 },
   ];
 }
 
@@ -67,9 +68,10 @@ export function CalendarModal({
   onClose,
 }: CalendarModalProps) {
   const { theme, colors, isDark } = useTheme();
+  const { t, language } = useI18n();
   const planner = usePlanner();
   const firstDayOfWeek = (planner?.settings?.firstDayOfWeek as 'mon' | 'sat' | 'sun') || 'mon';
-  const weekdayHeaders = getWeekdayHeaders(firstDayOfWeek);
+  const weekdayHeaders = getWeekdayHeaders(firstDayOfWeek, t.date.weekdaysShort);
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const onCloseRef = useRef(onClose);
@@ -217,7 +219,7 @@ export function CalendarModal({
   const quickOptions = [
     {
       key: todayKey,
-      label: 'Бүгін',
+      label: t.date.today,
       icon: SunIcon,
       color: colors.today,
       activeBg: colors.tintBg,
@@ -226,13 +228,13 @@ export function CalendarModal({
     },
     {
       key: tomorrowKey,
-      label: 'Ертең',
+      label: t.date.tomorrow,
       icon: TomorrowIcon,
       ...tomorrowConfig,
     },
     {
       key: weekendKey,
-      label: 'Демалыс күні',
+      label: t.date.thisWeekend,
       icon: WeekendIcon,
       color: '#FF4B3E',
       activeBg: isDark ? '#361A1D' : '#FFF1F0',
@@ -241,7 +243,7 @@ export function CalendarModal({
     },
     {
       key: nextWeekKey,
-      label: 'Келесі апта',
+      label: t.date.nextWeek,
       icon: NextWeekIcon,
       ...nextWeekConfig,
     },
@@ -250,8 +252,12 @@ export function CalendarModal({
   // Capitalized Month Title
   const currYear = currentMonthDate.getFullYear();
   const currMonthIdx = currentMonthDate.getMonth();
-  const monthName = kzMonthsFull[currMonthIdx];
-  const capitalizedMonthTitle = `${monthName[0].toUpperCase()}${monthName.slice(1)} ${currYear}`;
+  const monthName = t.date.monthsFull[currMonthIdx];
+  const capitalizedMonthTitle = language === 'en'
+    ? `${monthName[0].toUpperCase()}${monthName.slice(1)} ${currYear}`
+    : language === 'ru'
+    ? `${monthName[0].toUpperCase()}${monthName.slice(1)} ${currYear}`
+    : `${monthName[0].toUpperCase()}${monthName.slice(1)} ${currYear}`;
 
   const matchedQuickOption = quickOptions.find((opt) => opt.key === tempSelectedDate);
   const selectedOptionStyle = matchedQuickOption
@@ -278,17 +284,18 @@ export function CalendarModal({
 
           {/* Top Sheet Header */}
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>Күнді таңдау</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.calendar.pickDate}</Text>
             <AnimatedPressable
               activeScale={0.88}
               style={[styles.closeBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
               onPress={handleClose}
               accessibilityRole="button"
-              accessibilityLabel="Жабу"
+              accessibilityLabel={t.common.close}
             >
               <CloseXIcon color={colors.secondary} />
             </AnimatedPressable>
           </View>
+
 
           {/* Quick Date Pills */}
           <ScrollView
@@ -349,7 +356,7 @@ export function CalendarModal({
                   setShowMonthPicker(true);
                 }}
                 accessibilityRole="button"
-                accessibilityLabel="Ай мен жылды таңдау"
+                accessibilityLabel={t.date.selectMonth}
               >
                 <Text style={[styles.monthTitle, { color: colors.text }]}>{capitalizedMonthTitle}</Text>
                 <ChevronDownIcon color={colors.text} />
@@ -411,7 +418,7 @@ export function CalendarModal({
               >
                 <TrashIcon color={tempSelectedDate ? colors.weekend : colors.inputPlaceholder} />
                 <Text style={[styles.removeText, { color: colors.weekend }, !tempSelectedDate && styles.removeTextDisabled]}>
-                  Күнді өшіру
+                  {t.calendar.removeDate}
                 </Text>
               </AnimatedPressable>
             )}
@@ -425,11 +432,12 @@ export function CalendarModal({
               ]}
               onPress={handleConfirm}
             >
-              <Text style={styles.confirmText}>Сақтау</Text>
+              <Text style={styles.confirmText}>{t.common.save}</Text>
             </AnimatedPressable>
           </View>
         </Animated.View>
       </Animated.View>
+
 
       {/* Month & Year Selection Modal */}
       <MonthPickerModal

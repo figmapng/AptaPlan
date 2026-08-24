@@ -1,6 +1,7 @@
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface BackButtonProps {
@@ -11,17 +12,19 @@ interface BackButtonProps {
 
 export function BackButton({
   onPress,
-  accessibilityLabel = 'Артқа қайту',
+  accessibilityLabel,
   size = 48,
 }: BackButtonProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const iconSize = Math.round((size * 20) / 48);
   return (
     <AnimatedPressable
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={accessibilityLabel || t.common.back}
       onPress={onPress}
       activeScale={0.94}
+
       style={{
         width: size,
         height: size,

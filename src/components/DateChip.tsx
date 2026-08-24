@@ -1,8 +1,8 @@
 import { StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { formatChipDate } from '@/utils/dateHelpers';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface DateChipProps {
@@ -13,6 +13,7 @@ interface DateChipProps {
 
 export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps) {
   const { colors } = useTheme();
+  const { formatChipDate, t } = useI18n();
 
   const handlePress = async () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
@@ -26,7 +27,7 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
   return (
     <AnimatedPressable
       accessibilityRole="button"
-      accessibilityLabel={`Күн: ${displayText || 'Таңдалмаған'}`}
+      accessibilityLabel={`${t.date.date}: ${displayText || t.common.notSet}`}
       onPress={handlePress}
       activeScale={0.93}
       style={[
@@ -41,6 +42,7 @@ export function DateChip({ date, onPress, hapticsEnabled = true }: DateChipProps
     </AnimatedPressable>
   );
 }
+
 
 function CalendarIcon({ color = '#23262D', size = 18 }: { color?: string; size?: number }) {
   return (

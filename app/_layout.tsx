@@ -6,6 +6,9 @@ import { PlannerProvider } from '@/store/planner-store';
 import { CardTransitionProvider } from '@/components/card-transition-provider';
 import { useTheme } from '@/hooks/use-theme';
 
+// Expo Router error boundary – prevents full crashes, shows recovery UI
+export { ErrorBoundary } from 'expo-router';
+
 // Expo Go can briefly open the app with an empty `--/` path after a reload.
 // Keep the planner's root screen as the explicit navigation fallback.
 export const unstable_settings = {

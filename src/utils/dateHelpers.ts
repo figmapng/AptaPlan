@@ -1,4 +1,6 @@
 import { addDays, format, parseISO } from 'date-fns';
+import type { Language } from '@/types/settings';
+import { formatLocalizedChipDate, formatLocalizedFullDate, formatLocalizedTaskDisplayDate } from '@/i18n/formatters';
 
 export const kzMonthsShort = [
   'қаң', 'ақп', 'нау', 'сәу', 'мам', 'мау',
@@ -48,31 +50,15 @@ export function getNextWeekMondayKey(): string {
 
 export const kzWeekdaysShort = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
 
-export function formatChipDate(dateStr: string): string {
-  const date = fromDateKey(dateStr);
-  const day = date.getDate();
-  const monthIdx = date.getMonth();
-  const shortMonth = kzMonthsShort[monthIdx];
-  const weekdayShort = kzWeekdaysShort[date.getDay()];
-  return `${day} ${shortMonth}, ${weekdayShort}`;
+export function formatChipDate(dateStr: string, lang: Language = 'kk'): string {
+  return formatLocalizedChipDate(dateStr, lang);
 }
 
-export function formatFullKzDate(dateStr: string): string {
-  const date = fromDateKey(dateStr);
-  const day = date.getDate();
-  const monthIdx = date.getMonth();
-  const fullMonth = kzMonthsFull[monthIdx];
-  return `${day} ${fullMonth}`;
+export function formatFullKzDate(dateStr: string, lang: Language = 'kk'): string {
+  return formatLocalizedFullDate(fromDateKey(dateStr), lang);
 }
 
-export function formatTaskDisplayDate(dateStr: string): string {
-  const date = fromDateKey(dateStr);
-  const day = date.getDate();
-  const monthIdx = date.getMonth();
-  const shortMonth = kzMonthsShort[monthIdx];
-  const currentYear = new Date().getFullYear();
-  if (date.getFullYear() !== currentYear) {
-    return `${day} ${shortMonth}. ${date.getFullYear()}`;
-  }
-  return `${day} ${shortMonth}.`;
+export function formatTaskDisplayDate(dateStr: string, lang: Language = 'kk'): string {
+  return formatLocalizedTaskDisplayDate(dateStr, lang);
 }
+

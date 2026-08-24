@@ -3,6 +3,7 @@ import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View, useWindowDi
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 
 export type ViewMode = 'day' | 'week' | 'month' | 'year';
@@ -25,6 +26,7 @@ export function ViewModeModal({
   topOffset = 60,
 }: ViewModeModalProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { width: screenWidth } = useWindowDimensions();
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -115,7 +117,7 @@ export function ViewModeModal({
             <View style={styles.optionLeft}>
               <WeekViewIcon color={currentMode === 'week' ? colors.today : colors.text} />
               <Text style={[styles.optionText, { color: colors.text }, currentMode === 'week' && { color: colors.today, fontWeight: '700' }]}>
-                Апта
+                {t.viewModes.week}
               </Text>
             </View>
             {currentMode === 'week' && <CheckmarkIcon color={colors.today} />}
@@ -135,7 +137,7 @@ export function ViewModeModal({
             <View style={styles.optionLeft}>
               <MonthViewIcon color={currentMode === 'month' ? colors.today : colors.text} />
               <Text style={[styles.optionText, { color: colors.text }, currentMode === 'month' && { color: colors.today, fontWeight: '700' }]}>
-                Ай
+                {t.viewModes.month}
               </Text>
             </View>
             {currentMode === 'month' && <CheckmarkIcon color={colors.today} />}
@@ -155,7 +157,7 @@ export function ViewModeModal({
             <View style={styles.optionLeft}>
               <YearViewIcon color={currentMode === 'year' ? colors.today : colors.text} />
               <Text style={[styles.optionText, { color: colors.text }, currentMode === 'year' && { color: colors.today, fontWeight: '700' }]}>
-                Жыл
+                {t.viewModes.year}
               </Text>
             </View>
             {currentMode === 'year' && <CheckmarkIcon color={colors.today} />}
@@ -166,6 +168,7 @@ export function ViewModeModal({
     </Modal>
   );
 }
+
 
 
 function DayViewIcon({ color }: { color: string }) {

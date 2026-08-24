@@ -3,6 +3,7 @@ import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n, getLocalizedShortRepeatLabel } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface RepeatChipProps {
@@ -26,21 +27,12 @@ export const repeatLabels: Record<TaskRepeat, string> = {
 };
 
 export function getShortRepeatLabel(repeat: TaskRepeat | null, interval = 1): string | null {
-  if (!repeat || repeat === 'none') return null;
-
-  if (interval > 1) {
-    if (repeat === 'hourly') return `Әр ${interval} сағатта`;
-    if (repeat === 'daily' || repeat === 'custom') return `Әр ${interval} күнде`;
-    if (repeat === 'weekly') return `Әр ${interval} аптада`;
-    if (repeat === 'monthly') return `Әр ${interval} айда`;
-    if (repeat === 'yearly') return `Әр ${interval} жылда`;
-  }
-
-  return repeatLabels[repeat] || 'Арнайы';
+  return getLocalizedShortRepeatLabel(repeat, interval, 'kk');
 }
 
 export function RepeatChip({ repeat, interval = 1, customLabel, onPress, hapticsEnabled = true }: RepeatChipProps) {
   const { colors } = useTheme();
+  const { getShortRepeatLabel: getShortLabel, t } = useI18n();
 
   const handlePress = async () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
@@ -50,12 +42,12 @@ export function RepeatChip({ repeat, interval = 1, customLabel, onPress, haptics
   };
 
   const isActive = repeat && repeat !== 'none';
-  const label = (repeat === 'custom' && customLabel) ? customLabel : getShortRepeatLabel(repeat, interval);
+  const label = (repeat === 'custom' && customLabel) ? customLabel : getShortLabel(repeat, interval);
 
   return (
     <AnimatedPressable
       accessibilityRole="button"
-      accessibilityLabel={`Қайталау: ${label || 'Орнатылмаған'}`}
+      accessibilityLabel={`${t.repeat.title}: ${label || t.repeat.none}`}
       onPress={handlePress}
       activeScale={0.93}
       style={[
@@ -127,3 +119,4 @@ const styles = StyleSheet.create({
     color: '#4B5563',
   },
 });
+

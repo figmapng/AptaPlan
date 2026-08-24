@@ -13,6 +13,7 @@ import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 import { YearCycleMonthPicker } from './YearCycleMonthPicker';
 
@@ -34,6 +35,7 @@ export function MonthPickerModal({
   locale = 'kz',
 }: MonthPickerModalProps) {
   const { colors, isDark } = useTheme();
+  const { t, language } = useI18n();
   const [selectedYear, setSelectedYear] = useState(() => currentDate.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(() => currentDate.getMonth());
   const translateY = useRef(new Animated.Value(480)).current;
@@ -87,6 +89,8 @@ export function MonthPickerModal({
     onClose();
   };
 
+  const yearLabel = language === 'en' ? `${selectedYear}` : language === 'ru' ? `${selectedYear} г.` : `${selectedYear} жыл`;
+
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={handleClose}>
       <View style={styles.container}>
@@ -109,20 +113,16 @@ export function MonthPickerModal({
 
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>
-              {locale === 'ru' ? 'Выбрать месяц' : 'Айды таңдау'}
-            </Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.date.selectMonth}</Text>
             <AnimatedPressable
               activeScale={0.92}
               style={[styles.todayBadge, { backgroundColor: `${colors.today}18` }]}
               onPress={handleTodayClick}
               accessible
               accessibilityRole="button"
-              accessibilityLabel={locale === 'ru' ? 'Сегодня' : 'Бүгін'}
+              accessibilityLabel={t.date.today}
             >
-              <Text style={[styles.todayText, { color: colors.today }]}>
-                {locale === 'ru' ? 'Сегодня' : 'Бүгін'}
-              </Text>
+              <Text style={[styles.todayText, { color: colors.today }]}>{t.date.today}</Text>
             </AnimatedPressable>
           </View>
 
@@ -134,7 +134,7 @@ export function MonthPickerModal({
               onPress={handlePrevYear}
               accessible
               accessibilityRole="button"
-              accessibilityLabel={locale === 'ru' ? 'Предыдущий год' : 'Алдыңғы жыл'}
+              accessibilityLabel={t.date.prevYear || 'Алдыңғы жыл'}
             >
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Path
@@ -147,9 +147,7 @@ export function MonthPickerModal({
               </Svg>
             </AnimatedPressable>
 
-            <Text style={[styles.yearText, { color: colors.text }]}>
-              {selectedYear} {locale === 'ru' ? 'год' : 'жыл'}
-            </Text>
+            <Text style={[styles.yearText, { color: colors.text }]}>{yearLabel}</Text>
 
             <AnimatedPressable
               activeScale={0.88}
@@ -176,7 +174,7 @@ export function MonthPickerModal({
             year={selectedYear}
             selectedMonth={selectedMonth}
             currentDate={today}
-            locale={locale}
+            locale={language === 'ru' ? 'ru' : 'kz'}
             onSelectMonth={handleSelectMonth}
             onChangeYear={setSelectedYear}
           />

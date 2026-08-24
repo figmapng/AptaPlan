@@ -6,9 +6,8 @@ import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
-import { getShortRepeatLabel } from './RepeatChip';
-import { describeCustomRepeat } from './CustomRepeatModal';
-import { formatTaskDisplayDate, getTodayKey } from '@/utils/dateHelpers';
+import { useI18n } from '@/i18n/use-i18n';
+import { getTodayKey } from '@/utils/dateHelpers';
 
 export const TaskRow = React.memo(function TaskRow({
   task,
@@ -42,6 +41,7 @@ export const TaskRow = React.memo(function TaskRow({
   showDate?: boolean;
 }) {
   const { colors, isDark } = useTheme();
+  const { t, formatTaskDisplayDate, getShortRepeatLabel, describeCustomRepeat } = useI18n();
   const { toggle, remove, settings } = usePlanner();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -132,11 +132,11 @@ export const TaskRow = React.memo(function TaskRow({
 
     if (isRecurring) {
       Alert.alert(
-        'Қайталанатын тапсырма',
-        'Осы қайталанатын тапсырманы қалай өшіргіңіз келеді?',
+        t.alerts.recurringTask,
+        t.alerts.chooseDeleteMethod,
         [
           {
-            text: 'Тек осы күнгіні өшіру',
+            text: t.alerts.deleteThisOnly,
             style: 'destructive',
             onPress: async () => {
               await triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
@@ -144,7 +144,7 @@ export const TaskRow = React.memo(function TaskRow({
             },
           },
           {
-            text: 'Барлық қайталануларды өшіру',
+            text: t.alerts.deleteAll,
             style: 'destructive',
             onPress: async () => {
               await triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
@@ -152,7 +152,7 @@ export const TaskRow = React.memo(function TaskRow({
             },
           },
           {
-            text: 'Болдырмау',
+            text: t.common.cancel,
             style: 'cancel',
             onPress: resetSwipe,
           },
@@ -161,11 +161,11 @@ export const TaskRow = React.memo(function TaskRow({
       );
     } else {
       Alert.alert(
-        'Тапсырманы өшіру',
-        'Бұл тапсырманы жоюды растайсыз ба?',
+        t.alerts.deleteTaskTitle,
+        t.alerts.deleteTaskMessage,
         [
           {
-            text: 'Өшіру',
+            text: t.common.delete,
             style: 'destructive',
             onPress: async () => {
               await triggerHaptic(Haptics.ImpactFeedbackStyle.Rigid);
@@ -173,7 +173,7 @@ export const TaskRow = React.memo(function TaskRow({
             },
           },
           {
-            text: 'Болдырмау',
+            text: t.common.cancel,
             style: 'cancel',
             onPress: resetSwipe,
           },
@@ -182,6 +182,7 @@ export const TaskRow = React.memo(function TaskRow({
       );
     }
   };
+
 
   const handlePressIn = () => {
     if (isSwipingRef?.current) return;
@@ -340,8 +341,8 @@ export const TaskRow = React.memo(function TaskRow({
           accessibilityState={{ checked: task.isCompleted }}
           accessibilityLabel={
             task.isCompleted
-              ? 'Тапсырманы орындалмаған деп белгілеу'
-              : 'Тапсырманы орындалды деп белгілеу'
+              ? t.accessibility.markIncomplete
+              : t.accessibility.markComplete
           }
           onPress={onToggle}
           hitSlop={8}

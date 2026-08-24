@@ -2,19 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { format } from 'date-fns';
-import { months, shortMonths, weekdays, toDateKey } from '@/services/date-service';
+import { toDateKey } from '@/services/date-service';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import type { Task } from '@/types/task';
-
-const MOTIVATIONAL_QUOTES = [
-  "Бүгінгі әрбір кішкентай қадам — ертеңгі үлкен жеңіс!",
-  "Бүгінгі күнді тиімді өткізіп, мақсатыңа бір қадам жақында!",
-  "Табыстың сыры — күнделікті табандылық пен төзімде.",
-  "Бүгінгі жоспарланған істі кейінге қалдырма, сенің қолыңнан келеді!",
-  "Әрбір жаңа күн — жаңа мүмкіндіктер мен биік белестерге жол.",
-  "Мақсатқа жетудің ең қысқа жолы — дәл қазір бастау!",
-  "Уақытыңды дұрыс басқарсаң, армандарыңа тез жетесің.",
-];
 
 interface WeatherState {
   temp: number;
@@ -33,10 +24,11 @@ interface MotivationalHeaderProps {
 
 export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: MotivationalHeaderProps) {
   const { colors, isDark } = useTheme();
+  const { t, language } = useI18n();
   const fallbackAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = anim || fallbackAnim;
 
-  // Sequential Staggered Fade-In (Бірінен соң бірі біртіндеп мөлдірлікпен пайда болу)
+  // Sequential Staggered Fade-In
   const topRowOpacity = progressAnim.interpolate({
     inputRange: [0, 0.1, 0.35],
     outputRange: [0, 0, 1],
@@ -63,9 +55,10 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
 
   const today = new Date();
   const dayNum = format(today, 'dd');
-  const monthFull = months[today.getMonth()][0].toUpperCase() + months[today.getMonth()].slice(1);
+  const monthName = t.date.monthsGenitive[today.getMonth()];
+  const monthFull = monthName[0].toUpperCase() + monthName.slice(1);
   const yearFull = today.getFullYear();
-  const dayOfWeek = weekdays[today.getDay()];
+  const dayOfWeek = t.date.weekdays[today.getDay()];
 
   const todayKey = toDateKey(today);
   const todayTasks = useMemo(() => tasks.filter((t) => t.date === todayKey), [tasks, todayKey]);
@@ -76,17 +69,17 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
   const diff = today.getTime() - startOfYear.getTime();
   const oneDay = 1000 * 60 * 60 * 24;
   const dayOfYear = Math.floor(diff / oneDay);
-  const quote = MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
+  const quotesList = t.motivation.quotes;
+  const quote = quotesList[dayOfYear % quotesList.length];
 
   // Greeting based on time of day
   const hour = today.getHours();
-  const greeting = hour < 12 ? 'Қайырлы таң' : hour < 18 ? 'Қайырлы күн' : 'Қайырлы кеш';
+  const greeting = hour < 12 ? t.motivation.greetingMorning : hour < 18 ? t.motivation.greetingDay : t.motivation.greetingEvening;
 
   // ── Calculate remaining time until the end of the year ───────────────
   const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59);
   const totalDaysLeft = Math.max(0, Math.ceil((endOfYear.getTime() - today.getTime()) / oneDay));
   const monthsLeft = Math.max(0, 11 - today.getMonth());
-  const weeksLeft = Math.floor(totalDaysLeft / 7);
 
   // ── Live Weather State ────────────────────────────────────────────────
   const [weather, setWeather] = useState<WeatherState>({
@@ -138,7 +131,7 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
             });
           }
         }
-      } catch (err) {
+      } catch {
         // Fallback to initial state if network is offline
       }
     };
@@ -160,7 +153,9 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
             </View>
           </View>
           <View style={styles.dateSubGroup}>
-            <Text style={styles.monthYearText}>{`${monthFull} ${yearFull}`}</Text>
+            <Text style={styles.monthYearText}>
+              {language === 'en' ? `${monthFull} ${dayNum}, ${yearFull}` : `${monthFull} ${yearFull}`}
+            </Text>
             <Text style={styles.weekdayText}>{dayOfWeek}</Text>
           </View>
         </View>
@@ -183,9 +178,9 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
         <Text style={styles.greetingText}>{greeting}.</Text>
         
         <Text style={styles.bodyText}>
-          Бүгін сізде <Text style={styles.boldText}>🗓️ {todayTasks.length} тапсырма</Text>
+          {t.motivation.todaySummary} <Text style={styles.boldText}>{t.motivation.tasksCount(todayTasks.length)}</Text>
           {completedCount > 0 ? (
-            <> және <Text style={styles.boldText}>☑️ {completedCount} орындалды</Text></>
+            <> <Text style={styles.boldText}>{t.motivation.andCompleted(completedCount)}</Text></>
           ) : null}
           . {quote}
         </Text>
@@ -193,25 +188,22 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
 
       {/* 3. Metrics Row: Weather, Sunrise/Sunset & Year Countdown (Third Sequential Fade-In) */}
       <Animated.View style={[styles.statsRow, { opacity: statsOpacity }]}>
-        {/* Weather Badge */}
         <View style={styles.statBadge}>
           <Text style={styles.statText}>
             {`${weather.emoji} ${weather.temp > 0 ? `+${weather.temp}` : weather.temp}°C · ${weather.cityName}`}
           </Text>
         </View>
 
-        {/* Sunrise & Sunset Badge */}
         <View style={styles.statBadge}>
           <Text style={styles.statText}>
             {`☀️ ${weather.sunrise} · 🌙 ${weather.sunset}`}
           </Text>
         </View>
 
-        {/* Year Countdown Badge */}
         <View style={styles.statBadge}>
           <Text style={styles.statText}>
-            <Text style={{ opacity: 0.65 }}>⏳ Жыл бітуіне: </Text>
-            {`${totalDaysLeft} күн қалды (яғни ~${monthsLeft} ай)`}
+            <Text style={{ opacity: 0.65 }}>⏳ {t.motivation.yearCountdownPrefix} </Text>
+            {t.motivation.yearCountdown(totalDaysLeft, monthsLeft)}
           </Text>
         </View>
       </Animated.View>
@@ -225,6 +217,7 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

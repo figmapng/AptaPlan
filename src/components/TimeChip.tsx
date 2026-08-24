@@ -2,6 +2,7 @@ import { StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface TimeChipProps {
@@ -12,6 +13,7 @@ interface TimeChipProps {
 
 export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const handlePress = async () => {
     if (hapticsEnabled && process.env.EXPO_OS === 'ios') {
@@ -23,7 +25,7 @@ export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps
   return (
     <AnimatedPressable
       accessibilityRole="button"
-      accessibilityLabel={`Уақыт: ${time || 'Таңдалмаған'}`}
+      accessibilityLabel={`${t.time.time}: ${time || t.common.notSet}`}
       onPress={handlePress}
       activeScale={0.93}
       style={[
@@ -38,6 +40,7 @@ export function TimeChip({ time, onPress, hapticsEnabled = true }: TimeChipProps
     </AnimatedPressable>
   );
 }
+
 
 function ClockIcon({ color = '#23262D', size = 18 }: { color?: string; size?: number }) {
   return (

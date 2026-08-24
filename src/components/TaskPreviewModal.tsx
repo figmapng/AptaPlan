@@ -18,13 +18,12 @@ import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
-import { formatFullDate } from '@/services/date-service';
-import { fromDateKey, formatTaskDisplayDate } from '@/utils/dateHelpers';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 import { CalendarModal } from './CalendarModal';
 import { TimeModal } from './TimeModal';
 import { RepeatActionSheet } from './RepeatActionSheet';
-import { CustomRepeatConfig, describeCustomRepeat } from './CustomRepeatModal';
+import { CustomRepeatConfig } from './CustomRepeatModal';
 
 function CheckmarkIcon({ size = 12, color = '#FFFFFF' }: { size?: number; color?: string }) {
   return (
@@ -159,6 +158,7 @@ export function TaskPreviewModal({
   onDelete,
 }: TaskPreviewModalProps) {
   const { colors, isDark } = useTheme();
+  const { t, formatTaskDisplayDate, getShortRepeatLabel, describeCustomRepeat } = useI18n();
   const insets = useSafeAreaInsets();
   const { toggle, update, remove, settings } = usePlanner();
 
@@ -206,8 +206,8 @@ export function TaskPreviewModal({
   }, [visible, task]);
 
   if (!visible && !currentTask) return null;
-  const t = currentTask || task;
-  if (!t) return null;
+  const taskObj = currentTask || task;
+  if (!taskObj) return null;
 
   const triggerHaptic = async (style: Haptics.ImpactFeedbackStyle) => {
     if (Platform.OS === 'ios' && settings.haptics) {
@@ -217,58 +217,58 @@ export function TaskPreviewModal({
 
   const handleToggleDone = async () => {
     await triggerHaptic(
-      t.isCompleted ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium
+      taskObj.isCompleted ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium
     );
-    const updated = { ...t, isCompleted: !t.isCompleted };
+    const updated = { ...taskObj, isCompleted: !taskObj.isCompleted };
     setCurrentTask(updated);
-    await toggle(t);
+    await toggle(taskObj);
   };
 
   const handleDateSelect = async (newDate: string | null) => {
     if (!newDate) return;
-    const updated = { ...t, date: newDate };
+    const updated = { ...taskObj, date: newDate };
     setCurrentTask(updated);
-    await update(t.id, {
-      title: t.title,
-      note: t.note,
+    await update(taskObj.id, {
+      title: taskObj.title,
+      note: taskObj.note,
       date: newDate,
-      time: t.time,
-      priority: t.priority,
-      repeatType: t.repeatType,
-      repeatInterval: t.repeatInterval,
-      repeatConfig: t.repeatConfig,
+      time: taskObj.time,
+      priority: taskObj.priority,
+      repeatType: taskObj.repeatType,
+      repeatInterval: taskObj.repeatInterval,
+      repeatConfig: taskObj.repeatConfig,
     });
   };
 
   const handleTimeSelect = async (newTime: string | null) => {
-    const updated = { ...t, time: newTime };
+    const updated = { ...taskObj, time: newTime };
     setCurrentTask(updated);
-    await update(t.id, {
-      title: t.title,
-      note: t.note,
-      date: t.date,
+    await update(taskObj.id, {
+      title: taskObj.title,
+      note: taskObj.note,
+      date: taskObj.date,
       time: newTime,
-      priority: t.priority,
-      repeatType: t.repeatType,
-      repeatInterval: t.repeatInterval,
-      repeatConfig: t.repeatConfig,
+      priority: taskObj.priority,
+      repeatType: taskObj.repeatType,
+      repeatInterval: taskObj.repeatInterval,
+      repeatConfig: taskObj.repeatConfig,
     });
   };
 
   const handleRepeatSelect = async (type: TaskRepeat, interval?: number, config?: CustomRepeatConfig) => {
     const updated = {
-      ...t,
+      ...taskObj,
       repeatType: type,
       repeatInterval: interval || 1,
       repeatConfig: config || null,
     };
     setCurrentTask(updated);
-    await update(t.id, {
-      title: t.title,
-      note: t.note,
-      date: t.date,
-      time: t.time,
-      priority: t.priority,
+    await update(taskObj.id, {
+      title: taskObj.title,
+      note: taskObj.note,
+      date: taskObj.date,
+      time: taskObj.time,
+      priority: taskObj.priority,
       repeatType: type,
       repeatInterval: interval || 1,
       repeatConfig: config || null,
@@ -276,17 +276,17 @@ export function TaskPreviewModal({
   };
 
   const handleDelete = () => {
-    Alert.alert('Тапсырманы өшіру', 'Бұл тапсырманы өшіргіңіз келе ме?', [
-      { text: 'Болдырмау', style: 'cancel' },
+    Alert.alert(t.alerts.deleteTaskTitle, t.alerts.deleteTaskMessage, [
+      { text: t.common.cancel, style: 'cancel' },
       {
-        text: 'Өшіру',
+        text: t.common.delete,
         style: 'destructive',
         onPress: async () => {
           onClose();
           if (onDelete) {
-            onDelete(t);
+            onDelete(taskObj);
           } else {
-            await remove(t.id, t.occurrenceDate || t.date, 'all');
+            await remove(taskObj.id, taskObj.occurrenceDate || taskObj.date, 'all');
           }
         },
       },
@@ -295,24 +295,15 @@ export function TaskPreviewModal({
 
   const handleEdit = () => {
     onClose();
-    onEdit(t);
+    onEdit(taskObj);
   };
 
-  const repeatLabel = t.repeatConfig
-    ? describeCustomRepeat(t.repeatConfig)
-    : t.repeatType && t.repeatType !== 'none'
-    ? t.repeatType === 'daily'
-      ? 'Күнде'
-      : t.repeatType === 'weekdays'
-      ? 'Дүйсенбі - Жұма'
-      : t.repeatType === 'weekly'
-      ? 'Апта сайын'
-      : t.repeatType === 'monthly'
-      ? 'Ай сайын'
-      : t.repeatType === 'yearly'
-      ? 'Жыл сайын'
-      : null
+  const repeatLabel = taskObj.repeatConfig
+    ? describeCustomRepeat(taskObj.repeatConfig)
+    : taskObj.repeatType && taskObj.repeatType !== 'none'
+    ? getShortRepeatLabel(taskObj.repeatType as TaskRepeat, taskObj.repeatInterval || 1)
     : null;
+
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
@@ -348,14 +339,14 @@ export function TaskPreviewModal({
                 style={[
                   styles.checkbox,
                   { borderColor: colors.checkboxBorder, backgroundColor: colors.card },
-                  t.isCompleted && {
+                  taskObj.isCompleted && {
                     backgroundColor: colors.checkedCheckboxBg,
                     borderColor: colors.checkedCheckboxBg,
                   },
                 ]}
                 hitSlop={8}
               >
-                {t.isCompleted && (
+                {taskObj.isCompleted && (
                   <CheckmarkIcon size={12} color="#FFFFFF" />
                 )}
               </Pressable>
@@ -364,16 +355,16 @@ export function TaskPreviewModal({
                 style={[
                   styles.taskTitle,
                   { color: colors.text },
-                  t.isCompleted && [styles.taskTitleCompleted, { color: colors.secondary }],
+                  taskObj.isCompleted && [styles.taskTitleCompleted, { color: colors.secondary }],
                 ]}
               >
-                {t.title}
+                {taskObj.title}
               </Text>
             </View>
 
             {/* Note / Description */}
-            {t.note ? (
-              <Text style={[styles.taskNote, { color: colors.secondary }]}>{t.note}</Text>
+            {taskObj.note ? (
+              <Text style={[styles.taskNote, { color: colors.secondary }]}>{taskObj.note}</Text>
             ) : null}
 
             {/* Meta Tags Row */}
@@ -386,8 +377,8 @@ export function TaskPreviewModal({
               >
                 <CalendarIcon size={14} color={colors.secondary} />
                 <Text style={[styles.dateBadgeText, { color: colors.secondary }]}>
-                  {formatTaskDisplayDate(t.date)}
-                  {t.time ? ` · ${t.time}` : ''}
+                  {formatTaskDisplayDate(taskObj.date)}
+                  {taskObj.time ? ` · ${taskObj.time}` : ''}
                 </Text>
               </Pressable>
 
@@ -418,7 +409,7 @@ export function TaskPreviewModal({
               >
                 <CalendarIcon
                   size={19}
-                  color={t.date ? colors.today : colors.secondary}
+                  color={taskObj.date ? colors.today : colors.secondary}
                 />
               </AnimatedPressable>
 
@@ -433,7 +424,7 @@ export function TaskPreviewModal({
               >
                 <ClockIcon
                   size={19}
-                  color={t.time ? colors.today : colors.secondary}
+                  color={taskObj.time ? colors.today : colors.secondary}
                 />
               </AnimatedPressable>
 
@@ -448,7 +439,7 @@ export function TaskPreviewModal({
               >
                 <RepeatIcon
                   size={19}
-                  color={t.repeatType && t.repeatType !== 'none' ? colors.today : colors.secondary}
+                  color={taskObj.repeatType && taskObj.repeatType !== 'none' ? colors.today : colors.secondary}
                 />
               </AnimatedPressable>
 
@@ -487,7 +478,7 @@ export function TaskPreviewModal({
       {/* Sub-modals for quick date / time / repeat edits */}
       <CalendarModal
         visible={showCalendar}
-        selectedDate={t.date}
+        selectedDate={taskObj.date}
         onSelectDate={(newDate) => {
           void handleDateSelect(newDate);
           setShowCalendar(false);
@@ -501,7 +492,7 @@ export function TaskPreviewModal({
 
       <TimeModal
         visible={showTimePicker}
-        selectedTime={t.time || null}
+        selectedTime={taskObj.time || null}
         onSelectTime={(newTime) => {
           void handleTimeSelect(newTime);
           setShowTimePicker(false);
@@ -515,9 +506,9 @@ export function TaskPreviewModal({
 
       <RepeatActionSheet
         visible={showRepeatSheet}
-        selectedRepeat={((t.repeat as TaskRepeat) || (t.repeatType as TaskRepeat) || 'none')}
-        selectedRepeatInterval={t.repeatInterval || 1}
-        selectedCustomConfig={t.repeatConfig ?? undefined}
+        selectedRepeat={((taskObj.repeat as TaskRepeat) || (taskObj.repeatType as TaskRepeat) || 'none')}
+        selectedRepeatInterval={taskObj.repeatInterval || 1}
+        selectedCustomConfig={taskObj.repeatConfig ?? undefined}
         onClose={() => setShowRepeatSheet(false)}
         onSelectRepeat={(r, interval = 1, customLabel, customUnit, customConfig) => {
           void handleRepeatSelect(r, interval, customConfig);

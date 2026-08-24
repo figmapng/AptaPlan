@@ -11,6 +11,7 @@ import {
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { colors as defaultColors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 
 interface UserGuideModalProps {
@@ -18,71 +19,41 @@ interface UserGuideModalProps {
   onClose: () => void;
 }
 
-const getSlides = (accentColor: string) => [
-  {
-    id: 'week_overview',
-    title: '📅 Апталық Күнтізбе',
-    subtitle: 'Аптаңызды бір қарағаннан жоспарлаңыз',
-    description:
-      'Аптаның барлық 7 күні бірге көрсетіледі. Басқа апталарға өту үшін экранды солға немесе оңға свайп жасаңыз.',
-    icon: (
-      <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-        <Rect x="3" y="4" width="18" height="17" rx="4" stroke={accentColor} strokeWidth="2" />
-        <Path d="M3 9h18M8 2v4M16 2v4" stroke={accentColor} strokeWidth="2" strokeLinecap="round" />
-        <Circle cx="8" cy="13" r="1.5" fill={accentColor} />
-        <Circle cx="12" cy="13" r="1.5" fill={accentColor} />
-        <Circle cx="16" cy="13" r="1.5" fill={accentColor} />
-        <Circle cx="8" cy="17" r="1.5" fill={accentColor} />
-        <Circle cx="12" cy="17" r="1.5" fill={accentColor} />
-      </Svg>
-    ),
-  },
-  {
-    id: 'card_expansion',
-    title: '🃏 Карточкаларды Ашу Мен Свайп',
-    subtitle: 'Әр күнге толық назар аударыңыз',
-    description:
-      'Кез келген күннің карточкасын басып, толық ашыңыз. Ашық күйде солға/оңға свайп жасап, басқа күндерге тез ауыса аласыз.',
-    icon: (
-      <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-        <Rect x="4" y="3" width="16" height="18" rx="4" stroke={accentColor} strokeWidth="2" />
-        <Path d="M8 8h8M8 12h5" stroke={accentColor} strokeWidth="2" strokeLinecap="round" />
-        <Path d="M12 16l-2-2m2 2l2-2" stroke={accentColor} strokeWidth="2" strokeLinecap="round" />
-      </Svg>
-    ),
-  },
-  {
-    id: 'task_management',
-    title: '✍️ Тапсырма Қосу Мен Тәртіптеу',
-    subtitle: 'Тапсырмаларды оңай бақылаңыз',
-    description:
-      'Төменгі инпут арқылы жылдам тапсырма қосыңыз. Тапсырмаларды жоғары-төмен жылжыту (Drag & Drop) арқылы реттеңіз.',
-    icon: (
-      <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-        <Rect x="4" y="4" width="16" height="16" rx="4" fill={accentColor} fillOpacity="0.12" stroke={accentColor} strokeWidth="2" />
-        <Path d="M8 12l2.5 2.5L16 9" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      </Svg>
-    ),
-  },
-  {
-    id: 'return_today',
-    title: '↩️ Бүгінге Жылдам Оралу',
-    subtitle: 'Ешқашан адаспаңыз',
-    description:
-      'Басқа апталарға өтіп кетсеңіз, жоғарғы хэдердегі [↩ 30 шіл.] батырмасын басып, 1 секундта бүгінгі күнге оралыңыз.',
-    icon: (
-      <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-        <Circle cx="12" cy="12" r="9" stroke={accentColor} strokeWidth="2" />
-        <Path d="M9 14L5 10l4-4" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        <Path d="M5 10h9a4 4 0 0 1 4 4v1" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" />
-      </Svg>
-    ),
-  },
-];
-
 export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const { colors } = useTheme();
+  const { t } = useI18n();
+
+  const icons = [
+    <Svg width={48} height={48} viewBox="0 0 24 24" fill="none" key="0">
+      <Rect x="3" y="4" width="18" height="17" rx="4" stroke={colors.today} strokeWidth="2" />
+      <Path d="M3 9h18M8 2v4M16 2v4" stroke={colors.today} strokeWidth="2" strokeLinecap="round" />
+      <Circle cx="8" cy="13" r="1.5" fill={colors.today} />
+      <Circle cx="12" cy="13" r="1.5" fill={colors.today} />
+      <Circle cx="16" cy="13" r="1.5" fill={colors.today} />
+      <Circle cx="8" cy="17" r="1.5" fill={colors.today} />
+      <Circle cx="12" cy="17" r="1.5" fill={colors.today} />
+    </Svg>,
+    <Svg width={48} height={48} viewBox="0 0 24 24" fill="none" key="1">
+      <Rect x="4" y="3" width="16" height="18" rx="4" stroke={colors.today} strokeWidth="2" />
+      <Path d="M8 8h8M8 12h5" stroke={colors.today} strokeWidth="2" strokeLinecap="round" />
+      <Path d="M12 16l-2-2m2 2l2-2" stroke={colors.today} strokeWidth="2" strokeLinecap="round" />
+    </Svg>,
+    <Svg width={48} height={48} viewBox="0 0 24 24" fill="none" key="2">
+      <Rect x="4" y="4" width="16" height="16" rx="4" fill={colors.today} fillOpacity="0.12" stroke={colors.today} strokeWidth="2" />
+      <Path d="M8 12l2.5 2.5L16 9" stroke={colors.today} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>,
+    <Svg width={48} height={48} viewBox="0 0 24 24" fill="none" key="3">
+      <Circle cx="12" cy="12" r="9" stroke={colors.today} strokeWidth="2" />
+      <Path d="M9 14L5 10l4-4" stroke={colors.today} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M5 10h9a4 4 0 0 1 4 4v1" stroke={colors.today} strokeWidth="2.5" strokeLinecap="round" />
+    </Svg>,
+  ];
+
+  const slides = t.userGuide.slides.map((s, i) => ({
+    ...s,
+    icon: icons[i] || icons[0],
+  }));
 
   const handleNext = () => {
     if (activeIndex < slides.length - 1) {
@@ -94,7 +65,6 @@ export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
 
   if (!visible) return null;
 
-  const slides = getSlides(colors.today);
   const currentSlide = slides[activeIndex];
 
   return (
@@ -105,7 +75,7 @@ export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
         <View style={[styles.container, { backgroundColor: colors.card }]}>
           {/* Header Bar */}
           <View style={styles.header}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Пайдалану Гиды</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>{t.userGuide.title}</Text>
             <AnimatedPressable onPress={onClose} style={[styles.closeBtn, { backgroundColor: colors.inputBg }]}>
               <Text style={[styles.closeText, { color: colors.secondary }]}>✕</Text>
             </AnimatedPressable>
@@ -138,7 +108,7 @@ export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
           <View style={styles.actions}>
             {activeIndex < slides.length - 1 ? (
               <Pressable onPress={onClose} style={styles.skipBtn}>
-                <Text style={[styles.skipText, { color: colors.secondary }]}>Секіру</Text>
+                <Text style={[styles.skipText, { color: colors.secondary }]}>{t.userGuide.skip}</Text>
               </Pressable>
             ) : (
               <View style={{ flex: 1 }} />
@@ -149,7 +119,7 @@ export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
               style={[styles.nextBtn, { backgroundColor: colors.today }]}
             >
               <Text style={styles.nextText}>
-                {activeIndex === slides.length - 1 ? 'Түсінікті!' : 'Келесі →'}
+                {activeIndex === slides.length - 1 ? t.userGuide.finish : t.userGuide.next}
               </Text>
             </AnimatedPressable>
           </View>
@@ -158,6 +128,7 @@ export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   overlay: {

@@ -1,6 +1,7 @@
 import { forwardRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent, type NativeSyntheticEvent, type TextInputContentSizeChangeEventData, type TextInputProps } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 
 interface TaskInputProps extends TextInputProps {
   value: string;
@@ -9,9 +10,10 @@ interface TaskInputProps extends TextInputProps {
   onHeightChange?: (height: number) => void;
 }
 
-export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChangeText, onSubmit, onContentSizeChange, onHeightChange, style, ...props }, ref) => {
+export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChangeText, onSubmit, onContentSizeChange, onHeightChange, style, placeholder, ...props }, ref) => {
   const [contentHeight, setContentHeight] = useState(24);
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const updateHeight = (height: number) => {
     const nextHeight = Math.max(24, Math.min(128, Math.ceil(height)));
@@ -34,7 +36,7 @@ export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChang
         ref={ref}
         value={value}
         onChangeText={onChangeText}
-        placeholder="Не істеуіңіз керек?"
+        placeholder={placeholder || t.task.whatNeedsToBeDone}
         placeholderTextColor={colors.inputPlaceholder}
         multiline
         scrollEnabled={contentHeight >= 128}
@@ -48,6 +50,7 @@ export const TaskInput = forwardRef<TextInput, TaskInputProps>(({ value, onChang
         style={[styles.input, style, { height: contentHeight, textAlign: 'left', color: colors.text }]}
         {...props}
       />
+
       <Text
         pointerEvents="none"
         accessible={false}

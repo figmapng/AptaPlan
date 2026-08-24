@@ -21,6 +21,7 @@ import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { getTodayKey } from '@/utils/dateHelpers';
+import { useI18n } from '@/i18n/use-i18n';
 import { TaskInput } from './TaskInput';
 import { DateChip } from './DateChip';
 import { TimeChip } from './TimeChip';
@@ -50,6 +51,7 @@ export function TaskBottomSheet({
 }: TaskBottomSheetProps) {
   const planner = usePlanner();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [title, setTitle] = useState('');
   const [titleInputHeight, setTitleInputHeight] = useState(24);
@@ -155,10 +157,10 @@ export function TaskBottomSheet({
 
   const handleDismissRequest = () => {
     if (isDirty) {
-      Alert.alert('Өзгерістерді сақтамай жабу?', 'Енгізілген өзгерістер сақталмайды.', [
-        { text: 'Жалғастыру', style: 'cancel' },
+      Alert.alert(t.alerts.discardChangesTitle, t.alerts.discardChangesMessage, [
+        { text: t.alerts.continue, style: 'cancel' },
         {
-          text: 'Жою',
+          text: t.common.delete,
           style: 'destructive',
           onPress: () => {
             setTitle('');
@@ -260,7 +262,7 @@ export function TaskBottomSheet({
       onClose();
     } catch (error) {
       console.warn('Task save failed', error);
-      Alert.alert('Сақталмады', 'Өзгерісті сақтау кезінде қате шықты. Қайтадан көріңіз.');
+      Alert.alert(t.alerts.saveErrorTitle, t.alerts.saveErrorMessage);
     }
   };
 
@@ -343,7 +345,7 @@ export function TaskBottomSheet({
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Тапсырманы сақтау"
+                accessibilityLabel={t.common.save}
                 disabled={!isEnabled}
                 onPress={handleSend}
                 style={({ pressed }) => [
@@ -363,6 +365,7 @@ export function TaskBottomSheet({
               </Pressable>
             </View>
           </View>
+
 
           {/* Chips Row */}
           <ScrollView

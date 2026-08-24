@@ -6,6 +6,7 @@ import type { RepeatConfig, RepeatCustomUnit, RepeatMonthlyMode, TaskRepeat } fr
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n, describeLocalizedCustomRepeat } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 
 export type CustomUnit = RepeatCustomUnit;
@@ -34,100 +35,8 @@ interface CustomRepeatModalProps {
   onClose: () => void;
 }
 
-const unitLabels: Record<CustomUnit, string> = {
-  hourly: 'Сағат сайын',
-  daily: 'Күнде',
-  weekly: 'Апта сайын',
-  monthly: 'Ай сайын',
-  yearly: 'Жыл сайын',
-};
-
-const kzWeekdaysFull = [
-  'Жексенбі',
-  'Дүйсенбі',
-  'Сейсенбі',
-  'Сәрсенбі',
-  'Бейсенбі',
-  'Жұма',
-  'Сенбі',
-];
-
-const kzMonthsShort = [
-  'қаңт.',
-  'ақп.',
-  'наур.',
-  'сәу.',
-  'мам.',
-  'маус.',
-  'шіл.',
-  'там.',
-  'қырк.',
-  'қаз.',
-  'қар.',
-  'желт.',
-];
-
-const kzMonthsFull = [
-  'қаңтар',
-  'ақпан',
-  'наурыз',
-  'сәуір',
-  'мамыр',
-  'маусым',
-  'шілде',
-  'тамыз',
-  'қыркүйек',
-  'қазан',
-  'қараша',
-  'желтоқсан',
-];
-
-const weekPositions = ['бірінші', 'екінші', 'үшінші', 'төртінші', 'соңғы'];
-
-const shortWeekdays = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
-const posShort = ['1-ші', '2-ші', '3-ші', '4-ші', 'соңғы'];
-
-/** Rebuilds the human-readable short label from a persisted RepeatConfig. */
 export function describeCustomRepeat(config: RepeatConfig): string {
-  const interval = Math.max(1, config.interval || 1);
-  const unit = config.unit;
-
-  if (unit === 'daily') {
-    return interval === 1 ? 'Күнде' : `Әр ${interval} күнде`;
-  }
-
-  if (unit === 'weekly') {
-    const sorted = [...(config.selectedWeekdays ?? [])].sort((a, b) => a - b);
-    if (sorted.length === 0 || sorted.length === 7) {
-      return interval === 1 ? 'Апта сайын' : `Әр ${interval} аптада`;
-    }
-    const daysText = sorted.map((i) => shortWeekdays[i]).join(', ');
-    return interval === 1 ? `Апта сайын (${daysText})` : `Әр ${interval} аптада (${daysText})`;
-  }
-
-  if (unit === 'monthly') {
-    if (config.monthlyMode === 'dayOfWeek') {
-      const pos = posShort[config.selectedPosIdx ?? 0];
-      const dayText = kzWeekdaysFull[config.selectedDayIdx ?? 1].toLowerCase();
-      return interval === 1 ? `Ай сайын (${pos} ${dayText})` : `Әр ${interval} айда (${pos} ${dayText})`;
-    }
-    const d = config.selectedMonthDate ?? 1;
-    return interval === 1 ? `Ай сайын (${d}-күні)` : `Әр ${interval} айда (${d}-күні)`;
-  }
-
-  if (unit === 'yearly') {
-    const mShort = kzMonthsShort[config.selectedYearlyMonth ?? 0];
-    if (config.yearlyEnableWeekdays) {
-      const pos = posShort[config.selectedPosIdx ?? 0];
-      const dayText = kzWeekdaysFull[config.selectedDayIdx ?? 1].toLowerCase();
-      return interval === 1
-        ? `Жыл сайын (${pos} ${dayText}, ${mShort})`
-        : `Әр ${interval} жылда (${pos} ${dayText}, ${mShort})`;
-    }
-    return interval === 1 ? `Жыл сайын (${mShort})` : `Әр ${interval} жылда (${mShort})`;
-  }
-
-  return interval === 1 ? 'Күнде' : `Әр ${interval} күнде`;
+  return describeLocalizedCustomRepeat(config, 'kk');
 }
 
 export function CustomRepeatModal({
@@ -140,6 +49,7 @@ export function CustomRepeatModal({
   onClose,
 }: CustomRepeatModalProps) {
   const { colors } = useTheme();
+  const { t, language, describeCustomRepeat: getLocalizedDescription } = useI18n();
   const planner = usePlanner();
   const firstDayOfWeek = planner.settings?.firstDayOfWeek || 'mon';
   const orderedWeekdayIndices = getOrderedWeekdayIndices(firstDayOfWeek);
@@ -148,6 +58,19 @@ export function CustomRepeatModal({
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+
+  const unitLabels: Record<CustomUnit, string> = {
+    hourly: t.repeat.hourly,
+    daily: t.repeat.daily,
+    weekly: t.repeat.weekly,
+    monthly: t.repeat.monthly,
+    yearly: t.repeat.yearly,
+  };
+
+  const weekdaysFull = t.date.weekdays;
+  const monthsShort = t.date.monthsShort;
+  const monthsFull = t.date.monthsFull;
+  const weekPositions = t.date.weekPositions;
 
   const [unit, setUnit] = useState<CustomUnit>(() => {
     if (currentCustomConfig) return currentCustomConfig.unit;
@@ -162,17 +85,14 @@ export function CustomRepeatModal({
   const [interval, setIntervalVal] = useState<number>(() => Math.max(1, currentInterval));
   const [showUnitMenu, setShowUnitMenu] = useState(false);
 
-  // Weekly state: selected weekdays (index 0..6)
-  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([1]); // default Mon
+  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([1]);
 
-  // Monthly state: mode ('dates' | 'dayOfWeek'), selected date numbers (1..31)
   const [monthlyMode, setMonthlyMode] = useState<MonthlyMode>('dates');
   const [selectedMonthDate, setSelectedMonthDate] = useState<number>(1);
-  const [selectedPosIdx, setSelectedPosIdx] = useState<number>(0); // 0=бірінші
-  const [selectedDayIdx, setSelectedDayIdx] = useState<number>(1); // 1=Дүйсенбі
+  const [selectedPosIdx, setSelectedPosIdx] = useState<number>(0);
+  const [selectedDayIdx, setSelectedDayIdx] = useState<number>(1);
 
-  // Yearly state: selected month (0..11), enableWeekdays toggle
-  const [selectedYearlyMonth, setSelectedYearlyMonth] = useState<number>(7); // Aug default
+  const [selectedYearlyMonth, setSelectedYearlyMonth] = useState<number>(7);
   const [yearlyEnableWeekdays, setYearlyEnableWeekdays] = useState(false);
 
   const triggerHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
@@ -252,7 +172,7 @@ export function CustomRepeatModal({
   };
 
   const getShortCustomLabel = (): string =>
-    describeCustomRepeat({
+    getLocalizedDescription({
       unit,
       interval,
       selectedWeekdays,
@@ -285,62 +205,28 @@ export function CustomRepeatModal({
     triggerHaptic();
     setSelectedWeekdays((prev) => {
       if (prev.includes(idx)) {
-        if (prev.length === 1) return prev; // keep at least one
+        if (prev.length === 1) return prev;
         return prev.filter((i) => i !== idx);
       }
       return [...prev, idx];
     });
   };
 
-  // Human readable Kazakh summary sentence
   const getSummarySentence = () => {
-    if (unit === 'hourly') {
-      return interval === 1
-        ? 'Тапсырма сағат сайын қайталанып отырады.'
-        : `Тапсырма әр ${interval} сағат сайын қайталанып отырады.`;
-    }
-
-    if (unit === 'daily') {
-      return interval === 1
-        ? 'Тапсырма күн сайын қайталанып отырады.'
-        : `Тапсырма әр ${interval} күн сайын қайталанып отырады.`;
-    }
-
-    if (unit === 'weekly') {
-      const selectedNames = selectedWeekdays
-        .sort((a, b) => a - b)
-        .map((i) => kzWeekdaysFull[i].toLowerCase())
-        .join(', ');
-      return interval === 1
-        ? `Тапсырма апта сайын, келесі күндері қайталанады: ${selectedNames}.`
-        : `Тапсырма әр ${interval} апта сайын, келесі күндері қайталанады: ${selectedNames}.`;
-    }
-
-    if (unit === 'monthly') {
-      if (monthlyMode === 'dates') {
-        return interval === 1
-          ? `Тапсырма ай сайын ${selectedMonthDate}-күні қайталанып отырады.`
-          : `Тапсырма әр ${interval} ай сайын ${selectedMonthDate}-күні қайталанып отырады.`;
-      }
-      const posText = weekPositions[selectedPosIdx];
-      const dayText = kzWeekdaysFull[selectedDayIdx].toLowerCase();
-      return interval === 1
-        ? `Тапсырма ай сайын (${posText} ${dayText}) қайталанып отырады.`
-        : `Тапсырма әр ${interval} ай сайын (${posText} ${dayText}) қайталанып отырады.`;
-    }
-
-    // yearly
-    const monthNameFull = kzMonthsFull[selectedYearlyMonth];
-    if (yearlyEnableWeekdays) {
-      const posText = weekPositions[selectedPosIdx];
-      const dayText = kzWeekdaysFull[selectedDayIdx].toLowerCase();
-      return interval === 1
-        ? `Тапсырма жыл сайын (${posText} ${dayText}) таңдалған айда қайталанады: ${monthNameFull}.`
-        : `Тапсырма әр ${interval} жыл сайын (${posText} ${dayText}) таңдалған айда қайталанады: ${monthNameFull}.`;
-    }
-    return interval === 1
-      ? `Тапсырма жыл сайын таңдалған айда қайталанады: ${monthNameFull}.`
-      : `Тапсырма әр ${interval} жыл сайын таңдалған айда қайталанады: ${monthNameFull}.`;
+    return describeLocalizedCustomRepeat(
+      {
+        unit,
+        interval,
+        selectedWeekdays,
+        monthlyMode,
+        selectedMonthDate,
+        selectedPosIdx,
+        selectedDayIdx,
+        selectedYearlyMonth,
+        yearlyEnableWeekdays,
+      },
+      language
+    );
   };
 
   return (
@@ -349,26 +235,25 @@ export function CustomRepeatModal({
       <Animated.View style={[styles.sheet, { backgroundColor: colors.sheetBg, transform: [{ translateY }] }]}>
         <View style={[styles.dragPill, { backgroundColor: colors.dragPill }]} />
 
-        {/* Header with Back Button, Title, and Blue Circular Checkmark Button */}
         <View style={styles.header}>
           <AnimatedPressable
             activeScale={0.88}
             style={[styles.backBtn, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
             onPress={handleClose}
             accessibilityRole="button"
-            accessibilityLabel="Артқа қайту"
+            accessibilityLabel={t.common.back}
           >
             <BackChevronIcon color={colors.secondary} />
           </AnimatedPressable>
 
-          <Text style={[styles.title, { color: colors.text }]}>Реттеу</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t.repeat.customTitle}</Text>
 
           <AnimatedPressable
             activeScale={0.88}
             style={[styles.checkCircleBtn, { backgroundColor: colors.today, borderColor: colors.today }]}
             onPress={handleConfirm}
             accessibilityRole="button"
-            accessibilityLabel="Қолдану"
+            accessibilityLabel={t.common.confirm}
           >
             <CheckMarkIcon color="#FFFFFF" />
           </AnimatedPressable>
@@ -379,9 +264,7 @@ export function CustomRepeatModal({
           contentContainerStyle={styles.scrollContent}
           style={{ width: '100%' }}
         >
-          {/* Card 1: Frequency & Every Stepper */}
           <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
-            {/* Frequency Dropdown Row */}
             <Pressable
               style={styles.formRow}
               onPress={() => {
@@ -389,7 +272,7 @@ export function CustomRepeatModal({
                 setShowUnitMenu((prev) => !prev);
               }}
             >
-              <Text style={styles.rowLabel}>Жиілігі</Text>
+              <Text style={styles.rowLabel}>{t.repeat.frequency}</Text>
               <View style={styles.selectorBtn}>
                 <Text style={[styles.selectorText, { color: colors.today }]}>{unitLabels[unit]}</Text>
                 <SelectorChevronIcon color={colors.today} />
@@ -398,9 +281,8 @@ export function CustomRepeatModal({
 
             <View style={[styles.divider, { backgroundColor: colors.inputBorder }]} />
 
-            {/* Every Stepper Row */}
             <View style={styles.formRow}>
-              <Text style={styles.rowLabel}>Әрбір</Text>
+              <Text style={styles.rowLabel}>{t.repeat.every}</Text>
               <View style={[styles.stepperContainer, { backgroundColor: colors.card, borderColor: colors.inputBorder }]}>
                 <AnimatedPressable
                   activeScale={0.85}
@@ -422,19 +304,15 @@ export function CustomRepeatModal({
             </View>
           </View>
 
-          {/* Footer Summary Sentence */}
           <Text style={styles.summaryText}>{getSummarySentence()}</Text>
 
-          {/* Card 2 (Conditional per unit) */}
-
-          {/* WEEKLY: Weekdays Picker List */}
           {unit === 'weekly' && (
             <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, marginTop: 16 }]}>
               {orderedWeekdayIndices.map((dayIdx, i) => {
-                const dayName = kzWeekdaysFull[dayIdx];
+                const dayName = weekdaysFull[dayIdx];
                 const isSelected = selectedWeekdays.includes(dayIdx);
                 return (
-                  <View key={dayName}>
+                  <View key={`${dayName}-${dayIdx}`}>
                     {i > 0 && <View style={[styles.divider, { backgroundColor: colors.inputBorder }]} />}
                     <Pressable style={styles.formRow} onPress={() => toggleWeekday(dayIdx)}>
                       <Text style={styles.rowLabel}>{dayName}</Text>
@@ -446,18 +324,17 @@ export function CustomRepeatModal({
             </View>
           )}
 
-          {/* MONTHLY: Dates Grid or Day of Week Mode */}
           {unit === 'monthly' && (
             <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, marginTop: 16 }]}>
               <Pressable style={styles.formRow} onPress={() => { triggerHaptic(); setMonthlyMode('dates'); }}>
-                <Text style={styles.rowLabel}>Даталарды таңдау</Text>
+                <Text style={styles.rowLabel}>{t.repeat.selectDates}</Text>
                 {monthlyMode === 'dates' && <CheckIcon color={colors.today} />}
               </Pressable>
 
               <View style={[styles.divider, { backgroundColor: colors.inputBorder }]} />
 
               <Pressable style={styles.formRow} onPress={() => { triggerHaptic(); setMonthlyMode('dayOfWeek'); }}>
-                <Text style={styles.rowLabel}>Апта күнін таңдау</Text>
+                <Text style={styles.rowLabel}>{t.repeat.selectDayOfWeek}</Text>
                 {monthlyMode === 'dayOfWeek' && <CheckIcon color={colors.today} />}
               </Pressable>
 
@@ -508,23 +385,22 @@ export function CustomRepeatModal({
                     data={orderedWeekdayIndices}
                     selectedIndex={Math.max(0, orderedWeekdayIndices.indexOf(selectedDayIdx))}
                     onSelect={(orderIdx) => setSelectedDayIdx(orderedWeekdayIndices[orderIdx])}
-                    getLabel={(dayIdx) => kzWeekdaysFull[dayIdx].toLowerCase()}
+                    getLabel={(dayIdx) => weekdaysFull[dayIdx].toLowerCase()}
                   />
                 </View>
               )}
             </View>
           )}
 
-          {/* YEARLY: 12-Month Grid + Weekdays Switch & Picker Wheel */}
           {unit === 'yearly' && (
             <>
               <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, marginTop: 16 }]}>
                 <View style={styles.monthsGridContainer}>
-                  {kzMonthsShort.map((mShort, mIdx) => {
+                  {monthsShort.map((mShort, mIdx) => {
                     const isSelected = selectedYearlyMonth === mIdx;
                     return (
                       <Pressable
-                        key={mShort}
+                        key={`${mShort}-${mIdx}`}
                         style={[
                           styles.monthGridCell,
                           isSelected && { backgroundColor: colors.today },
@@ -545,7 +421,7 @@ export function CustomRepeatModal({
 
               <View style={[styles.groupedCard, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, marginTop: 14 }]}>
                 <View style={styles.formRow}>
-                  <Text style={styles.rowLabel}>Апта күндері</Text>
+                  <Text style={styles.rowLabel}>{t.repeat.weekdays}</Text>
                   <View style={styles.switchWrapper}>
                     <Switch
                       value={yearlyEnableWeekdays}
@@ -572,7 +448,7 @@ export function CustomRepeatModal({
                       data={orderedWeekdayIndices}
                       selectedIndex={Math.max(0, orderedWeekdayIndices.indexOf(selectedDayIdx))}
                       onSelect={(orderIdx) => setSelectedDayIdx(orderedWeekdayIndices[orderIdx])}
-                      getLabel={(dayIdx) => kzWeekdaysFull[dayIdx].toLowerCase()}
+                      getLabel={(dayIdx) => weekdaysFull[dayIdx].toLowerCase()}
                     />
                   </View>
                 )}
@@ -581,7 +457,6 @@ export function CustomRepeatModal({
           )}
         </ScrollView>
 
-        {/* iOS Popover Dropdown Menu */}
         {showUnitMenu && (
           <Pressable style={styles.popoverOverlay} onPress={() => setShowUnitMenu(false)}>
             <View style={[styles.popoverMenu, { backgroundColor: colors.card, borderColor: colors.inputBorder }]}>
@@ -605,7 +480,13 @@ export function CustomRepeatModal({
                         setShowUnitMenu(false);
                       }}
                     >
-                      <Text style={[styles.menuItemText, isSelected && { color: colors.today, fontWeight: '700' }]}>
+                      <Text
+                        style={[
+                          styles.menuItemText,
+                          { color: colors.text },
+                          isSelected && { color: colors.today, fontWeight: '700' },
+                        ]}
+                      >
                         {unitLabels[u]}
                       </Text>
                       {isSelected && <CheckIcon color={colors.today} />}

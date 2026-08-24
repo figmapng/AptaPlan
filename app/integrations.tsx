@@ -17,12 +17,14 @@ import * as Haptics from 'expo-haptics';
 
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 
 export default function IntegrationsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const {
     settings,
     setPref,
@@ -41,7 +43,7 @@ export default function IntegrationsScreen() {
 
     if (enable) {
       if (Platform.OS !== 'ios') {
-        Alert.alert('Ескерту', 'Apple Reminders тек iOS құрылғыларында қолжетімді.');
+        Alert.alert(t.common.warning, t.integrations.alerts.iosOnlyWarning);
         return;
       }
       setIsSyncing(true);
@@ -49,25 +51,25 @@ export default function IntegrationsScreen() {
         const res = await enableAppleReminders();
         if (res.success) {
           Alert.alert(
-            'Синхрондау қосылды',
-            `Apple Reminders қосымшасынан тапсырмалар жүктелді.\n\n• Қосылды: ${res.importedCount}\n• Жаңартылды: ${res.updatedCount}`
+            t.integrations.alerts.syncEnabledTitle,
+            t.integrations.alerts.syncEnabledMessage(res.importedCount, res.updatedCount)
           );
         } else {
-          Alert.alert('Рұқсат қажет', res.error || 'Қате орын алды');
+          Alert.alert(t.integrations.alerts.permissionRequiredTitle, res.error || t.common.error);
         }
       } catch (e: any) {
-        Alert.alert('Қате', e?.message || 'Қосу мүмкін болмады');
+        Alert.alert(t.common.error, e?.message || t.common.error);
       } finally {
         setIsSyncing(false);
       }
     } else {
       Alert.alert(
-        'Apple Reminders синхрондауын өшіру',
-        'Бұрын синхрондалған барлық еске салғыштар AptaPlan-нан өшіріледі. Қолдан қосылған тапсырмалар сақталады.',
+        t.integrations.alerts.disableTitle,
+        t.integrations.alerts.disableMessage,
         [
-          { text: 'Болдырмау', style: 'cancel' },
+          { text: t.common.cancel, style: 'cancel' },
           {
-            text: 'Өшіру',
+            text: t.common.delete,
             style: 'destructive',
             onPress: async () => {
               setIsSyncing(true);
@@ -86,7 +88,7 @@ export default function IntegrationsScreen() {
   const handleSyncReminders = async () => {
     if (isSyncing) return;
     if (Platform.OS !== 'ios') {
-      Alert.alert('Ескерту', 'Apple Reminders тек iOS құрылғыларында қолжетімді.');
+      Alert.alert(t.common.warning, t.integrations.alerts.iosOnlyWarning);
       return;
     }
     if (settings.haptics) {
@@ -98,17 +100,17 @@ export default function IntegrationsScreen() {
       const res = await syncAppleReminders();
       if (res.success) {
         const total = res.importedCount + res.updatedCount;
-        const msg = total > 0 ? `Жаңартылды: ${total}` : 'Жаңа тапсырма жоқ';
+        const msg = total > 0 ? t.integrations.alerts.updatedCount(total) : t.integrations.alerts.noNewTasks;
         setSyncStatusText(msg);
         Alert.alert(
-          'Синхрондау аяқталды',
-          `Apple Reminders-тен тапсырмалар сәтті жүктелді.\n\n• Қосылды: ${res.importedCount}\n• Жаңартылды: ${res.updatedCount}\n• Барлығы табылды: ${res.totalFound}`
+          t.integrations.alerts.syncSuccessTitle,
+          t.integrations.alerts.syncSuccessMessage(res.importedCount, res.updatedCount, res.totalFound)
         );
       } else {
-        Alert.alert('Синхрондау қатесі', res.error || 'Қате орын алды');
+        Alert.alert(t.integrations.alerts.syncErrorTitle, res.error || t.common.error);
       }
     } catch (e: any) {
-      Alert.alert('Қате', e?.message || 'Синхрондау мүмкін болмады');
+      Alert.alert(t.common.error, e?.message || t.common.error);
     } finally {
       setIsSyncing(false);
     }
@@ -131,12 +133,12 @@ export default function IntegrationsScreen() {
             }
           }}
           style={[styles.backButton, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
-          accessibilityLabel="Артқа қайту"
+          accessibilityLabel={t.common.back}
         >
           <Ionicons name="chevron-back" size={20} color={colors.secondary} style={{ marginLeft: -1 }} />
         </AnimatedPressable>
 
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Интеграциялар</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t.integrations.title}</Text>
 
         <View style={styles.headerSpacer} />
       </View>
@@ -152,17 +154,17 @@ export default function IntegrationsScreen() {
         {isIOS && (
           <>
             <View style={styles.sectionHeaderContainer}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Apple қызметтері</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.integrations.appleServices}</Text>
               <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>
-                iOS жүйелік қосымшаларымен синхрондау
+                {t.integrations.appleServicesSub}
               </Text>
             </View>
 
             <Section>
               <IntegrationRow
                 customIcon={<AppleRemindersIcon size={22} />}
-                label="Apple Reminders"
-                subtitle="Еске салғыштар тізімінен тапсырмаларды жүктеу"
+                label={t.integrations.appleReminders}
+                subtitle={t.integrations.appleRemindersSub}
                 rightElement={
                   isSyncing ? (
                     <ActivityIndicator size="small" color={colors.today} />
@@ -182,8 +184,8 @@ export default function IntegrationsScreen() {
                   <Divider />
                   <IntegrationRow
                     icon="refresh-circle-outline"
-                    label="Авто-синхрондау"
-                    subtitle="Қосымша ашылғанда автоматты жаңарту"
+                    label={t.integrations.autoSync}
+                    subtitle={t.integrations.autoSyncSub}
                     rightElement={
                       <Switch
                         value={settings.autoSyncAppleReminders !== false}
@@ -196,13 +198,13 @@ export default function IntegrationsScreen() {
                   <Divider />
                   <IntegrationRow
                     icon="sync-outline"
-                    label="Қазір синхрондау"
+                    label={t.integrations.syncNow}
                     subtitle={
                       settings.lastRemindersSyncTime
-                        ? `Соңғы синхрондау: ${new Date(settings.lastRemindersSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                        ? t.integrations.lastSync(new Date(settings.lastRemindersSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
                         : undefined
                     }
-                    valueText={isSyncing ? 'Жүктелуде...' : syncStatusText || undefined}
+                    valueText={isSyncing ? t.integrations.syncing : syncStatusText || undefined}
                     onPress={handleSyncReminders}
                   />
                 </>
@@ -212,9 +214,9 @@ export default function IntegrationsScreen() {
             <Section>
               <IntegrationRow
                 icon="calendar-outline"
-                label="Apple Calendar (Күнтізбе)"
-                subtitle="Жүйелік күнтізбе оқиғаларымен байланыстыру"
-                badgeText="Жақында"
+                label={t.integrations.appleCalendar}
+                subtitle={t.integrations.appleCalendarSub}
+                badgeText={t.common.comingSoon}
               />
             </Section>
           </>
@@ -224,25 +226,25 @@ export default function IntegrationsScreen() {
         {(isAndroid || !isIOS) && (
           <>
             <View style={styles.sectionHeaderContainer}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Android қызметтері</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.integrations.androidServices}</Text>
               <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>
-                Google және құрылғының жүйелік күнтізбесі
+                {t.integrations.androidServicesSub}
               </Text>
             </View>
 
             <Section>
               <IntegrationRow
                 customIcon={<GoogleCalendarIcon size={22} />}
-                label="Google Calendar / Күнтізбе"
-                subtitle="Android жүйелік күнтізбесімен синхрондау"
-                badgeText="Жақында"
+                label={t.integrations.googleCalendar}
+                subtitle={t.integrations.googleCalendarSub}
+                badgeText={t.common.comingSoon}
               />
               <Divider />
               <IntegrationRow
                 customIcon={<GoogleTasksIcon size={22} />}
-                label="Google Tasks"
-                subtitle="Google тапсырмаларымен синхрондау"
-                badgeText="Жақында"
+                label={t.integrations.googleTasks}
+                subtitle={t.integrations.googleTasksSub}
+                badgeText={t.common.comingSoon}
               />
             </Section>
           </>
@@ -257,9 +259,9 @@ export default function IntegrationsScreen() {
         >
           <Ionicons name="shield-checkmark-outline" size={20} color={colors.today} style={{ marginTop: 2 }} />
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[styles.infoTitle, { color: colors.text }]}>Қауіпсіздік және құпиялылық</Text>
+            <Text style={[styles.infoTitle, { color: colors.text }]}>{t.integrations.privacyTitle}</Text>
             <Text style={[styles.infoDesc, { color: colors.secondary }]}>
-              Барлық синхрондау тек сіздің құрылғыңызда офлайн жүзеге асады. Деректеріңіз сыртқы серверлерге жіберілмейді.
+              {t.integrations.privacyDesc}
             </Text>
           </View>
         </View>
@@ -267,6 +269,7 @@ export default function IntegrationsScreen() {
     </View>
   );
 }
+
 
 function Section({ children }: { children: React.ReactNode }) {
   const { colors } = useTheme();

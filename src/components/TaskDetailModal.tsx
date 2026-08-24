@@ -23,14 +23,13 @@ import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
 import type { Task, TaskRepeat } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
-import { formatFullDate, weekdays } from '@/services/date-service';
 import { fromDateKey, getTodayKey } from '@/utils/dateHelpers';
+import { useI18n, formatLocalizedFullDate } from '@/i18n/use-i18n';
 import { CalendarModal } from './CalendarModal';
 import { TimeModal } from './TimeModal';
 import { RepeatActionSheet } from './RepeatActionSheet';
-import { CustomRepeatConfig, describeCustomRepeat } from './CustomRepeatModal';
+import { CustomRepeatConfig } from './CustomRepeatModal';
 import { REMINDER_DEFAULT_OFFSET_MINUTES } from '@/services/notification-service';
-import { getShortRepeatLabel } from './RepeatChip';
 
 interface TaskDetailModalProps {
   visible: boolean;
@@ -47,6 +46,7 @@ export function TaskDetailModal({
 }: TaskDetailModalProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { t, language, getShortRepeatLabel, describeCustomRepeat } = useI18n();
   const { update, remove, toggle, create, settings } = usePlanner();
 
   const [title, setTitle] = useState('');
@@ -221,7 +221,7 @@ export function TaskDetailModal({
     closeActionMenu();
     try {
       await create({
-        title: `${task.title} (көшірме)`,
+        title: `${task.title} (${t.task.copy})`,
         date: task.date,
         time: task.time,
         repeat: task.repeat,
@@ -290,20 +290,20 @@ export function TaskDetailModal({
   );
 
   const repeatText = useMemo(() => {
-    if (!selectedRepeat || selectedRepeat === 'none') return 'Қайталанбайды';
+    if (!selectedRepeat || selectedRepeat === 'none') return t.repeat.none;
     if (selectedCustomConfig) return describeCustomRepeat(selectedCustomConfig);
-    return getShortRepeatLabel(selectedRepeat, selectedRepeatInterval) || 'Қайталанбайды';
-  }, [selectedRepeat, selectedRepeatInterval, selectedCustomConfig]);
+    return getShortRepeatLabel(selectedRepeat, selectedRepeatInterval) || t.repeat.none;
+  }, [selectedRepeat, selectedRepeatInterval, selectedCustomConfig, t, getShortRepeatLabel, describeCustomRepeat]);
 
   const formattedDateText = useMemo(() => {
     try {
       const d = fromDateKey(selectedDate);
-      const dayName = weekdays[d.getDay()];
-      return `${dayName}, ${formatFullDate(d)}`;
+      const dayName = t.date.weekdays[d.getDay()];
+      return `${dayName}, ${formatLocalizedFullDate(d, language)}`;
     } catch {
       return selectedDate;
     }
-  }, [selectedDate]);
+  }, [selectedDate, t, language]);
 
   if (!task && !visible) return null;
 
@@ -353,7 +353,7 @@ export function TaskDetailModal({
             </TouchableOpacity>
 
             {/* Title */}
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Тапсырма параметрі</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>{t.task.taskParameters}</Text>
 
             {/* More Options (•••) */}
             <TouchableOpacity
@@ -393,7 +393,7 @@ export function TaskDetailModal({
                   value={title}
                   onChangeText={(text) => setTitle(text)}
                   onBlur={() => void saveChanges()}
-                  placeholder="Тапсырма атауы..."
+                  placeholder={t.task.taskPlaceholder}
                   placeholderTextColor={colors.inputPlaceholder}
                   multiline
                   style={[
@@ -416,7 +416,7 @@ export function TaskDetailModal({
                   <View style={styles.propertyIconContainer}>
                     <CalendarIcon size={18} color={colors.secondary} />
                   </View>
-                  <Text style={[styles.propertyLabel, { color: colors.text }]}>Күні</Text>
+                  <Text style={[styles.propertyLabel, { color: colors.text }]}>{t.date.date}</Text>
                 </View>
                 <View style={styles.propertyRight}>
                   <Text style={[styles.propertyValue, { color: colors.text }]}>{formattedDateText}</Text>
@@ -436,11 +436,11 @@ export function TaskDetailModal({
                   <View style={styles.propertyIconContainer}>
                     <ClockIcon size={18} color={colors.secondary} />
                   </View>
-                  <Text style={[styles.propertyLabel, { color: colors.text }]}>Уақыты</Text>
+                  <Text style={[styles.propertyLabel, { color: colors.text }]}>{t.time.time}</Text>
                 </View>
                 <View style={styles.propertyRight}>
                   <Text style={[styles.propertyValue, { color: colors.text }, !selectedTime && styles.propertyPlaceholder, selectedTime && { color: colors.today, fontWeight: '700' }]}>
-                    {selectedTime || 'Таңдалмаған'}
+                    {selectedTime || t.common.notSet}
                   </Text>
                   {selectedTime ? (
                     <TouchableOpacity
@@ -471,7 +471,7 @@ export function TaskDetailModal({
                   <View style={styles.propertyIconContainer}>
                     <RepeatIcon size={18} color={colors.secondary} />
                   </View>
-                  <Text style={[styles.propertyLabel, { color: colors.text }]}>Қайталау</Text>
+                  <Text style={[styles.propertyLabel, { color: colors.text }]}>{t.repeat.title}</Text>
                 </View>
                 <View style={styles.propertyRight}>
                   <Text style={[styles.propertyValue, { color: colors.text }, selectedRepeat === 'none' && styles.propertyPlaceholder, selectedRepeat !== 'none' && { color: colors.today, fontWeight: '700' }]}>
@@ -558,9 +558,9 @@ export function TaskDetailModal({
                     {/* Header Item */}
                     <View style={[styles.actionHeaderItem, { backgroundColor: colors.inputBg }]}>
                       <Text style={[styles.actionHeaderTitle, { color: colors.text }]} numberOfLines={1}>
-                        {task?.title || 'Тапсырма'}
+                        {task?.title || t.task.taskPlaceholder}
                       </Text>
-                      <Text style={[styles.actionHeaderSub, { color: colors.secondary }]}>Тапсырма әрекеттері</Text>
+                      <Text style={[styles.actionHeaderSub, { color: colors.secondary }]}>{t.task.taskActions}</Text>
                     </View>
 
                     <View style={[styles.actionDivider, { backgroundColor: colors.divider }]} />
@@ -572,7 +572,7 @@ export function TaskDetailModal({
                       style={[styles.actionRow, { backgroundColor: colors.card }]}
                     >
                       <CopyIcon size={18} color={colors.text} />
-                      <Text style={[styles.actionRowText, { color: colors.text }]}>Көшірмесін жасау (Дубликат)</Text>
+                      <Text style={[styles.actionRowText, { color: colors.text }]}>{t.task.duplicate}</Text>
                     </TouchableOpacity>
 
                     <View style={[styles.actionDivider, { backgroundColor: colors.divider }]} />
@@ -584,7 +584,7 @@ export function TaskDetailModal({
                       style={[styles.actionRow, { backgroundColor: colors.card }]}
                     >
                       <ShareIcon size={18} color={colors.text} />
-                      <Text style={[styles.actionRowText, { color: colors.text }]}>Бөлісу</Text>
+                      <Text style={[styles.actionRowText, { color: colors.text }]}>{t.task.share}</Text>
                     </TouchableOpacity>
 
                     <View style={[styles.actionDivider, { backgroundColor: colors.divider }]} />
@@ -597,7 +597,7 @@ export function TaskDetailModal({
                     >
                       <TrashIcon size={18} color={colors.weekend} />
                       <Text style={[styles.actionRowText, styles.actionRowTextDestructive, { color: colors.weekend }]}>
-                        Тапсырманы өшіру
+                        {t.alerts.deleteTaskTitle}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -608,7 +608,7 @@ export function TaskDetailModal({
                     onPress={closeActionMenu}
                     style={[styles.actionCancelButton, { backgroundColor: colors.card }]}
                   >
-                    <Text style={[styles.actionCancelText, { color: colors.today }]}>Болдырмау</Text>
+                    <Text style={[styles.actionCancelText, { color: colors.today }]}>{t.common.cancel}</Text>
                   </TouchableOpacity>
                 </>
               ) : (
@@ -616,8 +616,8 @@ export function TaskDetailModal({
                   {/* Delete Options for Recurring Task */}
                   <View style={[styles.actionGroupCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
                     <View style={[styles.actionHeaderItem, { backgroundColor: colors.inputBg }]}>
-                      <Text style={[styles.actionHeaderTitle, { color: colors.text }]}>Қайталанатын тапсырма</Text>
-                      <Text style={[styles.actionHeaderSub, { color: colors.secondary }]}>Өшіру әдісін таңдаңыз:</Text>
+                      <Text style={[styles.actionHeaderTitle, { color: colors.text }]}>{t.alerts.recurringTask}</Text>
+                      <Text style={[styles.actionHeaderSub, { color: colors.secondary }]}>{t.alerts.chooseDeleteMethod}</Text>
                     </View>
 
                     <View style={[styles.actionDivider, { backgroundColor: colors.divider }]} />
@@ -629,7 +629,7 @@ export function TaskDetailModal({
                     >
                       <TrashIcon size={18} color={colors.weekend} />
                       <Text style={[styles.actionRowText, styles.actionRowTextDestructive, { color: colors.weekend }]}>
-                        Тек осы күнгіні өшіру
+                        {t.alerts.deleteThisOnly}
                       </Text>
                     </TouchableOpacity>
 
@@ -642,7 +642,7 @@ export function TaskDetailModal({
                     >
                       <TrashIcon size={18} color={colors.weekend} />
                       <Text style={[styles.actionRowText, styles.actionRowTextDestructive, { color: colors.weekend, fontWeight: '700' }]}>
-                        Барлық қайталануларды өшіру
+                        {t.alerts.deleteAll}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -653,7 +653,7 @@ export function TaskDetailModal({
                     onPress={() => setShowDeleteConfirm(false)}
                     style={[styles.actionCancelButton, { backgroundColor: colors.card }]}
                   >
-                    <Text style={[styles.actionCancelText, { color: colors.today }]}>Болдырмау</Text>
+                    <Text style={[styles.actionCancelText, { color: colors.today }]}>{t.common.cancel}</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -664,6 +664,7 @@ export function TaskDetailModal({
     </Modal>
   );
 }
+
 
 // Icons
 function CloseIcon({ size = 16, color = '#374151' }: { size?: number; color?: string }) {

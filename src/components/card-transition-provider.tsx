@@ -7,8 +7,9 @@ import { addDays, format, isToday } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
-import { months, toDateKey, weekdays } from '@/services/date-service';
+import { toDateKey } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
+import { useI18n } from '@/i18n/use-i18n';
 import { TaskRow } from './task-row';
 import { TaskBottomSheet } from './TaskBottomSheet';
 import { TaskPreviewModal } from './TaskPreviewModal';
@@ -101,6 +102,7 @@ const CarouselCard = React.memo(function CarouselCard({
 
   const [localListHeight, setLocalListHeight] = useState(0);
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const cardTaskCount = cardTasks.length;
   const taskListHeight = localListHeight > 0 ? localListHeight : (cardTaskCount > 0 ? cardTaskCount * 48 + 12 : 80);
   const rawCardContentHeight = 44 + 8 + taskListHeight;
@@ -299,6 +301,8 @@ const CarouselCard = React.memo(function CarouselCard({
         >
           {/* Weekday Name */}
           <Animated.Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
             style={{
               fontSize: progress.interpolate({
                 inputRange: [0, 1],
@@ -307,14 +311,16 @@ const CarouselCard = React.memo(function CarouselCard({
               }),
               fontWeight: '600',
               color: isTodayCard ? (colors.activeHeaderText || '#FFFFFF') : isWeekendCard ? colors.sundayText : colors.text,
+              flexShrink: 1,
             }}
           >
-            {(weekdays[cardDate.getDay()] ?? '').toUpperCase()}
+            {(t.date.weekdays[cardDate.getDay()] ?? '').toUpperCase()}
           </Animated.Text>
 
           {/* Outer badge */}
           <Animated.View
             style={{
+              flexShrink: 0,
               marginLeft: progress.interpolate({
                 inputRange: [0, 1],
                 outputRange: [6, 8],
@@ -442,16 +448,18 @@ const CarouselCard = React.memo(function CarouselCard({
                   overflow: 'hidden',
                 }}
               >
-                {months[cardDate.getMonth()][0].toUpperCase() + months[cardDate.getMonth()].slice(1)}
+                {t.date.monthsFull[cardDate.getMonth()][0].toUpperCase() + t.date.monthsFull[cardDate.getMonth()].slice(1)}
               </Animated.Text>
             </Animated.View>
           </Animated.View>
+
 
           <Animated.View
             style={{
               marginLeft: 'auto',
               flexDirection: 'row',
               alignItems: 'center',
+              flexShrink: 0,
               opacity: progress,
             }}
           >
@@ -523,7 +531,7 @@ const CarouselCard = React.memo(function CarouselCard({
                 }}
               >
                 <Text style={{ color: colors.secondary, fontSize: 15, fontWeight: '500' }}>
-                  Тапсырма жоқ
+                  {t.common.noTasks}
                 </Text>
               </View>
             ) : (
@@ -554,7 +562,7 @@ const CarouselCard = React.memo(function CarouselCard({
                   </Svg>
                 </View>
                 <Text style={{ color: colors.secondary, fontSize: 12, lineHeight: 17, fontWeight: '400' }}>
-                  Тапсырма қосу
+                  {t.common.addTask}
                 </Text>
               </View>
             )}
@@ -640,7 +648,7 @@ const CarouselCard = React.memo(function CarouselCard({
                       textAlign: 'center',
                     }}
                   >
-                    Тапсырма жоқ
+                    {t.common.noTasks}
                   </Text>
                 </Pressable>
               )}
@@ -657,6 +665,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const insets = useSafeAreaInsets();
   const { tasks, settings, loadRange, remove } = usePlanner();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const progress = useRef(new Animated.Value(0)).current;
 
@@ -1134,7 +1143,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
               <AnimatedPressable
                 accessibilityRole="button"
-                accessibilityLabel="Жаңа тапсырма қосу"
+                accessibilityLabel={t.common.addTask}
                 onPress={() => beginAdding(activeCardDate)}
                 activeScale={0.97}
                 style={{
@@ -1160,7 +1169,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   />
                 </Svg>
                 <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>
-                  Тапсырма қосу
+                  {t.common.addTask}
                 </Text>
               </AnimatedPressable>
             </Animated.View>
@@ -1203,7 +1212,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                       marginRight: 12,
                     }}
                   >
-                    Тапсырма өшірілді
+                    {t.alerts.taskDeleted}
                   </Text>
                   <Pressable
                     onPress={handleUndo}
@@ -1222,7 +1231,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                         fontWeight: '700',
                       }}
                     >
-                      Қайтару
+                      {t.common.undo}
                     </Text>
                   </Pressable>
                 </View>

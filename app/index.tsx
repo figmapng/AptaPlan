@@ -45,9 +45,8 @@ import { useCardTransition } from '@/components/card-transition-provider';
 import { MonthPickerModal } from '@/components/MonthPickerModal';
 import { ViewModeModal, type ViewMode } from '@/components/ViewModeModal';
 import { CompactWeekStrip } from '@/components/CompactWeekStrip';
+import { useI18n } from '@/i18n/use-i18n';
 import type { Task } from '@/types/task';
-
-const modeLabels: Record<ViewMode, string> = { day: 'Күн', week: 'Апта', month: 'Ай', year: 'Жыл' };
 
 type DayDataItem = {
   date: Date;
@@ -79,6 +78,16 @@ export default function Home() {
   const { openCard } = useCardTransition();
   const { ready, error, tasks, loadRange, create, settings } = usePlanner();
   const { colors, isDark } = useTheme();
+  const { t, language } = useI18n();
+  const [measuredContentHeight, setMeasuredContentHeight] = useState(0);
+
+  const modeLabels: Record<ViewMode, string> = {
+    day: t.viewModes.day,
+    week: t.viewModes.week,
+    month: t.viewModes.month,
+    year: t.viewModes.year,
+  };
+
   const firstDay = settings.firstDayOfWeek ?? 'mon';
   const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
   const [weekStart, setWeekStart] = useState(() => getStartOfWeekWith(new Date(), weekStartsOn));
@@ -173,7 +182,7 @@ export default function Home() {
           date,
           dateKey: key,
           tasks: dayTasks,
-          monthLabel: isOtherMonth ? `${shortMonths[date.getMonth()]}.` : undefined,
+          monthLabel: isOtherMonth ? `${t.date.monthsShort[date.getMonth()]}.` : undefined,
         };
       });
     };
@@ -193,14 +202,22 @@ export default function Home() {
     }
     const dominantDate = currDates.find((d) => d.getMonth() === currDominantMonth) ?? currDates[0];
 
+    const formatHeaderMonthYear = (d: Date) => {
+      const mName = t.date.monthsFull[d.getMonth()];
+      const mCap = mName[0].toUpperCase() + mName.slice(1);
+      return `${mCap} ${d.getFullYear()}`;
+    };
+
+    const yearHeader = language === 'en' ? `${year}` : language === 'ru' ? `${year} г.` : `${year} жыл`;
+
     const headerTitle =
       mode === 'day'
-        ? `${months[dayDate.getMonth()][0].toUpperCase()}${months[dayDate.getMonth()].slice(1)} ${dayDate.getFullYear()}`
+        ? formatHeaderMonthYear(dayDate)
         : mode === 'week'
-        ? `${months[dominantDate.getMonth()][0].toUpperCase()}${months[dominantDate.getMonth()].slice(1)} ${dominantDate.getFullYear()}`
+        ? formatHeaderMonthYear(dominantDate)
         : mode === 'month'
-        ? `${months[month.getMonth()][0].toUpperCase()}${months[month.getMonth()].slice(1)} ${month.getFullYear()}`
-        : `${year} жыл`;
+        ? formatHeaderMonthYear(month)
+        : yearHeader;
 
     const todayTime = new Date().setHours(0, 0, 0, 0);
     const firstWeekDateTime = currDates[0].getTime();
@@ -224,7 +241,8 @@ export default function Home() {
       currSlotDays,
       slots,
     };
-  }, [weekStart, tasks, screenWidth, mode, month, year, dayDate]);
+  }, [weekStart, tasks, screenWidth, mode, month, year, dayDate, t, language]);
+
 
   // ── Animated.Value for carousel translation ──────────────────────
   const carouselAnim = useRef(new Animated.Value(0)).current;
@@ -296,7 +314,7 @@ export default function Home() {
         : userSundayStateRef.current === 'collapsed' ? 0
         : defaultExpanded ? 1 : 0;
       isExpandedRef.current = target === 1;
-      Animated.timing(weekProgress, { toValue: target, duration: 180, useNativeDriver: false }).start();
+      weekProgress.setValue(target);
     }
   }, [ready, derivedWeekData.slots, loadRange, weekProgress, settings.lastDayVisibility]);
 
@@ -806,21 +824,21 @@ export default function Home() {
         const dy = e.nativeEvent.pageY - touchStartY.current;
 
         if (isMotivationalOpenRef.current) {
-          if (dy < -15) {
+          if (dy < -20) {
             closeMotivationalHeader();
           } else {
             openMotivationalHeader();
           }
         } else if (isExpandedRef.current) {
-          if (dy > 25) {
+          if (dy > 45) {
             collapseWeek();
           } else {
             expandWeek();
           }
         } else {
-          if (dy > 15) {
+          if (dy > 25) {
             openMotivationalHeader();
-          } else if (dy < -25) {
+          } else if (dy < -45) {
             closeMotivationalHeader();
             expandWeek();
           } else {
@@ -890,12 +908,17 @@ export default function Home() {
   
   const headerSpace = insets.top + 68;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 60;
-  const availableHeight = screenHeight - headerSpace - bottomBarSpace;
+  const rawAvailableHeight = screenHeight - headerSpace - bottomBarSpace;
+  const availableHeight = measuredContentHeight > 0
+    ? measuredContentHeight - bottomBarSpace
+    : Math.max(400, rawAvailableHeight);
+
   // Month grid uses the same available height as week view
   const monthGridAvailH = availableHeight;
-  const collapsedBodyHeight = Math.max(120, Math.floor((availableHeight - 16 - 3 * 31) / 3));
-  const expandedBodyHeight = Math.max(70, Math.floor((availableHeight - 24 - 156 - 3 * 31) / 3));
-  const expandedSundayHeight = 156;
+  const sundayTargetH = Math.min(160, Math.max(120, Math.round(availableHeight * 0.25)));
+  const expandedBodyHeight = Math.max(70, Math.floor((availableHeight - 24 - sundayTargetH - 3 * 29) / 3));
+  const collapsedBodyHeight = Math.max(120, Math.floor((availableHeight - 16 - 3 * 29) / 3));
+  const expandedSundayHeight = sundayTargetH;
   const cardGridBottomPadding = bottomBarSpace;
   const title = derivedWeekData.headerTitle;
   const isFutureWeek = derivedWeekData.isFutureWeek;
@@ -1204,7 +1227,7 @@ export default function Home() {
               if (total === 0) {
                 return (
                   <Text style={{ fontSize: 13, fontWeight: '500', color: colors.secondary, marginTop: 2 }}>
-                    Тапсырма жоқ
+                    {t.common.noTasks}
                   </Text>
                 );
               }
@@ -1212,7 +1235,7 @@ export default function Home() {
               return (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
                   <Text style={{ fontSize: 13, fontWeight: '500', color: colors.secondary, fontVariant: ['tabular-nums'] }}>
-                    {done}/{total} орындалды
+                    {t.common.completedOf(done, total)}
                   </Text>
                   {done === total && total > 0 && (
                     <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#E6F9F0', alignItems: 'center', justifyContent: 'center' }}>
@@ -1332,7 +1355,15 @@ export default function Home() {
           })}
         </View>
       ) : mode === 'week' ? (
-        <View style={{ flex: 1, overflow: 'hidden' }}>
+        <View
+          style={{ flex: 1, overflow: 'hidden' }}
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            if (h > 0 && Math.abs(h - measuredContentHeight) > 1) {
+              setMeasuredContentHeight(h);
+            }
+          }}
+        >
           {derivedWeekData.slots.map((slot) => {
             const translateX = carouselAnim.interpolate({
               inputRange: [-screenWidth, 0, screenWidth],
@@ -1482,7 +1513,7 @@ export default function Home() {
           <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {fromYearMode && mode === 'month' && (
               <BackButton
-                accessibilityLabel="Жыл режиміне қайту"
+                accessibilityLabel={t.common.back}
                 onPress={handleBackToYearFromMonth}
               />
             )}
@@ -1496,7 +1527,7 @@ export default function Home() {
             ) && (
               <AnimatedPressable
                 accessibilityRole="button"
-                accessibilityLabel="Ағымдағы мезгілге қайту"
+                accessibilityLabel={t.common.today}
                 onPress={
                   (mode as ViewMode) === 'day'
                     ? () => setDayDate(new Date())
@@ -1523,7 +1554,9 @@ export default function Home() {
                   </Svg>
                 )}
                 <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
-                  {`${format(new Date(), 'dd')} ${months[new Date().getMonth()].slice(0, 3)}.`}
+                  {language === 'en'
+                    ? `${t.date.monthsShort[new Date().getMonth()]} ${format(new Date(), 'dd')}`
+                    : `${format(new Date(), 'dd')} ${t.date.monthsShort[new Date().getMonth()]}.`}
                 </Text>
                 {(((mode as ViewMode) === 'day' && dayDate < new Date()) || ((mode as ViewMode) === 'week' && isPastWeek) || ((mode as ViewMode) === 'month' && month < new Date())) && (
                   <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
@@ -1537,6 +1570,7 @@ export default function Home() {
         </>
       )}
       </Animated.View>
+
 
       <TaskBottomSheet visible={showBottomSheet} onClose={() => setShowBottomSheet(false)} onTaskSaved={handleTaskSaved} />
       <FlyingTaskOverlay flyingTask={flyingTask} onComplete={() => setFlyingTask(null)} />
@@ -1647,10 +1681,11 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   return (
     <AnimatedPressable
       accessibilityRole="button"
-      accessibilityLabel="Жаңа тапсырма қосу"
+      accessibilityLabel={t.common.addTask}
       onPress={() => { onInteraction?.(); onAddTask(); }}
       activeScale={0.97}
       style={{
@@ -1674,7 +1709,7 @@ function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => v
           strokeLinejoin="round"
         />
       </Svg>
-      <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>Тапсырма қосу</Text>
+      <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>{t.common.addTask}</Text>
     </AnimatedPressable>
   );
 }
@@ -1692,6 +1727,7 @@ const MonthGrid = memo(function MonthGridComponent({
 }) {
   const { settings } = usePlanner();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const firstDay = settings.firstDayOfWeek ?? 'mon';
   const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
 
@@ -1737,10 +1773,11 @@ const MonthGrid = memo(function MonthGridComponent({
   const cellH = Math.min(86, Math.max(64, rawCellH));
 
   const DAY_LABELS = useMemo(() => {
-    if (firstDay === 'sun') return ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
-    if (firstDay === 'sat') return ['Сб', 'Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм'];
-    return ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жс'];
-  }, [firstDay]);
+    const sw = t.date.weekdaysShort;
+    if (firstDay === 'sun') return [sw[0], sw[1], sw[2], sw[3], sw[4], sw[5], sw[6]];
+    if (firstDay === 'sat') return [sw[6], sw[0], sw[1], sw[2], sw[3], sw[4], sw[5]];
+    return [sw[1], sw[2], sw[3], sw[4], sw[5], sw[6], sw[0]];
+  }, [firstDay, t]);
 
   const todayDowIndex = useMemo(() => {
     const day = new Date().getDay();
@@ -1974,6 +2011,9 @@ const YearView = memo(function YearViewComponent({
   isSwipingRef?: React.RefObject<boolean>;
 }) {
   const { theme, colors, isDark } = useTheme();
+  const { t } = useI18n();
+  const { settings } = usePlanner();
+  const firstDay = settings.firstDayOfWeek ?? 'mon';
   const today = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => toDateKey(today), [today]);
 
@@ -1992,7 +2032,16 @@ const YearView = memo(function YearViewComponent({
     return r;
   }, []);
 
-  const DOW_LABELS = ['Д', 'С', 'С', 'Б', 'Ж', 'С', 'Ж'];
+  const DOW_LABELS = useMemo(() => {
+    const sw = t.date.weekdaysShort;
+    const ordered = firstDay === 'sun'
+      ? [sw[0], sw[1], sw[2], sw[3], sw[4], sw[5], sw[6]]
+      : firstDay === 'sat'
+      ? [sw[6], sw[0], sw[1], sw[2], sw[3], sw[4], sw[5]]
+      : [sw[1], sw[2], sw[3], sw[4], sw[5], sw[6], sw[0]];
+    return ordered.map((s) => s.slice(0, 1));
+  }, [firstDay, t]);
+
   const monthBlockHeight = Math.max(106, Math.floor((availableHeight - 3 * 8 - 16) / 4));
 
   return (
@@ -2012,9 +2061,13 @@ const YearView = memo(function YearViewComponent({
               today.getFullYear() === year && today.getMonth() === monthIndex;
 
             // Build grid: 7 columns (Mon–Sun), up to 6 rows
-            const firstDay = new Date(year, monthIndex, 1);
+            const firstDayDate = new Date(year, monthIndex, 1);
             const lastDay = new Date(year, monthIndex + 1, 0);
-            const startDow = (firstDay.getDay() + 6) % 7; // 0=Mon
+            const startDow = firstDay === 'sun'
+              ? firstDayDate.getDay()
+              : firstDay === 'sat'
+              ? (firstDayDate.getDay() + 1) % 7
+              : (firstDayDate.getDay() + 6) % 7;
             const totalDays = lastDay.getDate();
 
             const cells: (number | null)[] = [];
@@ -2051,8 +2104,9 @@ const YearView = memo(function YearViewComponent({
                     { color: isCurrentMonth ? colors.today : colors.text },
                   ]}
                 >
-                  {months[monthIndex][0].toUpperCase() + months[monthIndex].slice(1)}
+                  {t.date.monthsFull[monthIndex][0].toUpperCase() + t.date.monthsFull[monthIndex].slice(1)}
                 </Text>
+
 
                 <View style={yearStyles.dowRow}>
                   {DOW_LABELS.map((d, i) => (

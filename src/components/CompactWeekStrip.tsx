@@ -1,9 +1,9 @@
 import React from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { addDays, isSameDay, isToday, startOfWeek } from 'date-fns';
-import { weekdaysShort } from '@/services/date-service';
 import { colors as defaultColors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 
 interface CompactWeekStripProps {
   selectedDate: Date;
@@ -21,6 +21,7 @@ export function CompactWeekStrip({
   pageIndex = 0,
 }: CompactWeekStripProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -80,8 +81,9 @@ export function CompactWeekStrip({
         const isSelected = isSameDay(d, selectedDate);
         const isDayToday = isToday(d);
         const dayNum = d.getDate();
-        const dayShort = (weekdaysShort[d.getDay()] || '').toUpperCase();
+        const dayShort = (t.date.weekdaysShort[d.getDay()] || '').toUpperCase();
         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+
 
         // Optical center adjustment for 2-digit dates starting with '1' (10, 12..19)
         // Digit '1' is narrower than 0, 2..9, shifting visual center of number slightly right.

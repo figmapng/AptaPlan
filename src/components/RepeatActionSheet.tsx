@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
-import { getShortRepeatLabel, repeatLabels } from './RepeatChip';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 import { CustomRepeatConfig, CustomRepeatModal, CustomUnit } from './CustomRepeatModal';
 
@@ -48,6 +48,7 @@ export function RepeatActionSheet({
   onClose,
 }: RepeatActionSheetProps) {
   const { colors, isDark } = useTheme();
+  const { t, getShortRepeatLabel } = useI18n();
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const onCloseRef = useRef(onClose);
@@ -111,7 +112,7 @@ export function RepeatActionSheet({
           <View style={[styles.dragPill, { backgroundColor: colors.secondary }]} />
 
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>Қайталау</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t.repeat.title}</Text>
             <AnimatedPressable
               hitSlop={12}
               activeScale={0.88}
@@ -131,8 +132,8 @@ export function RepeatActionSheet({
               const shortCustomLabel = selectedCustomLabel || getShortRepeatLabel(current, selectedRepeatInterval);
               const labelText =
                 opt === 'custom' && isSelected && shortCustomLabel
-                  ? `Арнайы (${shortCustomLabel})`
-                  : repeatLabels[opt];
+                  ? `${t.repeat.custom} (${shortCustomLabel})`
+                  : t.repeat[opt];
 
               const iconColor = isSelected ? colors.today : colors.secondary;
 

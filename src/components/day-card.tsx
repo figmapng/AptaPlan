@@ -3,10 +3,11 @@ import { Animated, Pressable, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { format, isToday } from 'date-fns';
 import { colors } from '@/constants/colors';
-import { months, toDateKey, weekdays } from '@/services/date-service';
+import { toDateKey } from '@/services/date-service';
 import type { Task } from '@/types/task';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { TaskListFrame } from './task-list-frame';
 import { useCardTransition } from './card-transition-provider';
 import { AnimatedPressable } from './AnimatedPressable';
@@ -51,6 +52,7 @@ export const DayCard = memo(function DayCardComponent({
   const isWeekend = isSunday || isSaturday;
 
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const completedCount = tasks.filter((task) => task.isCompleted).length;
   const cardRef = useRef<View>(null);
   const { openCard, activeDate, progress: transitionProgress, originFrame } = useCardTransition();
@@ -152,7 +154,7 @@ export const DayCard = memo(function DayCardComponent({
   const progressCountColor = today ? (colors.activeHeaderText || '#FFFFFF') : isWeekend ? (isDark ? '#FFAAA4' : '#7B4545') : colors.text;
   const progressTotalColor = today ? (colors.activeHeaderText === '#18181B' ? 'rgba(24, 24, 27, 0.7)' : 'rgba(255, 255, 255, 0.8)') : isWeekend ? (isDark ? 'rgba(255, 170, 164, 0.7)' : 'rgba(123, 69, 69, 0.7)') : colors.secondary;
 
-  const dayName = weekdays[date.getDay()] ?? '';
+  const dayName = t.date.weekdays[date.getDay()] ?? '';
   const cardHeader = (
     <AnimatedPressable
       onPressIn={handlePressIn}
@@ -170,11 +172,13 @@ export const DayCard = memo(function DayCardComponent({
     >
       <Text
         numberOfLines={1}
+        ellipsizeMode="tail"
         style={{
           fontSize: 12,
           fontWeight: '600',
           letterSpacing: 0.2,
           color: dayNameColor,
+          flexShrink: 1,
         }}
       >
         {dayName.toUpperCase()}
@@ -193,6 +197,7 @@ export const DayCard = memo(function DayCardComponent({
           paddingRight: 4,
           paddingBottom: 0,
           paddingLeft: 4,
+          flexShrink: 0,
         }}
       >
         {/* Inner frame */}
@@ -236,7 +241,7 @@ export const DayCard = memo(function DayCardComponent({
         </View>
       </View>
 
-      <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
         <Text
           style={{
             fontSize: 11,
@@ -315,7 +320,7 @@ export const DayCard = memo(function DayCardComponent({
             }}
           >
             <Text style={{ color: colors.secondary, fontSize: 15, fontWeight: '500' }}>
-              Тапсырма жоқ
+              {t.common.noTasks}
             </Text>
           </View>
         ) : (
@@ -346,7 +351,7 @@ export const DayCard = memo(function DayCardComponent({
               </Svg>
             </View>
             <Text style={{ color: colors.secondary, fontSize: 12, lineHeight: 17, fontWeight: '400' }}>
-              Тапсырма қосу
+              {t.common.addTask}
             </Text>
           </View>
         )}
@@ -373,7 +378,7 @@ export const DayCard = memo(function DayCardComponent({
         ref={cardRef}
         collapsable={false}
         onLayout={handleCardLayout}
-        accessibilityLabel={`${weekdays[date.getDay()]}, ${tasks.length} тапсырма`}
+        accessibilityLabel={`${dayName}, ${tasks.length} ${t.common.tasksCount}`}
         style={[
           {
             backgroundColor: outerBg,
@@ -399,7 +404,7 @@ export const DayCard = memo(function DayCardComponent({
       ref={cardRef}
       collapsable={false}
       onLayout={handleCardLayout}
-      accessibilityLabel={`${weekdays[date.getDay()]}, ${tasks.length} тапсырма`}
+      accessibilityLabel={`${dayName}, ${tasks.length} ${t.common.tasksCount}`}
       style={{
         backgroundColor: outerBg,
         borderRadius: 14,
@@ -415,3 +420,4 @@ export const DayCard = memo(function DayCardComponent({
     </Animated.View>
   );
 });
+

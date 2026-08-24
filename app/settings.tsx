@@ -20,9 +20,10 @@ import * as Haptics from 'expo-haptics';
 
 import { colors } from '@/constants/colors';
 import { THEMES, THEME_LIST, type ThemeConfig } from '@/constants/themes';
-import { type ThemeId } from '@/types/settings';
+import { type Language, type ThemeId } from '@/types/settings';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { UserGuideModal } from '@/components/UserGuideModal';
 import { getDatabase } from '@/database/database';
@@ -32,6 +33,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { theme, themeConfig, colors, setTheme } = useTheme();
+  const { language, setLanguage, t } = useI18n();
   const {
     settings,
     setPref,
@@ -41,6 +43,7 @@ export default function SettingsScreen() {
 
   // Modals for selection settings
   const [guideOpen, setGuideOpen] = useState(false);
+  const [languageModalOpen, setLanguageModalOpen] = useState(false);
   const [placementModalOpen, setPlacementModalOpen] = useState(false);
   const [sortModalOpen, setSortModalOpen] = useState(false);
   const [firstDayModalOpen, setFirstDayModalOpen] = useState(false);
@@ -49,20 +52,20 @@ export default function SettingsScreen() {
 
   const clear = () =>
     Alert.alert(
-      'Барлық деректі өшіру',
-      'Бұл әрекетті кері қайтару мүмкін емес.',
+      t.settings.clearAllConfirmTitle,
+      t.settings.clearAllConfirmDesc,
       [
-        { text: 'Болдырмау', style: 'cancel' },
+        { text: t.common.cancel, style: 'cancel' },
         {
-          text: 'Жалғастыру',
+          text: t.common.continue,
           style: 'destructive',
           onPress: () =>
             Alert.alert(
-              'Соңғы растау',
-              'Барлық тапсырма шынымен өшірілсін бе?',
+              t.settings.clearAllFinalTitle,
+              t.settings.clearAllFinalDesc,
               [
-                { text: 'Болдырмау', style: 'cancel' },
-                { text: 'Барлығын өшіру', style: 'destructive', onPress: () => void clearAll() },
+                { text: t.common.cancel, style: 'cancel' },
+                { text: t.settings.clearAllButton, style: 'destructive', onPress: () => void clearAll() },
               ]
             ),
         },
@@ -71,13 +74,15 @@ export default function SettingsScreen() {
 
   const handleExport = async () => {
     const db = await getDatabase();
-    await exportBackup(db);
+    await exportBackup(db, language);
   };
 
   const handleImport = async () => {
     const db = await getDatabase();
-    await importBackup(db, refresh);
+    await importBackup(db, refresh, language);
   };
+
+  const themeDisplayName = t.settings.themeNames[theme] || themeConfig.name;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
@@ -93,12 +98,12 @@ export default function SettingsScreen() {
             }
           }}
           style={[styles.backButton, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
-          accessibilityLabel="Артқа қайту"
+          accessibilityLabel={t.common.back}
         >
           <Ionicons name="chevron-back" size={20} color={colors.secondary} style={{ marginLeft: -1 }} />
         </AnimatedPressable>
 
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Баптаулар</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t.settings.title}</Text>
 
         <View style={styles.headerSpacer} />
       </View>
@@ -110,12 +115,19 @@ export default function SettingsScreen() {
           { paddingBottom: insets.bottom + 32 },
         ]}
       >
-        {/* Бөлім 1: Жекелендіру */}
+        {/* Бөлім 1: Жекелендіру және тіл */}
         <Section>
           <SettingRow
+            icon="globe-outline"
+            label={t.settings.language}
+            valueText={t.settings.languages[language]}
+            onPress={() => setLanguageModalOpen(true)}
+          />
+          <Divider />
+          <SettingRow
             icon="color-palette-outline"
-            label="Сыртқы түрі"
-            valueText={themeConfig.name}
+            label={t.settings.appearance}
+            valueText={themeDisplayName}
             rightElement={
               <View
                 style={{
@@ -136,37 +148,37 @@ export default function SettingsScreen() {
         <Section>
           <SettingRow
             icon="options-outline"
-            label="Әдепкі режим"
+            label={t.settings.defaultViewMode}
             valueText={
               settings.defaultViewMode === 'month'
-                ? 'Ай'
+                ? t.viewModes.month
                 : settings.defaultViewMode === 'year'
-                ? 'Жыл'
-                : 'Апта'
+                ? t.viewModes.year
+                : t.viewModes.week
             }
             onPress={() => setDefaultViewModeModalOpen(true)}
           />
           <Divider />
           <SettingRow
             icon="calendar-outline"
-            label="Аптаның бірінші күні"
+            label={t.settings.firstDayOfWeek}
             valueText={
               settings.firstDayOfWeek === 'sat'
-                ? 'Сенбі'
+                ? t.settings.saturday
                 : settings.firstDayOfWeek === 'sun'
-                ? 'Жексенбі'
-                : 'Дүйсенбі'
+                ? t.settings.sunday
+                : t.settings.monday
             }
             onPress={() => setFirstDayModalOpen(true)}
           />
           <Divider />
           <SettingRow
             icon="eye-outline"
-            label="Соңғы күннің көрінуі"
+            label={t.settings.lastDayVisibility}
             valueText={
               settings.lastDayVisibility === 'hidden'
-                ? 'Жасырын'
-                : 'Үнемі көрінеді'
+                ? t.settings.lastDayHidden
+                : t.settings.lastDayVisible
             }
             onPress={() => setLastDayModalOpen(true)}
           />
@@ -176,18 +188,18 @@ export default function SettingsScreen() {
         <Section>
           <SettingRow
             icon="layers-outline"
-            label="Орындалған тапсырмалар"
+            label={t.settings.completedPlacement}
             valueText={
-              settings.completedPlacement === 'keep' ? 'Орнында' : 'Төменде'
+              settings.completedPlacement === 'keep' ? t.settings.completedPlacementKeep : t.settings.completedPlacementBottom
             }
             onPress={() => setPlacementModalOpen(true)}
           />
           <Divider />
           <SettingRow
             icon="swap-vertical-outline"
-            label="Автоматты сұрыптау"
+            label={t.settings.sortMode}
             valueText={
-              settings.sortMode === 'time' ? 'Уақыт бойынша' : 'Қолмен'
+              settings.sortMode === 'time' ? t.settings.sortModeTime : t.settings.sortModeManual
             }
             onPress={() => setSortModalOpen(true)}
           />
@@ -197,20 +209,20 @@ export default function SettingsScreen() {
         <Section>
           <SettingRow
             icon="extension-puzzle-outline"
-            label="Интеграциялар"
+            label={t.settings.integrations}
             valueText={
               Platform.OS === 'ios'
                 ? settings.syncAppleReminders
                   ? 'Apple Reminders'
-                  : 'Өшірулі'
-                : 'Күнтізбе'
+                  : t.common.close
+                : t.integrations.googleCalendar
             }
             onPress={() => router.push('/integrations' as any)}
           />
           <Divider />
           <SettingRow
             icon="pulse-outline"
-            label="Тактильді кері байланыс"
+            label={t.settings.haptics}
             rightElement={
               <Switch
                 value={settings.haptics}
@@ -226,20 +238,20 @@ export default function SettingsScreen() {
         <Section>
           <SettingRow
             icon="cloud-upload-outline"
-            label="Деректерді экспорттау (JSON)"
+            label={t.settings.exportBackup}
             onPress={() => void handleExport()}
           />
           <Divider />
           <SettingRow
             icon="cloud-download-outline"
-            label="Деректерді импорттау (JSON)"
+            label={t.settings.importBackup}
             onPress={() => void handleImport()}
           />
           <Divider />
           <SettingRow
             icon="trash-outline"
             iconColor="#FF4B3E"
-            label="Барлық деректі өшіру"
+            label={t.settings.clearAllData}
             labelStyle={{ color: '#FF4B3E', fontWeight: '600' }}
             onPress={clear}
           />
@@ -256,6 +268,39 @@ export default function SettingsScreen() {
       {/* User Guide Modal */}
       <UserGuideModal visible={guideOpen} onClose={() => setGuideOpen(false)} />
 
+      {/* Language Modal */}
+      <OptionModal
+        visible={languageModalOpen}
+        title={t.settings.languageModalTitle}
+        onClose={() => setLanguageModalOpen(false)}
+        options={[
+          {
+            label: 'Қазақша',
+            selected: language === 'kk',
+            onSelect: () => {
+              void setLanguage('kk');
+              setLanguageModalOpen(false);
+            },
+          },
+          {
+            label: 'Русский',
+            selected: language === 'ru',
+            onSelect: () => {
+              void setLanguage('ru');
+              setLanguageModalOpen(false);
+            },
+          },
+          {
+            label: 'English',
+            selected: language === 'en',
+            onSelect: () => {
+              void setLanguage('en');
+              setLanguageModalOpen(false);
+            },
+          },
+        ]}
+      />
+
       {/* Visual Default View Mode Modal */}
       <DefaultViewModeModal
         visible={defaultViewModeModalOpen}
@@ -267,11 +312,11 @@ export default function SettingsScreen() {
       {/* First Day Modal */}
       <OptionModal
         visible={firstDayModalOpen}
-        title="Аптаның бірінші күні"
+        title={t.settings.firstDayOfWeek}
         onClose={() => setFirstDayModalOpen(false)}
         options={[
           {
-            label: 'Дүйсенбі',
+            label: t.settings.monday,
             selected: !settings.firstDayOfWeek || settings.firstDayOfWeek === 'mon',
             onSelect: () => {
               void setPref('firstDayOfWeek', 'mon');
@@ -279,7 +324,7 @@ export default function SettingsScreen() {
             },
           },
           {
-            label: 'Сенбі',
+            label: t.settings.saturday,
             selected: settings.firstDayOfWeek === 'sat',
             onSelect: () => {
               void setPref('firstDayOfWeek', 'sat');
@@ -287,7 +332,7 @@ export default function SettingsScreen() {
             },
           },
           {
-            label: 'Жексенбі',
+            label: t.settings.sunday,
             selected: settings.firstDayOfWeek === 'sun',
             onSelect: () => {
               void setPref('firstDayOfWeek', 'sun');
@@ -308,11 +353,11 @@ export default function SettingsScreen() {
       {/* Completed Placement Modal */}
       <OptionModal
         visible={placementModalOpen}
-        title="Орындалған тапсырмалар"
+        title={t.settings.completedPlacement}
         onClose={() => setPlacementModalOpen(false)}
         options={[
           {
-            label: 'Орнында қалдыру',
+            label: t.settings.completedPlacementKeep,
             selected: settings.completedPlacement === 'keep',
             onSelect: () => {
               void setPref('completedPlacement', 'keep');
@@ -320,7 +365,7 @@ export default function SettingsScreen() {
             },
           },
           {
-            label: 'Төменге жылжыту',
+            label: t.settings.completedPlacementBottom,
             selected: settings.completedPlacement === 'bottom',
             onSelect: () => {
               void setPref('completedPlacement', 'bottom');
@@ -333,11 +378,11 @@ export default function SettingsScreen() {
       {/* Sort Mode Modal */}
       <OptionModal
         visible={sortModalOpen}
-        title="Автоматты сұрыптау"
+        title={t.settings.sortMode}
         onClose={() => setSortModalOpen(false)}
         options={[
           {
-            label: 'Уақыт бойынша сұрыптау',
+            label: t.settings.sortModeTime,
             selected: settings.sortMode === 'time',
             onSelect: () => {
               void setPref('sortMode', 'time');
@@ -345,7 +390,7 @@ export default function SettingsScreen() {
             },
           },
           {
-            label: 'Қолмен реттеу',
+            label: t.settings.sortModeManual,
             selected: settings.sortMode === 'manual',
             onSelect: () => {
               void setPref('sortMode', 'manual');
@@ -448,6 +493,7 @@ function OptionModal({
   options: { label: string; sublabel?: string; selected: boolean; onSelect: () => void }[];
 }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -516,14 +562,13 @@ function OptionModal({
 
           {/* Bottom Action Button */}
           <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
-            <Text style={styles.modalContinueButtonText}>Растау</Text>
+            <Text style={styles.modalContinueButtonText}>{t.common.confirm}</Text>
           </Pressable>
         </View>
       </View>
     </Modal>
   );
 }
-
 
 function WeekLayoutPreview() {
   return (
@@ -637,6 +682,7 @@ function MonthLayoutPreview() {
 }
 
 function YearLayoutPreview() {
+  const { colors } = useTheme();
   return (
     <View style={styles.phonePreviewBox}>
       {/* Top Header: Left cyan "2026" + right mode pill */}
@@ -648,7 +694,7 @@ function YearLayoutPreview() {
       {/* 4 rows x 3 columns grid (12 month cards) */}
       <View style={styles.previewYearGridNew}>
         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((m) => {
-          const isActiveMonth = m === 7; // August (Тамыз)
+          const isActiveMonth = m === 7; // August
           return (
             <View
               key={m}
@@ -696,6 +742,7 @@ function DefaultViewModeModal({
   onClose: () => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [selected, setSelected] = useState<'week' | 'month' | 'year'>(currentMode || 'week');
 
   useEffect(() => {
@@ -712,17 +759,17 @@ function DefaultViewModeModal({
   const options: { mode: 'week' | 'month' | 'year'; label: string; preview: React.ReactNode }[] = [
     {
       mode: 'week',
-      label: 'Апта',
+      label: t.viewModes.week,
       preview: <WeekLayoutPreview />,
     },
     {
       mode: 'month',
-      label: 'Ай',
+      label: t.viewModes.month,
       preview: <MonthLayoutPreview />,
     },
     {
       mode: 'year',
-      label: 'Жыл',
+      label: t.viewModes.year,
       preview: <YearLayoutPreview />,
     },
   ];
@@ -734,7 +781,7 @@ function DefaultViewModeModal({
         <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
-            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Әдепкі режим</Text>
+            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.defaultViewMode}</Text>
             <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
@@ -780,7 +827,7 @@ function DefaultViewModeModal({
 
           {/* Confirm Button */}
           <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
-            <Text style={styles.modalContinueButtonText}>Сақтау</Text>
+            <Text style={styles.modalContinueButtonText}>{t.common.save}</Text>
           </Pressable>
         </View>
       </View>
@@ -858,6 +905,7 @@ function LastDayVisibilityModal({
   onClose: () => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [selected, setSelected] = useState<'visible' | 'hidden'>(currentValue || 'visible');
 
   useEffect(() => {
@@ -874,14 +922,14 @@ function LastDayVisibilityModal({
   const options: { mode: 'visible' | 'hidden'; label: string; sublabel: string; preview: React.ReactNode }[] = [
     {
       mode: 'visible',
-      label: 'Үнемі көрінеді',
-      sublabel: '7 күннен тұратын толық апта көрінісі (свайппен жасыруға болады)',
+      label: t.settings.lastDayVisible,
+      sublabel: t.settings.lastDayPreviewSubVisible,
       preview: <LastDayVisiblePreview />,
     },
     {
       mode: 'hidden',
-      label: 'Жасырын',
-      sublabel: '6 күндік ықшам режим (свайппен ашуға болады)',
+      label: t.settings.lastDayHidden,
+      sublabel: t.settings.lastDayPreviewSubHidden,
       preview: <LastDayHiddenPreview />,
     },
   ];
@@ -893,11 +941,12 @@ function LastDayVisibilityModal({
         <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
-            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Соңғы күннің көрінуі</Text>
+            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.lastDayVisibility}</Text>
             <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
           </View>
+
 
           {/* Vertical Option Cards Container */}
           <View style={styles.verticalCardsContainer}>
