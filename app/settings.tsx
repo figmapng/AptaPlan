@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Modal,
   Platform,
   Pressable,
@@ -1027,6 +1028,9 @@ function LastDayVisibilityModal({
   );
 }
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CAROUSEL_WIDTH = Math.min(SCREEN_WIDTH - 64, 340);
+
 function CircularMonthPickerPreview() {
   const { colors, isDark } = useTheme();
   const { language } = useI18n();
@@ -1038,11 +1042,7 @@ function CircularMonthPickerPreview() {
     ? { summer: 'SUMMER', spring: 'SPRING', winter: 'WINTER', autumn: 'AUTUMN' }
     : { summer: 'ЖАЗ', spring: 'КӨКТЕМ', winter: 'ҚЫС', autumn: 'КҮЗ' };
 
-  // Month Labels:
-  // Top: Jun, Jul, Aug (active)
-  // Right: May, Apr, Mar
-  // Bottom: Feb, Jan, Dec
-  // Left: Nov, Oct, Sep
+  // Month Labels
   const m = language === 'ru'
     ? { jun: 'Июн', jul: 'Июл', aug: 'Авг', may: 'Май', apr: 'Апр', mar: 'Мар', feb: 'Фев', jan: 'Янв', dec: 'Дек', nov: 'Ноя', oct: 'Окт', sep: 'Сен', center: 'Август' }
     : language === 'en'
@@ -1059,101 +1059,103 @@ function CircularMonthPickerPreview() {
   const seasonColorWinter = isDark ? '#94A3B8' : '#475569';
   const seasonColorAutumn = isDark ? '#FB923C' : '#C2410C';
 
-  const textColor = isDark ? '#F1F5F9' : '#1E293B';
-  const borderColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+  const textColor = isDark ? '#F1F5F9' : '#0F172A';
+  const borderColor = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)';
 
   return (
-    <View style={styles.richPreviewBox}>
-      <Svg width="100%" height={142} viewBox="0 0 280 142">
-        {/* Season Labels */}
-        <SvgText x={140} y={13} fontSize={11} fontWeight="800" fill={seasonColorSummer} textAnchor="middle" letterSpacing={1.2}>
+    <View style={styles.carouselSvgContainer}>
+      <Svg width={290} height={190} viewBox="0 0 290 190">
+        {/* ── Season Headers ── */}
+        <SvgText x={145} y={15} fontSize={11} fontWeight="800" fill={seasonColorSummer} textAnchor="middle" letterSpacing={1.4}>
           {seasons.summer}
         </SvgText>
-        <SvgText x={269} y={75} fontSize={9.5} fontWeight="800" fill={seasonColorSpring} textAnchor="end" letterSpacing={0.6}>
+        <SvgText x={282} y={99} fontSize={10} fontWeight="800" fill={seasonColorSpring} textAnchor="end" letterSpacing={0.8}>
           {seasons.spring}
         </SvgText>
-        <SvgText x={140} y={137} fontSize={11} fontWeight="800" fill={seasonColorWinter} textAnchor="middle" letterSpacing={1.2}>
+        <SvgText x={145} y={185} fontSize={11} fontWeight="800" fill={seasonColorWinter} textAnchor="middle" letterSpacing={1.4}>
           {seasons.winter}
         </SvgText>
-        <SvgText x={11} y={75} fontSize={9.5} fontWeight="800" fill={seasonColorAutumn} textAnchor="start" letterSpacing={0.6}>
+        <SvgText x={8} y={99} fontSize={10} fontWeight="800" fill={seasonColorAutumn} textAnchor="start" letterSpacing={0.8}>
           {seasons.autumn}
         </SvgText>
 
-        {/* Outer Racetrack Ring Background Segments */}
-        {/* 1. Spring (Right Arc): x=190 to 240, y=20 to 120 */}
-        <Path d="M 190 20 A 50 50 0 0 1 190 120 L 190 94 A 24 24 0 0 0 190 46 Z" fill={springBg} />
-        {/* 2. Autumn (Left Arc): x=90 to 40, y=20 to 120 */}
-        <Path d="M 90 120 A 50 50 0 0 1 90 20 L 90 46 A 24 24 0 0 0 90 94 Z" fill={autumnBg} />
-        {/* 3. Summer (Top Bar): x=90 to 190, y=20 to 46 */}
-        <Rect x={90} y={20} width={100} height={26} fill={summerBg} />
-        {/* 4. Winter (Bottom Bar): x=90 to 190, y=94 to 120 */}
-        <Rect x={90} y={94} width={100} height={26} fill={winterBg} />
+        {/* ── Outer Racetrack Ring Background Segments ── */}
+        {/* Spring (Right curved arc): x=175 to 255, y=26 to 166 */}
+        <Path d="M 175 26 A 70 70 0 0 1 175 166 L 175 132 A 36 36 0 0 0 175 60 Z" fill={springBg} />
+        {/* Autumn (Left curved arc): x=115 to 35, y=26 to 166 */}
+        <Path d="M 115 166 A 70 70 0 0 1 115 26 L 115 60 A 36 36 0 0 0 115 132 Z" fill={autumnBg} />
+        {/* Summer (Top straight bar): x=115 to 175, y=26 to 60 */}
+        <Rect x={115} y={26} width={60} height={34} fill={summerBg} />
+        {/* Winter (Bottom straight bar): x=115 to 175, y=132 to 166 */}
+        <Rect x={115} y={132} width={60} height={34} fill={winterBg} />
 
-        {/* Active Month (August / Тамыз) highlighted in bright Cyan */}
-        <Rect x={73} y={20} width={43} height={26} rx={7} fill={colors.today} />
-
-        {/* Outer and Inner Borders */}
+        {/* ── Active Month Highlight (August / Тамыз) ── */}
         <Path
-          d="M 90 20 L 190 20 A 50 50 0 0 1 190 120 L 90 120 A 50 50 0 0 1 90 20 Z"
+          d="M 80 26 L 126 26 L 126 60 L 80 60 A 34 34 0 0 1 72 38 A 34 34 0 0 1 80 26 Z"
+          fill={colors.today}
+        />
+
+        {/* ── Outer and Inner Racetrack Outlines ── */}
+        <Path
+          d="M 115 26 L 175 26 A 70 70 0 0 1 175 166 L 115 166 A 70 70 0 0 1 115 26 Z"
           fill="none"
           stroke={borderColor}
-          strokeWidth={1}
+          strokeWidth={1.2}
         />
         <Path
-          d="M 90 46 L 190 46 A 24 24 0 0 1 190 94 L 90 94 A 24 24 0 0 1 90 46 Z"
+          d="M 115 60 L 175 60 A 36 36 0 0 1 175 132 L 115 132 A 36 36 0 0 1 115 60 Z"
           fill={colors.sheetBg}
           stroke={borderColor}
-          strokeWidth={1}
+          strokeWidth={1.2}
         />
 
-        {/* Segment Dividers */}
-        <Line x1={123} y1={20} x2={123} y2={46} stroke={borderColor} strokeWidth={1} />
-        <Line x1={157} y1={20} x2={157} y2={46} stroke={borderColor} strokeWidth={1} />
-        <Line x1={123} y1={94} x2={123} y2={120} stroke={borderColor} strokeWidth={1} />
-        <Line x1={157} y1={94} x2={157} y2={120} stroke={borderColor} strokeWidth={1} />
+        {/* ── Segment Dividers ── */}
+        <Line x1={126} y1={26} x2={126} y2={60} stroke={borderColor} strokeWidth={1} />
+        <Line x1={164} y1={26} x2={164} y2={60} stroke={borderColor} strokeWidth={1} />
+        <Line x1={126} y1={132} x2={126} y2={166} stroke={borderColor} strokeWidth={1} />
+        <Line x1={164} y1={132} x2={164} y2={166} stroke={borderColor} strokeWidth={1} />
 
-        {/* Month Labels */}
-        {/* Top: Aug (Active Cyan with white text), Jul, Jun */}
-        <SvgText x={94} y={37} fontSize={11.5} fontWeight="800" fill="#FFFFFF" textAnchor="middle">{m.aug}</SvgText>
-        <SvgText x={140} y={37} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.jul}</SvgText>
-        <SvgText x={175} y={37} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.jun}</SvgText>
+        {/* ── Month Labels ── */}
+        {/* Top: Авг (White Bold), Июл, Июн */}
+        <SvgText x={103} y={48} fontSize={12} fontWeight="800" fill="#FFFFFF" textAnchor="middle">{m.aug}</SvgText>
+        <SvgText x={145} y={48} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.jul}</SvgText>
+        <SvgText x={186} y={48} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.jun}</SvgText>
 
-        {/* Right: May, Apr, Mar */}
-        <SvgText x={217} y={50} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.may}</SvgText>
-        <SvgText x={228} y={74} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.apr}</SvgText>
-        <SvgText x={217} y={98} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.mar}</SvgText>
+        {/* Right Arc: Май, Апр, Мар */}
+        <SvgText x={226} y={64} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.may}</SvgText>
+        <SvgText x={237} y={99} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.apr}</SvgText>
+        <SvgText x={226} y={134} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.mar}</SvgText>
 
-        {/* Bottom: Dec, Jan, Feb */}
-        <SvgText x={94} y={111} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.dec}</SvgText>
-        <SvgText x={140} y={111} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.jan}</SvgText>
-        <SvgText x={175} y={111} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.feb}</SvgText>
+        {/* Bottom: Дек, Янв, Фев */}
+        <SvgText x={103} y={154} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.dec}</SvgText>
+        <SvgText x={145} y={154} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.jan}</SvgText>
+        <SvgText x={186} y={154} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.feb}</SvgText>
 
-        {/* Left: Nov, Oct, Sep */}
-        <SvgText x={63} y={98} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.nov}</SvgText>
-        <SvgText x={52} y={74} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.oct}</SvgText>
-        <SvgText x={63} y={50} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.sep}</SvgText>
+        {/* Left Arc: Ноя, Окт, Сен */}
+        <SvgText x={64} y={134} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.nov}</SvgText>
+        <SvgText x={53} y={99} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.oct}</SvgText>
+        <SvgText x={64} y={64} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.sep}</SvgText>
 
-        {/* Center Box: Racetrack Arrow Line + Center Full Month Name */}
-        {/* Clockwise Racetrack Arrow */}
+        {/* ── Inner Center Box: Track Loop & Month Title ── */}
         <Path
-          d="M 120 94 L 175 94 A 16 16 0 0 0 191 78 L 191 62 A 16 16 0 0 0 175 46 L 90 46"
+          d="M 125 132 L 180 132 A 28 28 0 0 0 208 104 L 208 88 A 28 28 0 0 0 180 60 L 92 60"
           fill="none"
           stroke={colors.today}
-          strokeWidth={2.2}
+          strokeWidth={2.5}
           strokeLinecap="round"
         />
-        {/* Arrowhead pointing Left at (90, 46) */}
+        {/* Arrowhead pointing left at (92, 60) */}
         <Path
-          d="M 95 43 L 89 46 L 95 49"
+          d="M 98 56 L 90 60 L 98 64"
           fill="none"
           stroke={colors.today}
-          strokeWidth={2.2}
+          strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
 
-        {/* Center Month Name */}
-        <SvgText x={140} y={75} fontSize={15.5} fontWeight="800" fill={textColor} textAnchor="middle" letterSpacing={-0.3}>
+        {/* Center Month Full Name */}
+        <SvgText x={145} y={103} fontSize={18} fontWeight="800" fill={textColor} textAnchor="middle" letterSpacing={-0.4}>
           {m.center}
         </SvgText>
       </Svg>
@@ -1174,35 +1176,35 @@ function GridMonthPickerPreview() {
   const activeIndex = 7; // Aug / Тамыз
 
   return (
-    <View style={styles.richPreviewBox}>
-      <View style={styles.gridPreviewContainer}>
+    <View style={styles.carouselGridContainer}>
+      <View style={styles.carouselGridMatrix}>
         {shortMonths.map((name, idx) => {
           const isActive = idx === activeIndex;
           return (
             <View
               key={idx}
               style={[
-                styles.gridRichCell,
+                styles.carouselGridCell,
                 {
                   backgroundColor: isActive
                     ? colors.today
                     : isDark
                     ? 'rgba(255,255,255,0.06)'
                     : 'rgba(0,0,0,0.035)',
-                  borderColor: isActive ? colors.today : isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                  borderColor: isActive ? colors.today : isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
                 },
               ]}
             >
               <Text
                 style={[
-                  styles.gridRichCellText,
+                  styles.carouselGridCellText,
                   { color: isActive ? '#FFFFFF' : colors.text },
                   isActive && { fontWeight: '800' },
                 ]}
               >
                 {name}
               </Text>
-              {isActive && <View style={styles.gridRichTodayDot} />}
+              {isActive && <View style={styles.carouselGridTodayDot} />}
             </View>
           );
         })}
@@ -1225,19 +1227,46 @@ function MonthPickerStyleModal({
   const { colors } = useTheme();
   const { t } = useI18n();
   const [selected, setSelected] = useState<'circular' | 'grid'>(currentValue || 'circular');
+  const [activeSlide, setActiveSlide] = useState<number>(() => (currentValue === 'grid' ? 1 : 0));
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (visible) {
-      setSelected(currentValue || 'circular');
+      const initVal = currentValue || 'circular';
+      setSelected(initVal);
+      const slideIdx = initVal === 'grid' ? 1 : 0;
+      setActiveSlide(slideIdx);
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ x: slideIdx * CAROUSEL_WIDTH, animated: false });
+      }, 60);
     }
   }, [visible, currentValue]);
+
+  const handleScrollEnd = (e: any) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const slideIdx = Math.round(offsetX / CAROUSEL_WIDTH);
+    if (slideIdx !== activeSlide && (slideIdx === 0 || slideIdx === 1)) {
+      setActiveSlide(slideIdx);
+      const newMode = slideIdx === 0 ? 'circular' : 'grid';
+      setSelected(newMode);
+      void Haptics.selectionAsync();
+    }
+  };
+
+  const handleSelectSlide = (idx: number) => {
+    setActiveSlide(idx);
+    const newMode = idx === 0 ? 'circular' : 'grid';
+    setSelected(newMode);
+    scrollRef.current?.scrollTo({ x: idx * CAROUSEL_WIDTH, animated: true });
+    void Haptics.selectionAsync();
+  };
 
   const handleConfirm = () => {
     onSelectValue(selected);
     onClose();
   };
 
-  const options: { mode: 'circular' | 'grid'; label: string; sublabel: string; preview: React.ReactNode }[] = [
+  const slides: { mode: 'circular' | 'grid'; label: string; sublabel: string; preview: React.ReactNode }[] = [
     {
       mode: 'circular',
       label: t.settings.monthPickerStyles.circular,
@@ -1256,7 +1285,7 @@ function MonthPickerStyleModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg, maxWidth: 440 }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg, width: CAROUSEL_WIDTH + 32, paddingHorizontal: 16, paddingBottom: 16 }]}>
           {/* Header */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.monthPickerStyle}</Text>
@@ -1265,41 +1294,47 @@ function MonthPickerStyleModal({
             </Pressable>
           </View>
 
-          {/* Large Visual Option Cards */}
+          {/* Carousel Slider */}
           <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ gap: 12, paddingBottom: 4 }}
+            ref={scrollRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={handleScrollEnd}
+            decelerationRate="fast"
+            snapToInterval={CAROUSEL_WIDTH}
+            snapToAlignment="center"
+            style={{ width: CAROUSEL_WIDTH, alignSelf: 'center' }}
+            contentContainerStyle={{ width: CAROUSEL_WIDTH * 2 }}
           >
-            {options.map((opt) => {
-              const isSelected = selected === opt.mode;
+            {slides.map((slide, i) => {
+              const isSelected = selected === slide.mode;
               return (
-                <AnimatedPressable
-                  key={opt.mode}
-                  activeScale={0.98}
+                <Pressable
+                  key={slide.mode}
+                  onPress={() => handleSelectSlide(i)}
                   style={[
-                    styles.styleModalCard,
-                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-                    isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today, borderWidth: 2 },
+                    styles.carouselSlideCard,
+                    {
+                      width: CAROUSEL_WIDTH - 6,
+                      marginHorizontal: 3,
+                      backgroundColor: colors.sheetBg,
+                      borderColor: isSelected ? colors.today : colors.inputBorder,
+                      borderWidth: isSelected ? 2 : 1,
+                    },
                   ]}
-                  onPress={() => setSelected(opt.mode)}
                 >
-                  {/* Visual Graphic Mockup */}
-                  {opt.preview}
+                  {/* Large High-Fidelity Preview */}
+                  {slide.preview}
 
-                  {/* Bottom info row with Radio button */}
-                  <View style={styles.styleCardBottomRow}>
-                    <View style={{ flex: 1, paddingRight: 10 }}>
-                      <Text
-                        style={[
-                          styles.styleCardTitle,
-                          { color: colors.text },
-                          isSelected && { color: colors.today, fontWeight: '800' },
-                        ]}
-                      >
-                        {opt.label}
+                  {/* Title, Subtitle, Radio Row */}
+                  <View style={styles.carouselInfoBox}>
+                    <View style={{ flex: 1, paddingRight: 8 }}>
+                      <Text style={[styles.carouselTitle, { color: colors.text }, isSelected && { color: colors.today, fontWeight: '800' }]}>
+                        {slide.label}
                       </Text>
-                      <Text style={[styles.styleCardSubtitle, { color: colors.secondary }]}>
-                        {opt.sublabel}
+                      <Text style={[styles.carouselSubtitle, { color: colors.secondary }]}>
+                        {slide.sublabel}
                       </Text>
                     </View>
                     <View
@@ -1312,13 +1347,28 @@ function MonthPickerStyleModal({
                       {isSelected && <View style={[styles.visualRadioInner, { backgroundColor: colors.today }]} />}
                     </View>
                   </View>
-                </AnimatedPressable>
+                </Pressable>
               );
             })}
           </ScrollView>
 
+          {/* Pagination Dots */}
+          <View style={styles.carouselPaginationRow}>
+            {slides.map((_, i) => (
+              <Pressable
+                key={i}
+                onPress={() => handleSelectSlide(i)}
+                style={[
+                  styles.carouselDot,
+                  { backgroundColor: activeSlide === i ? colors.today : colors.inputBorder },
+                  activeSlide === i && styles.carouselDotActive,
+                ]}
+              />
+            ))}
+          </View>
+
           {/* Confirm Button */}
-          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today, marginTop: 8 }]} onPress={handleConfirm}>
+          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today, marginTop: 12 }]} onPress={handleConfirm}>
             <Text style={styles.modalContinueButtonText}>{t.common.save}</Text>
           </Pressable>
         </View>
@@ -1927,73 +1977,88 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
   },
-  pickerPreviewBox: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  styleModalCard: {
-    borderRadius: 20,
-    borderWidth: 1.5,
+  carouselSlideCard: {
+    borderRadius: 22,
     padding: 12,
     overflow: 'hidden',
   },
-  richPreviewBox: {
+  carouselSvgContainer: {
     width: '100%',
-    height: 142,
+    height: 195,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
-    overflow: 'hidden',
-    marginBottom: 8,
   },
-  gridPreviewContainer: {
-    width: '94%',
-    height: 126,
+  carouselGridContainer: {
+    width: '100%',
+    height: 195,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  carouselGridMatrix: {
+    width: 276,
+    height: 172,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignContent: 'space-between',
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
-  gridRichCell: {
-    width: '23.5%',
-    height: 36,
-    borderRadius: 10,
+  carouselGridCell: {
+    width: 62,
+    height: 48,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
-  gridRichCellText: {
-    fontSize: 12.5,
+  carouselGridCellText: {
+    fontSize: 13,
     fontWeight: '600',
   },
-  gridRichTodayDot: {
+  carouselGridTodayDot: {
     position: 'absolute',
-    top: 4,
-    right: 5,
-    width: 4.5,
-    height: 4.5,
-    borderRadius: 2.25,
+    top: 5,
+    right: 6,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     backgroundColor: '#FFFFFF',
   },
-  styleCardBottomRow: {
+  carouselInfoBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 4,
-    paddingTop: 2,
+    paddingTop: 8,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(0,0,0,0.06)',
+    marginTop: 4,
   },
-  styleCardTitle: {
+  carouselTitle: {
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.2,
   },
-  styleCardSubtitle: {
+  carouselSubtitle: {
     fontSize: 12,
     fontWeight: '400',
     marginTop: 2,
+  },
+  carouselPaginationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  carouselDot: {
+    height: 6,
+    width: 6,
+    borderRadius: 3,
+  },
+  carouselDotActive: {
+    width: 18,
+    borderRadius: 3,
   },
 });
