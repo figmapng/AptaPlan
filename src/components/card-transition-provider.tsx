@@ -1262,8 +1262,20 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   );
 }
 
+const fallbackProgress = new Animated.Value(0);
+
+const fallbackContext: ContextValue = {
+  openCard: () => {},
+  closeCard: () => {},
+  beginInteractiveClose: () => {},
+  updateInteractiveClose: () => {},
+  endInteractiveClose: () => {},
+  activeDate: null,
+  progress: fallbackProgress,
+  originFrame: null,
+};
+
 export function useCardTransition() {
   const ctx = useContext(CardTransitionContext);
-  if (!ctx) throw new Error('useCardTransition must be used inside CardTransitionProvider');
-  return ctx;
+  return ctx || fallbackContext;
 }
