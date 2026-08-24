@@ -20,7 +20,7 @@ import { AnimatedPressable } from '@/components/AnimatedPressable';
 export default function AppearanceScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { colors, themeMode, setThemeMode } = useTheme();
+  const { colors, isDark, themeMode, setThemeMode } = useTheme();
   const { t } = useI18n();
   const { settings, setPref } = usePlanner();
 
@@ -47,6 +47,13 @@ export default function AppearanceScreen() {
     }
     setSelectedIcon(iconId);
     void setPref('appIcon' as any, iconId);
+  };
+
+  const handleSelectMonthPickerStyle = (style: 'circular' | 'grid') => {
+    if (settings.haptics) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    void setPref('monthPickerStyle', style);
   };
 
   const appIcons = [
@@ -225,7 +232,88 @@ export default function AppearanceScreen() {
           </AnimatedPressable>
         </View>
 
-        {/* ── Section 3: Қосымша белгішесі (App Icon) ── */}
+        {/* ── Section 3: Айды таңдау көрінісі (Month Picker Style) ── */}
+        <View style={[styles.sectionHeaderContainer, { marginTop: 24 }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.settings.monthPickerStyle}</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>
+            {t.settings.monthPickerStyleSubtitle}
+          </Text>
+        </View>
+
+        <View style={styles.monthPickerStyleRow}>
+          {/* Circular (Year Cycle) */}
+          <AnimatedPressable
+            activeScale={0.96}
+            onPress={() => handleSelectMonthPickerStyle('circular')}
+            style={[
+              styles.pickerStyleCard,
+              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              (settings.monthPickerStyle || 'circular') === 'circular' && { borderColor: colors.today, borderWidth: 2 },
+            ]}
+          >
+            <View style={styles.circularMockupContainer}>
+              <View style={[styles.circularMockupTrack, { borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)' }]}>
+                {/* 4 Quadrant Season Color Bars */}
+                <View style={[styles.seasonQuadrant, { top: 0, left: 10, right: 10, height: 6, backgroundColor: isDark ? '#2E2215' : '#FEF9C3' }]} />
+                <View style={[styles.seasonQuadrant, { right: 0, top: 10, bottom: 10, width: 6, backgroundColor: isDark ? '#142E1F' : '#DCFCE7' }]} />
+                <View style={[styles.seasonQuadrant, { bottom: 0, left: 10, right: 10, height: 6, backgroundColor: isDark ? '#182438' : '#DBEAFE' }]} />
+                <View style={[styles.seasonQuadrant, { left: 0, top: 10, bottom: 10, width: 6, backgroundColor: isDark ? '#2B1E17' : '#FFEDD5' }]} />
+                {/* Selected month highlight pill */}
+                <View style={[styles.mockupSelectedPill, { backgroundColor: colors.today }]} />
+                {/* Center Badge */}
+                <View style={[styles.mockupCenterBadge, { backgroundColor: colors.sheetBg }]}>
+                  <View style={{ width: 14, height: 3, borderRadius: 1.5, backgroundColor: colors.today }} />
+                </View>
+              </View>
+            </View>
+            <Text
+              style={[
+                styles.pickerStyleLabel,
+                { color: colors.text },
+                (settings.monthPickerStyle || 'circular') === 'circular' && { fontWeight: '700', color: colors.today },
+              ]}
+            >
+              {t.settings.monthPickerStyles.circular}
+            </Text>
+          </AnimatedPressable>
+
+          {/* Grid (12 Months) */}
+          <AnimatedPressable
+            activeScale={0.96}
+            onPress={() => handleSelectMonthPickerStyle('grid')}
+            style={[
+              styles.pickerStyleCard,
+              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              settings.monthPickerStyle === 'grid' && { borderColor: colors.today, borderWidth: 2 },
+            ]}
+          >
+            <View style={styles.gridMockupContainer}>
+              <View style={styles.gridMockupMatrix}>
+                {[...Array(12)].map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.gridMockupCell,
+                      { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                      i === 4 && { backgroundColor: colors.today },
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+            <Text
+              style={[
+                styles.pickerStyleLabel,
+                { color: colors.text },
+                settings.monthPickerStyle === 'grid' && { fontWeight: '700', color: colors.today },
+              ]}
+            >
+              {t.settings.monthPickerStyles.grid}
+            </Text>
+          </AnimatedPressable>
+        </View>
+
+        {/* ── Section 4: Қосымша белгішесі (App Icon) ── */}
         <View style={[styles.sectionHeaderContainer, { marginTop: 24 }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.settings.appIcon}</Text>
           <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>
@@ -478,5 +566,81 @@ const styles = StyleSheet.create({
   iconItemLabel: {
     fontSize: 11,
     textAlign: 'center',
+  },
+  monthPickerStyleRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  pickerStyleCard: {
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 10,
+    alignItems: 'center',
+    gap: 8,
+  },
+  circularMockupContainer: {
+    width: '100%',
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circularMockupTrack: {
+    width: 68,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  seasonQuadrant: {
+    position: 'absolute',
+    borderRadius: 3,
+  },
+  mockupSelectedPill: {
+    position: 'absolute',
+    top: 2,
+    right: 6,
+    width: 14,
+    height: 12,
+    borderRadius: 6,
+  },
+  mockupCenterBadge: {
+    width: 32,
+    height: 22,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  pickerStyleLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  gridMockupContainer: {
+    width: '100%',
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gridMockupMatrix: {
+    width: 72,
+    height: 52,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignContent: 'space-between',
+  },
+  gridMockupCell: {
+    width: '30%',
+    height: 10,
+    borderRadius: 2.5,
   },
 });

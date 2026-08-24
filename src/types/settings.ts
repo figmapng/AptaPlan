@@ -53,6 +53,8 @@ export function getDefaultSystemLanguage(): Language {
   return 'kk';
 }
 
+export type MonthPickerViewStyle = 'circular' | 'grid';
+
 export type PlannerSettings = {
   completedPlacement: 'keep' | 'bottom';
   haptics: boolean;
@@ -64,6 +66,7 @@ export type PlannerSettings = {
   themeMode?: ThemeMode;
   language?: Language;
   appIcon?: string;
+  monthPickerStyle?: MonthPickerViewStyle;
   syncAppleReminders?: boolean;
   autoSyncAppleReminders?: boolean;
   lastRemindersSyncTime?: string;
@@ -79,6 +82,7 @@ export const defaultSettings: PlannerSettings = {
   theme: 'ocean',
   themeMode: 'system',
   language: getDefaultSystemLanguage(),
+  monthPickerStyle: 'circular',
   syncAppleReminders: false,
   autoSyncAppleReminders: true,
 };

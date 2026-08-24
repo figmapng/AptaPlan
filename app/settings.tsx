@@ -49,6 +49,7 @@ export default function SettingsScreen() {
   const [firstDayModalOpen, setFirstDayModalOpen] = useState(false);
   const [lastDayModalOpen, setLastDayModalOpen] = useState(false);
   const [defaultViewModeModalOpen, setDefaultViewModeModalOpen] = useState(false);
+  const [monthPickerStyleModalOpen, setMonthPickerStyleModalOpen] = useState(false);
 
   const clear = () =>
     Alert.alert(
@@ -181,6 +182,15 @@ export default function SettingsScreen() {
                 : t.settings.lastDayVisible
             }
             onPress={() => setLastDayModalOpen(true)}
+          />
+          <Divider />
+          <SettingRow
+            icon="grid-outline"
+            label={t.settings.monthPickerStyle}
+            valueText={
+              t.settings.monthPickerStyles[settings.monthPickerStyle || 'circular']
+            }
+            onPress={() => setMonthPickerStyleModalOpen(true)}
           />
         </Section>
 
@@ -337,6 +347,31 @@ export default function SettingsScreen() {
             onSelect: () => {
               void setPref('firstDayOfWeek', 'sun');
               setFirstDayModalOpen(false);
+            },
+          },
+        ]}
+      />
+
+      {/* Month Picker Style Modal */}
+      <OptionModal
+        visible={monthPickerStyleModalOpen}
+        title={t.settings.monthPickerStyle}
+        onClose={() => setMonthPickerStyleModalOpen(false)}
+        options={[
+          {
+            label: t.settings.monthPickerStyles.circular,
+            selected: !settings.monthPickerStyle || settings.monthPickerStyle === 'circular',
+            onSelect: () => {
+              void setPref('monthPickerStyle', 'circular');
+              setMonthPickerStyleModalOpen(false);
+            },
+          },
+          {
+            label: t.settings.monthPickerStyles.grid,
+            selected: settings.monthPickerStyle === 'grid',
+            onSelect: () => {
+              void setPref('monthPickerStyle', 'grid');
+              setMonthPickerStyleModalOpen(false);
             },
           },
         ]}

@@ -172,6 +172,12 @@ export interface Translations {
     iconNames: Record<string, string>;
     calendarAndView: string;
     defaultViewMode: string;
+    monthPickerStyle: string;
+    monthPickerStyleSubtitle: string;
+    monthPickerStyles: {
+      circular: string;
+      grid: string;
+    };
     firstDayOfWeek: string;
     monday: string;
     saturday: string;
