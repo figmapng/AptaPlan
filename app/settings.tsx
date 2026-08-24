@@ -1060,93 +1060,101 @@ function CircularMonthPickerPreview() {
   const seasonColorAutumn = isDark ? '#FB923C' : '#C2410C';
 
   const textColor = isDark ? '#F1F5F9' : '#0F172A';
-  const borderColor = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)';
+  const borderColor = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.1)';
 
   return (
     <View style={styles.carouselSvgContainer}>
-      <Svg width={290} height={190} viewBox="0 0 290 190">
-        {/* ── Season Headers ── */}
-        <SvgText x={145} y={15} fontSize={11} fontWeight="800" fill={seasonColorSummer} textAnchor="middle" letterSpacing={1.4}>
+      <Svg width="100%" height={200} viewBox="0 0 360 220">
+        {/* ── Season Headers (Top & Bottom Horizontal, Left & Right Rotated Vertically) ── */}
+        <SvgText x={180} y={24} fontSize={12} fontWeight="800" fill={seasonColorSummer} textAnchor="middle" letterSpacing={1.6}>
           {seasons.summer}
         </SvgText>
-        <SvgText x={282} y={99} fontSize={10} fontWeight="800" fill={seasonColorSpring} textAnchor="end" letterSpacing={0.8}>
-          {seasons.spring}
-        </SvgText>
-        <SvgText x={145} y={185} fontSize={11} fontWeight="800" fill={seasonColorWinter} textAnchor="middle" letterSpacing={1.4}>
+        <SvgText x={180} y={212} fontSize={12} fontWeight="800" fill={seasonColorWinter} textAnchor="middle" letterSpacing={1.6}>
           {seasons.winter}
         </SvgText>
-        <SvgText x={8} y={99} fontSize={10} fontWeight="800" fill={seasonColorAutumn} textAnchor="start" letterSpacing={0.8}>
-          {seasons.autumn}
-        </SvgText>
+
+        {/* Rotated Left Season Label */}
+        <G transform="rotate(-90 22 110)">
+          <SvgText x={22} y={114} fontSize={11} fontWeight="800" fill={seasonColorAutumn} textAnchor="middle" letterSpacing={1.4}>
+            {seasons.autumn}
+          </SvgText>
+        </G>
+
+        {/* Rotated Right Season Label */}
+        <G transform="rotate(90 338 110)">
+          <SvgText x={338} y={114} fontSize={11} fontWeight="800" fill={seasonColorSpring} textAnchor="middle" letterSpacing={1.4}>
+            {seasons.spring}
+          </SvgText>
+        </G>
 
         {/* ── Outer Racetrack Ring Background Segments ── */}
-        {/* Spring (Right curved arc): x=175 to 255, y=26 to 166 */}
-        <Path d="M 175 26 A 70 70 0 0 1 175 166 L 175 132 A 36 36 0 0 0 175 60 Z" fill={springBg} />
-        {/* Autumn (Left curved arc): x=115 to 35, y=26 to 166 */}
-        <Path d="M 115 166 A 70 70 0 0 1 115 26 L 115 60 A 36 36 0 0 0 115 132 Z" fill={autumnBg} />
-        {/* Summer (Top straight bar): x=115 to 175, y=26 to 60 */}
-        <Rect x={115} y={26} width={60} height={34} fill={summerBg} />
-        {/* Winter (Bottom straight bar): x=115 to 175, y=132 to 166 */}
-        <Rect x={115} y={132} width={60} height={34} fill={winterBg} />
+        {/* Spring (Right curved arc): x=210 to 310, y=36 to 176 */}
+        <Path d="M 210 36 A 70 70 0 0 1 210 176 L 210 142 A 36 36 0 0 0 210 70 Z" fill={springBg} />
+        {/* Autumn (Left curved arc): x=150 to 50, y=36 to 176 */}
+        <Path d="M 150 176 A 70 70 0 0 1 150 36 L 150 70 A 36 36 0 0 0 150 142 Z" fill={autumnBg} />
+        {/* Summer (Top straight bar): x=150 to 210, y=36 to 70 */}
+        <Rect x={150} y={36} width={60} height={34} fill={summerBg} />
+        {/* Winter (Bottom straight bar): x=150 to 210, y=142 to 176 */}
+        <Rect x={150} y={142} width={60} height={34} fill={winterBg} />
 
-        {/* ── Active Month Highlight (August / Тамыз) ── */}
+        {/* ── Active Month Segment Highlight (August / Тамыз) ── */}
         <Path
-          d="M 80 26 L 126 26 L 126 60 L 80 60 A 34 34 0 0 1 72 38 A 34 34 0 0 1 80 26 Z"
+          d="M 104 36 L 155 36 L 155 70 L 104 70 A 34 34 0 0 1 96 50 A 34 34 0 0 1 104 36 Z"
           fill={colors.today}
         />
 
         {/* ── Outer and Inner Racetrack Outlines ── */}
         <Path
-          d="M 115 26 L 175 26 A 70 70 0 0 1 175 166 L 115 166 A 70 70 0 0 1 115 26 Z"
+          d="M 150 36 L 210 36 A 70 70 0 0 1 210 176 L 150 176 A 70 70 0 0 1 150 36 Z"
           fill="none"
           stroke={borderColor}
           strokeWidth={1.2}
         />
         <Path
-          d="M 115 60 L 175 60 A 36 36 0 0 1 175 132 L 115 132 A 36 36 0 0 1 115 60 Z"
+          d="M 150 70 L 210 70 A 36 36 0 0 1 210 142 L 150 142 A 36 36 0 0 1 150 70 Z"
           fill={colors.sheetBg}
           stroke={borderColor}
           strokeWidth={1.2}
         />
 
         {/* ── Segment Dividers ── */}
-        <Line x1={126} y1={26} x2={126} y2={60} stroke={borderColor} strokeWidth={1} />
-        <Line x1={164} y1={26} x2={164} y2={60} stroke={borderColor} strokeWidth={1} />
-        <Line x1={126} y1={132} x2={126} y2={166} stroke={borderColor} strokeWidth={1} />
-        <Line x1={164} y1={132} x2={164} y2={166} stroke={borderColor} strokeWidth={1} />
+        <Line x1={155} y1={36} x2={155} y2={70} stroke={borderColor} strokeWidth={1} />
+        <Line x1={208} y1={36} x2={208} y2={70} stroke={borderColor} strokeWidth={1} />
+        <Line x1={155} y1={142} x2={155} y2={176} stroke={borderColor} strokeWidth={1} />
+        <Line x1={208} y1={142} x2={208} y2={176} stroke={borderColor} strokeWidth={1} />
 
         {/* ── Month Labels ── */}
-        {/* Top: Авг (White Bold), Июл, Июн */}
-        <SvgText x={103} y={48} fontSize={12} fontWeight="800" fill="#FFFFFF" textAnchor="middle">{m.aug}</SvgText>
-        <SvgText x={145} y={48} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.jul}</SvgText>
-        <SvgText x={186} y={48} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.jun}</SvgText>
+        {/* Top: Авг (Active Month: White Bold), Июл, Июн */}
+        <SvgText x={126} y={58} fontSize={13} fontWeight="800" fill="#FFFFFF" textAnchor="middle">{m.aug}</SvgText>
+        <SvgText x={181} y={58} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.jul}</SvgText>
+        <SvgText x={236} y={58} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.jun}</SvgText>
 
         {/* Right Arc: Май, Апр, Мар */}
-        <SvgText x={226} y={64} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.may}</SvgText>
-        <SvgText x={237} y={99} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.apr}</SvgText>
-        <SvgText x={226} y={134} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.mar}</SvgText>
+        <SvgText x={276} y={74} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.may}</SvgText>
+        <SvgText x={290} y={114} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.apr}</SvgText>
+        <SvgText x={276} y={154} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.mar}</SvgText>
 
         {/* Bottom: Дек, Янв, Фев */}
-        <SvgText x={103} y={154} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.dec}</SvgText>
-        <SvgText x={145} y={154} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.jan}</SvgText>
-        <SvgText x={186} y={154} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.feb}</SvgText>
+        <SvgText x={126} y={164} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.dec}</SvgText>
+        <SvgText x={181} y={164} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.jan}</SvgText>
+        <SvgText x={236} y={164} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.feb}</SvgText>
 
         {/* Left Arc: Ноя, Окт, Сен */}
-        <SvgText x={64} y={134} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.nov}</SvgText>
-        <SvgText x={53} y={99} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.oct}</SvgText>
-        <SvgText x={64} y={64} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.sep}</SvgText>
+        <SvgText x={84} y={154} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.nov}</SvgText>
+        <SvgText x={70} y={114} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.oct}</SvgText>
+        <SvgText x={84} y={74} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.sep}</SvgText>
 
         {/* ── Inner Center Box: Track Loop & Month Title ── */}
         <Path
-          d="M 125 132 L 180 132 A 28 28 0 0 0 208 104 L 208 88 A 28 28 0 0 0 180 60 L 92 60"
+          d="M 155 142 L 210 142 A 28 28 0 0 0 238 114 L 238 98 A 28 28 0 0 0 210 70 L 115 70"
           fill="none"
           stroke={colors.today}
           strokeWidth={2.5}
           strokeLinecap="round"
         />
-        {/* Arrowhead pointing left at (92, 60) */}
+        {/* Arrowhead pointing left at (115, 70) */}
         <Path
-          d="M 98 56 L 90 60 L 98 64"
+          d="M 122 65 L 112 70 L 122 75"
           fill="none"
           stroke={colors.today}
           strokeWidth={2.5}
@@ -1154,8 +1162,8 @@ function CircularMonthPickerPreview() {
           strokeLinejoin="round"
         />
 
-        {/* Center Month Full Name */}
-        <SvgText x={145} y={103} fontSize={18} fontWeight="800" fill={textColor} textAnchor="middle" letterSpacing={-0.4}>
+        {/* Center Full Month Name */}
+        <SvgText x={180} y={118} fontSize={21} fontWeight="800" fill={textColor} textAnchor="middle" letterSpacing={-0.4}>
           {m.center}
         </SvgText>
       </Svg>
