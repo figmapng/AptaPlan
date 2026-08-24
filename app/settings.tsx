@@ -1173,20 +1173,15 @@ function CircularMonthPickerPreview() {
 
 function GridMonthPickerPreview() {
   const { colors, isDark } = useTheme();
-  const { language } = useI18n();
+  const { t } = useI18n();
 
-  const shortMonths = language === 'ru'
-    ? ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
-    : language === 'en'
-    ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    : ['Қаң', 'Ақп', 'Нау', 'Сәу', 'Мам', 'Мау', 'Шіл', 'Там', 'Қыр', 'Қаз', 'Қар', 'Жел'];
-
+  const fullMonths = t.date.monthsFull;
   const activeIndex = 7; // Aug / Тамыз
 
   return (
     <View style={styles.carouselGridContainer}>
       <View style={styles.carouselGridMatrix}>
-        {shortMonths.map((name, idx) => {
+        {fullMonths.map((name, idx) => {
           const isActive = idx === activeIndex;
           return (
             <View
@@ -1198,8 +1193,12 @@ function GridMonthPickerPreview() {
                     ? colors.today
                     : isDark
                     ? 'rgba(255,255,255,0.06)'
-                    : 'rgba(0,0,0,0.035)',
-                  borderColor: isActive ? colors.today : isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+                    : '#FFFFFF',
+                  borderColor: isActive
+                    ? colors.today
+                    : isDark
+                    ? 'rgba(255,255,255,0.12)'
+                    : 'rgba(0,0,0,0.08)',
                 },
               ]}
             >
@@ -1992,42 +1991,48 @@ const styles = StyleSheet.create({
   },
   carouselSvgContainer: {
     width: '100%',
-    height: 195,
+    height: 200,
     alignItems: 'center',
     justifyContent: 'center',
   },
   carouselGridContainer: {
     width: '100%',
-    height: 195,
+    height: 200,
     alignItems: 'center',
     justifyContent: 'center',
   },
   carouselGridMatrix: {
-    width: 276,
-    height: 172,
+    width: '98%',
+    height: 185,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignContent: 'space-between',
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   carouselGridCell: {
-    width: 62,
-    height: 48,
+    width: '31.5%',
+    height: 40,
     borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   carouselGridCellText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   carouselGridTodayDot: {
     position: 'absolute',
     top: 5,
-    right: 6,
+    right: 7,
     width: 5,
     height: 5,
     borderRadius: 2.5,
