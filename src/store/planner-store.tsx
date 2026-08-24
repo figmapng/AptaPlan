@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useRef, useState, use } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { Task, TaskInput } from '@/types/task';
 import type { PlannerSettings } from '@/types/settings';
 import { defaultSettings } from '@/types/settings';
@@ -315,11 +315,12 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function usePlanner() {
-  const ctx = use(Context);
+  const ctx = useContext(Context);
   if (!ctx) throw new Error('usePlanner must be used within PlannerProvider');
   return ctx;
 }
 
 export function useOptionalPlanner() {
-  return use(Context);
+  const ctx = useContext(Context);
+  return ctx;
 }
