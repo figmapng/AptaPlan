@@ -134,7 +134,7 @@ export function MonthPickerModal({
               onPress={handlePrevYear}
               accessible
               accessibilityRole="button"
-              accessibilityLabel={t.date.prevYear || 'Алдыңғы жыл'}
+              accessibilityLabel={language === 'ru' ? 'Предыдущий год' : 'Алдыңғы жыл'}
             >
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Path
@@ -155,7 +155,7 @@ export function MonthPickerModal({
               onPress={handleNextYear}
               accessible
               accessibilityRole="button"
-              accessibilityLabel={locale === 'ru' ? 'Следующий год' : 'Келесі жыл'}
+              accessibilityLabel={language === 'ru' ? 'Следующий год' : 'Келесі жыл'}
             >
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Path
