@@ -22,4 +22,20 @@ export const getMonthGrid = (date: Date, weekStartsOn: 0 | 1 | 6 = 1) =>
     start: getStartOfWeekWith(startOfMonth(date), weekStartsOn),
     end: addDays(getStartOfWeekWith(endOfMonth(date), weekStartsOn), 6),
   });
+
+export const getFirstDominantWeekOfMonth = (date: Date, weekStartsOn: 0 | 1 | 6 = 1) => {
+  const targetMonth = date.getMonth();
+  const firstDay = new Date(date.getFullYear(), targetMonth, 1);
+  const initialWeekStart = getStartOfWeekWith(firstDay, weekStartsOn);
+
+  let countInMonth = 0;
+  for (let i = 0; i < 7; i++) {
+    if (addDays(initialWeekStart, i).getMonth() === targetMonth) {
+      countInMonth++;
+    }
+  }
+
+  return countInMonth >= 4 ? initialWeekStart : addDays(initialWeekStart, 7);
+};
+
 export { addDays, addMonths, addYears, isSameMonth };

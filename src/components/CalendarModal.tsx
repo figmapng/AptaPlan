@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Easing, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { addMonths } from 'date-fns';
@@ -72,7 +72,6 @@ export function CalendarModal({
   const weekdayHeaders = getWeekdayHeaders(firstDayOfWeek);
   const translateY = useRef(new Animated.Value(420)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const scrollViewRef = useRef<ScrollView>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
@@ -95,6 +94,33 @@ export function CalendarModal({
       Animated.timing(translateY, { toValue: 420, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: false }),
     ]).start(() => onCloseRef.current());
   };
+
+  const handlePrevMonth = () => {
+    triggerHaptic();
+    setCurrentMonthDate((prev) => addMonths(prev, -1));
+  };
+
+  const handleNextMonth = () => {
+    triggerHaptic();
+    setCurrentMonthDate((prev) => addMonths(prev, 1));
+  };
+
+  // Horizontal swipe gesture recognizer for seamless month navigation
+  const monthSwipePanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -35 || gestureState.vx < -0.4) {
+          handleNextMonth();
+        } else if (gestureState.dx > 35 || gestureState.vx > 0.4) {
+          handlePrevMonth();
+        }
+      },
+    })
+  ).current;
 
   // Sheet PanResponder for vertical swipe down to dismiss sheet (Must be declared before any conditional return)
   const sheetPanResponder = useRef(
@@ -130,11 +156,6 @@ export function CalendarModal({
     }
   }, [visible, selectedDate, translateY, backdropOpacity]);
 
-  // Synchronously reset scroll position to index 1 BEFORE screen paint to prevent flickering
-  useLayoutEffect(() => {
-    scrollViewRef.current?.scrollTo({ x: ITEM_WIDTH, animated: false });
-  }, [currentMonthDate]);
-
   if (!visible) return null;
 
   const handleQuickSelect = (key: string) => {
@@ -157,24 +178,10 @@ export function CalendarModal({
     handleClose();
   };
 
-  const handlePrevMonth = () => {
-    triggerHaptic();
-    scrollViewRef.current?.scrollTo({ x: 0, animated: true });
-  };
-
-  const handleNextMonth = () => {
-    triggerHaptic();
-    scrollViewRef.current?.scrollTo({ x: ITEM_WIDTH * 2, animated: true });
-  };
-
   const todayKey = getTodayKey();
   const tomorrowKey = getTomorrowKey();
   const weekendKey = getThisWeekendKey();
   const nextWeekKey = getNextWeekMondayKey();
-
-  // 3-Month Carousel Data: [prevMonth, currMonth, nextMonth]
-  const prevMonthDate = addMonths(currentMonthDate, -1);
-  const nextMonthDate = addMonths(currentMonthDate, 1);
 
   const isWarmOrRedTheme = theme === 'amber' || theme === 'coral';
   const isVioletTheme = theme === 'violet';
@@ -370,62 +377,20 @@ export function CalendarModal({
               ))}
             </View>
 
-            {/* 3. HORIZONTAL DAYS GRID CAROUSEL */}
-            <ScrollView
-              ref={scrollViewRef}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              decelerationRate="fast"
-              snapToInterval={ITEM_WIDTH}
-              snapToAlignment="center"
-              contentOffset={{ x: ITEM_WIDTH, y: 0 }}
-              scrollEventThrottle={16}
-              onMomentumScrollEnd={(e) => {
-                const page = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
-                if (page === 0) {
-                  triggerHaptic();
-                  setCurrentMonthDate((prev) => addMonths(prev, -1));
-                } else if (page === 2) {
-                  triggerHaptic();
-                  setCurrentMonthDate((prev) => addMonths(prev, 1));
-                }
-              }}
-              style={{ width: ITEM_WIDTH, height: 240 }}
+            {/* 3. DAYS GRID MATRIX (Direct exact render with horizontal swipe navigation) */}
+            <View
+              style={{ width: ITEM_WIDTH, minHeight: 240 }}
+              {...monthSwipePanResponder.panHandlers}
             >
-              <View style={{ width: ITEM_WIDTH, height: 240 }}>
-                <DaysGridMatrix
-                  monthDate={prevMonthDate}
-                  selectedDate={tempSelectedDate}
-                  todayKey={todayKey}
-                  firstDayOfWeek={firstDayOfWeek}
-                  onSelectDay={handleSelectDay}
-                  selectedOptionStyle={selectedOptionStyle}
-                />
-              </View>
-
-              <View style={{ width: ITEM_WIDTH, height: 240 }}>
-                <DaysGridMatrix
-                  monthDate={currentMonthDate}
-                  selectedDate={tempSelectedDate}
-                  todayKey={todayKey}
-                  firstDayOfWeek={firstDayOfWeek}
-                  onSelectDay={handleSelectDay}
-                  selectedOptionStyle={selectedOptionStyle}
-                />
-              </View>
-
-              <View style={{ width: ITEM_WIDTH, height: 240 }}>
-                <DaysGridMatrix
-                  monthDate={nextMonthDate}
-                  selectedDate={tempSelectedDate}
-                  todayKey={todayKey}
-                  firstDayOfWeek={firstDayOfWeek}
-                  onSelectDay={handleSelectDay}
-                  selectedOptionStyle={selectedOptionStyle}
-                />
-              </View>
-            </ScrollView>
+              <DaysGridMatrix
+                monthDate={currentMonthDate}
+                selectedDate={tempSelectedDate}
+                todayKey={todayKey}
+                firstDayOfWeek={firstDayOfWeek}
+                onSelectDay={handleSelectDay}
+                selectedOptionStyle={selectedOptionStyle}
+              />
+            </View>
           </View>
 
           {/* Action Button Row */}

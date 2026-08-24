@@ -24,6 +24,7 @@ import { useTheme } from '@/hooks/use-theme';
 import {
   addDays,
   formatWeekRange,
+  getFirstDominantWeekOfMonth,
   getMonthGrid,
   getStartOfWeekWith,
   isSameMonth,
@@ -111,10 +112,11 @@ export default function Home() {
 
   const handleMonthPickerSelect = useCallback((selectedDate: Date) => {
     setFromYearMode(false);
+    setMonthPickerOpen(false);
     if (modeRef.current === 'day') {
       setDayDate(selectedDate);
     } else if (modeRef.current === 'week') {
-      setWeekStart(getStartOfWeekWith(selectedDate, weekStartsOn));
+      setWeekStart(getFirstDominantWeekOfMonth(selectedDate, weekStartsOn));
     } else if (modeRef.current === 'month') {
       setMonth(selectedDate);
     } else {
@@ -1540,7 +1542,15 @@ export default function Home() {
       <FlyingTaskOverlay flyingTask={flyingTask} onComplete={() => setFlyingTask(null)} />
       <MonthPickerModal
         visible={monthPickerOpen}
-        currentDate={mode === 'month' ? month : weekStart}
+        currentDate={
+          mode === 'day'
+            ? dayDate
+            : mode === 'week'
+            ? derivedWeekData.activeHeaderDate
+            : mode === 'month'
+            ? month
+            : new Date(year, 0, 1)
+        }
         onSelectMonth={handleMonthPickerSelect}
         onClose={() => setMonthPickerOpen(false)}
       />
