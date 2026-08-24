@@ -23,7 +23,7 @@ interface MonthPickerModalProps {
   currentDate: Date;
   onSelectMonth: (selectedDate: Date) => void;
   onClose: () => void;
-  locale?: 'kz' | 'ru';
+  locale?: 'kz' | 'ru' | 'en';
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -33,7 +33,7 @@ export function MonthPickerModal({
   currentDate,
   onSelectMonth,
   onClose,
-  locale = 'kz',
+  locale,
 }: MonthPickerModalProps) {
   const { colors, isDark } = useTheme();
   const { t, language } = useI18n();
@@ -137,7 +137,7 @@ export function MonthPickerModal({
               onPress={handlePrevYear}
               accessible
               accessibilityRole="button"
-              accessibilityLabel={language === 'ru' ? 'Предыдущий год' : 'Алдыңғы жыл'}
+              accessibilityLabel={language === 'en' ? 'Previous year' : language === 'ru' ? 'Предыдущий год' : 'Алдыңғы жыл'}
             >
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Path
@@ -158,7 +158,7 @@ export function MonthPickerModal({
               onPress={handleNextYear}
               accessible
               accessibilityRole="button"
-              accessibilityLabel={language === 'ru' ? 'Следующий год' : 'Келесі жыл'}
+              accessibilityLabel={language === 'en' ? 'Next year' : language === 'ru' ? 'Следующий год' : 'Келесі жыл'}
             >
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Path
@@ -178,7 +178,7 @@ export function MonthPickerModal({
               year={selectedYear}
               selectedMonth={selectedMonth}
               currentDate={today}
-              locale={language === 'ru' ? 'ru' : 'kz'}
+              locale={locale || (language === 'en' ? 'en' : language === 'ru' ? 'ru' : 'kz')}
               onSelectMonth={handleSelectMonth}
               onChangeYear={setSelectedYear}
             />

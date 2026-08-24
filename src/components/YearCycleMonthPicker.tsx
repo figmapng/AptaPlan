@@ -15,7 +15,7 @@ export interface YearCycleMonthPickerProps {
   year: number;
   selectedMonth: number; // 0 = Jan (Қаң) .. 11 = Dec (Жел)
   currentDate?: Date;
-  locale?: 'kz' | 'ru';
+  locale?: 'kz' | 'ru' | 'en';
   debugProgress?: number; // Optional normalized year progress 0..1 for testing
   onSelectMonth: (monthIndex: number) => void;
   onChangeYear?: (newYear: number) => void;
@@ -66,6 +66,29 @@ export const MONTH_NAMES = {
       autumn: 'ОСЕНЬ',
       winter: 'ЗИМА',
       spring: 'ВЕСНА',
+    },
+  },
+  en: {
+    short: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    full: [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ],
+    seasons: {
+      summer: 'SUMMER',
+      autumn: 'AUTUMN',
+      winter: 'WINTER',
+      spring: 'SPRING',
     },
   },
 };

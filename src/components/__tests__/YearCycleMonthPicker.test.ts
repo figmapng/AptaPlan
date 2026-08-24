@@ -56,6 +56,18 @@ describe('YearCycleMonthPicker canonical month mapping and geometry', () => {
     expectedFullKz.forEach((fullName, idx) => {
       expect(MONTH_NAMES.kz.full[idx]).toBe(fullName);
     });
+
+    // English localization check
+    expect(MONTH_NAMES.en).toBeDefined();
+    expect(MONTH_NAMES.en.short[0]).toBe('Jan');
+    expect(MONTH_NAMES.en.full[0]).toBe('January');
+    expect(MONTH_NAMES.en.seasons.summer).toBe('SUMMER');
+
+    // Russian localization check
+    expect(MONTH_NAMES.ru).toBeDefined();
+    expect(MONTH_NAMES.ru.short[0]).toBe('Янв');
+    expect(MONTH_NAMES.ru.full[0]).toBe('Январь');
+    expect(MONTH_NAMES.ru.seasons.summer).toBe('ЛЕТО');
   });
 
   test('calculateMonthProgress on August 24 gives ~77.4% through August', () => {
