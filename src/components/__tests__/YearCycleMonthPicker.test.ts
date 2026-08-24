@@ -20,6 +20,7 @@ import {
   getInnerProgressArrowheadPathD,
   getInnerProgressPoint,
   getInnerProgressPointAndTangent,
+  getInnerProgressStartNotchPathD,
 } from '../YearCycleMonthPicker';
 
 describe('YearCycleMonthPicker canonical month mapping and geometry', () => {
@@ -98,6 +99,11 @@ describe('YearCycleMonthPicker canonical month mapping and geometry', () => {
     const arrowD = getInnerProgressArrowheadPathD(6.5 * deltaS, cx, cy, wc, hc, Rc, P, innerInset);
     expect(arrowD.startsWith('M ')).toBe(true);
     expect(arrowD).toContain('L ');
+
+    // 5. Perpendicular start notch path generation
+    const startNotchD = getInnerProgressStartNotchPathD(-deltaS / 2, cx, cy, wc, hc, Rc, P, innerInset);
+    expect(startNotchD.startsWith('M ')).toBe(true);
+    expect(startNotchD).toContain('L ');
   });
 
   test('master synchronized inner progress path aligns with month start boundaries', () => {

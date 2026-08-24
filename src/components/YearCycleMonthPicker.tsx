@@ -265,6 +265,29 @@ export function getInnerProgressArrowheadPathD(
 }
 
 /**
+ * Builds the perpendicular start notch / tick mark at the progress line starting point.
+ */
+export function getInnerProgressStartNotchPathD(
+  sStart: number,
+  cx: number,
+  cy: number,
+  wc: number,
+  hc: number,
+  Rc: number,
+  P: number,
+  innerInset: number
+): string {
+  const { px, py, nx, ny } = getInnerProgressPointAndTangent(sStart, cx, cy, wc, hc, Rc, P, innerInset);
+  const H = 5.5;
+  const p1x = (px + H * nx).toFixed(2);
+  const p1y = (py + H * ny).toFixed(2);
+  const p2x = (px - H * nx).toFixed(2);
+  const p2y = (py - H * ny).toFixed(2);
+
+  return `M ${p1x} ${p1y} L ${p2x} ${p2y}`;
+}
+
+/**
  * Builds the continuous inner progress loop path from sStart to sEnd.
  */
 export function buildInnerProgressSubPath(
@@ -456,7 +479,22 @@ export function YearCycleMonthPicker({
     );
   }, [targetProgressS, cx, cy, wc, hc, Rc, P, deltaS, innerInset]);
 
-  // 5. Build segments explicitly mapped to their canonical monthIndex with expanded hit targets
+  // 5. Perpendicular start notch at Jan 1st
+  const startNotchPathD = useMemo(() => {
+    const sStartJan = -deltaS / 2;
+    return getInnerProgressStartNotchPathD(
+      sStartJan,
+      cx,
+      cy,
+      wc,
+      hc,
+      Rc,
+      P,
+      innerInset
+    );
+  }, [cx, cy, wc, hc, Rc, P, deltaS, innerInset]);
+
+  // 6. Build segments explicitly mapped to their canonical monthIndex with expanded hit targets
   const { segments, dividers, monthCenters } = useMemo(() => {
     const segList = [];
     const divList = [];
@@ -777,10 +815,32 @@ export function YearCycleMonthPicker({
           strokeWidth={2.5}
         />
 
+        {/* Start Notch on Background Track */}
+        {startNotchPathD.length > 0 && (
+          <Path
+            d={startNotchPathD}
+            fill="none"
+            stroke={isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.09)'}
+            strokeWidth={2.5}
+            strokeLinecap="round"
+          />
+        )}
+
         {/* Active Year Progress Stroke */}
         {(isCurrentYear || typeof debugProgress === 'number') && activeProgressPathD.length > 0 && (
           <Path
             d={activeProgressPathD}
+            fill="none"
+            stroke={colors.today}
+            strokeWidth={2.5}
+            strokeLinecap="round"
+          />
+        )}
+
+        {/* Active Start Notch at Jan 1st (Forms unified progress bar body) */}
+        {(isCurrentYear || typeof debugProgress === 'number') && activeProgressPathD.length > 0 && startNotchPathD.length > 0 && (
+          <Path
+            d={startNotchPathD}
             fill="none"
             stroke={colors.today}
             strokeWidth={2.5}
