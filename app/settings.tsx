@@ -1067,7 +1067,7 @@ function MonthPickerStyleModal({
   onSelectValue: (val: 'circular' | 'grid') => void;
   onClose: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const [selected, setSelected] = useState<'circular' | 'grid'>(currentValue || 'circular');
   const [activeSlide, setActiveSlide] = useState<number>(() => (currentValue === 'grid' ? 1 : 0));
@@ -1197,17 +1197,27 @@ function MonthPickerStyleModal({
 
           {/* Pagination Dots */}
           <View style={styles.carouselPaginationRow}>
-            {slides.map((_, i) => (
-              <Pressable
-                key={i}
-                onPress={() => handleSelectSlide(i)}
-                style={[
-                  styles.carouselDot,
-                  { backgroundColor: activeSlide === i ? colors.today : colors.inputBorder },
-                  activeSlide === i && styles.carouselDotActive,
-                ]}
-              />
-            ))}
+            {slides.map((_, i) => {
+              const isActive = activeSlide === i;
+              return (
+                <Pressable
+                  key={i}
+                  onPress={() => handleSelectSlide(i)}
+                  hitSlop={10}
+                  style={[
+                    styles.carouselDot,
+                    {
+                      backgroundColor: isActive
+                        ? colors.today
+                        : isDark
+                        ? 'rgba(255,255,255,0.35)'
+                        : 'rgba(0,0,0,0.22)',
+                    },
+                    isActive && styles.carouselDotActive,
+                  ]}
+                />
+              );
+            })}
           </View>
 
           {/* Confirm Button */}
@@ -1889,16 +1899,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    marginTop: 10,
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 4,
   },
   carouselDot: {
-    height: 6,
-    width: 6,
-    borderRadius: 3,
+    height: 7,
+    width: 7,
+    borderRadius: 3.5,
   },
   carouselDotActive: {
-    width: 18,
-    borderRadius: 3,
+    width: 22,
+    borderRadius: 3.5,
   },
 });
