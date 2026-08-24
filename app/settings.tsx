@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -1032,190 +1033,25 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CAROUSEL_WIDTH = Math.min(SCREEN_WIDTH - 64, 340);
 
 function CircularMonthPickerPreview() {
-  const { colors, isDark } = useTheme();
-  const { language } = useI18n();
-
-  // Season Labels
-  const seasons = language === 'ru'
-    ? { summer: 'ЛЕТО', spring: 'ВЕСНА', winter: 'ЗИМА', autumn: 'ОСЕНЬ' }
-    : language === 'en'
-    ? { summer: 'SUMMER', spring: 'SPRING', winter: 'WINTER', autumn: 'AUTUMN' }
-    : { summer: 'ЖАЗ', spring: 'КӨКТЕМ', winter: 'ҚЫС', autumn: 'КҮЗ' };
-
-  // Month Labels
-  const m = language === 'ru'
-    ? { jun: 'Июн', jul: 'Июл', aug: 'Авг', may: 'Май', apr: 'Апр', mar: 'Мар', feb: 'Фев', jan: 'Янв', dec: 'Дек', nov: 'Ноя', oct: 'Окт', sep: 'Сен', center: 'Август' }
-    : language === 'en'
-    ? { jun: 'Jun', jul: 'Jul', aug: 'Aug', may: 'May', apr: 'Apr', mar: 'Mar', feb: 'Feb', jan: 'Jan', dec: 'Dec', nov: 'Nov', oct: 'Oct', sep: 'Sep', center: 'August' }
-    : { jun: 'Мау', jul: 'Шіл', aug: 'Там', may: 'Мам', apr: 'Сәу', mar: 'Нау', feb: 'Ақп', jan: 'Қаң', dec: 'Жел', nov: 'Қар', oct: 'Қаз', sep: 'Қыр', center: 'Тамыз' };
-
-  const summerBg = isDark ? '#2E2416' : '#FEF9C3';
-  const springBg = isDark ? '#142E1F' : '#DCFCE7';
-  const winterBg = isDark ? '#182438' : '#DBEAFE';
-  const autumnBg = isDark ? '#2B1E17' : '#FFEDD5';
-
-  const seasonColorSummer = isDark ? '#FBBF24' : '#B45309';
-  const seasonColorSpring = isDark ? '#4ADE80' : '#15803D';
-  const seasonColorWinter = isDark ? '#94A3B8' : '#475569';
-  const seasonColorAutumn = isDark ? '#FB923C' : '#C2410C';
-
-  const textColor = isDark ? '#F1F5F9' : '#0F172A';
-  const borderColor = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.1)';
-
   return (
-    <View style={styles.carouselSvgContainer}>
-      <Svg width="100%" height={200} viewBox="0 0 360 220">
-        {/* ── Season Headers (Top & Bottom Horizontal, Left & Right Rotated Vertically) ── */}
-        <SvgText x={180} y={24} fontSize={12} fontWeight="800" fill={seasonColorSummer} textAnchor="middle" letterSpacing={1.6}>
-          {seasons.summer}
-        </SvgText>
-        <SvgText x={180} y={212} fontSize={12} fontWeight="800" fill={seasonColorWinter} textAnchor="middle" letterSpacing={1.6}>
-          {seasons.winter}
-        </SvgText>
-
-        {/* Rotated Left Season Label */}
-        <G transform="rotate(-90 22 110)">
-          <SvgText x={22} y={114} fontSize={11} fontWeight="800" fill={seasonColorAutumn} textAnchor="middle" letterSpacing={1.4}>
-            {seasons.autumn}
-          </SvgText>
-        </G>
-
-        {/* Rotated Right Season Label */}
-        <G transform="rotate(90 338 110)">
-          <SvgText x={338} y={114} fontSize={11} fontWeight="800" fill={seasonColorSpring} textAnchor="middle" letterSpacing={1.4}>
-            {seasons.spring}
-          </SvgText>
-        </G>
-
-        {/* ── Outer Racetrack Ring Background Segments ── */}
-        {/* Spring (Right curved arc): x=210 to 310, y=36 to 176 */}
-        <Path d="M 210 36 A 70 70 0 0 1 210 176 L 210 142 A 36 36 0 0 0 210 70 Z" fill={springBg} />
-        {/* Autumn (Left curved arc): x=150 to 50, y=36 to 176 */}
-        <Path d="M 150 176 A 70 70 0 0 1 150 36 L 150 70 A 36 36 0 0 0 150 142 Z" fill={autumnBg} />
-        {/* Summer (Top straight bar): x=150 to 210, y=36 to 70 */}
-        <Rect x={150} y={36} width={60} height={34} fill={summerBg} />
-        {/* Winter (Bottom straight bar): x=150 to 210, y=142 to 176 */}
-        <Rect x={150} y={142} width={60} height={34} fill={winterBg} />
-
-        {/* ── Active Month Segment Highlight (August / Тамыз) ── */}
-        <Path
-          d="M 104 36 L 155 36 L 155 70 L 104 70 A 34 34 0 0 1 96 50 A 34 34 0 0 1 104 36 Z"
-          fill={colors.today}
-        />
-
-        {/* ── Outer and Inner Racetrack Outlines ── */}
-        <Path
-          d="M 150 36 L 210 36 A 70 70 0 0 1 210 176 L 150 176 A 70 70 0 0 1 150 36 Z"
-          fill="none"
-          stroke={borderColor}
-          strokeWidth={1.2}
-        />
-        <Path
-          d="M 150 70 L 210 70 A 36 36 0 0 1 210 142 L 150 142 A 36 36 0 0 1 150 70 Z"
-          fill={colors.sheetBg}
-          stroke={borderColor}
-          strokeWidth={1.2}
-        />
-
-        {/* ── Segment Dividers ── */}
-        <Line x1={155} y1={36} x2={155} y2={70} stroke={borderColor} strokeWidth={1} />
-        <Line x1={208} y1={36} x2={208} y2={70} stroke={borderColor} strokeWidth={1} />
-        <Line x1={155} y1={142} x2={155} y2={176} stroke={borderColor} strokeWidth={1} />
-        <Line x1={208} y1={142} x2={208} y2={176} stroke={borderColor} strokeWidth={1} />
-
-        {/* ── Month Labels ── */}
-        {/* Top: Авг (Active Month: White Bold), Июл, Июн */}
-        <SvgText x={126} y={58} fontSize={13} fontWeight="800" fill="#FFFFFF" textAnchor="middle">{m.aug}</SvgText>
-        <SvgText x={181} y={58} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.jul}</SvgText>
-        <SvgText x={236} y={58} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.jun}</SvgText>
-
-        {/* Right Arc: Май, Апр, Мар */}
-        <SvgText x={276} y={74} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.may}</SvgText>
-        <SvgText x={290} y={114} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.apr}</SvgText>
-        <SvgText x={276} y={154} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.mar}</SvgText>
-
-        {/* Bottom: Дек, Янв, Фев */}
-        <SvgText x={126} y={164} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.dec}</SvgText>
-        <SvgText x={181} y={164} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.jan}</SvgText>
-        <SvgText x={236} y={164} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.feb}</SvgText>
-
-        {/* Left Arc: Ноя, Окт, Сен */}
-        <SvgText x={84} y={154} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.nov}</SvgText>
-        <SvgText x={70} y={114} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.oct}</SvgText>
-        <SvgText x={84} y={74} fontSize={12} fontWeight="600" fill={textColor} textAnchor="middle">{m.sep}</SvgText>
-
-        {/* ── Inner Center Box: Track Loop & Month Title ── */}
-        <Path
-          d="M 155 142 L 210 142 A 28 28 0 0 0 238 114 L 238 98 A 28 28 0 0 0 210 70 L 115 70"
-          fill="none"
-          stroke={colors.today}
-          strokeWidth={2.5}
-          strokeLinecap="round"
-        />
-        {/* Arrowhead pointing left at (115, 70) */}
-        <Path
-          d="M 122 65 L 112 70 L 122 75"
-          fill="none"
-          stroke={colors.today}
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Center Full Month Name */}
-        <SvgText x={180} y={118} fontSize={21} fontWeight="800" fill={textColor} textAnchor="middle" letterSpacing={-0.4}>
-          {m.center}
-        </SvgText>
-      </Svg>
+    <View style={styles.carouselImageContainer}>
+      <Image
+        source={require('@/assets/images/month-picker-circular.png')}
+        style={styles.previewImage}
+        resizeMode="contain"
+      />
     </View>
   );
 }
 
 function GridMonthPickerPreview() {
-  const { colors, isDark } = useTheme();
-  const { t } = useI18n();
-
-  const fullMonths = t.date.monthsFull;
-  const activeIndex = 7; // Aug / Тамыз
-
   return (
-    <View style={styles.carouselGridContainer}>
-      <View style={styles.carouselGridMatrix}>
-        {fullMonths.map((name, idx) => {
-          const isActive = idx === activeIndex;
-          return (
-            <View
-              key={idx}
-              style={[
-                styles.carouselGridCell,
-                {
-                  backgroundColor: isActive
-                    ? colors.today
-                    : isDark
-                    ? 'rgba(255,255,255,0.06)'
-                    : '#FFFFFF',
-                  borderColor: isActive
-                    ? colors.today
-                    : isDark
-                    ? 'rgba(255,255,255,0.12)'
-                    : 'rgba(0,0,0,0.08)',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.carouselGridCellText,
-                  { color: isActive ? '#FFFFFF' : colors.text },
-                  isActive && { fontWeight: '800' },
-                ]}
-              >
-                {name}
-              </Text>
-              {isActive && <View style={styles.carouselGridTodayDot} />}
-            </View>
-          );
-        })}
-      </View>
+    <View style={styles.carouselImageContainer}>
+      <Image
+        source={require('@/assets/images/month-picker-grid.png')}
+        style={styles.previewImage}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -1989,26 +1825,17 @@ const styles = StyleSheet.create({
     padding: 12,
     overflow: 'hidden',
   },
-  carouselSvgContainer: {
+  carouselImageContainer: {
     width: '100%',
-    height: 200,
+    height: 205,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  carouselGridContainer: {
+  previewImage: {
     width: '100%',
-    height: 200,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  carouselGridMatrix: {
-    width: '98%',
-    height: 185,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignContent: 'space-between',
-    paddingVertical: 2,
+    height: '100%',
   },
   carouselGridCell: {
     width: '31.5%',
