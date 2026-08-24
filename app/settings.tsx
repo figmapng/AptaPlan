@@ -1070,14 +1070,29 @@ function MonthPickerStyleModal({
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const [selected, setSelected] = useState<'circular' | 'grid'>(currentValue || 'circular');
-  const [activeSlide, setActiveSlide] = useState<number>(() => (currentValue === 'grid' ? 1 : 0));
+  const [activeSlide, setActiveSlide] = useState<number>(() => (currentValue === 'circular' ? 1 : 0));
   const scrollRef = useRef<ScrollView>(null);
+
+  const slides: { mode: 'circular' | 'grid'; label: string; sublabel: string; preview: React.ReactNode }[] = [
+    {
+      mode: 'grid',
+      label: t.settings.monthPickerStyles.grid,
+      sublabel: t.settings.monthPickerStylesSub.grid,
+      preview: <GridMonthPickerPreview />,
+    },
+    {
+      mode: 'circular',
+      label: t.settings.monthPickerStyles.circular,
+      sublabel: t.settings.monthPickerStylesSub.circular,
+      preview: <CircularMonthPickerPreview />,
+    },
+  ];
 
   useEffect(() => {
     if (visible) {
       const initVal = currentValue || 'circular';
       setSelected(initVal);
-      const slideIdx = initVal === 'grid' ? 1 : 0;
+      const slideIdx = initVal === 'circular' ? 1 : 0;
       setActiveSlide(slideIdx);
       setTimeout(() => {
         scrollRef.current?.scrollTo({ x: slideIdx * CAROUSEL_WIDTH, animated: false });
@@ -1090,7 +1105,7 @@ function MonthPickerStyleModal({
     const slideIdx = Math.round(offsetX / CAROUSEL_WIDTH);
     if (slideIdx !== activeSlide && (slideIdx === 0 || slideIdx === 1)) {
       setActiveSlide(slideIdx);
-      const newMode = slideIdx === 0 ? 'circular' : 'grid';
+      const newMode = slides[slideIdx].mode;
       setSelected(newMode);
       void Haptics.selectionAsync();
     }
@@ -1098,7 +1113,7 @@ function MonthPickerStyleModal({
 
   const handleSelectSlide = (idx: number) => {
     setActiveSlide(idx);
-    const newMode = idx === 0 ? 'circular' : 'grid';
+    const newMode = slides[idx].mode;
     setSelected(newMode);
     scrollRef.current?.scrollTo({ x: idx * CAROUSEL_WIDTH, animated: true });
     void Haptics.selectionAsync();
@@ -1108,21 +1123,6 @@ function MonthPickerStyleModal({
     onSelectValue(selected);
     onClose();
   };
-
-  const slides: { mode: 'circular' | 'grid'; label: string; sublabel: string; preview: React.ReactNode }[] = [
-    {
-      mode: 'circular',
-      label: t.settings.monthPickerStyles.circular,
-      sublabel: t.settings.monthPickerStylesSub.circular,
-      preview: <CircularMonthPickerPreview />,
-    },
-    {
-      mode: 'grid',
-      label: t.settings.monthPickerStyles.grid,
-      sublabel: t.settings.monthPickerStylesSub.grid,
-      preview: <GridMonthPickerPreview />,
-    },
-  ];
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
