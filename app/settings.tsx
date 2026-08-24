@@ -352,29 +352,12 @@ export default function SettingsScreen() {
         ]}
       />
 
-      {/* Month Picker Style Modal */}
-      <OptionModal
+      {/* Visual Month Picker Style Modal */}
+      <MonthPickerStyleModal
         visible={monthPickerStyleModalOpen}
-        title={t.settings.monthPickerStyle}
+        currentValue={settings.monthPickerStyle || 'circular'}
         onClose={() => setMonthPickerStyleModalOpen(false)}
-        options={[
-          {
-            label: t.settings.monthPickerStyles.circular,
-            selected: !settings.monthPickerStyle || settings.monthPickerStyle === 'circular',
-            onSelect: () => {
-              void setPref('monthPickerStyle', 'circular');
-              setMonthPickerStyleModalOpen(false);
-            },
-          },
-          {
-            label: t.settings.monthPickerStyles.grid,
-            selected: settings.monthPickerStyle === 'grid',
-            onSelect: () => {
-              void setPref('monthPickerStyle', 'grid');
-              setMonthPickerStyleModalOpen(false);
-            },
-          },
-        ]}
+        onSelectValue={(val) => void setPref('monthPickerStyle', val)}
       />
 
       {/* Visual Last Day Visibility Modal */}
@@ -1044,6 +1027,155 @@ function LastDayVisibilityModal({
   );
 }
 
+function CircularMonthPickerPreview() {
+  const { colors, isDark } = useTheme();
+  return (
+    <View style={styles.pickerPreviewBox}>
+      <View style={[styles.circularPreviewTrack, { borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)' }]}>
+        {/* 4 Season arcs */}
+        <View style={[styles.previewSeasonQuad, { top: 0, left: 6, right: 6, height: 4, backgroundColor: isDark ? '#3D2F17' : '#FEF08A' }]} />
+        <View style={[styles.previewSeasonQuad, { right: 0, top: 6, bottom: 6, width: 4, backgroundColor: isDark ? '#143823' : '#BBF7D0' }]} />
+        <View style={[styles.previewSeasonQuad, { bottom: 0, left: 6, right: 6, height: 4, backgroundColor: isDark ? '#1E2E4A' : '#BFDBFE' }]} />
+        <View style={[styles.previewSeasonQuad, { left: 0, top: 6, bottom: 6, width: 4, backgroundColor: isDark ? '#3B2314' : '#FED7AA' }]} />
+        {/* Selected month pill */}
+        <View style={[styles.previewSelectedPill, { backgroundColor: colors.today }]} />
+        {/* Central badge */}
+        <View style={[styles.previewCenterBadge, { backgroundColor: colors.sheetBg, borderColor: colors.inputBorder }]}>
+          <View style={{ width: 10, height: 2.5, borderRadius: 1.5, backgroundColor: colors.today }} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function GridMonthPickerPreview() {
+  const { colors, isDark } = useTheme();
+  return (
+    <View style={styles.pickerPreviewBox}>
+      <View style={styles.gridPreviewMatrix}>
+        {[...Array(12)].map((_, i) => (
+          <View
+            key={i}
+            style={[
+              styles.gridPreviewCell,
+              { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+              i === 4 && { backgroundColor: colors.today },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function MonthPickerStyleModal({
+  visible,
+  currentValue,
+  onSelectValue,
+  onClose,
+}: {
+  visible: boolean;
+  currentValue: 'circular' | 'grid';
+  onSelectValue: (val: 'circular' | 'grid') => void;
+  onClose: () => void;
+}) {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const [selected, setSelected] = useState<'circular' | 'grid'>(currentValue || 'circular');
+
+  useEffect(() => {
+    if (visible) {
+      setSelected(currentValue || 'circular');
+    }
+  }, [visible, currentValue]);
+
+  const handleConfirm = () => {
+    onSelectValue(selected);
+    onClose();
+  };
+
+  const options: { mode: 'circular' | 'grid'; label: string; sublabel: string; preview: React.ReactNode }[] = [
+    {
+      mode: 'circular',
+      label: t.settings.monthPickerStyles.circular,
+      sublabel: t.settings.monthPickerStylesSub.circular,
+      preview: <CircularMonthPickerPreview />,
+    },
+    {
+      mode: 'grid',
+      label: t.settings.monthPickerStyles.grid,
+      sublabel: t.settings.monthPickerStylesSub.grid,
+      preview: <GridMonthPickerPreview />,
+    },
+  ];
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
+          {/* Header */}
+          <View style={styles.modalHeaderRow}>
+            <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.monthPickerStyle}</Text>
+            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
+              <Ionicons name="close" size={18} color={colors.secondary} />
+            </Pressable>
+          </View>
+
+          {/* Vertical Option Cards */}
+          <View style={styles.verticalCardsContainer}>
+            {options.map((opt) => {
+              const isSelected = selected === opt.mode;
+              return (
+                <AnimatedPressable
+                  key={opt.mode}
+                  activeScale={0.97}
+                  style={[
+                    styles.verticalVisualCard,
+                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+                    isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today },
+                  ]}
+                  onPress={() => setSelected(opt.mode)}
+                >
+                  <View style={styles.verticalPreviewWrapper}>{opt.preview}</View>
+                  <View style={styles.verticalCardInfo}>
+                    <Text
+                      style={[
+                        styles.verticalCardLabel,
+                        { color: colors.text },
+                        isSelected && { color: colors.today, fontWeight: '700' },
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                    <Text style={[styles.verticalCardSublabel, { color: colors.secondary }]}>
+                      {opt.sublabel}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.visualRadio,
+                      { borderColor: colors.cardBorder },
+                      isSelected && { borderColor: colors.today },
+                    ]}
+                  >
+                    {isSelected && <View style={[styles.visualRadioInner, { backgroundColor: colors.today }]} />}
+                  </View>
+                </AnimatedPressable>
+              );
+            })}
+          </View>
+
+          {/* Confirm Button */}
+          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
+            <Text style={styles.modalContinueButtonText}>{t.common.save}</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 
 const styles = StyleSheet.create({
   container: {
@@ -1643,5 +1775,59 @@ const styles = StyleSheet.create({
   telegramThemeTitle: {
     fontSize: 11,
     textAlign: 'center',
+  },
+  pickerPreviewBox: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circularPreviewTrack: {
+    width: 52,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  previewSeasonQuad: {
+    position: 'absolute',
+    borderRadius: 2,
+  },
+  previewSelectedPill: {
+    position: 'absolute',
+    top: 1.5,
+    right: 4,
+    width: 11,
+    height: 9,
+    borderRadius: 4.5,
+  },
+  previewCenterBadge: {
+    width: 24,
+    height: 16,
+    borderRadius: 6,
+    borderWidth: 0.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  gridPreviewMatrix: {
+    width: 52,
+    height: 40,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignContent: 'space-between',
+  },
+  gridPreviewCell: {
+    width: '30%',
+    height: 8,
+    borderRadius: 2,
   },
 });

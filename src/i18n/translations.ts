@@ -217,6 +217,10 @@ export const translations: Record<Language, Translations> = {
         circular: 'Шеңберлік (Жыл циклі)',
         grid: 'Торша (12 ай)',
       },
+      monthPickerStylesSub: {
+        circular: 'Жыл мезгілдері және шеңберлік трек',
+        grid: '12 айлық классикалық тор көрінісі',
+      },
       firstDayOfWeek: 'Аптаның бірінші күні',
       monday: 'Дүйсенбі',
       saturday: 'Сенбі',
@@ -543,6 +547,10 @@ export const translations: Record<Language, Translations> = {
         circular: 'Круговой (Цикл года)',
         grid: 'Сетка (12 месяцев)',
       },
+      monthPickerStylesSub: {
+        circular: 'Времена года и круговой трек',
+        grid: 'Классическая сетка 12 месяцев',
+      },
       firstDayOfWeek: 'Первый день недели',
       monday: 'Понедельник',
       saturday: 'Суббота',
@@ -868,6 +876,10 @@ export const translations: Record<Language, Translations> = {
       monthPickerStyles: {
         circular: 'Circular (Year Cycle)',
         grid: 'Grid (12 Months)',
+      },
+      monthPickerStylesSub: {
+        circular: 'Four seasons with circular racetrack',
+        grid: 'Classic 12-month calendar grid',
       },
       firstDayOfWeek: 'First Day of Week',
       monday: 'Monday',

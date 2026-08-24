@@ -178,6 +178,10 @@ export interface Translations {
       circular: string;
       grid: string;
     };
+    monthPickerStylesSub: {
+      circular: string;
+      grid: string;
+    };
     firstDayOfWeek: string;
     monday: string;
     saturday: string;
