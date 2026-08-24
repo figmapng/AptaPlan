@@ -76,12 +76,20 @@ export function MonthPickerModal({
 
   const handlePrevYear = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedYear((y) => y - 1);
+    setSelectedYear((y) => {
+      const nextY = y - 1;
+      setSelectedMonth(nextY === today.getFullYear() ? today.getMonth() : -1);
+      return nextY;
+    });
   };
 
   const handleNextYear = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedYear((y) => y + 1);
+    setSelectedYear((y) => {
+      const nextY = y + 1;
+      setSelectedMonth(nextY === today.getFullYear() ? today.getMonth() : -1);
+      return nextY;
+    });
   };
 
   const handleSelectMonth = (monthIndex: number) => {

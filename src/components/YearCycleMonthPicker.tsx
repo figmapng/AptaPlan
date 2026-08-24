@@ -852,17 +852,6 @@ export function YearCycleMonthPicker({
           strokeWidth={2.5}
         />
 
-        {/* Start Notch on Background Track */}
-        {startNotchPathD.length > 0 && (
-          <Path
-            d={startNotchPathD}
-            fill="none"
-            stroke={isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.09)'}
-            strokeWidth={2.5}
-            strokeLinecap="round"
-          />
-        )}
-
         {/* Active Year Progress Stroke */}
         {(isCurrentYear || typeof debugProgress === 'number') && activeProgressPathD.length > 0 && (
           <Path
@@ -898,10 +887,12 @@ export function YearCycleMonthPicker({
         )}
       </Svg>
 
-      {/* Center Zone: Pure Selected Month Title */}
+      {/* Center Zone: Pure Selected Month Title or Year */}
       <View style={styles.centerContainer} pointerEvents="none">
         <Text style={[styles.centerMonth, { color: colors.text }]}>
-          {loc.full[selectedMonth]}
+          {selectedMonth >= 0 && selectedMonth < 12
+            ? loc.full[selectedMonth]
+            : `${year}`}
         </Text>
       </View>
     </Pressable>
