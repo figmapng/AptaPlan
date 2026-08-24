@@ -724,76 +724,51 @@ export function YearCycleMonthPicker({
           fillRule="evenodd"
         />
 
-        {/* 12 Interactive Month Segments with Native Exact Vector Hit-Testing */}
-        {segments.map((seg) => {
-          const isSelected = seg.monthIndex === selectedMonth;
-          const isActualToday = isCurrentYear && seg.monthIndex === actualCurrentMonthIdx;
-
-          const segmentBg = isSelected
-            ? colors.today
-            : isActualToday
+        {/* 1. Unselected Month Segments */}
+        {segments
+          .filter((seg) => seg.monthIndex !== selectedMonth)
+          .map((seg) => {
+            const isActualToday = isCurrentYear && seg.monthIndex === actualCurrentMonthIdx;
+            const segmentBg = isActualToday
               ? (isDark ? '#202735' : '#F9FAFC')
               : seasonStyles[seg.season].bg;
+            const textColor = isActualToday ? colors.today : colors.text;
 
-          const textColor = isSelected
-            ? '#FFFFFF'
-            : isActualToday
-              ? colors.today
-              : colors.text;
-
-          return (
-            <G
-              key={`segment-${seg.monthIndex}`}
-              onPress={() => handleMonthPress(seg.monthIndex)}
-              accessible
-              accessibilityRole="button"
-              accessibilityLabel={`${seg.fullName} ${year}`}
-            >
-              {/* Segment Background / Selection Fill */}
-              <Path
-                d={seg.pathD}
-                fill={segmentBg}
-                stroke={
-                  isSelected
-                    ? (colors.todayDark ?? colors.today)
-                    : 'none'
-                }
-                strokeWidth={isSelected ? 1.5 : 0}
-                strokeLinejoin="round"
-              />
-
-              {/* Expanded Invisible Hit Path for expanded touch target */}
-              <Path
-                d={seg.expandedHitPathD}
-                fill="rgba(0, 0, 0, 0.001)"
-              />
-
-              {/* Small accent dot above label for unselected current month */}
-              {isActualToday && !isSelected && (
-                <Circle
-                  cx={seg.dotX}
-                  cy={seg.dotY}
-                  r={2}
-                  fill={colors.today}
-                />
-              )}
-
-              {/* Month Text Label */}
-              <SvgText
-                x={seg.centerX}
-                y={seg.centerY + 4.5}
-                textAnchor="middle"
-                fontSize={13}
-                fontWeight={isSelected || isActualToday ? '700' : '600'}
-                fill={textColor}
+            return (
+              <G
+                key={`segment-${seg.monthIndex}`}
+                onPress={() => handleMonthPress(seg.monthIndex)}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`${seg.fullName} ${year}`}
               >
-                {seg.shortName}
-              </SvgText>
-            </G>
-          );
-        })}
+                {/* Segment Background Fill */}
+                <Path d={seg.pathD} fill={segmentBg} />
 
-        {/* Subtle Hairline Dividers Between Months */}
+                {/* Expanded Invisible Hit Path for expanded touch target */}
+                <Path d={seg.expandedHitPathD} fill="rgba(0, 0, 0, 0.001)" />
+
+                {/* Small accent dot above label for unselected current month */}
+                {isActualToday && (
+                  <Circle cx={seg.dotX} cy={seg.dotY} r={2} fill={colors.today} />
+                )}
+
+                {/* Month Text Label */}
+                <SvgText
+                  x={seg.centerX}
+                  y={seg.centerY + 4.5}
+                  textAnchor="middle"
+                  fontSize={13}
+                  fontWeight={isActualToday ? '700' : '600'}
+                  fill={textColor}
+                >
+                  {seg.shortName}
+                </SvgText>
+              </G>
+            );
+          })}
+
+        {/* 2. Subtle Hairline Dividers Between Months */}
         {dividers.map((d, idx) => (
           <Line
             key={`div-${idx}`}
@@ -805,6 +780,45 @@ export function YearCycleMonthPicker({
             strokeWidth={1}
           />
         ))}
+
+        {/* 3. Highest Layer: Selected / Active Month Segment (On top of all segments & dividers) */}
+        {(() => {
+          const selSeg = segments.find((seg) => seg.monthIndex === selectedMonth);
+          if (!selSeg) return null;
+          return (
+            <G
+              key={`selected-segment-${selSeg.monthIndex}`}
+              onPress={() => handleMonthPress(selSeg.monthIndex)}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={`${selSeg.fullName} ${year}`}
+            >
+              {/* Selected Segment Fill with full uninterrupted border */}
+              <Path
+                d={selSeg.pathD}
+                fill={colors.today}
+                stroke={colors.todayDark ?? colors.today}
+                strokeWidth={1.5}
+                strokeLinejoin="round"
+              />
+
+              {/* Expanded Invisible Hit Path */}
+              <Path d={selSeg.expandedHitPathD} fill="rgba(0, 0, 0, 0.001)" />
+
+              {/* Month Text Label */}
+              <SvgText
+                x={selSeg.centerX}
+                y={selSeg.centerY + 4.5}
+                textAnchor="middle"
+                fontSize={13}
+                fontWeight="800"
+                fill="#FFFFFF"
+              >
+                {selSeg.shortName}
+              </SvgText>
+            </G>
+          );
+        })()}
 
         {/* Dedicated Synchronized Inner Year Progress Loop */}
         {/* Subtle Background Track */}
