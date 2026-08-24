@@ -14,7 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 
@@ -1029,40 +1029,183 @@ function LastDayVisibilityModal({
 
 function CircularMonthPickerPreview() {
   const { colors, isDark } = useTheme();
+  const { language } = useI18n();
+
+  // Season Labels
+  const seasons = language === 'ru'
+    ? { summer: 'ЛЕТО', spring: 'ВЕСНА', winter: 'ЗИМА', autumn: 'ОСЕНЬ' }
+    : language === 'en'
+    ? { summer: 'SUMMER', spring: 'SPRING', winter: 'WINTER', autumn: 'AUTUMN' }
+    : { summer: 'ЖАЗ', spring: 'КӨКТЕМ', winter: 'ҚЫС', autumn: 'КҮЗ' };
+
+  // Month Labels:
+  // Top: Jun, Jul, Aug (active)
+  // Right: May, Apr, Mar
+  // Bottom: Feb, Jan, Dec
+  // Left: Nov, Oct, Sep
+  const m = language === 'ru'
+    ? { jun: 'Июн', jul: 'Июл', aug: 'Авг', may: 'Май', apr: 'Апр', mar: 'Мар', feb: 'Фев', jan: 'Янв', dec: 'Дек', nov: 'Ноя', oct: 'Окт', sep: 'Сен', center: 'Август' }
+    : language === 'en'
+    ? { jun: 'Jun', jul: 'Jul', aug: 'Aug', may: 'May', apr: 'Apr', mar: 'Mar', feb: 'Feb', jan: 'Jan', dec: 'Dec', nov: 'Nov', oct: 'Oct', sep: 'Sep', center: 'August' }
+    : { jun: 'Мау', jul: 'Шіл', aug: 'Там', may: 'Мам', apr: 'Сәу', mar: 'Нау', feb: 'Ақп', jan: 'Қаң', dec: 'Жел', nov: 'Қар', oct: 'Қаз', sep: 'Қыр', center: 'Тамыз' };
+
+  const summerBg = isDark ? '#2E2416' : '#FEF9C3';
+  const springBg = isDark ? '#142E1F' : '#DCFCE7';
+  const winterBg = isDark ? '#182438' : '#DBEAFE';
+  const autumnBg = isDark ? '#2B1E17' : '#FFEDD5';
+
+  const seasonColorSummer = isDark ? '#FBBF24' : '#B45309';
+  const seasonColorSpring = isDark ? '#4ADE80' : '#15803D';
+  const seasonColorWinter = isDark ? '#94A3B8' : '#475569';
+  const seasonColorAutumn = isDark ? '#FB923C' : '#C2410C';
+
+  const textColor = isDark ? '#F1F5F9' : '#1E293B';
+  const borderColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+
   return (
-    <View style={styles.pickerPreviewBox}>
-      <View style={[styles.circularPreviewTrack, { borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)' }]}>
-        {/* 4 Season arcs */}
-        <View style={[styles.previewSeasonQuad, { top: 0, left: 6, right: 6, height: 4, backgroundColor: isDark ? '#3D2F17' : '#FEF08A' }]} />
-        <View style={[styles.previewSeasonQuad, { right: 0, top: 6, bottom: 6, width: 4, backgroundColor: isDark ? '#143823' : '#BBF7D0' }]} />
-        <View style={[styles.previewSeasonQuad, { bottom: 0, left: 6, right: 6, height: 4, backgroundColor: isDark ? '#1E2E4A' : '#BFDBFE' }]} />
-        <View style={[styles.previewSeasonQuad, { left: 0, top: 6, bottom: 6, width: 4, backgroundColor: isDark ? '#3B2314' : '#FED7AA' }]} />
-        {/* Selected month pill */}
-        <View style={[styles.previewSelectedPill, { backgroundColor: colors.today }]} />
-        {/* Central badge */}
-        <View style={[styles.previewCenterBadge, { backgroundColor: colors.sheetBg, borderColor: colors.inputBorder }]}>
-          <View style={{ width: 10, height: 2.5, borderRadius: 1.5, backgroundColor: colors.today }} />
-        </View>
-      </View>
+    <View style={styles.richPreviewBox}>
+      <Svg width="100%" height={142} viewBox="0 0 280 142">
+        {/* Season Labels */}
+        <SvgText x={140} y={13} fontSize={11} fontWeight="800" fill={seasonColorSummer} textAnchor="middle" letterSpacing={1.2}>
+          {seasons.summer}
+        </SvgText>
+        <SvgText x={269} y={75} fontSize={9.5} fontWeight="800" fill={seasonColorSpring} textAnchor="end" letterSpacing={0.6}>
+          {seasons.spring}
+        </SvgText>
+        <SvgText x={140} y={137} fontSize={11} fontWeight="800" fill={seasonColorWinter} textAnchor="middle" letterSpacing={1.2}>
+          {seasons.winter}
+        </SvgText>
+        <SvgText x={11} y={75} fontSize={9.5} fontWeight="800" fill={seasonColorAutumn} textAnchor="start" letterSpacing={0.6}>
+          {seasons.autumn}
+        </SvgText>
+
+        {/* Outer Racetrack Ring Background Segments */}
+        {/* 1. Spring (Right Arc): x=190 to 240, y=20 to 120 */}
+        <Path d="M 190 20 A 50 50 0 0 1 190 120 L 190 94 A 24 24 0 0 0 190 46 Z" fill={springBg} />
+        {/* 2. Autumn (Left Arc): x=90 to 40, y=20 to 120 */}
+        <Path d="M 90 120 A 50 50 0 0 1 90 20 L 90 46 A 24 24 0 0 0 90 94 Z" fill={autumnBg} />
+        {/* 3. Summer (Top Bar): x=90 to 190, y=20 to 46 */}
+        <Rect x={90} y={20} width={100} height={26} fill={summerBg} />
+        {/* 4. Winter (Bottom Bar): x=90 to 190, y=94 to 120 */}
+        <Rect x={90} y={94} width={100} height={26} fill={winterBg} />
+
+        {/* Active Month (August / Тамыз) highlighted in bright Cyan */}
+        <Rect x={73} y={20} width={43} height={26} rx={7} fill={colors.today} />
+
+        {/* Outer and Inner Borders */}
+        <Path
+          d="M 90 20 L 190 20 A 50 50 0 0 1 190 120 L 90 120 A 50 50 0 0 1 90 20 Z"
+          fill="none"
+          stroke={borderColor}
+          strokeWidth={1}
+        />
+        <Path
+          d="M 90 46 L 190 46 A 24 24 0 0 1 190 94 L 90 94 A 24 24 0 0 1 90 46 Z"
+          fill={colors.sheetBg}
+          stroke={borderColor}
+          strokeWidth={1}
+        />
+
+        {/* Segment Dividers */}
+        <Line x1={123} y1={20} x2={123} y2={46} stroke={borderColor} strokeWidth={1} />
+        <Line x1={157} y1={20} x2={157} y2={46} stroke={borderColor} strokeWidth={1} />
+        <Line x1={123} y1={94} x2={123} y2={120} stroke={borderColor} strokeWidth={1} />
+        <Line x1={157} y1={94} x2={157} y2={120} stroke={borderColor} strokeWidth={1} />
+
+        {/* Month Labels */}
+        {/* Top: Aug (Active Cyan with white text), Jul, Jun */}
+        <SvgText x={94} y={37} fontSize={11.5} fontWeight="800" fill="#FFFFFF" textAnchor="middle">{m.aug}</SvgText>
+        <SvgText x={140} y={37} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.jul}</SvgText>
+        <SvgText x={175} y={37} fontSize={11} fontWeight="600" fill={textColor} textAnchor="middle">{m.jun}</SvgText>
+
+        {/* Right: May, Apr, Mar */}
+        <SvgText x={217} y={50} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.may}</SvgText>
+        <SvgText x={228} y={74} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.apr}</SvgText>
+        <SvgText x={217} y={98} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.mar}</SvgText>
+
+        {/* Bottom: Dec, Jan, Feb */}
+        <SvgText x={94} y={111} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.dec}</SvgText>
+        <SvgText x={140} y={111} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.jan}</SvgText>
+        <SvgText x={175} y={111} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.feb}</SvgText>
+
+        {/* Left: Nov, Oct, Sep */}
+        <SvgText x={63} y={98} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.nov}</SvgText>
+        <SvgText x={52} y={74} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.oct}</SvgText>
+        <SvgText x={63} y={50} fontSize={10} fontWeight="600" fill={textColor} textAnchor="middle">{m.sep}</SvgText>
+
+        {/* Center Box: Racetrack Arrow Line + Center Full Month Name */}
+        {/* Clockwise Racetrack Arrow */}
+        <Path
+          d="M 120 94 L 175 94 A 16 16 0 0 0 191 78 L 191 62 A 16 16 0 0 0 175 46 L 90 46"
+          fill="none"
+          stroke={colors.today}
+          strokeWidth={2.2}
+          strokeLinecap="round"
+        />
+        {/* Arrowhead pointing Left at (90, 46) */}
+        <Path
+          d="M 95 43 L 89 46 L 95 49"
+          fill="none"
+          stroke={colors.today}
+          strokeWidth={2.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* Center Month Name */}
+        <SvgText x={140} y={75} fontSize={15.5} fontWeight="800" fill={textColor} textAnchor="middle" letterSpacing={-0.3}>
+          {m.center}
+        </SvgText>
+      </Svg>
     </View>
   );
 }
 
 function GridMonthPickerPreview() {
   const { colors, isDark } = useTheme();
+  const { language } = useI18n();
+
+  const shortMonths = language === 'ru'
+    ? ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+    : language === 'en'
+    ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    : ['Қаң', 'Ақп', 'Нау', 'Сәу', 'Мам', 'Мау', 'Шіл', 'Там', 'Қыр', 'Қаз', 'Қар', 'Жел'];
+
+  const activeIndex = 7; // Aug / Тамыз
+
   return (
-    <View style={styles.pickerPreviewBox}>
-      <View style={styles.gridPreviewMatrix}>
-        {[...Array(12)].map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.gridPreviewCell,
-              { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
-              i === 4 && { backgroundColor: colors.today },
-            ]}
-          />
-        ))}
+    <View style={styles.richPreviewBox}>
+      <View style={styles.gridPreviewContainer}>
+        {shortMonths.map((name, idx) => {
+          const isActive = idx === activeIndex;
+          return (
+            <View
+              key={idx}
+              style={[
+                styles.gridRichCell,
+                {
+                  backgroundColor: isActive
+                    ? colors.today
+                    : isDark
+                    ? 'rgba(255,255,255,0.06)'
+                    : 'rgba(0,0,0,0.035)',
+                  borderColor: isActive ? colors.today : isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.gridRichCellText,
+                  { color: isActive ? '#FFFFFF' : colors.text },
+                  isActive && { fontWeight: '800' },
+                ]}
+              >
+                {name}
+              </Text>
+              {isActive && <View style={styles.gridRichTodayDot} />}
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -1113,7 +1256,7 @@ function MonthPickerStyleModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg, maxWidth: 440 }]}>
           {/* Header */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.monthPickerStyle}</Text>
@@ -1122,52 +1265,60 @@ function MonthPickerStyleModal({
             </Pressable>
           </View>
 
-          {/* Vertical Option Cards */}
-          <View style={styles.verticalCardsContainer}>
+          {/* Large Visual Option Cards */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12, paddingBottom: 4 }}
+          >
             {options.map((opt) => {
               const isSelected = selected === opt.mode;
               return (
                 <AnimatedPressable
                   key={opt.mode}
-                  activeScale={0.97}
+                  activeScale={0.98}
                   style={[
-                    styles.verticalVisualCard,
+                    styles.styleModalCard,
                     { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
-                    isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today },
+                    isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today, borderWidth: 2 },
                   ]}
                   onPress={() => setSelected(opt.mode)}
                 >
-                  <View style={styles.verticalPreviewWrapper}>{opt.preview}</View>
-                  <View style={styles.verticalCardInfo}>
-                    <Text
+                  {/* Visual Graphic Mockup */}
+                  {opt.preview}
+
+                  {/* Bottom info row with Radio button */}
+                  <View style={styles.styleCardBottomRow}>
+                    <View style={{ flex: 1, paddingRight: 10 }}>
+                      <Text
+                        style={[
+                          styles.styleCardTitle,
+                          { color: colors.text },
+                          isSelected && { color: colors.today, fontWeight: '800' },
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                      <Text style={[styles.styleCardSubtitle, { color: colors.secondary }]}>
+                        {opt.sublabel}
+                      </Text>
+                    </View>
+                    <View
                       style={[
-                        styles.verticalCardLabel,
-                        { color: colors.text },
-                        isSelected && { color: colors.today, fontWeight: '700' },
+                        styles.visualRadio,
+                        { borderColor: colors.cardBorder },
+                        isSelected && { borderColor: colors.today },
                       ]}
                     >
-                      {opt.label}
-                    </Text>
-                    <Text style={[styles.verticalCardSublabel, { color: colors.secondary }]}>
-                      {opt.sublabel}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.visualRadio,
-                      { borderColor: colors.cardBorder },
-                      isSelected && { borderColor: colors.today },
-                    ]}
-                  >
-                    {isSelected && <View style={[styles.visualRadioInner, { backgroundColor: colors.today }]} />}
+                      {isSelected && <View style={[styles.visualRadioInner, { backgroundColor: colors.today }]} />}
+                    </View>
                   </View>
                 </AnimatedPressable>
               );
             })}
-          </View>
+          </ScrollView>
 
           {/* Confirm Button */}
-          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
+          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today, marginTop: 8 }]} onPress={handleConfirm}>
             <Text style={styles.modalContinueButtonText}>{t.common.save}</Text>
           </Pressable>
         </View>
@@ -1782,52 +1933,67 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circularPreviewTrack: {
-    width: 52,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+  styleModalCard: {
+    borderRadius: 20,
+    borderWidth: 1.5,
+    padding: 12,
     overflow: 'hidden',
   },
-  previewSeasonQuad: {
-    position: 'absolute',
-    borderRadius: 2,
-  },
-  previewSelectedPill: {
-    position: 'absolute',
-    top: 1.5,
-    right: 4,
-    width: 11,
-    height: 9,
-    borderRadius: 4.5,
-  },
-  previewCenterBadge: {
-    width: 24,
-    height: 16,
-    borderRadius: 6,
-    borderWidth: 0.5,
+  richPreviewBox: {
+    width: '100%',
+    height: 142,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 8,
   },
-  gridPreviewMatrix: {
-    width: 52,
-    height: 40,
+  gridPreviewContainer: {
+    width: '94%',
+    height: 126,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignContent: 'space-between',
+    paddingVertical: 2,
   },
-  gridPreviewCell: {
-    width: '30%',
-    height: 8,
-    borderRadius: 2,
+  gridRichCell: {
+    width: '23.5%',
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  gridRichCellText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
+  gridRichTodayDot: {
+    position: 'absolute',
+    top: 4,
+    right: 5,
+    width: 4.5,
+    height: 4.5,
+    borderRadius: 2.25,
+    backgroundColor: '#FFFFFF',
+  },
+  styleCardBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    paddingTop: 2,
+  },
+  styleCardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  styleCardSubtitle: {
+    fontSize: 12,
+    fontWeight: '400',
+    marginTop: 2,
   },
 });
