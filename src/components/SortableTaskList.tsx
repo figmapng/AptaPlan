@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Animated, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/use-theme';
 function DragHandle({ active, opacity }: { active: boolean; opacity?: any }) {
   const { colors, isDark } = useTheme();
   return (
-    <Animated.View style={[styles.invisibleHandle, opacity !== undefined && { opacity }]}> 
+    <Animated.View style={[styles.invisibleHandle, opacity !== undefined && { opacity }]}>
       <Svg width={14} height={14} viewBox="0 0 16 16" fill="none">
         <Path
           d="M2.5 5h11M2.5 8h11M2.5 11h11"
@@ -38,7 +38,14 @@ function TrashIcon({ color = 'white' }: { color?: string }) {
 interface Props<T> {
   data: T[];
   onReorder: (newData: T[]) => void;
-  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value, onDelete?: () => void) => void, onScrollEnabledChange?: (enabled: boolean) => void) => React.ReactNode;
+  renderItem: (
+    item: T,
+    isActive: boolean,
+    index: number,
+    totalCount: number,
+    onSwipeX?: (anim: Animated.Value, onDelete?: () => void) => void,
+    onScrollEnabledChange?: (enabled: boolean) => void
+  ) => React.ReactNode;
   keyExtractor: (item: T) => string;
   onScrollEnabledChange?: (enabled: boolean) => void;
   onAutoScroll?: (offsetDelta: number) => void;
@@ -50,17 +57,26 @@ interface Props<T> {
 
 interface RowItemProps<T> {
   item: T;
+  itemKey: string;
   index: number;
   totalCount: number;
   isActive: boolean;
   dragYAnim: Animated.Value;
+  activeAnim: Animated.Value;
   shiftAnim: Animated.Value;
   dragHandleOpacity?: any;
   isScrollingRef?: React.RefObject<boolean>;
   showRowFrame?: boolean;
   onScrollEnabledChange?: (enabled: boolean) => void;
-  renderItem: (item: T, isActive: boolean, index: number, totalCount: number, onSwipeX?: (anim: Animated.Value, onDelete?: () => void) => void, onScrollEnabledChange?: (enabled: boolean) => void) => React.ReactNode;
-  onLayout: (index: number, height: number) => void;
+  renderItem: (
+    item: T,
+    isActive: boolean,
+    index: number,
+    totalCount: number,
+    onSwipeX?: (anim: Animated.Value, onDelete?: () => void) => void,
+    onScrollEnabledChange?: (enabled: boolean) => void
+  ) => React.ReactNode;
+  onLayout: (key: string, height: number) => void;
   onGrant: (index: number) => void;
   onMove: (dy: number, moveY: number) => void;
   onRelease: () => void;
@@ -69,10 +85,12 @@ interface RowItemProps<T> {
 
 function SortableRowItem<T>({
   item,
+  itemKey,
   index,
   totalCount,
   isActive,
   dragYAnim,
+  activeAnim,
   shiftAnim,
   dragHandleOpacity,
   isScrollingRef,
@@ -100,28 +118,34 @@ function SortableRowItem<T>({
     }
   }, []);
 
-  const startLongPress = React.useCallback((event: any) => {
-    clearLongPress();
-    longPressRef.current = false;
-    touchStartRef.current = {
-      x: event.nativeEvent.pageX,
-      y: event.nativeEvent.pageY,
-    };
-    longPressTimerRef.current = setTimeout(() => {
-      longPressRef.current = true;
-      longPressTimerRef.current = null;
-      onScrollEnabledChange?.(false);
-      onGrant(index);
-    }, 280);
-  }, [clearLongPress, index, onGrant, onScrollEnabledChange]);
+  const startLongPress = React.useCallback(
+    (event: any) => {
+      clearLongPress();
+      longPressRef.current = false;
+      touchStartRef.current = {
+        x: event.nativeEvent.pageX,
+        y: event.nativeEvent.pageY,
+      };
+      longPressTimerRef.current = setTimeout(() => {
+        longPressRef.current = true;
+        longPressTimerRef.current = null;
+        onScrollEnabledChange?.(false);
+        onGrant(index);
+      }, 230);
+    },
+    [clearLongPress, index, onGrant, onScrollEnabledChange]
+  );
 
-  const handleTouchMove = React.useCallback((event: any) => {
-    if (longPressRef.current || !touchStartRef.current) return;
-    const { pageX, pageY } = event.nativeEvent;
-    const dx = Math.abs(pageX - touchStartRef.current.x);
-    const dy = Math.abs(pageY - touchStartRef.current.y);
-    if (dx > 6 || dy > 6) clearLongPress();
-  }, [clearLongPress]);
+  const handleTouchMove = React.useCallback(
+    (event: any) => {
+      if (longPressRef.current || !touchStartRef.current) return;
+      const { pageX, pageY } = event.nativeEvent;
+      const dx = Math.abs(pageX - touchStartRef.current.x);
+      const dy = Math.abs(pageY - touchStartRef.current.y);
+      if (dx > 8 || dy > 8) clearLongPress();
+    },
+    [clearLongPress]
+  );
 
   const handleSwipeX = React.useCallback((anim: Animated.Value, onDelete?: () => void) => {
     setSwipeXAnim(anim);
@@ -162,42 +186,77 @@ function SortableRowItem<T>({
       PanResponder.create({
         onStartShouldSetPanResponder: () => false,
         onStartShouldSetPanResponderCapture: () => false,
-        onMoveShouldSetPanResponder: (_, gs) => !isScrollingRef?.current && longPressRef.current && Math.abs(gs.dy) > 4 && Math.abs(gs.dy) > Math.abs(gs.dx),
-        onMoveShouldSetPanResponderCapture: (_, gs) => !isScrollingRef?.current && longPressRef.current && Math.abs(gs.dy) > 4 && Math.abs(gs.dy) > Math.abs(gs.dx),
+        onMoveShouldSetPanResponder: (_, gs) =>
+          !isScrollingRef?.current && longPressRef.current && (Math.abs(gs.dy) > 3 || Math.abs(gs.dx) > 3),
+        onMoveShouldSetPanResponderCapture: (_, gs) =>
+          !isScrollingRef?.current && longPressRef.current && (Math.abs(gs.dy) > 3 || Math.abs(gs.dx) > 3),
         onPanResponderTerminationRequest: () => false,
         onShouldBlockNativeResponder: () => true,
         onPanResponderGrant: () => {
           gestureActiveRef.current = true;
           clearLongPress();
           onScrollEnabledChange?.(false);
-          onGrant(index);
         },
         onPanResponderMove: (_, gs) => onMove(gs.dy, gs.moveY),
         onPanResponderRelease: () => {
           gestureActiveRef.current = false;
           longPressRef.current = false;
-          onScrollEnabledChange?.(true);
           onRelease();
         },
         onPanResponderTerminate: () => {
           gestureActiveRef.current = false;
           longPressRef.current = false;
-          onScrollEnabledChange?.(true);
           onTerminate();
         },
       }),
-    [index, onGrant, onMove, onRelease, onTerminate, onScrollEnabledChange, clearLongPress, isScrollingRef]
+    [onMove, onRelease, onTerminate, onScrollEnabledChange, clearLongPress, isScrollingRef]
   );
+
+  const rotateAnim = dragYAnim.interpolate({
+    inputRange: [-160, 0, 160],
+    outputRange: ['-1.5deg', '0deg', '1.5deg'],
+    extrapolate: 'clamp',
+  });
+
+  const scaleAnim = activeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.035],
+    extrapolate: 'clamp',
+  });
+
+  const shadowOpacityAnim = activeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, isDark ? 0.38 : 0.12],
+    extrapolate: 'clamp',
+  });
+
+  const translateXAnim = activeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 18],
+    extrapolate: 'clamp',
+  });
 
   const rowStyle = isActive
     ? [
         styles.rowWrapper,
-        !showRowFrame && styles.noRowFrame,
-        showRowFrame && styles.activeRow,
+        styles.activeRow,
         {
-          transform: [{ translateY: dragYAnim }, { scale: 1.02 }],
+          backgroundColor: isDark ? (themeColors.card || '#27272A') : '#FFFFFF',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
+          borderWidth: 1,
+          borderRadius: 14,
+          transform: [
+            { translateX: translateXAnim },
+            { translateY: dragYAnim },
+            { scale: scaleAnim },
+            { rotate: rotateAnim },
+          ],
           zIndex: 9999,
-          elevation: 10,
+          elevation: 8,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: shadowOpacityAnim,
+          shadowRadius: 12,
         },
       ]
     : [
@@ -205,12 +264,11 @@ function SortableRowItem<T>({
         !showRowFrame && styles.noRowFrame,
         {
           transform: [{ translateY: shiftAnim }],
+          zIndex: 1,
         },
       ];
 
-  const translateXStyle = swipeXAnim
-    ? { transform: [{ translateX: swipeXAnim }] }
-    : undefined;
+  const translateXStyle = swipeXAnim ? { transform: [{ translateX: swipeXAnim }] } : undefined;
 
   const handleTouchEnd = React.useCallback(() => {
     clearLongPress();
@@ -231,10 +289,10 @@ function SortableRowItem<T>({
       style={rowStyle}
       onLayout={(e) => {
         const h = e.nativeEvent.layout.height;
-        if (h > 0) onLayout(index, h);
+        if (h > 0) onLayout(itemKey, h);
       }}
     >
-      {/* Red Delete Button & Below Text - Matching user screenshot 100% */}
+      {/* Red Delete Button & Below Text */}
       <Animated.View
         style={{
           position: 'absolute',
@@ -262,7 +320,7 @@ function SortableRowItem<T>({
               opacity: trashOpacity,
             }}
           >
-            {/* Red Oval Pill - Compact height & stretches horizontally on pull */}
+            {/* Red Oval Pill */}
             <Animated.View
               style={{
                 width: swipeXAnim
@@ -281,13 +339,12 @@ function SortableRowItem<T>({
             >
               <TrashIcon color="white" />
             </Animated.View>
-            {/* Soft Grey Text Below */}
             <Text style={{ color: themeColors.secondary, fontSize: 10, fontWeight: '400', marginTop: 2 }}>Өшіру</Text>
           </Animated.View>
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Foreground Swiping Row (Translates Left over Red Pill) */}
+      {/* Foreground Swiping Row */}
       <Animated.View
         style={[
           {
@@ -321,7 +378,7 @@ export function SortableTaskList<T>({
   keyExtractor,
   onScrollEnabledChange,
   onAutoScroll,
-  gap = 4,
+  gap = 0,
   dragHandleOpacity,
   isScrollingRef,
   showRowFrame = true,
@@ -330,8 +387,9 @@ export function SortableTaskList<T>({
   const [activeIndex, setActiveIndex] = useState<number>(-1);
 
   const dragY = useRef(new Animated.Value(0)).current;
+  const activeAnim = useRef(new Animated.Value(0)).current;
 
-  // Per-item shift animated values keyed by item key string
+  // Item-key-based shift animated values
   const shiftAnims = useRef<Map<string, Animated.Value>>(new Map());
 
   const getShiftAnim = (key: string): Animated.Value => {
@@ -341,7 +399,14 @@ export function SortableTaskList<T>({
     return shiftAnims.current.get(key)!;
   };
 
-  const rowHeightsRef = useRef<{ [key: number]: number }>({});
+  const resetAllShifts = () => {
+    shiftAnims.current.forEach((anim) => {
+      anim.stopAnimation();
+      anim.setValue(0);
+    });
+  };
+
+  const itemHeightsRef = useRef<Map<string, number>>(new Map());
   const itemHeightRef = useRef<number>(54);
   const activeIndexRef = useRef<number>(-1);
   const targetIndexRef = useRef<number>(-1);
@@ -349,25 +414,42 @@ export function SortableTaskList<T>({
   const dataStateRef = useRef<T[]>([...data]);
   const keyExtractorRef = useRef(keyExtractor);
   keyExtractorRef.current = keyExtractor;
-  const pendingOrderRef = useRef<string | null>(null);
 
   const autoScrollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoScrollOffsetRef = useRef(0);
+  const pendingOrderRef = useRef<string | null>(null);
+  const isCommittingRef = useRef(false);
 
+  // Synchronize incoming external data changes without reverting local reorders
   useEffect(() => {
     dataStateRef.current = [...data];
     if (activeIndexRef.current === -1) {
       const incomingOrder = data.map((item) => keyExtractorRef.current(item)).join('|');
       if (pendingOrderRef.current) {
-        if (pendingOrderRef.current !== incomingOrder) return;
-        pendingOrderRef.current = null;
+        if (pendingOrderRef.current === incomingOrder) {
+          pendingOrderRef.current = null;
+        }
+        return;
       }
+      resetAllShifts();
       setDataState([...data]);
     }
   }, [data]);
 
-  const getItemStep = (idx: number) =>
-    (rowHeightsRef.current[idx] || itemHeightRef.current) + gap;
+  useLayoutEffect(() => {
+    if (isCommittingRef.current) {
+      isCommittingRef.current = false;
+      resetAllShifts();
+      dragY.stopAnimation();
+      dragY.setValue(0);
+      activeAnim.stopAnimation();
+      activeAnim.setValue(0);
+      activeIndexRef.current = -1;
+      targetIndexRef.current = -1;
+      startIndexRef.current = -1;
+      autoScrollOffsetRef.current = 0;
+    }
+  }, [dataState]);
 
   const stopAutoScroll = () => {
     if (autoScrollTimer.current) {
@@ -399,33 +481,90 @@ export function SortableTaskList<T>({
     }
   };
 
-  const updateNeighborShifts = (active: number, target: number) => {
-    const step = getItemStep(active);
+  const getDistanceBetween = (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return 0;
+    let dist = 0;
+    if (fromIdx < toIdx) {
+      for (let i = fromIdx + 1; i <= toIdx; i++) {
+        const item = dataStateRef.current[i];
+        if (!item) continue;
+        const itemKey = keyExtractorRef.current(item);
+        const h = itemHeightsRef.current.get(itemKey) || itemHeightRef.current;
+        dist += h + gap;
+      }
+    } else {
+      for (let i = toIdx; i < fromIdx; i++) {
+        const item = dataStateRef.current[i];
+        if (!item) continue;
+        const itemKey = keyExtractorRef.current(item);
+        const h = itemHeightsRef.current.get(itemKey) || itemHeightRef.current;
+        dist += h + gap;
+      }
+    }
+    return dist;
+  };
+
+  const updateNeighborShifts = (startIdx: number, targetIdx: number) => {
+    const activeItem = dataStateRef.current[startIdx];
+    if (!activeItem) return;
+    const activeKey = keyExtractorRef.current(activeItem);
+    const activeHeight = (itemHeightsRef.current.get(activeKey) || itemHeightRef.current) + gap;
+
     dataStateRef.current.forEach((item, i) => {
-      if (i === active) return;
+      if (i === startIdx) return;
       const key = keyExtractorRef.current(item);
       let toValue = 0;
 
-      if (active < target && i > active && i <= target) {
-        toValue = -step;
-      } else if (active > target && i < active && i >= target) {
-        toValue = step;
+      if (startIdx < targetIdx && i > startIdx && i <= targetIdx) {
+        toValue = -activeHeight;
+      } else if (startIdx > targetIdx && i >= targetIdx && i < startIdx) {
+        toValue = activeHeight;
       }
 
       Animated.spring(getShiftAnim(key), {
         toValue,
-        friction: 8,
-        tension: 80,
+        stiffness: 270,
+        damping: 26,
+        mass: 0.9,
         useNativeDriver: true,
       }).start();
     });
   };
 
-  const stopAndResetAllShifts = () => {
-    shiftAnims.current.forEach((anim) => {
-      anim.stopAnimation();
-      anim.setValue(0);
-    });
+  const getTargetIndex = (startIdx: number, dy: number): number => {
+    const items = dataStateRef.current;
+    const count = items.length;
+    if (count <= 1) return startIdx;
+
+    if (dy > 0) {
+      let accumulated = 0;
+      for (let i = startIdx + 1; i < count; i++) {
+        const item = items[i];
+        const itemKey = keyExtractorRef.current(item);
+        const h = (itemHeightsRef.current.get(itemKey) || itemHeightRef.current) + gap;
+        if (dy > accumulated + h * 0.45) {
+          accumulated += h;
+        } else {
+          return i - 1;
+        }
+      }
+      return count - 1;
+    } else if (dy < 0) {
+      let accumulated = 0;
+      const absDy = -dy;
+      for (let i = startIdx - 1; i >= 0; i--) {
+        const item = items[i];
+        const itemKey = keyExtractorRef.current(item);
+        const h = (itemHeightsRef.current.get(itemKey) || itemHeightRef.current) + gap;
+        if (absDy > accumulated + h * 0.45) {
+          accumulated += h;
+        } else {
+          return i + 1;
+        }
+      }
+      return 0;
+    }
+    return startIdx;
   };
 
   const handleGrant = useRef((index: number) => {
@@ -436,32 +575,66 @@ export function SortableTaskList<T>({
 
     dragY.stopAnimation();
     dragY.setValue(0);
-    stopAndResetAllShifts();
+    resetAllShifts();
 
     onScrollEnabledChange?.(false);
     setActiveIndex(index);
+
+    // Fluid lift spring
+    Animated.spring(activeAnim, {
+      toValue: 1,
+      stiffness: 300,
+      damping: 24,
+      mass: 0.8,
+      useNativeDriver: true,
+    }).start();
 
     if (process.env.EXPO_OS === 'ios') {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   }).current;
 
+  const applyRubberBand = (overshoot: number, maxDistance: number = 22): number => {
+    if (overshoot <= 0) return 0;
+    return (overshoot * maxDistance) / (overshoot + maxDistance);
+  };
+
+  const clampDragDy = (startIdx: number, rawDy: number): number => {
+    const count = dataStateRef.current.length;
+    if (count <= 1) {
+      return rawDy > 0 ? applyRubberBand(rawDy, 16) : -applyRubberBand(-rawDy, 16);
+    }
+
+    const maxUp = getDistanceBetween(0, startIdx);
+    const maxDown = getDistanceBetween(startIdx, count - 1);
+
+    if (rawDy < -maxUp) {
+      const overshoot = -rawDy - maxUp;
+      return -maxUp - applyRubberBand(overshoot, 22);
+    } else if (rawDy > maxDown) {
+      const overshoot = rawDy - maxDown;
+      return maxDown + applyRubberBand(overshoot, 22);
+    }
+
+    return rawDy;
+  };
+
   const handleMove = useRef((dy: number, moveY: number) => {
     const active = activeIndexRef.current;
     if (active === -1) return;
 
-    const adjustedDy = dy + autoScrollOffsetRef.current;
-    dragY.setValue(adjustedDy);
+    const startIdx = startIndexRef.current;
+    const rawAdjustedDy = dy + autoScrollOffsetRef.current;
+    const clampedDy = clampDragDy(startIdx, rawAdjustedDy);
+
+    dragY.setValue(clampedDy);
     checkAutoScroll(moveY);
 
-    const step = getItemStep(active);
-    const startIdx = startIndexRef.current;
-    const offsetSteps = Math.round(adjustedDy / step);
-    const newTargetIdx = Math.max(0, Math.min(dataStateRef.current.length - 1, startIdx + offsetSteps));
+    const newTargetIdx = getTargetIndex(startIdx, clampedDy);
 
     if (newTargetIdx !== targetIndexRef.current) {
       targetIndexRef.current = newTargetIdx;
-      updateNeighborShifts(active, newTargetIdx);
+      updateNeighborShifts(startIdx, newTargetIdx);
       if (process.env.EXPO_OS === 'ios') {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
@@ -475,44 +648,60 @@ export function SortableTaskList<T>({
     if (active === -1) return;
 
     const targetIdx = targetIndexRef.current !== -1 ? targetIndexRef.current : startIdx;
-    const step = getItemStep(active);
-    const targetDragY = (targetIdx - startIdx) * step;
+    const targetDragY =
+      targetIdx > startIdx
+        ? getDistanceBetween(startIdx, targetIdx)
+        : targetIdx < startIdx
+        ? -getDistanceBetween(targetIdx, startIdx)
+        : 0;
 
-    // Smoothly spring active item into target slot over the shifted neighbors
-    Animated.spring(dragY, {
-      toValue: targetDragY,
-      tension: 160,
-      friction: 16,
-      useNativeDriver: true,
-    }).start(() => {
-      // Create new list order
-      const list = [...dataStateRef.current];
-      if (targetIdx !== startIdx) {
-        const [movedItem] = list.splice(startIdx, 1);
-        list.splice(targetIdx, 0, movedItem);
+    // Smooth, graceful drop & settling physics
+    Animated.parallel([
+      Animated.spring(dragY, {
+        toValue: targetDragY,
+        stiffness: 260,
+        damping: 26,
+        mass: 0.95,
+        useNativeDriver: true,
+      }),
+      Animated.spring(activeAnim, {
+        toValue: 0,
+        stiffness: 240,
+        damping: 25,
+        mass: 0.95,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      if (targetIdx === startIdx) {
+        resetAllShifts();
+        dragY.setValue(0);
+        activeAnim.setValue(0);
+        activeIndexRef.current = -1;
+        targetIndexRef.current = -1;
+        startIndexRef.current = -1;
+        setActiveIndex(-1);
+        onScrollEnabledChange?.(true);
+        return;
       }
 
-      // Reset shifts and commit new data order simultaneously
-      stopAndResetAllShifts();
-      dragY.setValue(0);
-      autoScrollOffsetRef.current = 0;
+      // Create new list order
+      const list = [...dataStateRef.current];
+      const [movedItem] = list.splice(startIdx, 1);
+      list.splice(targetIdx, 0, movedItem);
 
       dataStateRef.current = list;
       pendingOrderRef.current = list.map((item) => keyExtractorRef.current(item)).join('|');
-      setDataState(list);
+      isCommittingRef.current = true;
 
-      activeIndexRef.current = -1;
-      targetIndexRef.current = -1;
-      startIndexRef.current = -1;
+      // Commit the new order into React state
+      setDataState(list);
       setActiveIndex(-1);
 
+      // Persist reorder to database in background
       requestAnimationFrame(() => {
-        stopAndResetAllShifts();
-        dragY.setValue(0);
+        onReorder(list);
+        onScrollEnabledChange?.(true);
       });
-
-      onReorder(list);
-      onScrollEnabledChange?.(true);
     });
 
     if (process.env.EXPO_OS === 'ios') {
@@ -522,9 +711,11 @@ export function SortableTaskList<T>({
 
   const handleTerminate = useRef(() => {
     stopAutoScroll();
-    stopAndResetAllShifts();
+    resetAllShifts();
     dragY.stopAnimation();
     dragY.setValue(0);
+    activeAnim.stopAnimation();
+    activeAnim.setValue(0);
     activeIndexRef.current = -1;
     targetIndexRef.current = -1;
     startIndexRef.current = -1;
@@ -532,8 +723,8 @@ export function SortableTaskList<T>({
     onScrollEnabledChange?.(true);
   }).current;
 
-  const handleLayout = useRef((index: number, height: number) => {
-    rowHeightsRef.current[index] = height;
+  const handleLayout = useRef((key: string, height: number) => {
+    itemHeightsRef.current.set(key, height);
     itemHeightRef.current = height;
   }).current;
 
@@ -547,10 +738,12 @@ export function SortableTaskList<T>({
           <MemoRowItem
             key={keyStr}
             item={item}
+            itemKey={keyStr}
             index={index}
             totalCount={dataState.length}
             isActive={isActive}
             dragYAnim={dragY}
+            activeAnim={activeAnim}
             shiftAnim={getShiftAnim(keyStr)}
             dragHandleOpacity={dragHandleOpacity}
             onScrollEnabledChange={onScrollEnabledChange}
@@ -581,7 +774,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 0,
     backgroundColor: 'transparent',
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   noRowFrame: {
     backgroundColor: 'transparent',
@@ -589,8 +782,7 @@ const styles = StyleSheet.create({
     borderRadius: 0,
   },
   activeRow: {
-    backgroundColor: colors.inputBg,
-    borderRadius: 12,
+    borderRadius: 14,
   },
   contentWrapper: {
     flex: 1,
@@ -608,13 +800,5 @@ const styles = StyleSheet.create({
   invisibleHandle: {
     width: 32,
     height: 32,
-  },
-  deleteBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 9,
-    backgroundColor: '#FFECEC',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

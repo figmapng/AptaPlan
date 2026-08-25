@@ -51,7 +51,7 @@ export const DayCard = memo(function DayCardComponent({
   const isSaturday = date.getDay() === 6;
   const isWeekend = isSunday || isSaturday;
 
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, theme } = useTheme();
   const { t } = useI18n();
   const completedCount = tasks.filter((task) => task.isCompleted).length;
   const cardRef = useRef<View>(null);
@@ -148,7 +148,13 @@ export const DayCard = memo(function DayCardComponent({
 
   const numOuterBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
   const numInnerBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
-  const numTextColor = today ? (isDark && colors.today === '#E4E4E7' ? '#18181B' : colors.today) : isWeekend ? colors.weekendNumText : colors.dateNumText;
+  const numTextColor = theme === 'ocean' && !isWeekend && !today
+    ? '#565B66'
+    : today
+    ? (isDark && colors.today === '#E4E4E7' ? '#18181B' : colors.today)
+    : isWeekend
+    ? colors.weekendNumText
+    : colors.dateNumText;
 
   const dayNameColor = today ? (colors.activeHeaderText || '#FFFFFF') : isWeekend ? colors.sundayText : colors.text;
   const progressCountColor = today ? (colors.activeHeaderText || '#FFFFFF') : isWeekend ? (isDark ? '#FFAAA4' : '#7B4545') : colors.text;
@@ -420,4 +426,3 @@ export const DayCard = memo(function DayCardComponent({
     </Animated.View>
   );
 });
-

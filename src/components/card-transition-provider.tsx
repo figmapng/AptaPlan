@@ -52,7 +52,7 @@ type CarouselCardProps = {
   maxHeight: number;
   scrollEnabled: boolean;
   handleListLayout: (h: number) => void;
-  handleReorder: (newData: Task[]) => void;
+  handleReorder: (newData: Task[], targetDate?: Date) => void;
   handleScrollEnabled: (enabled: boolean) => void;
   isScrollingRef: React.RefObject<boolean>;
   handleTaskListScroll: () => void;
@@ -61,6 +61,7 @@ type CarouselCardProps = {
   closeCard: () => void;
   handlePendingDelete: (task: Task) => void;
   isTransitionSettled?: boolean;
+  headerPanHandlers?: any;
 };
 
 const CarouselCard = React.memo(function CarouselCard({
@@ -76,6 +77,7 @@ const CarouselCard = React.memo(function CarouselCard({
   emptyCardHeight,
   maxHeight,
   scrollEnabled,
+  pageIndex = 0,
   handleListLayout,
   handleReorder,
   handleScrollEnabled,
@@ -86,7 +88,8 @@ const CarouselCard = React.memo(function CarouselCard({
   closeCard,
   handlePendingDelete,
   isTransitionSettled = true,
-}: CarouselCardProps) {
+  headerPanHandlers,
+}: CarouselCardProps & { pageIndex?: number }) {
   const cardKey = useMemo(() => toDateKey(cardDate), [cardDate]);
   const cardTasks = useMemo(() => tasks.filter((t: Task) => t.date === cardKey), [tasks, cardKey]);
   const completedCount = useMemo(() => cardTasks.filter((t: Task) => t.isCompleted).length, [cardTasks]);
@@ -101,7 +104,7 @@ const CarouselCard = React.memo(function CarouselCard({
   }, []);
 
   const [localListHeight, setLocalListHeight] = useState(0);
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, theme } = useTheme();
   const { t } = useI18n();
   const cardTaskCount = cardTasks.length;
   const taskListHeight = localListHeight > 0 ? localListHeight : (cardTaskCount > 0 ? cardTaskCount * 48 + 12 : 80);
@@ -110,7 +113,7 @@ const CarouselCard = React.memo(function CarouselCard({
   const cardTargetHeight = Math.min(maxHeight, cardContentHeight);
 
   const cardTranslateX = Animated.add(virtualIndex * width, carouselX);
-  const isCenter = virtualIndex === 0;
+  const isCenter = virtualIndex === pageIndex;
   const isMonthOrigin = currentFrame.width < 100;
   const isWideOrigin = currentFrame.width > width * 0.7;
 
@@ -142,7 +145,7 @@ const CarouselCard = React.memo(function CarouselCard({
           }),
           top: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: [currentFrame.y, insets.top + 62],
+            outputRange: [currentFrame.y, insets.top + 64],
             extrapolate: 'clamp',
           }),
           width: progress.interpolate({
@@ -278,6 +281,7 @@ const CarouselCard = React.memo(function CarouselCard({
         }}
       >
         <Animated.View
+          {...(headerPanHandlers || {})}
           style={{
             height: progress.interpolate({
               inputRange: [0, 1],
@@ -393,7 +397,9 @@ const CarouselCard = React.memo(function CarouselCard({
                     extrapolate: 'clamp',
                   }),
                   fontWeight: isTodayCard ? '700' : '600',
-                  color: isTodayCard
+                  color: theme === 'ocean' && !isWeekendCard && !isTodayCard
+                    ? '#565B66'
+                    : isTodayCard
                     ? colors.today
                     : isWeekendCard
                     ? colors.weekendNumText
@@ -430,7 +436,9 @@ const CarouselCard = React.memo(function CarouselCard({
                     extrapolate: 'clamp',
                   }),
                   fontWeight: isTodayCard ? '700' : '600',
-                  color: isTodayCard
+                  color: theme === 'ocean' && !isWeekendCard && !isTodayCard
+                    ? '#565B66'
+                    : isTodayCard
                     ? (colors.today === '#FFFFFF' ? '#18181B' : colors.today)
                     : isWeekendCard
                     ? colors.weekendNumText
@@ -604,7 +612,7 @@ const CarouselCard = React.memo(function CarouselCard({
                   <SortableTaskList
                     data={cardTasks}
                     keyExtractor={(task) => `${task.id}:${task.date}`}
-                    onReorder={(newData) => void handleReorder(newData)}
+                    onReorder={(newData) => void handleReorder(newData, cardDate)}
                     onScrollEnabledChange={handleScrollEnabled}
                     onAutoScroll={handleAutoScroll}
                     isScrollingRef={isScrollingRef}
@@ -676,6 +684,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
   const [pageIndex, setPageIndex] = useState(0);
   const pageIndexRef = useRef(0);
+  const [jumpTargetIndex, setJumpTargetIndex] = useState<number | null>(null);
 
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -702,6 +711,19 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     return addDays(transition.date, pageIndex);
   }, [transition?.date, pageIndex]);
 
+  const renderedIndices = useMemo(() => {
+    if (!isTransitionSettled) return [0];
+    const set = new Set<number>([pageIndex - 1, pageIndex, pageIndex + 1]);
+    if (jumpTargetIndex !== null) {
+      const min = Math.min(pageIndex, jumpTargetIndex);
+      const max = Math.max(pageIndex, jumpTargetIndex);
+      for (let i = min - 1; i <= max + 1; i++) {
+        set.add(i);
+      }
+    }
+    return Array.from(set).sort((a, b) => a - b);
+  }, [isTransitionSettled, pageIndex, jumpTargetIndex]);
+
   const activeDateKey = toDateKey(activeCardDate);
   const activeDayTasks = tasks.filter((t) => t.date === activeDateKey);
   const taskCount = activeDayTasks.length;
@@ -711,7 +733,9 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const maxHeight = height - (insets.top + 68) - (Math.max(insets.bottom + 8, 16) + 60) - 12;
   const targetHeight = Math.min(maxHeight, contentHeight);
 
+  const scrollEnabledRef = useRef(true);
   const handleScrollEnabled = useCallback((enabled: boolean) => {
+    scrollEnabledRef.current = enabled;
     setScrollEnabled(enabled);
   }, []);
 
@@ -745,8 +769,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   };
 
   const handleReorder = useCallback(
-    async (newData: Task[]) => {
-      const dateKey = toDateKey(activeCardDate);
+    async (newData: Task[], targetDate?: Date) => {
+      const dateKey = toDateKey(targetDate ?? activeCardDate);
       const db = await getDatabase();
       const updatedAt = new Date().toISOString();
 
@@ -772,6 +796,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     setIsTransitionSettled(false);
     setPageIndex(0);
     pageIndexRef.current = 0;
+    setJumpTargetIndex(null);
     carouselX.setValue(0);
   };
 
@@ -790,6 +815,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     setMeasuredListHeight(cardTasks.length * 48);
     setPageIndex(0);
     pageIndexRef.current = 0;
+    setJumpTargetIndex(null);
     carouselX.setValue(0);
     setTransition(transitionRef.current);
 
@@ -817,8 +843,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
     Animated.timing(progress, {
       toValue: 0,
-      duration: 190,
-      easing: Easing.bezier(0.2, 0.8, 0.25, 1),
+      duration: 230,
+      easing: Easing.bezier(0.22, 1, 0.36, 1),
       useNativeDriver: false,
     }).start(() => {
       isAnimatingRef.current = false;
@@ -847,118 +873,78 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     }
     Animated.spring(progress, {
       toValue: 1,
+      stiffness: 320,
+      damping: 28,
+      mass: 0.8,
       useNativeDriver: false,
-      bounciness: 0,
-      speed: 24,
     }).start();
   };
-
-  const isDraggingVertically = useRef(false);
 
   const carouselPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_, gesture) => {
-        const isHorizontal = Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2;
-        const isVerticalDown = gesture.dy > 12 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.3;
-        return isHorizontal || isVerticalDown;
+        if (!scrollEnabledRef.current || isAnimatingRef.current) return false;
+        return Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2;
       },
       onMoveShouldSetPanResponderCapture: (_, gesture) => {
-        const isHorizontal = Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2;
-        const isVerticalDown = gesture.dy > 12 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.3;
-        return isHorizontal || isVerticalDown;
+        if (!scrollEnabledRef.current || isAnimatingRef.current) return false;
+        return Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2;
       },
-      onPanResponderGrant: (_, gesture) => {
-        isDraggingVertically.current = gesture.dy > 8 && Math.abs(gesture.dy) > Math.abs(gesture.dx);
+      onPanResponderGrant: () => {
+        carouselX.stopAnimation();
       },
       onPanResponderMove: (_, gesture) => {
-        if (isDraggingVertically.current || (gesture.dy > 10 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.3)) {
-          isDraggingVertically.current = true;
-          const newProg = Math.max(0, Math.min(1, 1 - gesture.dy / 280));
-          progress.setValue(newProg);
-        } else {
-          carouselX.setValue(-pageIndexRef.current * width + gesture.dx);
-        }
+        if (!scrollEnabledRef.current || isAnimatingRef.current) return;
+        carouselX.setValue(-pageIndexRef.current * width + gesture.dx);
       },
       onPanResponderRelease: (_, gesture) => {
-        if (isDraggingVertically.current) {
-          isDraggingVertically.current = false;
-          if (gesture.dy > 70 || gesture.vy > 0.5) {
-            closeCard();
-          } else {
-            Animated.spring(progress, {
-              toValue: 1,
-              useNativeDriver: false,
-              bounciness: 0,
-              speed: 24,
-            }).start();
-          }
-          return;
-        }
-
-        const threshold = (width - 32) * 0.22;
+        if (!scrollEnabledRef.current || isAnimatingRef.current) return;
+        const threshold = (width - 32) * 0.16;
         const velocity = gesture.vx;
 
-        if (gesture.dx < -threshold || velocity < -0.35) {
-          if (settings.haptics && Platform.OS === 'ios') {
-            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }
-          const nextIndex = pageIndexRef.current + 1;
-          pageIndexRef.current = nextIndex;
-          setPageIndex(nextIndex);
-          if (transitionRef.current?.date) {
-            const newKey = toDateKey(addDays(transitionRef.current.date, nextIndex));
-            void loadRange(newKey, newKey);
-          }
-          Animated.spring(carouselX, {
-            toValue: -nextIndex * width,
-            useNativeDriver: false,
-            bounciness: 0,
-            speed: 20,
-          }).start();
-        } else if (gesture.dx > threshold || velocity > 0.35) {
-          if (settings.haptics && Platform.OS === 'ios') {
-            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }
-          const prevIndex = pageIndexRef.current - 1;
-          pageIndexRef.current = prevIndex;
-          setPageIndex(prevIndex);
-          if (transitionRef.current?.date) {
-            const newKey = toDateKey(addDays(transitionRef.current.date, prevIndex));
-            void loadRange(newKey, newKey);
-          }
-          Animated.spring(carouselX, {
-            toValue: -prevIndex * width,
-            useNativeDriver: false,
-            bounciness: 0,
-            speed: 20,
-          }).start();
-        } else {
-          setPageIndex(pageIndexRef.current);
-          Animated.spring(carouselX, {
-            toValue: -pageIndexRef.current * width,
-            useNativeDriver: false,
-            bounciness: 4,
-          }).start();
+        let targetIndex = pageIndexRef.current;
+        if (gesture.dx < -threshold || velocity < -0.3) {
+          targetIndex = pageIndexRef.current + 1;
+        } else if (gesture.dx > threshold || velocity > 0.3) {
+          targetIndex = pageIndexRef.current - 1;
         }
+
+        if (targetIndex !== pageIndexRef.current && settings.haptics && Platform.OS === 'ios') {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+
+        isAnimatingRef.current = true;
+        if (targetIndex !== pageIndexRef.current) {
+          pageIndexRef.current = targetIndex;
+          setPageIndex(targetIndex);
+        }
+
+        Animated.spring(carouselX, {
+          toValue: -targetIndex * width,
+          tension: 300,
+          friction: 28,
+          useNativeDriver: false,
+        }).start(() => {
+          if (transitionRef.current?.date) {
+            const fromKey = toDateKey(addDays(transitionRef.current.date, targetIndex - 2));
+            const toKey = toDateKey(addDays(transitionRef.current.date, targetIndex + 2));
+            void loadRange(fromKey, toKey);
+          }
+          isAnimatingRef.current = false;
+        });
       },
       onPanResponderTerminate: () => {
-        if (isDraggingVertically.current) {
-          isDraggingVertically.current = false;
-          Animated.spring(progress, {
-            toValue: 1,
-            useNativeDriver: false,
-            bounciness: 0,
-            speed: 24,
-          }).start();
-          return;
-        }
-        setPageIndex(pageIndexRef.current);
+        isAnimatingRef.current = true;
         Animated.spring(carouselX, {
           toValue: -pageIndexRef.current * width,
+          tension: 300,
+          friction: 28,
           useNativeDriver: false,
-        }).start();
+        }).start(() => {
+          isAnimatingRef.current = false;
+        });
       },
     })
   ).current;
@@ -1005,16 +991,17 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
         </Animated.View>
 
         {current && (
-          <View {...carouselPanResponder.panHandlers} pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
-            <Pressable onPress={closeCard} style={StyleSheet.absoluteFillObject}>
-              <Animated.View
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  {
-                    backgroundColor: colors.background,
-                    opacity: progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, 0.9],
+          <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
+            <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject} {...carouselPanResponder.panHandlers}>
+              <Pressable onPress={closeCard} style={StyleSheet.absoluteFillObject}>
+                <Animated.View
+                  style={[
+                    StyleSheet.absoluteFillObject,
+                    {
+                      backgroundColor: colors.background,
+                      opacity: progress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 0.9],
                       extrapolate: 'clamp',
                     }),
                   },
@@ -1023,8 +1010,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
             </Pressable>
 
             <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
-              {(isTransitionSettled ? [-1, 0, 1] : [0]).map((offset) => {
-                const virtualIndex = pageIndex + offset;
+              {renderedIndices.map((virtualIndex) => {
                 const cardDate = addDays(current.date, virtualIndex);
                 const cardKey = toDateKey(cardDate);
 
@@ -1032,6 +1018,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   <CarouselCard
                     key={cardKey}
                     virtualIndex={virtualIndex}
+                    pageIndex={pageIndex}
                     cardDate={cardDate}
                     currentFrame={current.frame}
                     targetHeight={targetHeight}
@@ -1053,45 +1040,64 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     closeCard={closeCard}
                     handlePendingDelete={handlePendingDelete}
                     isTransitionSettled={isTransitionSettled}
+                    headerPanHandlers={carouselPanResponder.panHandlers}
                   />
                 );
               })}
             </View>
+          </View>
 
-            {/* Top Compact Week Strip placed directly above the open card */}
-            <Animated.View
-              pointerEvents="box-none"
-              style={{
-                position: 'absolute',
-                top: insets.top + 2,
-                left: 0,
-                right: 0,
-                zIndex: 10001,
-                opacity: progress.interpolate({
-                  inputRange: [0.5, 1],
-                  outputRange: [0, 1],
-                }),
-              }}
-            >
-              <CompactWeekStrip
-                selectedDate={activeCardDate}
-                carouselX={carouselX}
-                screenWidth={width}
-                pageIndex={pageIndex}
-                onSelectDate={(targetDate) => {
-                  const diff = Math.round((targetDate.getTime() - current.date.getTime()) / (1000 * 60 * 60 * 24));
-                  const newIndex = diff;
+          {/* Top Compact Week Strip placed directly above the open card */}
+          <Animated.View
+            pointerEvents="box-none"
+            style={{
+              position: 'absolute',
+              top: insets.top + 4,
+              left: 0,
+              right: 0,
+              zIndex: 10001,
+              opacity: progress.interpolate({
+                inputRange: [0.5, 1],
+                outputRange: [0, 1],
+              }),
+            }}
+          >
+            <CompactWeekStrip
+              selectedDate={activeCardDate}
+              originDate={current.date}
+              carouselX={carouselX}
+              screenWidth={width}
+              pageIndex={pageIndex}
+              onSelectDate={(targetDate) => {
+                if (isAnimatingRef.current) return;
+                const diff = Math.round((targetDate.getTime() - current.date.getTime()) / (1000 * 60 * 60 * 24));
+                const newIndex = diff;
+                if (newIndex === pageIndexRef.current) return;
+
+                if (settings.haptics && Platform.OS === 'ios') {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+
+                isAnimatingRef.current = true;
+                setJumpTargetIndex(newIndex);
+
+                Animated.spring(carouselX, {
+                  toValue: -newIndex * width,
+                  tension: 300,
+                  friction: 28,
+                  useNativeDriver: false,
+                }).start(() => {
                   pageIndexRef.current = newIndex;
                   setPageIndex(newIndex);
-                  Animated.spring(carouselX, {
-                    toValue: -newIndex * width,
-                    useNativeDriver: false,
-                    bounciness: 0,
-                    speed: 24,
-                  }).start();
-                }}
-              />
-            </Animated.View>
+                  const fromKey = toDateKey(addDays(current.date, newIndex - 2));
+                  const toKey = toDateKey(addDays(current.date, newIndex + 2));
+                  void loadRange(fromKey, toKey);
+                  setJumpTargetIndex(null);
+                  isAnimatingRef.current = false;
+                });
+              }}
+            />
+          </Animated.View>
 
             <Animated.View
               pointerEvents="none"

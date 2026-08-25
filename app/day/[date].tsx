@@ -117,15 +117,6 @@ export default function DayScreen() {
       router.replace('/');
     }
   };
-  const detailSwipeResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gesture) => gesture.dy > 14 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
-    onPanResponderMove: (_, gesture) => {
-      beginInteractiveClose();
-      updateInteractiveClose(gesture.dy);
-    },
-    onPanResponderRelease: (_, gesture) => endInteractiveClose(gesture.dy, gesture.vy),
-    onPanResponderTerminate: (_, gesture) => endInteractiveClose(gesture.dy, gesture.vy),
-  });
   const beginAdding = () => {
     setEditingTask(null);
     setIsAdding(true);
@@ -154,7 +145,7 @@ export default function DayScreen() {
         gap: 8,
       }}
     >
-      <View {...detailSwipeResponder.panHandlers}>
+      <View>
         <CompactWeekStrip
           selectedDate={selectedDate}
           onSelectDate={(d) => {
@@ -179,7 +170,6 @@ export default function DayScreen() {
         }}
       >
         <View
-          {...detailSwipeResponder.panHandlers}
           style={{
             minHeight: 48,
             paddingHorizontal: 12,

@@ -3,6 +3,8 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { format } from 'date-fns';
 import type { Language } from '@/types/settings';
 import { getTranslations } from '@/i18n/formatters';
+import { cancelReminder, scheduleReminder } from '@/services/notification-service';
+import type { TaskInput } from '@/types/task';
 
 export interface BackupData {
   version: number;
@@ -151,6 +153,9 @@ export async function importBackup(
             style: 'destructive',
             onPress: async () => {
               try {
+                const previousNotificationIds = await db.getAllAsync<{ notificationId: string }>(
+                  'SELECT notificationId FROM tasks WHERE notificationId IS NOT NULL'
+                );
                 await db.withTransactionAsync(async () => {
                   await db.execAsync('DELETE FROM task_occurrences; DELETE FROM tasks; DELETE FROM settings;');
 
@@ -163,12 +168,13 @@ export async function importBackup(
                         : null;
                     await db.runAsync(
                       `INSERT OR REPLACE INTO tasks (
-                        id, title, note, date, time, isCompleted, priority,
+                        id, externalId, title, note, date, time, isCompleted, priority,
                         repeatType, repeatInterval, repeatConfig, notificationOffset, notificationId,
                         sortOrder, createdAt, updatedAt, deletedAt
-                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                       [
                         taskItem.id,
+                        taskItem.externalId ?? null,
                         taskItem.title,
                         taskItem.note ?? null,
                         taskItem.date,
@@ -179,7 +185,7 @@ export async function importBackup(
                         taskItem.repeatInterval ?? 1,
                         repeatConfig,
                         taskItem.notificationOffset ?? null,
-                        taskItem.notificationId ?? null,
+                        null,
                         taskItem.sortOrder ?? 0,
                         taskItem.createdAt ?? new Date().toISOString(),
                         taskItem.updatedAt ?? new Date().toISOString(),
@@ -209,6 +215,20 @@ export async function importBackup(
                   }
                 });
 
+                // Notification identifiers are local to one device. Cancel the
+                // previous set, then create fresh identifiers for restored tasks.
+                await Promise.allSettled(previousNotificationIds.map(({ notificationId }) => cancelReminder(notificationId)));
+                for (const taskItem of payload.tasks) {
+                  const notificationId = await scheduleReminder(taskItem as TaskInput);
+                  if (notificationId) {
+                    await db.runAsync('UPDATE tasks SET notificationId=?, updatedAt=? WHERE id=?', [
+                      notificationId,
+                      new Date().toISOString(),
+                      taskItem.id,
+                    ]);
+                  }
+                }
+
                 await onSuccess();
                 Alert.alert(t.alerts.importSuccessTitle, t.alerts.importSuccessMessage);
                 resolve(true);
@@ -226,4 +246,3 @@ export async function importBackup(
     return false;
   }
 }
-

@@ -132,7 +132,7 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     try {
       if (prev?.notificationId) await cancelReminder(prev.notificationId);
       await repo.updateTask(db, id, i);
-      const reminderId = await scheduleReminder(i);
+      const reminderId = await scheduleReminder({ ...i, isCompleted: i.isCompleted ?? prev?.isCompleted });
       await repo.setNotificationId(db, id, reminderId);
     } catch (e) {
       console.warn('Reminder reschedule failed', e);
@@ -146,7 +146,7 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     const db = await getDatabase();
     const prev = await repo.getTask(db, id);
     if (date && mode === 'single') {
-      if (prev && prev.date === date && prev.notificationId) {
+      if (prev?.repeatType === 'none' && prev.date === date && prev.notificationId) {
         await cancelReminder(prev.notificationId);
       }
       await repo.deleteTaskOccurrence(db, id, date);
@@ -160,7 +160,7 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
   const removeOccurrence = useCallback(async (taskId: string, occurrenceDate: string) => {
     const db = await getDatabase();
     const prev = await repo.getTask(db, taskId);
-    if (prev && prev.date === occurrenceDate && prev.notificationId) {
+    if (prev?.repeatType === 'none' && prev.date === occurrenceDate && prev.notificationId) {
       await cancelReminder(prev.notificationId);
     }
     await repo.deleteTaskOccurrence(db, taskId, occurrenceDate);

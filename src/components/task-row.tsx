@@ -48,22 +48,26 @@ export const TaskRow = React.memo(function TaskRow({
   const checkScale = useRef(new Animated.Value(task.isCompleted ? 1 : 0)).current;
   const boxScale = useRef(new Animated.Value(1)).current;
   const rowOpacity = useRef(new Animated.Value(task.isCompleted ? 0.55 : 1)).current;
+  const prevCompletedRef = useRef(task.isCompleted);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.spring(checkScale, {
-        toValue: task.isCompleted ? 1 : 0,
-        tension: 300,
-        friction: 20,
-        useNativeDriver: false,
-      }),
-      Animated.spring(rowOpacity, {
-        toValue: task.isCompleted ? 0.55 : 1,
-        tension: 300,
-        friction: 20,
-        useNativeDriver: false,
-      }),
-    ]).start();
+    if (prevCompletedRef.current !== task.isCompleted) {
+      prevCompletedRef.current = task.isCompleted;
+      Animated.parallel([
+        Animated.spring(checkScale, {
+          toValue: task.isCompleted ? 1 : 0,
+          tension: 300,
+          friction: 20,
+          useNativeDriver: true,
+        }),
+        Animated.spring(rowOpacity, {
+          toValue: task.isCompleted ? 0.55 : 1,
+          tension: 300,
+          friction: 20,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
   }, [task.isCompleted, checkScale, rowOpacity]);
 
   const swipeX = useRef(new Animated.Value(0)).current;
@@ -383,7 +387,6 @@ export const TaskRow = React.memo(function TaskRow({
             styles.contentStack,
             compact && styles.compactContentStack,
             !isLast && !compact && [styles.contentStackBorderBottom, { borderBottomColor: colors.inputBorder }],
-            isActive && { opacity: 0.7 },
           ]}
         >
           <Animated.View style={{ transform: [{ scale: pressScale }] }}>

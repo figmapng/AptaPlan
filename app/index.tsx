@@ -90,11 +90,23 @@ export default function Home() {
 
   const firstDay = settings.firstDayOfWeek ?? 'mon';
   const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
-  const [weekStart, setWeekStart] = useState(() => getStartOfWeekWith(new Date(), weekStartsOn));
+  const initialWeekStartRef = useRef(getStartOfWeekWith(new Date(), weekStartsOn));
+  const [weekPageIndex, setWeekPageIndex] = useState(0);
+  const weekPageIndexRef = useRef(0);
+  const weekCarouselX = useRef(new Animated.Value(0)).current;
+  const weekTouchStartCarouselX = useRef(0);
 
   useEffect(() => {
-    setWeekStart((prev) => getStartOfWeekWith(prev, weekStartsOn));
+    initialWeekStartRef.current = getStartOfWeekWith(new Date(), weekStartsOn);
+    setWeekPageIndex(0);
+    weekPageIndexRef.current = 0;
+    weekCarouselX.setValue(0);
   }, [weekStartsOn]);
+
+  const activeWeekStart = useMemo(
+    () => addDays(initialWeekStartRef.current, weekPageIndex * 7),
+    [weekPageIndex, weekStartsOn]
+  );
 
   const [dayDate, setDayDate] = useState(new Date());
   const [mode, setMode] = useState<ViewMode>(() => settings.defaultViewMode ?? 'week');
@@ -114,8 +126,40 @@ export default function Home() {
 
   const [modePickerOpen, setModePickerOpen] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-  const [month, setMonth] = useState(new Date());
-  const [year, setYear] = useState(new Date().getFullYear());
+  const initialMonthRef = useRef(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [monthPageIndex, setMonthPageIndex] = useState(0);
+  const monthPageIndexRef = useRef(0);
+  const monthCarouselX = useRef(new Animated.Value(0)).current;
+  const monthTouchStartCarouselX = useRef(0);
+
+  const activeMonth = useMemo(
+    () => new Date(initialMonthRef.current.getFullYear(), initialMonthRef.current.getMonth() + monthPageIndex, 1),
+    [monthPageIndex]
+  );
+
+  // ── Month carousel ──────────────────────────────────────────────
+  const isMonthAnimatingRef = useRef(false);
+  const monthTouchStartX = useRef(0);
+  const monthTouchStartY = useRef(0);
+  const isMonthHorizontal = useRef(false);
+  const monthHasDetermined = useRef(false);
+
+  // ── Year carousel ───────────────────────────────────────────────
+  const initialYearRef = useRef(new Date().getFullYear());
+  const [yearPageIndex, setYearPageIndex] = useState(0);
+  const yearPageIndexRef = useRef(0);
+  const yearCarouselX = useRef(new Animated.Value(0)).current;
+  const yearTouchStartCarouselX = useRef(0);
+
+  const activeYear = useMemo(
+    () => initialYearRef.current + yearPageIndex,
+    [yearPageIndex]
+  );
+
+  const isYearAnimatingRef = useRef(false);
+  const zoomAnim = useRef(new Animated.Value(0)).current;
+  const bottomBarAnim = useRef(new Animated.Value(0)).current;
+
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [fromYearMode, setFromYearMode] = useState(false);
 
@@ -125,67 +169,62 @@ export default function Home() {
     if (modeRef.current === 'day') {
       setDayDate(selectedDate);
     } else if (modeRef.current === 'week') {
-      setWeekStart(getFirstDominantWeekOfMonth(selectedDate, weekStartsOn));
+      const targetStart = getFirstDominantWeekOfMonth(selectedDate, weekStartsOn);
+      const diffWeeks = Math.round((targetStart.getTime() - initialWeekStartRef.current.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      weekPageIndexRef.current = diffWeeks;
+      weekCarouselX.setValue(-diffWeeks * screenWidth);
+      setWeekPageIndex(diffWeeks);
     } else if (modeRef.current === 'month') {
-      setMonth(selectedDate);
+      const diffMonths = (selectedDate.getFullYear() - initialMonthRef.current.getFullYear()) * 12 + (selectedDate.getMonth() - initialMonthRef.current.getMonth());
+      monthPageIndexRef.current = diffMonths;
+      monthCarouselX.setValue(-diffMonths * screenWidth);
+      setMonthPageIndex(diffMonths);
     } else {
-      setMonth(selectedDate);
-      setYear(selectedDate.getFullYear());
+      const diffMonths = (selectedDate.getFullYear() - initialMonthRef.current.getFullYear()) * 12 + (selectedDate.getMonth() - initialMonthRef.current.getMonth());
+      monthPageIndexRef.current = diffMonths;
+      monthCarouselX.setValue(-diffMonths * screenWidth);
+      setMonthPageIndex(diffMonths);
+      const diffYears = selectedDate.getFullYear() - initialYearRef.current;
+      yearPageIndexRef.current = diffYears;
+      yearCarouselX.setValue(-diffYears * screenWidth);
+      setYearPageIndex(diffYears);
       setMode('month');
     }
-  }, [weekStartsOn]);
-
-  // ── Month carousel ──────────────────────────────────────────────
-  const monthCarouselAnim = useRef(new Animated.Value(0)).current;
-  const isMonthAnimatingRef = useRef(false);
-  const pendingMonthResetRef = useRef(false);
-  const monthTouchStartX = useRef(0);
-  const monthTouchStartY = useRef(0);
-  const isMonthHorizontal = useRef(false);
-  const monthHasDetermined = useRef(false);
-
-  // ── Year carousel ───────────────────────────────────────────────
-  const yearCarouselAnim = useRef(new Animated.Value(0)).current;
-  const isYearAnimatingRef = useRef(false);
-  const pendingYearResetRef = useRef(false);
-  const zoomAnim = useRef(new Animated.Value(0)).current;
-  const bottomBarAnim = useRef(new Animated.Value(0)).current;
+  }, [weekStartsOn, screenWidth, weekCarouselX, monthCarouselX, yearCarouselX]);
 
   const modeButtonRef = useRef<View>(null);
   const [modeButtonBounds, setModeButtonBounds] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
-  const derivedWeekData = useMemo<DerivedWeekData>(() => {
-    const currDates = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-    const prevDates = currDates.map((d) => addDays(d, -7));
-    const nextDates = currDates.map((d) => addDays(d, 7));
-
-    const buildDays = (datesList: Date[]): DayDataItem[] => {
-      const monthCounts: Record<number, number> = {};
-      datesList.forEach((d) => {
-        const m = d.getMonth();
-        monthCounts[m] = (monthCounts[m] || 0) + 1;
-      });
-      let dominantMonth = datesList[0].getMonth();
-      let maxCount = 0;
-      for (const [m, count] of Object.entries(monthCounts)) {
-        if (count > maxCount) {
-          maxCount = count;
-          dominantMonth = Number(m);
-        }
+  const buildDays = useCallback((datesList: Date[]): DayDataItem[] => {
+    const monthCounts: Record<number, number> = {};
+    datesList.forEach((d) => {
+      const m = d.getMonth();
+      monthCounts[m] = (monthCounts[m] || 0) + 1;
+    });
+    let dominantMonth = datesList[0].getMonth();
+    let maxCount = 0;
+    for (const [m, count] of Object.entries(monthCounts)) {
+      if (count > maxCount) {
+        maxCount = count;
+        dominantMonth = Number(m);
       }
+    }
 
-      return datesList.map((date) => {
-        const key = toDateKey(date);
-        const dayTasks = tasks.filter((t) => t.date === key);
-        const isOtherMonth = date.getMonth() !== dominantMonth;
-        return {
-          date,
-          dateKey: key,
-          tasks: dayTasks,
-          monthLabel: isOtherMonth ? `${t.date.monthsShort[date.getMonth()]}.` : undefined,
-        };
-      });
-    };
+    return datesList.map((date) => {
+      const key = toDateKey(date);
+      const dayTasks = tasks.filter((t) => t.date === key);
+      const isOtherMonth = date.getMonth() !== dominantMonth;
+      return {
+        date,
+        dateKey: key,
+        tasks: dayTasks,
+        monthLabel: isOtherMonth ? `${t.date.monthsShort[date.getMonth()]}.` : undefined,
+      };
+    });
+  }, [tasks, t]);
+
+  const derivedWeekData = useMemo<DerivedWeekData>(() => {
+    const currDates = Array.from({ length: 7 }, (_, i) => addDays(activeWeekStart, i));
 
     const currMonthCounts: Record<number, number> = {};
     currDates.forEach((d) => {
@@ -208,7 +247,7 @@ export default function Home() {
       return `${mCap} ${d.getFullYear()}`;
     };
 
-    const yearHeader = language === 'en' ? `${year}` : language === 'ru' ? `${year} г.` : `${year} жыл`;
+    const yearHeader = language === 'en' ? `${activeYear}` : language === 'ru' ? `${activeYear} г.` : `${activeYear} жыл`;
 
     const headerTitle =
       mode === 'day'
@@ -216,7 +255,7 @@ export default function Home() {
         : mode === 'week'
         ? formatHeaderMonthYear(dominantDate)
         : mode === 'month'
-        ? formatHeaderMonthYear(month)
+        ? formatHeaderMonthYear(activeMonth)
         : yearHeader;
 
     const todayTime = new Date().setHours(0, 0, 0, 0);
@@ -227,25 +266,17 @@ export default function Home() {
 
     const currSlotDays = buildDays(currDates);
 
-    const slots: SlotData[] = [
-      { id: 0, slotKey: 'prev', baseX: -screenWidth, dates: prevDates, days: buildDays(prevDates) },
-      { id: 1, slotKey: 'curr', baseX: 0, dates: currDates, days: currSlotDays },
-      { id: 2, slotKey: 'next', baseX: screenWidth, dates: nextDates, days: buildDays(nextDates) },
-    ];
-
     return {
       headerTitle,
       activeHeaderDate: dominantDate,
       isFutureWeek,
       isPastWeek,
       currSlotDays,
-      slots,
+      slots: [],
     };
-  }, [weekStart, tasks, screenWidth, mode, month, year, dayDate, t, language]);
+  }, [activeWeekStart, activeMonth, activeYear, buildDays, mode, dayDate, t, language]);
 
 
-  // ── Animated.Value for carousel translation ──────────────────────
-  const carouselAnim = useRef(new Animated.Value(0)).current;
   const isAnimatingRef = useRef(false);
 
   // ── Week expand/collapse ────────────────────────────────────────
@@ -303,11 +334,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const dates = derivedWeekData.slots[1].dates;
-    if (ready && dates.length > 0) {
+    if (ready) {
       // Load the surrounding weeks as well so adjacent carousel slots have
       // data immediately and swiping never shows an empty/stale week.
-      void loadRange(toDateKey(addDays(dates[0], -7)), toDateKey(addDays(dates[6], 7)));
+      void loadRange(toDateKey(addDays(activeWeekStart, -14)), toDateKey(addDays(activeWeekStart, 21)));
       const defaultExpanded = settings.lastDayVisibility !== 'hidden';
       const target =
         userSundayStateRef.current === 'expanded' ? 1
@@ -316,7 +346,7 @@ export default function Home() {
       isExpandedRef.current = target === 1;
       weekProgress.setValue(target);
     }
-  }, [ready, derivedWeekData.slots, loadRange, weekProgress, settings.lastDayVisibility]);
+  }, [ready, activeWeekStart, loadRange, weekProgress, settings.lastDayVisibility]);
 
   useEffect(() => {
     userSundayStateRef.current = null;
@@ -329,20 +359,20 @@ export default function Home() {
   // ── Month data load ─────────────────────────────────────────────
   useEffect(() => {
     if (!ready || mode !== 'month') return;
-    const from = new Date(month.getFullYear(), month.getMonth() - 1, 1);
-    const to = new Date(month.getFullYear(), month.getMonth() + 2, 0);
+    const from = new Date(activeMonth.getFullYear(), activeMonth.getMonth() - 1, 1);
+    const to = new Date(activeMonth.getFullYear(), activeMonth.getMonth() + 2, 0);
     void loadRange(toDateKey(from), toDateKey(to));
-  }, [ready, month, mode, loadRange]);
+  }, [ready, activeMonth, mode, loadRange]);
 
   // The year carousel renders the previous and next year as well, so keep
   // all three years in memory. This also makes task markers appear after a
   // direct switch to the year view.
   useEffect(() => {
     if (!ready || mode !== 'year') return;
-    const from = new Date(year - 1, 0, 1);
-    const to = new Date(year + 2, 0, 0);
+    const from = new Date(activeYear - 1, 0, 1);
+    const to = new Date(activeYear + 2, 0, 0);
     void loadRange(toDateKey(from), toDateKey(to));
-  }, [ready, year, mode, loadRange]);
+  }, [ready, activeYear, mode, loadRange]);
 
   const collapseWeek = useCallback(() => {
     userSundayStateRef.current = 'collapsed';
@@ -381,69 +411,47 @@ export default function Home() {
   const hasDetermined = useRef(false);
   const isSwipingRef = useRef(false);
 
-
-
-  const pendingResetRef = useRef(false);
-
-  useEffect(() => {
-    if (pendingResetRef.current) {
-      carouselAnim.setValue(0);
-      pendingResetRef.current = false;
-      isAnimatingRef.current = false;
-      setTimeout(() => {
-        isSwipingRef.current = false;
-      }, 50);
-    }
-  }, [weekStart, carouselAnim]);
-
-  const onSwipeComplete = useCallback((direction: -1 | 1) => {
-    isAnimatingRef.current = true;
-    isSwipingRef.current = true;
-
-    const targetVal = direction * screenWidth;
-
-    Animated.spring(carouselAnim, {
-      toValue: targetVal,
-      tension: 450,
-      friction: 32,
-      useNativeDriver: true,
-    }).start(() => {
-      pendingResetRef.current = true;
-      setWeekStart((d) => addDays(d, -direction * 7));
-    });
-  }, [carouselAnim, screenWidth]);
-
   const resetToCurrentWeek = useCallback(() => {
     if (isAnimatingRef.current) return;
-    setWeekStart(getStartOfWeekWith(new Date(), weekStartsOn));
-    carouselAnim.setValue(0);
-  }, [carouselAnim, weekStartsOn]);
+    const currentStart = getStartOfWeekWith(new Date(), weekStartsOn);
+    const diffWeeks = Math.round((currentStart.getTime() - initialWeekStartRef.current.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    isAnimatingRef.current = true;
+    Animated.spring(weekCarouselX, {
+      toValue: -diffWeeks * screenWidth,
+      tension: 420,
+      friction: 30,
+      useNativeDriver: true,
+    }).start(() => {
+      weekPageIndexRef.current = diffWeeks;
+      setWeekPageIndex(diffWeeks);
+      isAnimatingRef.current = false;
+    });
+  }, [weekCarouselX, screenWidth, weekStartsOn]);
 
   const resetToCurrentMonth = useCallback(() => {
     if (isMonthAnimatingRef.current) return;
-    setMonth(new Date());
-    monthCarouselAnim.setValue(0);
-  }, [monthCarouselAnim]);
+    const now = new Date();
+    const diffMonths = (now.getFullYear() - initialMonthRef.current.getFullYear()) * 12 + (now.getMonth() - initialMonthRef.current.getMonth());
+    isMonthAnimatingRef.current = true;
+    Animated.spring(monthCarouselX, {
+      toValue: -diffMonths * screenWidth,
+      tension: 420,
+      friction: 30,
+      useNativeDriver: true,
+    }).start(() => {
+      monthPageIndexRef.current = diffMonths;
+      setMonthPageIndex(diffMonths);
+      isMonthAnimatingRef.current = false;
+    });
+  }, [monthCarouselX, screenWidth]);
 
   // ── Day carousel ────────────────────────────────────────────────
   const dayCarouselAnim = useRef(new Animated.Value(0)).current;
   const isDayAnimatingRef = useRef(false);
-  const pendingDayResetRef = useRef(false);
   const dayTouchStartX = useRef(0);
   const dayTouchStartY = useRef(0);
   const isDayHorizontal = useRef(false);
   const dayHasDetermined = useRef(false);
-
-  useEffect(() => {
-    if (pendingDayResetRef.current) {
-      dayCarouselAnim.setValue(0);
-      pendingDayResetRef.current = false;
-      isDayAnimatingRef.current = false;
-      setTimeout(() => {
-        isSwipingRef.current = false;
-      }, 50);
-    }
-  }, [dayDate, dayCarouselAnim]);
 
   const onDaySwipeComplete = useCallback((direction: -1 | 1) => {
     isDayAnimatingRef.current = true;
@@ -457,38 +465,16 @@ export default function Home() {
       friction: 32,
       useNativeDriver: true,
     }).start(() => {
-      pendingDayResetRef.current = true;
-      setDayDate((d) => addDays(d, -direction));
-    });
-  }, [dayCarouselAnim, screenWidth]);
-
-  useEffect(() => {
-    if (pendingMonthResetRef.current) {
-      monthCarouselAnim.setValue(0);
-      pendingMonthResetRef.current = false;
-      isMonthAnimatingRef.current = false;
+      unstable_batchedUpdates(() => {
+        dayCarouselAnim.setValue(0);
+        setDayDate((d) => addDays(d, -direction));
+      });
+      isDayAnimatingRef.current = false;
       setTimeout(() => {
         isSwipingRef.current = false;
       }, 50);
-    }
-  }, [month, monthCarouselAnim]);
-
-  const onMonthSwipeComplete = useCallback((direction: -1 | 1) => {
-    isMonthAnimatingRef.current = true;
-    isSwipingRef.current = true;
-    if (Platform.OS === 'ios' || Platform.OS === 'android') {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    Animated.spring(monthCarouselAnim, {
-      toValue: direction * screenWidth,
-      tension: 450,
-      friction: 32,
-      useNativeDriver: true,
-    }).start(() => {
-      pendingMonthResetRef.current = true;
-      setMonth((m) => new Date(m.getFullYear(), m.getMonth() - direction, 1));
     });
-  }, [monthCarouselAnim, screenWidth]);
+  }, [dayCarouselAnim, screenWidth]);
 
   const dayScrollYRef = useRef(0);
   const dayGestureHandlers = {
@@ -555,7 +541,8 @@ export default function Home() {
       monthTouchStartY.current = e.nativeEvent.pageY;
       isMonthHorizontal.current = false;
       monthHasDetermined.current = false;
-      monthCarouselAnim.stopAnimation();
+      monthTouchStartCarouselX.current = -monthPageIndexRef.current * screenWidth;
+      monthCarouselX.stopAnimation();
     },
     onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
       if (isMonthAnimatingRef.current) return;
@@ -568,7 +555,7 @@ export default function Home() {
       }
       if (isMonthHorizontal.current) {
         isSwipingRef.current = true;
-        monthCarouselAnim.setValue(dx);
+        monthCarouselX.setValue(monthTouchStartCarouselX.current + dx);
       } else {
         if (isMotivationalOpenRef.current) {
           if (dy < 0) {
@@ -588,18 +575,26 @@ export default function Home() {
       if (isMonthHorizontal.current) {
         isSwipingRef.current = true;
         const dx = e.nativeEvent.pageX - monthTouchStartX.current;
-        const threshold = screenWidth * 0.1;
+        const threshold = screenWidth * 0.14;
+        let targetIndex = monthPageIndexRef.current;
         if (Math.abs(dx) > threshold) {
-          onMonthSwipeComplete(dx < 0 ? -1 : 1);
-        } else {
-          isMonthAnimatingRef.current = true;
-          Animated.spring(monthCarouselAnim, {
-            toValue: 0, tension: 420, friction: 30, useNativeDriver: true,
-          }).start(() => {
-            isMonthAnimatingRef.current = false;
-            setTimeout(() => { isSwipingRef.current = false; }, 150);
-          });
+          targetIndex = dx < 0 ? monthPageIndexRef.current + 1 : monthPageIndexRef.current - 1;
         }
+        isMonthAnimatingRef.current = true;
+        if (Platform.OS === 'ios' || Platform.OS === 'android') {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+        Animated.spring(monthCarouselX, {
+          toValue: -targetIndex * screenWidth,
+          tension: 420,
+          friction: 30,
+          useNativeDriver: true,
+        }).start(() => {
+          monthPageIndexRef.current = targetIndex;
+          setMonthPageIndex(targetIndex);
+          isMonthAnimatingRef.current = false;
+          setTimeout(() => { isSwipingRef.current = false; }, 50);
+        });
       } else {
         const dy = e.nativeEvent.pageY - monthTouchStartY.current;
         if (isMotivationalOpenRef.current) {
@@ -622,8 +617,11 @@ export default function Home() {
       if (monthHasDetermined.current) {
         if (isMonthHorizontal.current) {
           isMonthAnimatingRef.current = true;
-          Animated.spring(monthCarouselAnim, {
-            toValue: 0, tension: 320, friction: 36, useNativeDriver: true,
+          Animated.spring(monthCarouselX, {
+            toValue: -monthPageIndexRef.current * screenWidth,
+            tension: 320,
+            friction: 36,
+            useNativeDriver: true,
           }).start(() => {
             isMonthAnimatingRef.current = false;
             setTimeout(() => { isSwipingRef.current = false; }, 150);
@@ -637,34 +635,6 @@ export default function Home() {
     },
   };
 
-  useEffect(() => {
-    if (pendingYearResetRef.current) {
-      yearCarouselAnim.setValue(0);
-      pendingYearResetRef.current = false;
-      isYearAnimatingRef.current = false;
-      setTimeout(() => {
-        isSwipingRef.current = false;
-      }, 50);
-    }
-  }, [year, yearCarouselAnim]);
-
-  const onYearSwipeComplete = useCallback((direction: -1 | 1) => {
-    isYearAnimatingRef.current = true;
-    isSwipingRef.current = true;
-    if (Platform.OS === 'ios' || Platform.OS === 'android') {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    Animated.spring(yearCarouselAnim, {
-      toValue: direction * screenWidth,
-      tension: 450,
-      friction: 32,
-      useNativeDriver: true,
-    }).start(() => {
-      pendingYearResetRef.current = true;
-      setYear((y) => y - direction);
-    });
-  }, [yearCarouselAnim, screenWidth]);
-
   const yearGestureHandlers = {
     onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
       if (isYearAnimatingRef.current) return;
@@ -672,7 +642,8 @@ export default function Home() {
       yearTouchStartY.current = e.nativeEvent.pageY;
       isYearHorizontal.current = false;
       yearHasDetermined.current = false;
-      yearCarouselAnim.stopAnimation();
+      yearTouchStartCarouselX.current = -yearPageIndexRef.current * screenWidth;
+      yearCarouselX.stopAnimation();
     },
     onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
       if (isYearAnimatingRef.current) return;
@@ -685,7 +656,7 @@ export default function Home() {
       }
       if (isYearHorizontal.current) {
         isSwipingRef.current = true;
-        yearCarouselAnim.setValue(dx);
+        yearCarouselX.setValue(yearTouchStartCarouselX.current + dx);
       } else {
         if (isMotivationalOpenRef.current) {
           if (dy < 0) {
@@ -705,18 +676,26 @@ export default function Home() {
       if (isYearHorizontal.current) {
         isSwipingRef.current = true;
         const dx = e.nativeEvent.pageX - yearTouchStartX.current;
-        const threshold = screenWidth * 0.1;
+        const threshold = screenWidth * 0.14;
+        let targetIndex = yearPageIndexRef.current;
         if (Math.abs(dx) > threshold) {
-          onYearSwipeComplete(dx < 0 ? -1 : 1);
-        } else {
-          isYearAnimatingRef.current = true;
-          Animated.spring(yearCarouselAnim, {
-            toValue: 0, tension: 420, friction: 30, useNativeDriver: true,
-          }).start(() => {
-            isYearAnimatingRef.current = false;
-            setTimeout(() => { isSwipingRef.current = false; }, 150);
-          });
+          targetIndex = dx < 0 ? yearPageIndexRef.current + 1 : yearPageIndexRef.current - 1;
         }
+        isYearAnimatingRef.current = true;
+        if (Platform.OS === 'ios' || Platform.OS === 'android') {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+        Animated.spring(yearCarouselX, {
+          toValue: -targetIndex * screenWidth,
+          tension: 420,
+          friction: 30,
+          useNativeDriver: true,
+        }).start(() => {
+          yearPageIndexRef.current = targetIndex;
+          setYearPageIndex(targetIndex);
+          isYearAnimatingRef.current = false;
+          setTimeout(() => { isSwipingRef.current = false; }, 50);
+        });
       } else {
         const dy = e.nativeEvent.pageY - yearTouchStartY.current;
         if (isMotivationalOpenRef.current) {
@@ -739,8 +718,11 @@ export default function Home() {
       if (yearHasDetermined.current) {
         if (isYearHorizontal.current) {
           isYearAnimatingRef.current = true;
-          Animated.spring(yearCarouselAnim, {
-            toValue: 0, tension: 320, friction: 36, useNativeDriver: true,
+          Animated.spring(yearCarouselX, {
+            toValue: -yearPageIndexRef.current * screenWidth,
+            tension: 320,
+            friction: 36,
+            useNativeDriver: true,
           }).start(() => {
             isYearAnimatingRef.current = false;
             setTimeout(() => { isSwipingRef.current = false; }, 150);
@@ -761,7 +743,8 @@ export default function Home() {
       touchStartY.current = e.nativeEvent.pageY;
       isHorizontalGesture.current = false;
       hasDetermined.current = false;
-      carouselAnim.stopAnimation();
+      weekTouchStartCarouselX.current = -weekPageIndexRef.current * screenWidth;
+      weekCarouselX.stopAnimation();
     },
     onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
       if (modeRef.current !== 'week' || isAnimatingRef.current || isSwipingRef.current) return;
@@ -775,7 +758,8 @@ export default function Home() {
       }
 
       if (isHorizontalGesture.current) {
-        carouselAnim.setValue(dx);
+        isSwipingRef.current = true;
+        weekCarouselX.setValue(weekTouchStartCarouselX.current + dx);
       } else {
         if (isMotivationalOpenRef.current) {
           if (dy < 0) {
@@ -801,25 +785,32 @@ export default function Home() {
       }
     },
     onTouchEnd: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (modeRef.current !== 'week' || !hasDetermined.current || isAnimatingRef.current || isSwipingRef.current) return;
+      if (modeRef.current !== 'week' || !hasDetermined.current || isAnimatingRef.current) return;
       if (isHorizontalGesture.current) {
+        isSwipingRef.current = true;
         const dx = e.nativeEvent.pageX - touchStartX.current;
-        const threshold = screenWidth * 0.22;
-
+        const threshold = screenWidth * 0.18;
+        let targetIndex = weekPageIndexRef.current;
         if (Math.abs(dx) > threshold) {
-          const direction = dx < 0 ? -1 : 1;
-          onSwipeComplete(direction);
-        } else {
-          isAnimatingRef.current = true;
-          Animated.spring(carouselAnim, {
-            toValue: 0,
-            tension: 420,
-            friction: 30,
-            useNativeDriver: true,
-          }).start(() => {
-            isAnimatingRef.current = false;
-          });
+          targetIndex = dx < 0 ? weekPageIndexRef.current + 1 : weekPageIndexRef.current - 1;
         }
+        isAnimatingRef.current = true;
+        if (Platform.OS === 'ios' || Platform.OS === 'android') {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+        Animated.spring(weekCarouselX, {
+          toValue: -targetIndex * screenWidth,
+          tension: 420,
+          friction: 30,
+          useNativeDriver: true,
+        }).start(() => {
+          weekPageIndexRef.current = targetIndex;
+          setWeekPageIndex(targetIndex);
+          isAnimatingRef.current = false;
+          setTimeout(() => {
+            isSwipingRef.current = false;
+          }, 50);
+        });
       } else {
         const dy = e.nativeEvent.pageY - touchStartY.current;
 
@@ -856,8 +847,8 @@ export default function Home() {
       if (modeRef.current !== 'week') return;
       if (isHorizontalGesture.current) {
         isAnimatingRef.current = true;
-        Animated.spring(carouselAnim, {
-          toValue: 0,
+        Animated.spring(weekCarouselX, {
+          toValue: -weekPageIndexRef.current * screenWidth,
           tension: 320,
           friction: 36,
           useNativeDriver: true,
@@ -896,15 +887,15 @@ export default function Home() {
   }, []);
 
   const handleTaskSaved = useCallback((createdTask: Task) => {
-    const currDates = derivedWeekData.slots[1].dates;
+    const currDates = Array.from({ length: 7 }, (_, i) => addDays(activeWeekStart, i));
     const inCurr = currDates.some((d: Date) => toDateKey(d) === createdTask.date);
     if (inCurr && cardLayoutsRef.current[createdTask.date]) {
       setFlyingTask({ task: createdTask, targetLayout: cardLayoutsRef.current[createdTask.date] });
     }
-  }, [derivedWeekData.slots]);
+  }, [activeWeekStart]);
 
   // ── Layout metrics ──────────────────────────────────────
-  const currDates = derivedWeekData.slots[1].dates;
+  const currDates = Array.from({ length: 7 }, (_, i) => addDays(activeWeekStart, i));
   
   const headerSpace = insets.top + 68;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 60;
@@ -931,8 +922,14 @@ export default function Home() {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    setMonth(new Date(slotYear, monthIndex, 1));
-    setYear(slotYear);
+    const diffMonths = (slotYear - initialMonthRef.current.getFullYear()) * 12 + (monthIndex - initialMonthRef.current.getMonth());
+    monthPageIndexRef.current = diffMonths;
+    monthCarouselX.setValue(-diffMonths * screenWidth);
+    setMonthPageIndex(diffMonths);
+    const diffYears = slotYear - initialYearRef.current;
+    yearPageIndexRef.current = diffYears;
+    yearCarouselX.setValue(-diffYears * screenWidth);
+    setYearPageIndex(diffYears);
     setFromYearMode(true);
     setMode('month');
 
@@ -955,7 +952,7 @@ export default function Home() {
     ]).start(() => {
       isYearAnimatingRef.current = false;
     });
-  }, [bottomBarAnim, zoomAnim]);
+  }, [bottomBarAnim, zoomAnim, screenWidth, monthCarouselX, yearCarouselX]);
 
   const handleBackToYearFromMonth = useCallback(() => {
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
@@ -988,18 +985,21 @@ export default function Home() {
     zoomAnim.setValue(0);
     bottomBarAnim.setValue(0);
     if (nextMode === 'day') {
-      const targetDate = mode === 'month' ? month : derivedWeekData.activeHeaderDate;
+      const targetDate = mode === 'month' ? activeMonth : derivedWeekData.activeHeaderDate;
       setDayDate(targetDate);
     } else if (nextMode === 'year') {
-      const nextYear = mode === 'month' ? month.getFullYear() : derivedWeekData.activeHeaderDate.getFullYear();
-      setYear(nextYear);
+      const nextYear = mode === 'month' ? activeMonth.getFullYear() : derivedWeekData.activeHeaderDate.getFullYear();
+      const diffYears = nextYear - initialYearRef.current;
+      yearPageIndexRef.current = diffYears;
+      yearCarouselX.setValue(-diffYears * screenWidth);
+      setYearPageIndex(diffYears);
     }
     setMode(nextMode);
     setModePickerOpen(false);
   };
 
   // ── Spatial Zoom Calculations ────────────────────────────────────
-  const zoomMonthIndex = month.getMonth();
+  const zoomMonthIndex = activeMonth.getMonth();
   const zoomCol = zoomMonthIndex % 3;
   const zoomRow = Math.floor(zoomMonthIndex / 3);
 
@@ -1056,17 +1056,19 @@ export default function Home() {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    if (year === currentYear) {
-      yearCarouselAnim.stopAnimation();
+    const diffYears = currentYear - initialYearRef.current;
+    if (yearPageIndexRef.current === diffYears) {
+      const baseVal = -diffYears * screenWidth;
+      yearCarouselX.stopAnimation();
       Animated.sequence([
-        Animated.timing(yearCarouselAnim, {
-          toValue: 10,
+        Animated.timing(yearCarouselX, {
+          toValue: baseVal + 10,
           duration: 80,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
-        Animated.spring(yearCarouselAnim, {
-          toValue: 0,
+        Animated.spring(yearCarouselX, {
+          toValue: baseVal,
           tension: 500,
           friction: 24,
           useNativeDriver: true,
@@ -1075,23 +1077,18 @@ export default function Home() {
       return;
     }
 
-    const startOffset = currentYear > year ? screenWidth : -screenWidth;
     isYearAnimatingRef.current = true;
-    yearCarouselAnim.stopAnimation();
-
-    setYear(currentYear);
-    requestAnimationFrame(() => {
-      yearCarouselAnim.setValue(startOffset);
-      Animated.spring(yearCarouselAnim, {
-        toValue: 0,
-        tension: 450,
-        friction: 32,
-        useNativeDriver: true,
-      }).start(() => {
-        isYearAnimatingRef.current = false;
-      });
+    Animated.spring(yearCarouselX, {
+      toValue: -diffYears * screenWidth,
+      tension: 450,
+      friction: 32,
+      useNativeDriver: true,
+    }).start(() => {
+      yearPageIndexRef.current = diffYears;
+      setYearPageIndex(diffYears);
+      isYearAnimatingRef.current = false;
     });
-  }, [screenWidth, year, yearCarouselAnim]);
+  }, [screenWidth, yearCarouselX]);
 
   if (error)
     return (
@@ -1180,8 +1177,9 @@ export default function Home() {
                   >
                     <Pressable onPress={resetYearToCurrent} hitSlop={8}>
                       <AnimatedYearTitle
-                        year={year}
-                        carouselAnim={yearCarouselAnim}
+                        initialYear={initialYearRef.current}
+                        yearPageIndex={yearPageIndex}
+                        yearCarouselX={yearCarouselX}
                         screenWidth={screenWidth}
                         small={screenWidth < 380}
                       />
@@ -1330,7 +1328,7 @@ export default function Home() {
             const dayCardH = Math.min(maxDayCardH, Math.max(defaultEmptyCardH, taskContentH));
             return (
               <Animated.View
-                key={offset}
+                key={slotKey}
                 pointerEvents={offset === 0 ? 'auto' : 'none'}
                 style={{
                   position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -1364,29 +1362,36 @@ export default function Home() {
             }
           }}
         >
-          {derivedWeekData.slots.map((slot) => {
-            const translateX = carouselAnim.interpolate({
-              inputRange: [-screenWidth, 0, screenWidth],
-              outputRange: [slot.baseX - screenWidth, slot.baseX, slot.baseX + screenWidth],
-            });
+          {([-1, 0, 1] as const).map((offset) => {
+            const virtualIndex = weekPageIndex + offset;
+            const slotWeekStart = addDays(initialWeekStartRef.current, virtualIndex * 7);
+            const slotKey = toDateKey(slotWeekStart);
+            const slotDates = Array.from({ length: 7 }, (_, i) => addDays(slotWeekStart, i));
+            const days = buildDays(slotDates);
+            const translateX = Animated.add(virtualIndex * screenWidth, weekCarouselX);
+
             return (
               <Animated.View
-                key={slot.slotKey}
-                pointerEvents={slot.baseX === 0 ? 'auto' : 'none'}
+                key={slotKey}
+                pointerEvents={offset === 0 ? 'auto' : 'none'}
                 style={{
-                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
                   paddingHorizontal: 16,
                   paddingBottom: cardGridBottomPadding,
                   transform: [{ translateX }],
                 }}
               >
                 <WeekView
-                  days={slot.days}
+                  days={days}
                   progress={weekProgress}
                   collapsedBodyHeight={collapsedBodyHeight}
                   expandedBodyHeight={expandedBodyHeight}
                   expandedSundayHeight={expandedSundayHeight}
-                  onLayoutMeasured={slot.baseX === 0 ? handleCardLayoutMeasured : undefined}
+                  onLayoutMeasured={offset === 0 ? handleCardLayoutMeasured : undefined}
                   isSwipingRef={isSwipingRef}
                 />
               </Animated.View>
@@ -1407,12 +1412,9 @@ export default function Home() {
               {...yearGestureHandlers}
             >
               {([-1, 0, 1] as const).map((offset) => {
-                const slotYear = year + offset;
-                const baseX = offset * screenWidth;
-                const translateX = yearCarouselAnim.interpolate({
-                  inputRange: [-screenWidth, 0, screenWidth],
-                  outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
-                });
+                const virtualIndex = yearPageIndex + offset;
+                const slotYear = initialYearRef.current + virtualIndex;
+                const translateX = Animated.add(virtualIndex * screenWidth, yearCarouselX);
                 return (
                   <Animated.View
                     key={slotYear}
@@ -1459,15 +1461,13 @@ export default function Home() {
               {...monthGestureHandlers}
             >
               {([-1, 0, 1] as const).map((offset) => {
-                const slotDate = new Date(month.getFullYear(), month.getMonth() + offset, 1);
-                const baseX = offset * screenWidth;
-                const translateX = monthCarouselAnim.interpolate({
-                  inputRange: [-screenWidth, 0, screenWidth],
-                  outputRange: [baseX - screenWidth, baseX, baseX + screenWidth],
-                });
+                const virtualIndex = monthPageIndex + offset;
+                const slotDate = new Date(initialMonthRef.current.getFullYear(), initialMonthRef.current.getMonth() + virtualIndex, 1);
+                const slotKey = `${slotDate.getFullYear()}-${slotDate.getMonth()}`;
+                const translateX = Animated.add(virtualIndex * screenWidth, monthCarouselX);
                 return (
                   <Animated.View
-                    key={offset}
+                    key={slotKey}
                     pointerEvents={offset === 0 ? 'auto' : 'none'}
                     style={{
                       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -1523,7 +1523,7 @@ export default function Home() {
             {!fromYearMode && (
               ((mode as ViewMode) === 'day' && !isToday(dayDate)) ||
               ((mode as ViewMode) === 'week' && (isFutureWeek || isPastWeek)) ||
-              ((mode as ViewMode) === 'month' && !isSameMonth(month, new Date()))
+              ((mode as ViewMode) === 'month' && !isSameMonth(activeMonth, new Date()))
             ) && (
               <AnimatedPressable
                 accessibilityRole="button"
@@ -1547,7 +1547,7 @@ export default function Home() {
                   gap: 6,
                 }}
               >
-                {(((mode as ViewMode) === 'day' && dayDate > new Date()) || ((mode as ViewMode) === 'week' && isFutureWeek) || ((mode as ViewMode) === 'month' && month > new Date())) && (
+                {(((mode as ViewMode) === 'day' && dayDate > new Date()) || ((mode as ViewMode) === 'week' && isFutureWeek) || ((mode as ViewMode) === 'month' && activeMonth > new Date())) && (
                   <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
                     <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
@@ -1558,7 +1558,7 @@ export default function Home() {
                     ? `${t.date.monthsShort[new Date().getMonth()]} ${format(new Date(), 'dd')}`
                     : `${format(new Date(), 'dd')} ${t.date.monthsShort[new Date().getMonth()]}.`}
                 </Text>
-                {(((mode as ViewMode) === 'day' && dayDate < new Date()) || ((mode as ViewMode) === 'week' && isPastWeek) || ((mode as ViewMode) === 'month' && month < new Date())) && (
+                {(((mode as ViewMode) === 'day' && dayDate < new Date()) || ((mode as ViewMode) === 'week' && isPastWeek) || ((mode as ViewMode) === 'month' && activeMonth < new Date())) && (
                   <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
                     <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
@@ -1582,8 +1582,8 @@ export default function Home() {
             : mode === 'week'
             ? derivedWeekData.activeHeaderDate
             : mode === 'month'
-            ? month
-            : new Date(year, 0, 1)
+            ? activeMonth
+            : new Date(activeYear, 0, 1)
         }
         onSelectMonth={handleMonthPickerSelect}
         onClose={() => setMonthPickerOpen(false)}
@@ -2261,13 +2261,15 @@ function Center({ children }: { children: React.ReactNode }) {
 }
 
 function AnimatedYearTitle({
-  year,
-  carouselAnim,
+  initialYear,
+  yearPageIndex,
+  yearCarouselX,
   screenWidth,
   small,
 }: {
-  year: number;
-  carouselAnim: Animated.Value;
+  initialYear: number;
+  yearPageIndex: number;
+  yearCarouselX: Animated.Value;
   screenWidth: number;
   small: boolean;
 }) {
@@ -2275,46 +2277,6 @@ function AnimatedYearTitle({
   const fontSize = small ? 32 : 38;
   const lineHeight = small ? 38 : 44;
   const slideOffset = small ? 95 : 115;
-
-  const currentYearText = String(year);
-  const nextYearText = String(year + 1);
-  const prevYearText = String(year - 1);
-
-  // Current year (center)
-  const currentTranslateX = carouselAnim.interpolate({
-    inputRange: [-screenWidth, 0, screenWidth],
-    outputRange: [-slideOffset, 0, slideOffset],
-    extrapolate: 'clamp',
-  });
-  const currentOpacity = carouselAnim.interpolate({
-    inputRange: [-screenWidth, 0, screenWidth],
-    outputRange: [0, 1, 0],
-    extrapolate: 'clamp',
-  });
-
-  // Next year (slides in from right during left swipe)
-  const nextTranslateX = carouselAnim.interpolate({
-    inputRange: [-screenWidth, 0],
-    outputRange: [0, slideOffset],
-    extrapolate: 'clamp',
-  });
-  const nextOpacity = carouselAnim.interpolate({
-    inputRange: [-screenWidth, 0],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  // Previous year (slides in from left during right swipe)
-  const prevTranslateX = carouselAnim.interpolate({
-    inputRange: [0, screenWidth],
-    outputRange: [-slideOffset, 0],
-    extrapolate: 'clamp',
-  });
-  const prevOpacity = carouselAnim.interpolate({
-    inputRange: [0, screenWidth],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
 
   const textStyle = {
     fontSize,
@@ -2327,47 +2289,37 @@ function AnimatedYearTitle({
 
   return (
     <View style={{ height: lineHeight, width: slideOffset + 20, justifyContent: 'center' }}>
-      {/* Current Year */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          left: 0,
-          opacity: currentOpacity,
-          transform: [{ translateX: currentTranslateX }],
-        }}
-      >
-        <Text numberOfLines={1} style={textStyle}>
-          {currentYearText}
-        </Text>
-      </Animated.View>
+      {([-1, 0, 1] as const).map((offset) => {
+        const virtualIndex = yearPageIndex + offset;
+        const slotYear = initialYear + virtualIndex;
+        const normalizedOffset = Animated.divide(
+          Animated.add(virtualIndex * screenWidth, yearCarouselX),
+          screenWidth
+        );
+        const translateX = Animated.multiply(normalizedOffset, slideOffset);
+        const opacity = normalizedOffset.interpolate({
+          inputRange: [-1, 0, 1],
+          outputRange: [0, 1, 0],
+          extrapolate: 'clamp',
+        });
 
-      {/* Next Year */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          left: 0,
-          opacity: nextOpacity,
-          transform: [{ translateX: nextTranslateX }],
-        }}
-      >
-        <Text numberOfLines={1} style={textStyle}>
-          {nextYearText}
-        </Text>
-      </Animated.View>
-
-      {/* Previous Year */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          left: 0,
-          opacity: prevOpacity,
-          transform: [{ translateX: prevTranslateX }],
-        }}
-      >
-        <Text numberOfLines={1} style={textStyle}>
-          {prevYearText}
-        </Text>
-      </Animated.View>
+        return (
+          <Animated.View
+            key={slotYear}
+            style={{
+              position: 'absolute',
+              left: 0,
+              opacity,
+              transform: [{ translateX }],
+            }}
+            pointerEvents={offset === 0 ? 'auto' : 'none'}
+          >
+            <Text numberOfLines={1} style={textStyle}>
+              {slotYear}
+            </Text>
+          </Animated.View>
+        );
+      })}
     </View>
   );
 }
