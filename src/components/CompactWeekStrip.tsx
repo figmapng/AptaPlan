@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { Animated, PanResponder, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { addDays, isSameDay, isToday, startOfWeek } from 'date-fns';
+import { addDays, differenceInCalendarDays, isSameDay, isToday, startOfWeek } from 'date-fns';
 import { colors as defaultColors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
@@ -17,6 +17,7 @@ interface CompactWeekStripProps {
 
 export function CompactWeekStrip({
   selectedDate,
+  originDate,
   onSelectDate,
   carouselX,
   screenWidth = 375,
@@ -25,6 +26,7 @@ export function CompactWeekStrip({
 }: CompactWeekStripProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
+  const [rowWidth, setRowWidth] = React.useState<number>(0);
 
   const currentDayDate = useMemo(() => {
     if (!selectedDate || isNaN(selectedDate.getTime())) return new Date();
@@ -41,6 +43,61 @@ export function CompactWeekStrip({
     [currentWeekStart]
   );
 
+  // Calculate day index within current week (0 to 6)
+  const selectedDayIndex = useMemo(() => {
+    return days.findIndex((d) => isSameDay(d, currentDayDate));
+  }, [days, currentDayDate]);
+
+  // Animated position for non-carousel fallback
+  const animatedIndex = useRef(new Animated.Value(selectedDayIndex >= 0 ? selectedDayIndex : 0)).current;
+
+  React.useEffect(() => {
+    if (!carouselX && selectedDayIndex >= 0) {
+      Animated.spring(animatedIndex, {
+        toValue: selectedDayIndex,
+        tension: 300,
+        friction: 28,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [selectedDayIndex, carouselX, animatedIndex]);
+
+  // Day width inside week row
+  const cellWidth = rowWidth > 0 ? rowWidth / 7 : (screenWidth - 32 - 8) / 7;
+
+  // Real-time synchronization with carousel swipe
+  // If carouselX and originDate are provided:
+  // carouselX = -pageIndex * width + gesture.dx
+  // As user swipes, target day index moves continuously!
+  const indicatorTranslateX = useMemo(() => {
+    if (carouselX && originDate && !isNaN(originDate.getTime())) {
+      const originOffsetDays = differenceInCalendarDays(originDate, currentWeekStart);
+
+      return carouselX.interpolate({
+        inputRange: [-6 * screenWidth, 0, 6 * screenWidth],
+        outputRange: [
+          (originOffsetDays + 6) * cellWidth,
+          originOffsetDays * cellWidth,
+          (originOffsetDays - 6) * cellWidth,
+        ],
+        extrapolate: 'clamp',
+      });
+    }
+
+    return animatedIndex.interpolate({
+      inputRange: [0, 1, 2, 3, 4, 5, 6],
+      outputRange: [
+        0 * cellWidth,
+        1 * cellWidth,
+        2 * cellWidth,
+        3 * cellWidth,
+        4 * cellWidth,
+        5 * cellWidth,
+        6 * cellWidth,
+      ],
+    });
+  }, [carouselX, originDate, currentWeekStart, screenWidth, cellWidth, animatedIndex]);
+
   return (
     <View
       style={[
@@ -53,16 +110,35 @@ export function CompactWeekStrip({
         style,
       ]}
     >
-      <View style={styles.weekRow}>
+      <View
+        style={styles.weekRow}
+        onLayout={(e) => {
+          const w = e.nativeEvent.layout.width;
+          if (w > 0 && Math.abs(w - rowWidth) > 1) {
+            setRowWidth(w);
+          }
+        }}
+      >
+        {/* Smooth animated sliding pill indicator */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.slidingIndicator,
+            {
+              width: cellWidth,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F3F5',
+              transform: [{ translateX: indicatorTranslateX }],
+            },
+          ]}
+        />
+
         {days.map((d, i) => {
           const isSelected = isSameDay(d, currentDayDate);
           const isTodayDay = isToday(d);
           const dayNum = d.getDate();
           const dayShort = (t.date.weekdaysShort[d.getDay()] || '');
-          // Capitalize first letter e.g. "Ср", "Wed"
           const formattedDayShort = dayShort.charAt(0).toUpperCase() + dayShort.slice(1);
 
-          // Subtle, soft colors matching clean iOS design
           const labelColor = isSelected
             ? (isDark ? '#E2E8F0' : '#475569')
             : (isDark ? '#64748B' : '#94A3B8');
@@ -78,15 +154,7 @@ export function CompactWeekStrip({
               key={`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${i}`}
               onPress={() => onSelectDate(d)}
               hitSlop={4}
-              style={[
-                styles.dayCell,
-                isSelected && [
-                  styles.selectedCell,
-                  {
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F3F5',
-                  },
-                ],
-              ]}
+              style={styles.dayCell}
             >
               <View style={styles.cellContent}>
                 <Text
@@ -141,6 +209,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  slidingIndicator: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    height: 44,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    zIndex: 0,
+  },
   dayCell: {
     flex: 1,
     height: 44,
@@ -148,9 +225,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 12,
     borderCurve: 'continuous',
-  },
-  selectedCell: {
-    borderWidth: 0,
+    zIndex: 1,
   },
   cellContent: {
     alignItems: 'center',
