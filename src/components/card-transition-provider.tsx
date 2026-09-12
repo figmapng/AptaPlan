@@ -743,11 +743,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
       onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_, gesture) => {
         if (!scrollEnabledRef.current || isAnimatingRef.current) return false;
-        return Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2;
+        return Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy);
       },
       onMoveShouldSetPanResponderCapture: (_, gesture) => {
         if (!scrollEnabledRef.current || isAnimatingRef.current) return false;
-        return Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2;
+        return Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy);
       },
       onPanResponderGrant: () => {
         carouselX.stopAnimation();
@@ -758,13 +758,13 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
       },
       onPanResponderRelease: (_, gesture) => {
         if (!scrollEnabledRef.current || isAnimatingRef.current) return;
-        const threshold = (width - 32) * 0.16;
+        const threshold = 40;
         const velocity = gesture.vx;
 
         let targetIndex = pageIndexRef.current;
-        if (gesture.dx < -threshold || velocity < -0.3) {
+        if (gesture.dx < -threshold || velocity < -0.2) {
           targetIndex = pageIndexRef.current + 1;
-        } else if (gesture.dx > threshold || velocity > 0.3) {
+        } else if (gesture.dx > threshold || velocity > 0.2) {
           targetIndex = pageIndexRef.current - 1;
         }
 
@@ -774,6 +774,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
         isAnimatingRef.current = true;
         if (targetIndex !== pageIndexRef.current) {
+          setJumpTargetIndex(targetIndex);
           pageIndexRef.current = targetIndex;
           setPageIndex(targetIndex);
         }
@@ -789,6 +790,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
             const toKey = toDateKey(addDays(transitionRef.current.date, targetIndex + 2));
             void loadRange(fromKey, toKey);
           }
+          setJumpTargetIndex(null);
           isAnimatingRef.current = false;
         });
       },
