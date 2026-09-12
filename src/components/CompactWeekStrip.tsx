@@ -58,51 +58,67 @@ export function CompactWeekStrip({
           const isSelected = isSameDay(d, currentDayDate);
           const isTodayDay = isToday(d);
           const dayNum = d.getDate();
-          const dayShort = (t.date.weekdaysShort[d.getDay()] || '').toUpperCase();
+          const dayShort = (t.date.weekdaysShort[d.getDay()] || '');
+          // Capitalize first letter e.g. "Ср", "Wed"
+          const formattedDayShort = dayShort.charAt(0).toUpperCase() + dayShort.slice(1);
 
           const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
-          // Active (today) day uses theme accent color
-          // Date number is slightly softer/lighter, day label is slightly richer/darker
-          const numColor = isTodayDay
-            ? colors.today
-            : isSelected
-            ? (isDark ? colors.text : '#4B5563')
-            : (isDark ? '#6B7280' : '#9CA3AF');
-
+          // In user design:
+          // Top is Day name ("Wed"), Bottom is Day number ("10")
+          // Selected day has an elevated rounded rectangle/pill background
           const labelColor = isTodayDay
             ? colors.today
             : isSelected
-            ? (isDark ? colors.text : '#1F2937')
-            : isWeekend
-            ? (isDark ? '#9CA3AF' : '#6B7280')
-            : (isDark ? '#E5E7EB' : '#4B5563');
+            ? (isDark ? '#CBD5E1' : '#707684')
+            : (isDark ? '#64748B' : '#9CA3AF');
 
-          const fontWeight = (isSelected || isTodayDay) ? '700' : '600';
+          const numColor = isTodayDay
+            ? colors.today
+            : isSelected
+            ? (isDark ? colors.text : '#1E293B')
+            : isWeekend
+            ? (isDark ? '#94A3B8' : '#64748B')
+            : (isDark ? '#94A3B8' : '#64748B');
 
           return (
             <Pressable
               key={`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${i}`}
               onPress={() => onSelectDate(d)}
               hitSlop={4}
-              style={styles.dayCell}
+              style={[
+                styles.dayCell,
+                isSelected && [
+                  styles.selectedCell,
+                  {
+                    backgroundColor: isDark ? '#2C3446' : '#EFF0F3',
+                    borderColor: isDark ? '#3D485C' : '#E2E5EB',
+                  },
+                ],
+              ]}
             >
               <View style={styles.cellContent}>
                 <Text
                   style={[
-                    styles.cellNum,
-                    { color: numColor, fontWeight },
+                    styles.cellLabel,
+                    {
+                      color: labelColor,
+                      fontWeight: isSelected ? '600' : '500',
+                    },
                   ]}
                 >
-                  {dayNum}
+                  {formattedDayShort}
                 </Text>
                 <Text
                   style={[
-                    styles.cellLabel,
-                    { color: labelColor, fontWeight },
+                    styles.cellNum,
+                    {
+                      color: numColor,
+                      fontWeight: isSelected ? '700' : '600',
+                    },
                   ]}
                 >
-                  {dayShort}
+                  {dayNum}
                 </Text>
               </View>
             </Pressable>
@@ -115,12 +131,12 @@ export function CompactWeekStrip({
 
 const styles = StyleSheet.create({
   container: {
-    height: 56,
+    height: 60,
     marginHorizontal: 16,
     borderRadius: 20,
     borderCurve: 'continuous',
-    paddingHorizontal: 6,
-    paddingVertical: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
     position: 'relative',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
@@ -133,29 +149,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
   },
   dayCell: {
     flex: 1,
-    height: 44,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: 14,
+    borderCurve: 'continuous',
+  },
+  selectedCell: {
+    borderWidth: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 1,
   },
   cellContent: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
   },
-  cellNum: {
-    fontSize: 17,
-    lineHeight: 20,
-    textAlign: 'center',
-    fontVariant: ['tabular-nums'],
-  },
   cellLabel: {
     fontSize: 11,
-    lineHeight: 13,
+    lineHeight: 14,
     textAlign: 'center',
+  },
+  cellNum: {
+    fontSize: 16,
+    lineHeight: 19,
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
   },
 });
