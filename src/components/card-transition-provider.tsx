@@ -304,7 +304,7 @@ const CarouselCard = React.memo(function CarouselCard({
             numberOfLines={1}
             ellipsizeMode="tail"
             style={{
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: '600',
               color: isTodayCard ? '#0195FF' : isDark ? colors.text : '#31383E',
               letterSpacing: -0.2,
