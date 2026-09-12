@@ -22,8 +22,8 @@ describe('Theme System', () => {
 
   it('getThemeColors returns correct colors for specified theme and fallback to ocean', () => {
     const oceanColors = getThemeColors('ocean');
-    expect(oceanColors.today).toBe('#01B7FF');
-    expect(oceanColors.primary).toBe('#01B7FF');
+    expect(oceanColors.today).toBe('#0195FF');
+    expect(oceanColors.primary).toBe('#0195FF');
     expect(oceanColors.background).toBe('#FFFFFF');
 
     const emeraldColors = getThemeColors('emerald');
@@ -47,7 +47,7 @@ describe('Theme System', () => {
     expect(pinkColors.primary).toBe('#FF87C4');
 
     const fallbackColors = getThemeColors(undefined as any);
-    expect(fallbackColors.today).toBe('#01B7FF');
+    expect(fallbackColors.today).toBe('#0195FF');
     expect(fallbackColors.background).toBe('#FFFFFF');
   });
 
@@ -56,7 +56,7 @@ describe('Theme System', () => {
     expect(darkOcean.background).toBe('#10131A');
     expect(darkOcean.card).toBe('#1C222E');
     expect(darkOcean.text).toBe('#F3F5F9');
-    expect(darkOcean.today).toBe('#01B7FF');
+    expect(darkOcean.today).toBe('#0195FF');
 
     const darkEmerald = getThemeColors('emerald', true);
     expect(darkEmerald.background).toBe('#10131A');

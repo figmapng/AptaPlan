@@ -31,7 +31,7 @@ function CheckmarkIcon({ size = 12, color = '#FFFFFF' }: { size?: number; color?
       <Path
         d="M4.5 12.75l6 6 9-13.5"
         stroke={color}
-        strokeWidth="3.2"
+        strokeWidth="3.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

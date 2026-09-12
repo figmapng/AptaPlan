@@ -71,7 +71,7 @@ export const DayCard = memo(function DayCardComponent({
   };
 
   const open = (e?: any) => {
-    if (disableOpen || isSwipingRef?.current) return;
+    if (disableOpen) return;
 
     // Prevent accidental click during drag/swipe gesture (if finger moved > 8px)
     if (e?.nativeEvent && touchStartPos.current) {
@@ -80,22 +80,37 @@ export const DayCard = memo(function DayCardComponent({
       if (dx > 8 || dy > 8) {
         return;
       }
+    } else if (isSwipingRef?.current) {
+      return;
     }
 
     onInteraction?.();
 
+    const fallbackFrame = measuredFrameRef.current || { x: 16, y: 140, width: 300, height: 200 };
+
     if (cardRef.current) {
+      let completed = false;
+      const fallbackTimer = setTimeout(() => {
+        if (!completed) {
+          completed = true;
+          openCard(date, tasks, fallbackFrame);
+        }
+      }, 50);
+
       cardRef.current.measureInWindow((x, y, w, h) => {
+        if (completed) return;
+        completed = true;
+        clearTimeout(fallbackTimer);
         if (typeof x === 'number' && !isNaN(x) && w > 0 && h > 0 && y > 0) {
           const freshFrame = { x, y, width: w, height: h };
           measuredFrameRef.current = freshFrame;
           openCard(date, tasks, freshFrame);
-        } else if (measuredFrameRef.current) {
-          openCard(date, tasks, measuredFrameRef.current);
+        } else {
+          openCard(date, tasks, fallbackFrame);
         }
       });
-    } else if (measuredFrameRef.current) {
-      openCard(date, tasks, measuredFrameRef.current);
+    } else {
+      openCard(date, tasks, fallbackFrame);
     }
   };
 
@@ -141,39 +156,24 @@ export const DayCard = memo(function DayCardComponent({
       })
     : 1;
 
-  const headerBg = today ? colors.activeHeaderBg : isWeekend ? (isDark ? '#351B1E' : '#FFE5E2') : colors.cardHeaderBg;
-  const outerBg = today ? colors.activeCardBorder : isWeekend ? (isDark ? '#351B1E' : '#FFE5E2') : colors.cardHeaderBg;
-  const cardBorderColor = today ? colors.activeCardBorder : isWeekend ? (isDark ? '#522328' : '#F2D2CF') : colors.cardBorder;
-  const cardBorderWidth = 0;
-
-  const numOuterBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
-  const numInnerBg = today ? '#FFFFFF' : isWeekend ? colors.weekendNumBg : colors.dateNumBg;
-  const numTextColor = theme === 'ocean' && !isWeekend && !today
-    ? '#565B66'
-    : today
-    ? (isDark && colors.today === '#E4E4E7' ? '#18181B' : colors.today)
-    : isWeekend
-    ? colors.weekendNumText
-    : colors.dateNumText;
-
-  const dayNameColor = today ? (colors.activeHeaderText || '#FFFFFF') : isWeekend ? colors.sundayText : colors.text;
-  const progressCountColor = today ? (colors.activeHeaderText || '#FFFFFF') : isWeekend ? (isDark ? '#FFAAA4' : '#7B4545') : colors.text;
-  const progressTotalColor = today ? (colors.activeHeaderText === '#18181B' ? 'rgba(24, 24, 27, 0.7)' : 'rgba(255, 255, 255, 0.8)') : isWeekend ? (isDark ? 'rgba(255, 170, 164, 0.7)' : 'rgba(123, 69, 69, 0.7)') : colors.secondary;
+  const headerTextColor = today
+    ? colors.today
+    : isDark
+    ? colors.text
+    : '#31383E';
 
   const dayName = t.date.weekdays[date.getDay()] ?? '';
+  const dayNumber = format(date, 'd');
+  const monthShort = t.date.monthsShort[date.getMonth()] ?? '';
+
   const cardHeader = (
     <AnimatedPressable
       onPressIn={handlePressIn}
       onPress={open}
       activeScale={0.98}
       style={{
-        height: 29,
-        paddingVertical: 0,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 10,
-        backgroundColor: headerBg,
+        paddingTop: 0,
+        paddingBottom: 0,
       }}
     >
       <Text
@@ -181,104 +181,42 @@ export const DayCard = memo(function DayCardComponent({
         ellipsizeMode="tail"
         style={{
           fontSize: 12,
+          lineHeight: 16,
           fontWeight: '600',
           letterSpacing: 0.2,
-          color: dayNameColor,
-          flexShrink: 1,
+          color: headerTextColor,
         }}
       >
-        {dayName.toUpperCase()}
+        {dayName.toUpperCase()} • {dayNumber} {monthShort}
       </Text>
+    </AnimatedPressable>
+  );
 
-      {/* Outer badge */}
+  const headerDivider = (
+    <Pressable onPressIn={handlePressIn} onPress={open}>
       <View
         style={{
-          minWidth: 20,
-          minHeight: 17,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: numOuterBg,
-          borderRadius: 5,
-          paddingTop: 0,
-          paddingRight: 4,
-          paddingBottom: 0,
-          paddingLeft: 4,
-          flexShrink: 0,
+          height: 1,
+          backgroundColor: isDark ? colors.cardBorder : '#EDEEF1',
+          marginTop: 8,
+          marginBottom: 8,
         }}
-      >
-        {/* Inner frame */}
-        <View
-          style={{
-            alignSelf: 'stretch',
-            flexDirection: 'row',
-            borderRadius: 4,
-            paddingHorizontal: 0,
-            paddingVertical: 0,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: numInnerBg,
-            gap: 2,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 12,
-              lineHeight: 13,
-              fontWeight: today ? '700' : '600',
-              color: numTextColor,
-              fontVariant: ['tabular-nums'],
-            }}
-          >
-            {format(date, monthLabel ? 'd' : 'dd')}
-          </Text>
-          {monthLabel ? (
-            <Text
-              style={{
-                fontSize: 9.5,
-                lineHeight: 12,
-                fontWeight: '600',
-                color: numTextColor,
-                opacity: 0.85,
-              }}
-            >
-              {monthLabel}
-            </Text>
-          ) : null}
-        </View>
-      </View>
-
-      <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
-        <Text
-          style={{
-            fontSize: 11,
-            fontWeight: '600',
-            fontVariant: ['tabular-nums'],
-          }}
-        >
-          <Text style={{ color: progressCountColor }}>{completedCount}</Text>
-          <Text style={{ color: progressTotalColor }}>/{tasks.length}</Text>
-        </Text>
-      </View>
-    </AnimatedPressable>
+      />
+    </Pressable>
   );
 
   const wideBodyHeight = progress
     ? progress.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, Math.max(80, expandedSundayHeight - 31)],
+        outputRange: [0, Math.max(80, expandedSundayHeight - 48)],
       })
-    : Math.max(80, expandedSundayHeight - 31);
+    : Math.max(80, expandedSundayHeight - 48);
 
   const cardBodyContent = (
     <Animated.View
       style={[
         {
           overflow: 'hidden',
-          backgroundColor: colors.card,
-          borderRadius: 12,
-          borderCurve: 'continuous',
-          marginHorizontal: 1.5,
-          marginBottom: 1.5,
           flex: wide ? 1 : undefined,
         },
         wide ? undefined : { height: bodyHeight },
@@ -289,74 +227,50 @@ export const DayCard = memo(function DayCardComponent({
         onPress={open}
         style={{
           flex: 1,
-          paddingHorizontal: 8,
-          paddingTop: 6,
-          paddingBottom: 6,
-          gap: 4,
+          paddingVertical: 2,
+          paddingHorizontal: 0,
         }}
       >
         {tasks.length ? (
-          wide ? (
-            <TaskListFrame
-              tasks={tasks}
-              scrollable
-              scrollEnabled={scrollEnabled}
-              onScrollYChange={onScrollYChange}
-              onPress={open}
-              onInteraction={onInteraction}
-              isSwipingRef={isSwipingRef}
-              singleLine
-            />
-          ) : (
-            <TaskListFrame
-              tasks={tasks}
-              onPress={open}
-              onInteraction={onInteraction}
-              isSwipingRef={isSwipingRef}
-              singleLine
-            />
-          )
-        ) : wide ? (
-          <View
-            style={{
-              flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingVertical: 20,
-            }}
-          >
-            <Text style={{ color: colors.secondary, fontSize: 15, fontWeight: '500' }}>
-              {t.common.noTasks}
-            </Text>
-          </View>
+          <TaskListFrame
+            tasks={tasks}
+            onPress={open}
+            onInteraction={onInteraction}
+            isSwipingRef={isSwipingRef}
+            singleLine
+          />
         ) : (
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
-              paddingVertical: 1,
+              paddingVertical: 2,
             }}
           >
             <View
               style={{
                 width: 16,
                 height: 16,
+                borderRadius: 5,
+                borderWidth: 1,
+                borderColor: isDark ? '#3A3A3C' : '#DEE2E8',
+                backgroundColor: isDark ? '#242C3C' : '#F7F9FC',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+              <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
                 <Path
-                  d="M12 4v16M4 12h16"
-                  stroke={colors.secondary}
-                  strokeWidth="2"
+                  d="M12 5v14M5 12h15"
+                  stroke={isDark ? '#7E8B9F' : '#9CA3AF'}
+                  strokeWidth="2.4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </Svg>
             </View>
-            <Text style={{ color: colors.secondary, fontSize: 12, lineHeight: 17, fontWeight: '400' }}>
+            <Text style={{ color: isDark ? '#7E8B9F' : '#9CA3AF', fontSize: 13, lineHeight: 18, fontWeight: '400' }}>
               {t.common.addTask}
             </Text>
           </View>
@@ -378,6 +292,22 @@ export const DayCard = memo(function DayCardComponent({
     });
   };
 
+  const cardContainerStyle = {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    borderCurve: 'continuous' as const,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: isDark ? colors.cardBorder : 'transparent',
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: isDark ? 0.2 : 0.05,
+    shadowRadius: 15,
+    elevation: 4,
+  };
+
   if (wide) {
     return (
       <Animated.View
@@ -386,13 +316,8 @@ export const DayCard = memo(function DayCardComponent({
         onLayout={handleCardLayout}
         accessibilityLabel={`${dayName}, ${tasks.length} ${t.common.tasksCount}`}
         style={[
+          cardContainerStyle,
           {
-            backgroundColor: outerBg,
-            borderRadius: 14,
-            borderCurve: 'continuous',
-            borderWidth: cardBorderWidth,
-            borderColor: cardBorderColor,
-            overflow: 'hidden',
             opacity: isTransitioning ? 0 : wideOpacity,
             height: wideHeight,
             transform: [{ translateY: wideTranslateY }, { scale: wideScale }],
@@ -400,6 +325,7 @@ export const DayCard = memo(function DayCardComponent({
         ]}
       >
         {cardHeader}
+        {headerDivider}
         {cardBodyContent}
       </Animated.View>
     );
@@ -411,17 +337,15 @@ export const DayCard = memo(function DayCardComponent({
       collapsable={false}
       onLayout={handleCardLayout}
       accessibilityLabel={`${dayName}, ${tasks.length} ${t.common.tasksCount}`}
-      style={{
-        backgroundColor: outerBg,
-        borderRadius: 14,
-        borderCurve: 'continuous',
-        borderWidth: cardBorderWidth,
-        borderColor: cardBorderColor,
-        overflow: 'hidden',
-        opacity: isTransitioning ? 0 : gridPushOpacity,
-      }}
+      style={[
+        cardContainerStyle,
+        {
+          opacity: isTransitioning ? 0 : gridPushOpacity,
+        },
+      ]}
     >
       {cardHeader}
+      {headerDivider}
       {cardBodyContent}
     </Animated.View>
   );

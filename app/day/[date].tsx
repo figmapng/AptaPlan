@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   PanResponder,
@@ -23,6 +23,7 @@ import { TaskBottomSheet } from '@/components/TaskBottomSheet';
 import { TaskPreviewModal } from '@/components/TaskPreviewModal';
 import { SortableTaskList } from '@/components/SortableTaskList';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { BackButton } from '@/components/BackButton';
 import { CompactWeekStrip } from '@/components/CompactWeekStrip';
 import { useI18n } from '@/i18n/use-i18n';
 import type { Task } from '@/types/task';
@@ -96,7 +97,15 @@ export default function DayScreen() {
     if (date) void loadRange(date, date);
   }, [date, loadRange]);
 
-  const selectedDate = fromDateKey(date);
+  const selectedDate = useMemo(() => {
+    if (!date) return new Date();
+    try {
+      const parsed = fromDateKey(date);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    } catch {
+      return new Date();
+    }
+  }, [date]);
   const dayTasks = tasks.filter((task) => task.date === date);
   const completedCount = dayTasks.filter((task) => task.isCompleted).length;
   const isWeekend = selectedDate.getDay() === 0 || selectedDate.getDay() === 6;
@@ -142,12 +151,13 @@ export default function DayScreen() {
         paddingHorizontal: 16,
         paddingTop: insets.top + 4,
         paddingBottom: 88,
-        gap: 8,
+        gap: 12,
       }}
     >
       <View>
         <CompactWeekStrip
           selectedDate={selectedDate}
+          style={{ marginHorizontal: 0 }}
           onSelectDate={(d) => {
             const newKey = toDateKey(d);
             if (newKey !== date) {
@@ -159,89 +169,55 @@ export default function DayScreen() {
       <View
         style={{
           backgroundColor: colors.card,
-          borderRadius: 20,
+          borderRadius: 24,
           borderCurve: 'continuous',
           overflow: 'hidden',
           height: cardHeight,
           maxHeight: cardMaxHeight,
-          borderWidth: 1,
-          borderColor: isSelectedToday ? colors.activeCardBorder : colors.cardBorder,
-          boxShadow: '0 1px 3px rgba(31,32,38,0.035)',
+          borderWidth: isDark ? 1 : 0,
+          borderColor: isDark ? colors.cardBorder : 'transparent',
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: isDark ? 0.2 : 0.05,
+          shadowRadius: 20,
+          elevation: 4,
         }}
       >
         <View
           style={{
-            minHeight: 48,
-            paddingHorizontal: 12,
-            paddingVertical: 12,
+            paddingHorizontal: 18,
+            paddingTop: 18,
+            paddingBottom: 12,
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 8,
-            borderBottomWidth: 1,
-            borderBottomColor: isSelectedToday ? activeDayColor : colors.divider,
-            backgroundColor: isSelectedToday ? activeDayColor : colors.card,
+            justifyContent: 'space-between',
           }}
         >
-          <View style={{
-            backgroundColor: isSelectedToday
-              ? (isDark && colors.today === '#E4E4E7' ? '#FFFFFF' : (isDark ? colors.card : 'white'))
-              : isWeekend ? colors.weekendNumBg : colors.dateNumBg,
-            borderRadius: 6,
-            paddingHorizontal: 8,
-            paddingVertical: 4
-          }}>
-            <Text style={{
-              color: isSelectedToday
-                ? (isDark && colors.today === '#E4E4E7' ? '#18181B' : colors.today)
-                : isWeekend ? colors.weekendNumText : colors.dateNumText,
-              fontSize: 14,
-              fontWeight: '600'
-            }}>
-              {t.date.monthsFull[selectedDate.getMonth()][0].toUpperCase() + t.date.monthsFull[selectedDate.getMonth()].slice(1)}
-            </Text>
-          </View>
-          <Text style={{
-            color: isSelectedToday
-              ? (colors.activeHeaderText || '#FFFFFF')
-              : isWeekend ? colors.sundayText : colors.text,
-            fontSize: 16,
-            fontWeight: '600'
-          }}>
-            {t.date.weekdays[selectedDate.getDay()]}
+          <Text
+            numberOfLines={1}
+            style={{
+              fontSize: 18,
+              fontWeight: '700',
+              color: isSelectedToday ? '#0195FF' : isDark ? colors.text : '#31383E',
+              letterSpacing: -0.2,
+            }}
+          >
+            {`${(t.date.weekdays[selectedDate.getDay()] ?? '').toUpperCase()} • ${format(selectedDate, 'd')} ${t.date.monthsShort[selectedDate.getMonth()] ?? ''}`}
           </Text>
-          <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{
-              width: 14,
-              height: 14,
-              marginRight: 6,
-              borderRadius: 4,
-              borderWidth: 1.25,
-              borderColor: isSelectedToday ? (colors.activeHeaderText || '#FFFFFF') : colors.text,
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Text style={{
-                color: isSelectedToday ? (colors.activeHeaderText || '#FFFFFF') : colors.text,
-                fontSize: 9,
-                fontWeight: '800',
-                lineHeight: 10
-              }}>✓</Text>
-            </View>
-            <Text style={{
-              color: isSelectedToday ? (colors.activeHeaderText || '#FFFFFF') : colors.text,
-              fontSize: 12,
-              fontWeight: '600',
-              fontVariant: ['tabular-nums']
-            }}>{completedCount}</Text>
-            <Text style={{
-              color: isSelectedToday
-                ? (colors.activeHeaderText === '#18181B' ? 'rgba(24, 24, 27, 0.65)' : 'rgba(255,255,255,0.72)')
-                : colors.secondary,
-              fontSize: 12,
-              fontWeight: '600',
-              fontVariant: ['tabular-nums']
-            }}>/{dayTasks.length}</Text>
-          </View>
+
+          <Text
+            style={{
+              fontSize: 14,
+              fontWeight: '500',
+              color: isDark ? '#8E8E93' : '#9CA3AF',
+              fontVariant: ['tabular-nums'],
+            }}
+          >
+            <Text style={{ fontWeight: '600', color: isDark ? colors.text : '#31383E' }}>
+              {completedCount}
+            </Text>
+            /{dayTasks.length}
+          </Text>
         </View>
 
         <ScrollView
@@ -280,6 +256,8 @@ export default function DayScreen() {
                     onPress={() => setPreviewTask(task)}
                     onPendingDelete={handlePendingDelete}
                     isActive={isActive}
+                    cardSurface
+                    cardBg="#FFFFFF"
                   />
                 )}
               />
@@ -338,24 +316,7 @@ export default function DayScreen() {
       </View>
     )}
     <View pointerEvents="box-none" style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), height: 48, flexDirection: 'row', alignItems: 'center', gap: 10, zIndex: 30 }}>
-      <AnimatedPressable
-        accessibilityRole="button"
-        accessibilityLabel={t.common.back}
-        onPress={returnToList}
-        activeScale={0.92}
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: 24,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: colors.inputBg,
-          borderWidth: 1,
-          borderColor: colors.inputBorder,
-        }}
-      >
-        <ChevronLeftIcon />
-      </AnimatedPressable>
+      <BackButton onPress={returnToList} />
       <AnimatedPressable
         accessibilityRole="button"
         accessibilityLabel={t.common.addTask}
@@ -365,9 +326,14 @@ export default function DayScreen() {
           flex: 1,
           height: 48,
           borderRadius: 24,
-          borderWidth: 1,
-          borderColor: colors.inputBorder,
-          backgroundColor: colors.inputBg,
+          borderWidth: isDark ? 1 : 0,
+          borderColor: isDark ? colors.cardBorder : 'transparent',
+          backgroundColor: colors.card,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.2 : 0.06,
+          shadowRadius: 10,
+          elevation: 3,
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 16,
@@ -377,13 +343,15 @@ export default function DayScreen() {
         <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
           <Path
             d="M12 4.5v15M4.5 12h15"
-            stroke={colors.inputPlusIcon}
+            stroke={isDark ? '#7E8B9F' : '#9CA3AF'}
             strokeWidth="2.8"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </Svg>
-        <Text style={{ color: colors.inputPlaceholder, fontSize: 14, fontWeight: '500' }}>{t.common.addTask}</Text>
+        <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: isDark ? '#7E8B9F' : '#9CA3AF' }}>
+          {t.common.addTask}
+        </Text>
       </AnimatedPressable>
     </View>
     <TaskPreviewModal
@@ -406,21 +374,5 @@ export default function DayScreen() {
       onClose={closeComposer}
     />
     </View>
-  );
-}
-
-
-function ChevronLeftIcon() {
-  const { colors } = useTheme();
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M15 18l-6-6 6-6"
-        stroke={colors.secondary}
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
   );
 }

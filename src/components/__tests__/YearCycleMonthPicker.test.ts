@@ -3,8 +3,8 @@ jest.mock('@/hooks/use-theme', () => ({
     colors: {
       text: '#23262D',
       textMuted: '#94A3B8',
-      today: '#01B7FF',
-      todayDark: '#009FD6',
+      today: '#0195FF',
+      todayDark: '#0080DE',
     },
     isDark: false,
   }),

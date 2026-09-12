@@ -50,10 +50,10 @@ export default function AppearanceScreen() {
   };
 
   const appIcons = [
-    { id: 'default', label: t.settings.iconNames.default || 'Default', bg: '#01B7FF', mark: '#FFFFFF' },
+    { id: 'default', label: t.settings.iconNames.default || 'Default', bg: '#0195FF', mark: '#FFFFFF' },
     { id: 'amber', label: t.settings.iconNames.amber || 'Amber', bg: '#FFAA01', mark: '#FFFFFF' },
     { id: 'emerald', label: t.settings.iconNames.emerald || 'Emerald', bg: '#10B981', mark: '#FFFFFF' },
-    { id: 'dark', label: t.settings.iconNames.dark || 'Dark', bg: '#1E293B', mark: '#01B7FF' },
+    { id: 'dark', label: t.settings.iconNames.dark || 'Dark', bg: '#1E293B', mark: '#0195FF' },
   ];
 
   return (

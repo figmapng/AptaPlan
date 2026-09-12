@@ -898,7 +898,9 @@ export default function Home() {
   const currDates = Array.from({ length: 7 }, (_, i) => addDays(activeWeekStart, i));
   
   const headerSpace = insets.top + 68;
-  const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 60;
+  const bottomInputBarHeight = 48;
+  const cardToInputGap = 16;
+  const bottomBarSpace = Math.max(insets.bottom + 8, 16) + bottomInputBarHeight + cardToInputGap;
   const rawAvailableHeight = screenHeight - headerSpace - bottomBarSpace;
   const availableHeight = measuredContentHeight > 0
     ? measuredContentHeight - bottomBarSpace
@@ -906,10 +908,10 @@ export default function Home() {
 
   // Month grid uses the same available height as week view
   const monthGridAvailH = availableHeight;
-  const sundayTargetH = Math.min(160, Math.max(120, Math.round(availableHeight * 0.25)));
-  const expandedBodyHeight = Math.max(70, Math.floor((availableHeight - 24 - sundayTargetH - 3 * 29) / 3));
-  const collapsedBodyHeight = Math.max(120, Math.floor((availableHeight - 16 - 3 * 29) / 3));
-  const expandedSundayHeight = sundayTargetH;
+  const cardNonBodyHeight = 53; // 10 paddingTop + 16 header + 17 divider + 10 paddingBottom
+  const expandedBodyHeight = Math.max(40, Math.floor((availableHeight - 24 - 4 * cardNonBodyHeight) / 4));
+  const collapsedBodyHeight = Math.max(60, Math.floor((availableHeight - 16 - 3 * cardNonBodyHeight) / 3));
+  const expandedSundayHeight = cardNonBodyHeight + expandedBodyHeight;
   const cardGridBottomPadding = bottomBarSpace;
   const title = derivedWeekData.headerTitle;
   const isFutureWeek = derivedWeekData.isFutureWeek;
@@ -1660,7 +1662,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
 }) {
   return (
     <View style={{ gap: 8 }}>
-      <View style={{ flexDirection: 'row', gap: 10 }}>
+      <View style={{ flexDirection: 'row', gap: 14 }}>
         <View style={{ flex: 1, gap: 8 }}>
           {days.slice(0, 3).map((day) => (
             <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} monthLabel={day.monthLabel} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />

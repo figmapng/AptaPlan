@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, PanResponder, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { addDays, isSameDay, isToday, startOfWeek } from 'date-fns';
 import { colors as defaultColors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
@@ -12,6 +12,7 @@ interface CompactWeekStripProps {
   carouselX?: Animated.Value;
   screenWidth?: number;
   pageIndex?: number;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function CompactWeekStrip({
@@ -20,11 +21,15 @@ export function CompactWeekStrip({
   carouselX,
   screenWidth = 375,
   pageIndex = 0,
+  style,
 }: CompactWeekStripProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useI18n();
 
-  const currentDayDate = selectedDate;
+  const currentDayDate = useMemo(() => {
+    if (!selectedDate || isNaN(selectedDate.getTime())) return new Date();
+    return selectedDate;
+  }, [selectedDate]);
 
   const currentWeekStart = useMemo(
     () => startOfWeek(currentDayDate, { weekStartsOn: 1 }),
@@ -36,119 +41,58 @@ export function CompactWeekStrip({
     [currentWeekStart]
   );
 
-  const currentDayInWeek = useMemo(
-    () => Math.round((currentDayDate.getTime() - currentWeekStart.getTime()) / (24 * 60 * 60 * 1000)),
-    [currentDayDate, currentWeekStart]
-  );
-
-  const stripWidth = screenWidth - 32; // marginHorizontal 16 * 2
-  const cellWidth = stripWidth / 7;
-
-  const curIsToday = isToday(currentDayDate);
-  const curIsWeekend = currentDayDate.getDay() === 0 || currentDayDate.getDay() === 6;
-  const activeBorderColor = curIsToday
-    ? colors.today
-    : curIsWeekend
-    ? colors.weekendNumBg
-    : colors.cardBorder;
-
-  const dayDragOffset = useMemo(
-    () => (carouselX ? Animated.add(carouselX, pageIndex * screenWidth) : new Animated.Value(0)),
-    [carouselX, pageIndex, screenWidth]
-  );
-
-  // Selection Indicator frame positioning (glides between day cells)
-  const indicatorTranslateX = useMemo(() => {
-    if (!carouselX) return currentDayInWeek * cellWidth;
-    return dayDragOffset.interpolate({
-      inputRange: [-screenWidth, 0, screenWidth],
-      outputRange: [
-        Math.min(6 * cellWidth, (currentDayInWeek + 1) * cellWidth),
-        currentDayInWeek * cellWidth,
-        Math.max(0, (currentDayInWeek - 1) * cellWidth),
-      ],
-      extrapolate: 'clamp',
-    });
-  }, [dayDragOffset, currentDayInWeek, cellWidth, screenWidth, carouselX]);
-
   return (
-    <View style={[styles.container, { width: stripWidth }]}>
-      {/* Selection indicator frame */}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.animatedIndicator,
-          {
-            width: cellWidth - 3,
-            transform: [{ translateX: indicatorTranslateX }],
-            borderColor: activeBorderColor,
-          },
-        ]}
-      />
-
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.card,
+          borderColor: isDark ? colors.cardBorder : 'transparent',
+          borderWidth: isDark ? 1 : 0,
+        },
+        style,
+      ]}
+    >
       <View style={styles.weekRow}>
-        {days.map((d) => {
+        {days.map((d, i) => {
           const isSelected = isSameDay(d, currentDayDate);
-          const isDayToday = isToday(d);
+          const isTodayDay = isToday(d);
           const dayNum = d.getDate();
           const dayShort = (t.date.weekdaysShort[d.getDay()] || '').toUpperCase();
+
           const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
-          const isTeenNumber = dayNum >= 10 && dayNum <= 19 && dayNum !== 11;
-          const opticalLabelStyle = isTeenNumber ? { transform: [{ translateX: 0.75 }] } : null;
+          // Only active (today) day has the accent color (#0195FF)
+          // Inactive days look like inactive card colors
+          const numColor = isTodayDay
+            ? '#0195FF'
+            : isSelected
+            ? (isDark ? colors.text : '#31383E')
+            : (isDark ? '#7E8B9F' : '#9CA3AF');
 
-          let numColor = colors.secondary;
-          let labelColor = colors.secondary;
-          let numWeight: '500' | '600' | '700' | '800' = '500';
-          let labelWeight: '500' | '600' | '700' | '800' = '500';
+          // Weekdays (non-weekend) have a richer/darker color (#31383E), weekend days are muted (#9CA3AF)
+          const labelColor = isTodayDay
+            ? '#0195FF'
+            : isSelected
+            ? (isDark ? colors.text : '#31383E')
+            : isWeekend
+            ? (isDark ? '#7E8B9F' : '#9CA3AF')
+            : (isDark ? '#D1D5DB' : '#31383E');
 
-          if (isSelected) {
-            if (isDayToday) {
-              numColor = colors.today;
-              labelColor = colors.today;
-              numWeight = '800';
-              labelWeight = '800';
-            } else if (isWeekend) {
-              numColor = colors.weekend;
-              labelColor = colors.weekend;
-              numWeight = '700';
-              labelWeight = '700';
-            } else {
-              numColor = colors.text;
-              labelColor = colors.text;
-              numWeight = '700';
-              labelWeight = '700';
-            }
-          } else {
-            if (isDayToday) {
-              numColor = colors.today;
-              labelColor = colors.today;
-              numWeight = '500';
-              labelWeight = '500';
-            } else if (isWeekend) {
-              numColor = colors.weekend;
-              labelColor = colors.weekend;
-              numWeight = '500';
-              labelWeight = '500';
-            } else {
-              numColor = colors.secondary;
-              labelColor = colors.secondary;
-              numWeight = '500';
-              labelWeight = '500';
-            }
-          }
+          const fontWeight = (isSelected || isTodayDay) ? '700' : '600';
 
           return (
             <Pressable
-              key={d.toISOString()}
+              key={`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${i}`}
               onPress={() => onSelectDate(d)}
+              hitSlop={4}
               style={styles.dayCell}
             >
               <View style={styles.cellContent}>
                 <Text
                   style={[
                     styles.cellNum,
-                    { color: numColor, fontWeight: numWeight },
+                    { color: numColor, fontWeight },
                   ]}
                 >
                   {dayNum}
@@ -156,8 +100,7 @@ export function CompactWeekStrip({
                 <Text
                   style={[
                     styles.cellLabel,
-                    { color: labelColor, fontWeight: labelWeight },
-                    opticalLabelStyle,
+                    { color: labelColor, fontWeight },
                   ]}
                 >
                   {dayShort}
@@ -173,62 +116,47 @@ export function CompactWeekStrip({
 
 const styles = StyleSheet.create({
   container: {
-    height: 52,
+    height: 56,
     marginHorizontal: 16,
-    marginBottom: 4,
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    paddingHorizontal: 6,
+    paddingVertical: 6,
     position: 'relative',
-    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
+    justifyContent: 'center',
   },
   weekRow: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  animatedIndicator: {
-    position: 'absolute',
-    left: 1.5,
-    top: 0,
-    bottom: 0,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    backgroundColor: 'transparent',
-    zIndex: 1,
+    paddingHorizontal: 4,
   },
   dayCell: {
     flex: 1,
-    height: 48,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
-    marginHorizontal: 1.5,
-    position: 'relative',
-    zIndex: 2,
+    borderRadius: 12,
   },
   cellContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 1,
+    gap: 2,
   },
   cellNum: {
-    fontSize: 18,
+    fontSize: 17,
     lineHeight: 20,
     textAlign: 'center',
-    alignSelf: 'center',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    fontVariant: ['tabular-nums'],
   },
   cellLabel: {
-    fontSize: 10,
-    lineHeight: 12,
-    letterSpacing: 0,
+    fontSize: 11,
+    lineHeight: 13,
     textAlign: 'center',
-    alignSelf: 'center',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
   },
 });

@@ -27,7 +27,7 @@ export function TaskListFrame({
 }: TaskListFrameProps) {
   const { colors } = useTheme();
   const rows = (
-    <View style={{ gap: 2 }}>
+    <View style={{ gap: 4 }}>
       {tasks.map((task) => (
         <TaskRow
           key={`${task.id}:${task.date}`}

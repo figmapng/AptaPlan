@@ -23,7 +23,7 @@ export async function requestRemindersPermission(): Promise<boolean> {
     const { status } = await Calendar.requestRemindersPermissionsAsync();
     return status === 'granted';
   } catch (error) {
-    console.error('Error requesting reminders permission:', error);
+    console.warn('Error requesting reminders permission:', error);
     return false;
   }
 }

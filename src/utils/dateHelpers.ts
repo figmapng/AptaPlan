@@ -48,7 +48,7 @@ export function getNextWeekMondayKey(): string {
   return toDateKey(addDays(d, daysUntilNextMon));
 }
 
-export const kzWeekdaysShort = ['Жс', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
+export const kzWeekdaysShort = ['Жб', 'Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб'];
 
 export function formatChipDate(dateStr: string, lang: Language = 'kk'): string {
   return formatLocalizedChipDate(dateStr, lang);

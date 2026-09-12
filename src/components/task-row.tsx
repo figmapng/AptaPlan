@@ -335,9 +335,6 @@ export const TaskRow = React.memo(function TaskRow({
           styles.rowContainer,
           compact && styles.compactRowContainer,
           cardSurface && styles.cardRowContainer,
-          {
-            opacity: rowOpacity,
-          },
         ]}
       >
         <Pressable
@@ -356,12 +353,20 @@ export const TaskRow = React.memo(function TaskRow({
             style={[
               styles.checkbox,
               compact && styles.compactCheckbox,
-              { borderColor: colors.checkboxBorder, backgroundColor: 'transparent' },
-              task.isCompleted && {
-                borderColor: colors.checkedCheckboxBg,
-                backgroundColor: colors.checkedCheckboxBg,
+              cardSurface && styles.cardSurfaceCheckbox,
+              {
+                borderColor: compact || cardSurface
+                  ? (isDark ? '#3A3A3C' : '#DEE2E8')
+                  : colors.checkboxBorder,
+                backgroundColor: compact || cardSurface
+                  ? (isDark ? '#242C3C' : '#F7F9FC')
+                  : 'transparent',
+                borderWidth: compact || cardSurface ? 1.2 : 1.5,
               },
-              cardBg === '#FAFCFF' && { borderColor: colors.checkboxBorder, backgroundColor: 'transparent' },
+              task.isCompleted && {
+                borderColor: '#0195FF',
+                backgroundColor: isDark ? 'rgba(1, 149, 255, 0.2)' : '#E6F4FF',
+              },
               { transform: [{ scale: boxScale }] },
             ]}
           >
@@ -373,7 +378,11 @@ export const TaskRow = React.memo(function TaskRow({
                   justifyContent: 'center',
                 }}
               >
-                <CheckmarkIcon size={compact ? 10 : 13} color="#FFFFFF" />
+                <CheckmarkIcon
+                  size={compact ? 10 : cardSurface ? 11 : 13}
+                  color="#0195FF"
+                  strokeWidth={compact ? 3.0 : cardSurface ? 3.0 : 3.2}
+                />
               </Animated.View>
             )}
           </Animated.View>
@@ -386,26 +395,52 @@ export const TaskRow = React.memo(function TaskRow({
           style={[
             styles.contentStack,
             compact && styles.compactContentStack,
-            !isLast && !compact && [styles.contentStackBorderBottom, { borderBottomColor: colors.inputBorder }],
+            cardSurface && { paddingBottom: 0 },
+            !isLast && !compact && !cardSurface && [styles.contentStackBorderBottom, { borderBottomColor: colors.inputBorder }],
           ]}
         >
-          <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+          <Animated.View
+            style={[
+              { transform: [{ scale: pressScale }], opacity: rowOpacity },
+              compact && { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+            ]}
+          >
             <Text
-              numberOfLines={singleLine ? 1 : undefined}
+              numberOfLines={singleLine ? 1 : cardSurface ? 2 : undefined}
               ellipsizeMode={singleLine ? 'tail' : undefined}
               style={[
                 styles.title,
                 compact && styles.compactTitle,
-                { color: colors.text },
-                task.isCompleted && [styles.completedTitle, { color: colors.secondary }],
+                cardSurface && styles.cardSurfaceTitle,
+                { color: isDark ? colors.text : '#31383E' },
+                compact && { flex: 1 },
+                task.isCompleted && [styles.completedTitle, { color: isDark ? '#636366' : '#9CA3AF' }],
               ]}
             >
               {task.title}
             </Text>
 
+            {compact && hasTime ? (
+              <View
+                style={[
+                  styles.compactTimePill,
+                  { backgroundColor: isDark ? '#2C3446' : '#F3F4F7' },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.compactTimeText,
+                    { color: isDark ? '#94A0B4' : '#6B7280' },
+                  ]}
+                >
+                  {task.time}
+                </Text>
+              </View>
+            ) : null}
+
             {!compact && hasMetadata && (
-              <View style={styles.metadataRow}>
-                {hasDate && (
+              <View style={[styles.metadataRow, cardSurface && { marginTop: 4, gap: 8 }]}>
+                {hasDate && !cardSurface && (
                   <View style={styles.metaItem}>
                     <CalendarIcon size={13} color={dateColor} />
                     <Text style={[styles.metaText, { color: isOverdue ? '#E03B2F' : colors.secondary }]}>
@@ -416,15 +451,15 @@ export const TaskRow = React.memo(function TaskRow({
 
                 {hasTime && (
                   <View style={styles.metaItem}>
-                    <ClockIcon size={13} color={colors.secondary} />
-                    <Text style={[styles.metaText, { color: colors.secondary }]}>{task.time}</Text>
+                    <ClockIcon size={12} color={colors.secondary} />
+                    <Text style={[styles.metaText, { color: colors.secondary, fontSize: 12 }]}>{task.time}</Text>
                   </View>
                 )}
 
                 {hasRepeat && (
                   <View style={styles.metaItem}>
-                    <RepeatIcon size={13} color={colors.secondary} />
-                    {repeatLabel ? (
+                    <RepeatIcon size={12} color={colors.secondary} />
+                    {repeatLabel && !cardSurface ? (
                       <Text style={[styles.metaText, { color: colors.secondary }]}>{repeatLabel}</Text>
                     ) : null}
                   </View>
@@ -438,13 +473,13 @@ export const TaskRow = React.memo(function TaskRow({
   );
 });
 
-function CheckmarkIcon({ size = 12, color = '#FFFFFF' }: { size?: number; color?: string }) {
+function CheckmarkIcon({ size = 12, color = '#FFFFFF', strokeWidth = 3.4 }: { size?: number; color?: string; strokeWidth?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M4.5 12.75l6 6 9-13.5"
         stroke={color}
-        strokeWidth="3.2"
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -510,14 +545,18 @@ const styles = StyleSheet.create({
   },
   cardRowContainer: {
     width: '100%',
+    paddingVertical: 7,
+    paddingHorizontal: 0,
+    gap: 12,
   },
   compactRowContainer: {
-    minHeight: 18,
-    paddingTop: 1,
-    paddingBottom: 1,
+    minHeight: 22,
+    paddingTop: 2.5,
+    paddingBottom: 2.5,
     paddingHorizontal: 0,
     gap: 8,
     alignItems: 'center',
+    flexDirection: 'row',
   },
   checkboxTouch: {
     marginTop: 2,
@@ -532,6 +571,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  cardSurfaceCheckbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+  },
   checkboxCompleted: {
     borderColor: colors.checkedCheckboxBg,
     backgroundColor: colors.checkedCheckboxBg,
@@ -540,9 +584,9 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 5,
-    borderWidth: 1.5,
-    borderColor: colors.checkboxBorder,
-    backgroundColor: colors.checkboxBg,
+    borderWidth: 1,
+    borderColor: '#DEE2E8',
+    backgroundColor: '#F7F9FC',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -564,15 +608,37 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: colors.text,
   },
+  cardSurfaceTitle: {
+    fontSize: 14.5,
+    lineHeight: 20,
+    fontWeight: '400',
+  },
   compactTitle: {
     fontSize: 12,
-    lineHeight: 17,
+    lineHeight: 16,
     fontWeight: '400',
     color: colors.text,
   },
   completedTitle: {
     textDecorationLine: 'line-through',
     color: colors.secondary,
+  },
+  compactTimePill: {
+    backgroundColor: '#F3F4F7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 6,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactTimeText: {
+    fontSize: 11.5,
+    lineHeight: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+    fontVariant: ['tabular-nums'],
   },
   metadataRow: {
     flexDirection: 'row',

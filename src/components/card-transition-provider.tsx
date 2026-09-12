@@ -3,7 +3,7 @@ import { Animated, Easing, PanResponder, Platform, Pressable, ScrollView, StyleS
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { addDays, format, isToday } from 'date-fns';
+import { addDays, differenceInCalendarDays, format, isToday } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
@@ -129,9 +129,14 @@ const CarouselCard = React.memo(function CarouselCard({
     ? (isDark ? '#4A252A' : '#FFE0DC')
     : (isDark ? '#2C3446' : '#E8EDF3');
 
-  const closedHeaderHeight = isMonthOrigin ? 0 : isWideOrigin ? 35 : 29;
-  const closedHeaderPadding = isMonthOrigin ? 4 : isWideOrigin ? 14 : 10;
-  const closedHeaderFontSize = isWideOrigin ? 15 : 12;
+  const safeFrameX = typeof currentFrame?.x === 'number' && !isNaN(currentFrame.x) ? currentFrame.x : 16;
+  const safeFrameY = typeof currentFrame?.y === 'number' && !isNaN(currentFrame.y) ? currentFrame.y : insets.top + 78;
+  const safeFrameW = typeof currentFrame?.width === 'number' && !isNaN(currentFrame.width) && currentFrame.width > 0 ? currentFrame.width : width - 32;
+  const safeFrameH = typeof currentFrame?.height === 'number' && !isNaN(currentFrame.height) && currentFrame.height > 0 ? currentFrame.height : 200;
+
+  const closedHeaderHeight = isMonthOrigin ? 0 : 26;
+  const closedHeaderPadding = isMonthOrigin ? 4 : 10;
+  const closedHeaderFontSize = 12;
 
   return (
     <Animated.View
@@ -140,49 +145,41 @@ const CarouselCard = React.memo(function CarouselCard({
           position: 'absolute',
           left: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: [currentFrame.x, 16],
+            outputRange: [safeFrameX, 16],
             extrapolate: 'clamp',
           }),
           top: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: [currentFrame.y, insets.top + 64],
+            outputRange: [safeFrameY, insets.top + 78],
             extrapolate: 'clamp',
           }),
           width: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: [currentFrame.width, width - 32],
+            outputRange: [safeFrameW, width - 32],
             extrapolate: 'clamp',
           }),
           height: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: [currentFrame.height, cardTargetHeight],
+            outputRange: [safeFrameH, cardTargetHeight],
             extrapolate: 'clamp',
           }),
           borderRadius: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: [isMonthOrigin ? 8 : 14, 16],
+            outputRange: [isMonthOrigin ? 8 : 16, 24],
             extrapolate: 'clamp',
           }),
-          backgroundColor: isMonthOrigin
-            ? progress.interpolate({
-                inputRange: [0, 0.4, 1],
-                outputRange: [monthCellBg, isTodayCard ? colors.activeHeaderBg : isWeekendCard ? (isDark ? '#351B1E' : '#FFE5E2') : colors.cardHeaderBg, isTodayCard ? colors.activeHeaderBg : isWeekendCard ? (isDark ? '#351B1E' : '#FFE5E2') : colors.cardHeaderBg],
-                extrapolate: 'clamp',
-              })
-            : isTodayCard ? colors.activeHeaderBg : isWeekendCard ? (isDark ? '#351B1E' : '#FFE5E2') : colors.cardHeaderBg,
-          borderWidth: isMonthOrigin
-            ? progress.interpolate({
-                inputRange: [0, 0.35, 1],
-                outputRange: [isTodayCard ? 1.5 : 0.5, 0, 0],
-                extrapolate: 'clamp',
-              })
-            : 0,
-          borderColor: isMonthOrigin ? monthCellBorder : undefined,
+          borderCurve: 'continuous',
+          backgroundColor: colors.card,
+          borderWidth: isDark ? 1 : 0,
+          borderColor: isDark ? colors.cardBorder : 'transparent',
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: isDark ? 0.2 : 0.05,
+          shadowRadius: 20,
+          elevation: 4,
           opacity: 1,
           zIndex: isCenter ? 9999 : 9998,
-          transform: [
-            { translateX: cardTranslateX },
-          ],
+          transform: [{ translateX: cardTranslateX }],
         },
       ]}
     >
@@ -267,17 +264,10 @@ const CarouselCard = React.memo(function CarouselCard({
       <Animated.View
         style={{
           flex: 1,
-          borderRadius: 16,
+          borderRadius: 24,
           borderCurve: 'continuous',
           overflow: 'hidden',
-          backgroundColor: isTodayCard ? colors.activeHeaderBg : isWeekendCard ? (isDark ? '#351B1E' : '#FFE5E2') : colors.cardHeaderBg,
-          opacity: isMonthOrigin
-            ? progress.interpolate({
-                inputRange: [0.2, 0.55, 1],
-                outputRange: [0, 0.3, 1],
-                extrapolate: 'clamp',
-              })
-            : 1,
+          backgroundColor: colors.card,
         }}
       >
         <Animated.View
@@ -285,183 +275,45 @@ const CarouselCard = React.memo(function CarouselCard({
           style={{
             height: progress.interpolate({
               inputRange: [0, 1],
-              outputRange: [closedHeaderHeight, 44],
+              outputRange: [closedHeaderHeight, 48],
               extrapolate: 'clamp',
             }),
             paddingHorizontal: progress.interpolate({
               inputRange: [0, 1],
-              outputRange: [closedHeaderPadding, 14],
+              outputRange: [closedHeaderPadding, 16],
               extrapolate: 'clamp',
             }),
-            opacity: progress.interpolate({
-              inputRange: [0, 0.25, 1],
-              outputRange: [isMonthOrigin ? 0 : 0.7, 0.9, 1],
+            paddingTop: progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 14],
+              extrapolate: 'clamp',
+            }),
+            paddingBottom: progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 14],
               extrapolate: 'clamp',
             }),
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'space-between',
             overflow: 'hidden',
           }}
         >
-          {/* Weekday Name */}
-          <Animated.Text
+          {/* Weekday Name, Date and Month: vibrant blue only if active (today), otherwise inactive card color */}
+          <Text
             numberOfLines={1}
             ellipsizeMode="tail"
             style={{
-              fontSize: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [closedHeaderFontSize, 17],
-                extrapolate: 'clamp',
-              }),
-              fontWeight: '600',
-              color: isTodayCard ? (colors.activeHeaderText || '#FFFFFF') : isWeekendCard ? colors.sundayText : colors.text,
-              flexShrink: 1,
+              fontSize: 18,
+              fontWeight: '700',
+              color: isTodayCard ? '#0195FF' : isDark ? colors.text : '#31383E',
+              letterSpacing: -0.2,
             }}
           >
-            {(t.date.weekdays[cardDate.getDay()] ?? '').toUpperCase()}
-          </Animated.Text>
+            {`${(t.date.weekdays[cardDate.getDay()] ?? '').toUpperCase()} • ${format(cardDate, 'd')} ${t.date.monthsShort[cardDate.getMonth()] ?? ''}`}
+          </Text>
 
-          {/* Outer badge */}
-          <Animated.View
-            style={{
-              flexShrink: 0,
-              marginLeft: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [6, 8],
-                extrapolate: 'clamp',
-              }),
-              minWidth: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [20, 24],
-                extrapolate: 'clamp',
-              }),
-              minHeight: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [17, 21],
-                extrapolate: 'clamp',
-              }),
-              paddingHorizontal: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [4, 8],
-                extrapolate: 'clamp',
-              }),
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: isTodayCard
-                ? '#FFFFFF'
-                : isWeekendCard
-                ? colors.weekendNumBg
-                : colors.dateNumBg,
-              borderRadius: progress.interpolate({
-                inputRange: [0, 1],
-                outputRange: [5, 6],
-                extrapolate: 'clamp',
-              }),
-              paddingTop: 0,
-              paddingBottom: 0,
-            }}
-          >
-            {/* Inner frame */}
-            <Animated.View
-              style={{
-                alignSelf: 'stretch',
-                flexDirection: 'row',
-                borderRadius: progress.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [4, 5],
-                  extrapolate: 'clamp',
-                }),
-                paddingHorizontal: 0,
-                paddingVertical: 0,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: isTodayCard
-                  ? '#FFFFFF'
-                  : isWeekendCard
-                  ? colors.weekendNumBg
-                  : colors.dateNumBg,
-              }}
-            >
-              {/* Day number (visible when closed, collapses to 0 when opened) */}
-              <Animated.Text
-                numberOfLines={1}
-                style={{
-                  fontSize: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [12, 0],
-                    extrapolate: 'clamp',
-                  }),
-                  lineHeight: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [13, 0],
-                    extrapolate: 'clamp',
-                  }),
-                  fontWeight: isTodayCard ? '700' : '600',
-                  color: theme === 'ocean' && !isWeekendCard && !isTodayCard
-                    ? '#565B66'
-                    : isTodayCard
-                    ? colors.today
-                    : isWeekendCard
-                    ? colors.weekendNumText
-                    : colors.dateNumText,
-                  fontVariant: ['tabular-nums'],
-                  opacity: progress.interpolate({
-                    inputRange: [0, 0.3, 1],
-                    outputRange: [1, 0, 0],
-                    extrapolate: 'clamp',
-                  }),
-                  maxWidth: progress.interpolate({
-                    inputRange: [0, 0.5, 1],
-                    outputRange: [30, 0, 0],
-                    extrapolate: 'clamp',
-                  }),
-                  overflow: 'hidden',
-                }}
-              >
-                {format(cardDate, 'dd')}
-              </Animated.Text>
-
-              {/* Month name (hidden when closed, expands when opened) */}
-              <Animated.Text
-                numberOfLines={1}
-                style={{
-                  fontSize: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 14],
-                    extrapolate: 'clamp',
-                  }),
-                  lineHeight: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 17],
-                    extrapolate: 'clamp',
-                  }),
-                  fontWeight: isTodayCard ? '700' : '600',
-                  color: theme === 'ocean' && !isWeekendCard && !isTodayCard
-                    ? '#565B66'
-                    : isTodayCard
-                    ? (colors.today === '#FFFFFF' ? '#18181B' : colors.today)
-                    : isWeekendCard
-                    ? colors.weekendNumText
-                    : colors.dateNumText,
-                  opacity: progress.interpolate({
-                    inputRange: [0, 0.4, 1],
-                    outputRange: [0, 0.5, 1],
-                    extrapolate: 'clamp',
-                  }),
-                  maxWidth: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 120],
-                    extrapolate: 'clamp',
-                  }),
-                  overflow: 'hidden',
-                }}
-              >
-                {t.date.monthsFull[cardDate.getMonth()][0].toUpperCase() + t.date.monthsFull[cardDate.getMonth()].slice(1)}
-              </Animated.Text>
-            </Animated.View>
-          </Animated.View>
-
-
+          {/* Progress fraction e.g. 1/4 */}
           <Animated.View
             style={{
               marginLeft: 'auto',
@@ -471,33 +323,39 @@ const CarouselCard = React.memo(function CarouselCard({
               opacity: progress,
             }}
           >
-            <Animated.Text
+            <Text
               style={{
-                fontSize: 12,
-                fontWeight: '600',
-                color: isTodayCard ? (colors.activeHeaderText || '#FFFFFF') : isWeekendCard ? (isDark ? '#FFAAA4' : '#7B4545') : colors.text,
+                fontSize: 14,
+                fontWeight: '500',
+                color: isDark ? '#8E8E93' : '#9CA3AF',
                 fontVariant: ['tabular-nums'],
               }}
             >
-              <Text style={{ fontWeight: '700', color: isTodayCard ? (colors.activeHeaderText || '#FFFFFF') : isWeekendCard ? (isDark ? '#FFAAA4' : '#7B4545') : colors.text }}>
+              <Text style={{ fontWeight: '600', color: isDark ? colors.text : '#31383E' }}>
                 {completedCount}
               </Text>
-              <Text style={{ color: isTodayCard ? (colors.activeHeaderText === '#18181B' ? 'rgba(24, 24, 27, 0.7)' : 'rgba(255,255,255,0.8)') : isWeekendCard ? (isDark ? 'rgba(255,170,164,0.7)' : 'rgba(123,69,69,0.7)') : colors.secondary }}>
-                /{cardTasks.length}
-              </Text>
-            </Animated.Text>
+              /{cardTasks.length}
+            </Text>
           </Animated.View>
         </Animated.View>
+
+        {/* Divider line under header in opened card (matches Figma design) */}
+        <Animated.View
+          style={{
+            height: 1,
+            backgroundColor: isDark ? colors.cardBorder : '#EDEEF1',
+            marginHorizontal: 16,
+            marginTop: 0,
+            marginBottom: 4,
+            opacity: progress,
+          }}
+        />
 
         <Animated.View
           style={{
             flex: 1,
             paddingHorizontal: 0,
             backgroundColor: colors.card,
-            borderRadius: isWideOrigin ? 12 : 14,
-            borderCurve: 'continuous',
-            marginHorizontal: 2,
-            marginBottom: 2,
             overflow: 'hidden',
             opacity: 1,
             paddingTop: 0,
@@ -525,23 +383,9 @@ const CarouselCard = React.memo(function CarouselCard({
             {cardTasks.length ? (
               <TaskListFrame
                 tasks={cardTasks.slice(0, 6)}
-                scrollable={isWideOrigin}
                 singleLine
                 onPress={() => {}}
               />
-            ) : isWideOrigin ? (
-              <View
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: 20,
-                }}
-              >
-                <Text style={{ color: colors.secondary, fontSize: 15, fontWeight: '500' }}>
-                  {t.common.noTasks}
-                </Text>
-              </View>
             ) : (
               <View
                 style={{
@@ -599,7 +443,7 @@ const CarouselCard = React.memo(function CarouselCard({
                 scrollYRef.current = e.nativeEvent.contentOffset.y;
               }}
               scrollEventThrottle={16}
-              contentContainerStyle={{ paddingHorizontal: 6, paddingTop: 4, paddingBottom: 8 }}
+              contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 10, paddingBottom: 16 }}
             >
               {cardTasks.length ? (
                 <View
@@ -672,7 +516,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { tasks, settings, loadRange, remove } = usePlanner();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useI18n();
 
   const progress = useRef(new Animated.Value(0)).current;
@@ -727,10 +571,12 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const activeDateKey = toDateKey(activeCardDate);
   const activeDayTasks = tasks.filter((t) => t.date === activeDateKey);
   const taskCount = activeDayTasks.length;
-  const emptyCardHeight = Math.round(height * 0.42);
-  const rawContentHeight = 44 + 16 + (measuredListHeight > 0 ? measuredListHeight : (taskCount > 0 ? taskCount * 48 : 80));
+  const emptyCardHeight = Math.round(height * 0.48);
+  const rawContentHeight = 52 + 16 + (measuredListHeight > 0 ? measuredListHeight : (taskCount > 0 ? taskCount * 56 : 80));
   const contentHeight = Math.max(emptyCardHeight, rawContentHeight);
-  const maxHeight = height - (insets.top + 68) - (Math.max(insets.bottom + 8, 16) + 60) - 12;
+  const openedCardTop = insets.top + 78;
+  const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 48 + 16;
+  const maxHeight = height - openedCardTop - bottomBarSpace;
   const targetHeight = Math.min(maxHeight, contentHeight);
 
   const scrollEnabledRef = useRef(true);
@@ -798,16 +644,27 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     pageIndexRef.current = 0;
     setJumpTargetIndex(null);
     carouselX.setValue(0);
+    isAnimatingRef.current = false;
   };
 
   const openCard = (date: Date, cardTasks: Task[], frame: Frame) => {
-    if (transitionRef.current) return;
+    if (transitionRef.current) {
+      if (transitionRef.current.phase === 'opening') return;
+      cleanupClose();
+    }
+    progress.stopAnimation();
+    carouselX.stopAnimation();
     isAnimatingRef.current = true;
     setIsTransitionSettled(false);
     const calcTaskCount = cardTasks.length;
-    const calcContentHeight = Math.max(emptyCardHeight, 48 + 8 + calcTaskCount * 48 + 60);
+    const calcContentHeight = Math.max(emptyCardHeight, 52 + 16 + calcTaskCount * 56 + 60);
     const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
-    const frameSnapshot = Object.freeze({ x: frame.x, y: frame.y, width: frame.width, height: frame.height });
+    const frameSnapshot = Object.freeze({
+      x: typeof frame?.x === 'number' && !isNaN(frame.x) ? frame.x : 16,
+      y: typeof frame?.y === 'number' && !isNaN(frame.y) ? frame.y : insets.top + 78,
+      width: typeof frame?.width === 'number' && !isNaN(frame.width) && frame.width > 0 ? frame.width : width - 32,
+      height: typeof frame?.height === 'number' && !isNaN(frame.height) && frame.height > 0 ? frame.height : 200,
+    });
 
     const next = { date, tasks: cardTasks, frame: frameSnapshot, targetHeight: calcTargetHeight };
     origin.current = next;
@@ -991,17 +848,16 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
         </Animated.View>
 
         {current && (
-          <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
-            <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject} {...carouselPanResponder.panHandlers}>
-              <Pressable onPress={closeCard} style={StyleSheet.absoluteFillObject}>
-                <Animated.View
-                  style={[
-                    StyleSheet.absoluteFillObject,
-                    {
-                      backgroundColor: colors.background,
-                      opacity: progress.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, 0.9],
+          <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 1000 }]}>
+            <Pressable onPress={closeCard} style={[StyleSheet.absoluteFill, { zIndex: 1 }]}>
+              <Animated.View
+                style={[
+                  StyleSheet.absoluteFill,
+                  {
+                    backgroundColor: colors.background,
+                    opacity: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, 0.9],
                       extrapolate: 'clamp',
                     }),
                   },
@@ -1009,7 +865,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
               />
             </Pressable>
 
-            <View pointerEvents="box-none" style={StyleSheet.absoluteFillObject}>
+            <View
+              pointerEvents="box-none"
+              style={[StyleSheet.absoluteFill, { zIndex: 2 }]}
+              {...carouselPanResponder.panHandlers}
+            >
               {renderedIndices.map((virtualIndex) => {
                 const cardDate = addDays(current.date, virtualIndex);
                 const cardKey = toDateKey(cardDate);
@@ -1045,14 +905,13 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 );
               })}
             </View>
-          </View>
 
           {/* Top Compact Week Strip placed directly above the open card */}
           <Animated.View
             pointerEvents="box-none"
             style={{
               position: 'absolute',
-              top: insets.top + 4,
+              top: insets.top + 8,
               left: 0,
               right: 0,
               zIndex: 10001,
@@ -1070,7 +929,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
               pageIndex={pageIndex}
               onSelectDate={(targetDate) => {
                 if (isAnimatingRef.current) return;
-                const diff = Math.round((targetDate.getTime() - current.date.getTime()) / (1000 * 60 * 60 * 24));
+                const diff = differenceInCalendarDays(targetDate, current.date);
                 const newIndex = diff;
                 if (newIndex === pageIndexRef.current) return;
 
@@ -1100,40 +959,12 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
           </Animated.View>
 
             <Animated.View
-              pointerEvents="none"
-              style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: Math.max(insets.bottom + 8, 12) + 54,
-                zIndex: 10000,
-                opacity: progress.interpolate({
-                  inputRange: [0.3, 1],
-                  outputRange: [0, 1],
-                }),
-              }}
-            >
-              <Svg width="100%" height="100%">
-                <Defs>
-                  <LinearGradient id="bottomFadeGradientCard" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0" stopColor={colors.background} stopOpacity="0" />
-                    <Stop offset="0.2" stopColor={colors.background} stopOpacity="0.7" />
-                    <Stop offset="0.45" stopColor={colors.background} stopOpacity="1" />
-                    <Stop offset="1" stopColor={colors.background} stopOpacity="1" />
-                  </LinearGradient>
-                </Defs>
-                <Rect x="0" y="0" width="100%" height="100%" fill="url(#bottomFadeGradientCard)" />
-              </Svg>
-            </Animated.View>
-
-            <Animated.View
               pointerEvents="box-none"
               style={{
                 position: 'absolute',
                 left: 16,
                 right: 16,
-                bottom: Math.max(insets.bottom + 8, 12),
+                bottom: Math.max(insets.bottom + 8, 16),
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 10,
@@ -1156,9 +987,14 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   flex: 1,
                   height: 48,
                   borderRadius: 24,
-                  borderWidth: 1,
-                  borderColor: colors.inputBorder,
-                  backgroundColor: colors.inputBg,
+                  borderWidth: isDark ? 1 : 0,
+                  borderColor: isDark ? colors.cardBorder : 'transparent',
+                  backgroundColor: colors.card,
+                  shadowColor: '#000000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: isDark ? 0.2 : 0.06,
+                  shadowRadius: 10,
+                  elevation: 3,
                   flexDirection: 'row',
                   alignItems: 'center',
                   paddingHorizontal: 16,
@@ -1168,13 +1004,13 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M12 4.5v15M4.5 12h15"
-                    stroke={colors.inputPlusIcon}
+                    stroke={isDark ? '#7E8B9F' : '#9CA3AF'}
                     strokeWidth="2.8"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                 </Svg>
-                <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>
+                <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: isDark ? '#7E8B9F' : '#9CA3AF' }}>
                   {t.common.addTask}
                 </Text>
               </AnimatedPressable>
@@ -1232,7 +1068,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   >
                     <Text
                       style={{
-                        color: '#38BDF8',
+                        color: colors.today,
                         fontSize: 14,
                         fontWeight: '700',
                       }}
