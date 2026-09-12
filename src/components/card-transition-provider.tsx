@@ -940,7 +940,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
               screenWidth={width}
               pageIndex={pageIndex}
               onSelectDate={(targetDate) => {
-                if (isAnimatingRef.current) return;
                 const diff = differenceInCalendarDays(targetDate, current.date);
                 const newIndex = diff;
                 if (newIndex === pageIndexRef.current) return;
@@ -949,8 +948,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }
 
+                carouselX.stopAnimation();
                 isAnimatingRef.current = true;
                 setJumpTargetIndex(newIndex);
+                pageIndexRef.current = newIndex;
+                setPageIndex(newIndex);
 
                 Animated.spring(carouselX, {
                   toValue: -newIndex * width,
@@ -958,8 +960,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   friction: 28,
                   useNativeDriver: false,
                 }).start(() => {
-                  pageIndexRef.current = newIndex;
-                  setPageIndex(newIndex);
                   const fromKey = toDateKey(addDays(current.date, newIndex - 2));
                   const toKey = toDateKey(addDays(current.date, newIndex + 2));
                   void loadRange(fromKey, toKey);

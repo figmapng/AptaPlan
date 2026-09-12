@@ -48,55 +48,42 @@ export function CompactWeekStrip({
     return days.findIndex((d) => isSameDay(d, currentDayDate));
   }, [days, currentDayDate]);
 
-  // Animated position for non-carousel fallback
+  const prevWeekStartRef = useRef<number>(currentWeekStart.getTime());
   const animatedIndex = useRef(new Animated.Value(selectedDayIndex >= 0 ? selectedDayIndex : 0)).current;
 
   React.useEffect(() => {
-    if (!carouselX && selectedDayIndex >= 0) {
+    if (selectedDayIndex < 0) return;
+    const weekChanged = currentWeekStart.getTime() !== prevWeekStartRef.current;
+    prevWeekStartRef.current = currentWeekStart.getTime();
+
+    if (weekChanged) {
+      animatedIndex.setValue(selectedDayIndex);
+    } else {
       Animated.spring(animatedIndex, {
         toValue: selectedDayIndex,
-        tension: 300,
-        friction: 28,
+        stiffness: 350,
+        damping: 28,
+        mass: 0.8,
         useNativeDriver: true,
       }).start();
     }
-  }, [selectedDayIndex, carouselX, animatedIndex]);
+  }, [selectedDayIndex, currentWeekStart]);
 
   // Day width inside week row
   const cellWidth = rowWidth > 0 ? rowWidth / 7 : (screenWidth - 32 - 8) / 7;
 
-  // Real-time synchronization with carousel swipe
-  // If carouselX and originDate are provided:
-  // carouselX = -pageIndex * width + gesture.dx
-  // As user swipes, target day index moves continuously!
-  const indicatorTranslateX = useMemo(() => {
-    if (carouselX && originDate && !isNaN(originDate.getTime())) {
-      const originOffsetDays = differenceInCalendarDays(originDate, currentWeekStart);
-
-      return carouselX.interpolate({
-        inputRange: [-6 * screenWidth, 0, 6 * screenWidth],
-        outputRange: [
-          (originOffsetDays + 6) * cellWidth,
-          originOffsetDays * cellWidth,
-          (originOffsetDays - 6) * cellWidth,
-        ],
-        extrapolate: 'clamp',
-      });
-    }
-
-    return animatedIndex.interpolate({
-      inputRange: [0, 1, 2, 3, 4, 5, 6],
-      outputRange: [
-        0 * cellWidth,
-        1 * cellWidth,
-        2 * cellWidth,
-        3 * cellWidth,
-        4 * cellWidth,
-        5 * cellWidth,
-        6 * cellWidth,
-      ],
-    });
-  }, [carouselX, originDate, currentWeekStart, screenWidth, cellWidth, animatedIndex]);
+  const indicatorTranslateX = animatedIndex.interpolate({
+    inputRange: [0, 1, 2, 3, 4, 5, 6],
+    outputRange: [
+      0 * cellWidth,
+      1 * cellWidth,
+      2 * cellWidth,
+      3 * cellWidth,
+      4 * cellWidth,
+      5 * cellWidth,
+      6 * cellWidth,
+    ],
+  });
 
   return (
     <View
@@ -211,6 +198,7 @@ const styles = StyleSheet.create({
   },
   slidingIndicator: {
     position: 'absolute',
+    left: 0,
     top: 0,
     bottom: 0,
     height: 44,
