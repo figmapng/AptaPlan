@@ -101,74 +101,56 @@ export default function AppearanceScreen() {
           </Text>
         </View>
 
-        <View
-          style={[
-            styles.appleGroupedCard,
-            {
-              backgroundColor: isDark ? colors.card : '#FFFFFF',
-              borderColor: colors.cardBorder,
-            },
-          ]}
-        >
-          {THEME_LIST.map((th, index) => {
-            const activeThemeId = THEME_LIST.some((t) => t.id === settings.theme) ? (settings.theme || 'ocean') : 'ocean';
-            const isSelected = activeThemeId === th.id;
-            const localizedName = t.settings.themeNames[th.id] || th.name;
-            const isBlack = th.id === 'minimal';
-            const isLast = index === THEME_LIST.length - 1;
+        <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, paddingVertical: 14, paddingHorizontal: 0 }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carouselContent}
+          >
+            {THEME_LIST.map((th) => {
+              const activeThemeId = THEME_LIST.some((t) => t.id === settings.theme) ? (settings.theme || 'ocean') : 'ocean';
+              const isSelected = activeThemeId === th.id;
+              const localizedName = t.settings.themeNames[th.id] || th.name;
+              const isYellow = th.id === 'amber';
+              const isBlack = th.id === 'minimal';
+              const checkmarkColor = isYellow ? '#18181B' : '#FFFFFF';
 
-            return (
-              <AnimatedPressable
-                key={th.id}
-                activeScale={0.99}
-                onPress={() => handleSelectTheme(th.id)}
-                style={styles.appleRowPressable}
-                accessibilityRole="button"
-                accessibilityLabel={localizedName}
-              >
-                <View style={styles.appleRowContent}>
-                  {/* Left: Apple circular color dot */}
+              return (
+                <AnimatedPressable
+                  key={th.id}
+                  activeScale={0.88}
+                  onPress={() => handleSelectTheme(th.id)}
+                  style={styles.carouselItem}
+                  accessibilityRole="button"
+                  accessibilityLabel={localizedName}
+                >
                   <View
                     style={[
-                      styles.appleColorDot,
-                      { backgroundColor: th.primary },
-                      isBlack && isDark && { borderColor: '#52525B', borderWidth: 1 },
-                    ]}
-                  />
-
-                  {/* Middle: Color Title */}
-                  <Text
-                    style={[
-                      styles.appleRowTitle,
-                      { color: colors.text },
-                      isSelected && { fontWeight: '600' },
+                      styles.carouselRing,
+                      isSelected
+                        ? {
+                            borderColor: isBlack && isDark ? '#FFFFFF' : th.primary,
+                            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                          }
+                        : { borderColor: 'transparent' },
                     ]}
                   >
-                    {localizedName}
-                  </Text>
-
-                  {/* Right: Apple Blue Checkmark (Native iOS Navigation/Settings checkmark) */}
-                  {isSelected && (
-                    <Ionicons
-                      name="checkmark"
-                      size={20}
-                      color={isBlack && isDark ? '#FFFFFF' : (isBlack ? '#18181B' : th.primary)}
-                    />
-                  )}
-                </View>
-
-                {/* Apple Table View Inset Separator */}
-                {!isLast && (
-                  <View
-                    style={[
-                      styles.appleRowSeparator,
-                      { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(60,60,67,0.12)' },
-                    ]}
-                  />
-                )}
-              </AnimatedPressable>
-            );
-          })}
+                    <View
+                      style={[
+                        styles.carouselDot,
+                        { backgroundColor: th.primary },
+                        isBlack && isDark && { borderColor: '#52525B', borderWidth: 1 },
+                      ]}
+                    >
+                      {isSelected && (
+                        <Ionicons name="checkmark" size={20} color={checkmarkColor} />
+                      )}
+                    </View>
+                  </View>
+                </AnimatedPressable>
+              );
+            })}
+          </ScrollView>
         </View>
 
         {/* ── Section 2: Режим (Mode: Light / Dark / System) ── */}
@@ -365,34 +347,34 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  appleGroupedCard: {
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-  },
-  appleRowPressable: {
-    width: '100%',
-  },
-  appleRowContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  carouselContent: {
     paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 12,
+  },
+  carouselItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  carouselRing: {
+    width: 48,
     height: 48,
-    gap: 14,
+    borderRadius: 24,
+    borderWidth: 2.5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  appleColorDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-  },
-  appleRowTitle: {
-    fontSize: 16,
-    letterSpacing: -0.3,
-    flex: 1,
-  },
-  appleRowSeparator: {
-    height: StyleSheet.hairlineWidth,
-    marginLeft: 52, // Inset matching dot (16 + 22 + 14 = 52)
+  carouselDot: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
   },
   modeRow: {
     flexDirection: 'row',
