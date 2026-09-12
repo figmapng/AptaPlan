@@ -763,6 +763,7 @@ const styles = StyleSheet.create({
   quickBtn: {
     height: 38,
     borderRadius: 12,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -789,6 +790,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: colors.inputBg,
     borderRadius: 20,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: colors.inputBorder,
     padding: 8,

@@ -572,6 +572,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 7,
+    borderCurve: 'continuous',
     borderWidth: 1.5,
     borderColor: colors.checkboxBorder,
     backgroundColor: colors.checkboxBg,
@@ -582,6 +583,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 5,
+    borderCurve: 'continuous',
   },
   checkboxCompleted: {
     borderColor: colors.checkedCheckboxBg,
@@ -591,6 +593,7 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 5,
+    borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: '#DEE2E8',
     backgroundColor: '#F7F9FC',

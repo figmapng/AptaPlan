@@ -226,6 +226,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
+    borderCurve: 'continuous',
   },
   topRow: {
     flexDirection: 'row',
@@ -241,6 +242,7 @@ const styles = StyleSheet.create({
   dateCardBadgeOuter: {
     backgroundColor: '#D1D1D6',
     borderRadius: 11,
+    borderCurve: 'continuous',
     paddingTop: 7.5,
     paddingRight: 2,
     paddingBottom: 2,
@@ -251,6 +253,7 @@ const styles = StyleSheet.create({
   dateCardBadgeInner: {
     backgroundColor: '#18181A',
     borderRadius: 9,
+    borderCurve: 'continuous',
     paddingHorizontal: 9,
     paddingVertical: 3,
     alignItems: 'center',
@@ -285,6 +288,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
+    borderCurve: 'continuous',
     backgroundColor: '#2C2C2E',
     alignItems: 'center',
     justifyContent: 'center',
@@ -326,6 +330,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 6,
     borderRadius: 12,
+    borderCurve: 'continuous',
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   statText: {

@@ -1256,6 +1256,7 @@ export default function Home() {
               alignItems: 'center',
               backgroundColor: colors.inputBg,
               borderRadius: 20,
+              borderCurve: 'continuous',
               padding: 3,
               borderWidth: 1,
               borderColor: colors.inputBorder,
@@ -1271,6 +1272,7 @@ export default function Home() {
                 height: 32,
                 paddingHorizontal: 10,
                 borderRadius: 16,
+                borderCurve: 'continuous',
                 backgroundColor: colors.card,
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -1302,6 +1304,7 @@ export default function Home() {
                 width: 32,
                 height: 32,
                 borderRadius: 16,
+                borderCurve: 'continuous',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -1693,6 +1696,7 @@ function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => v
       style={{
         height: 48,
         borderRadius: 24,
+        borderCurve: 'continuous',
         borderWidth: 1,
         borderColor: colors.inputBorder,
         backgroundColor: colors.inputBg,

@@ -28,6 +28,7 @@ export function BackButton({
         width: size,
         height: size,
         borderRadius: size / 2,
+        borderCurve: 'continuous',
         backgroundColor: colors.card,
         borderWidth: isDark ? 1 : 0,
         borderColor: isDark ? colors.cardBorder : 'transparent',

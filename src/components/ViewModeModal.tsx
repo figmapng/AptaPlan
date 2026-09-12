@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
   dropdownCard: {
     width: '100%',
     borderRadius: 18,
+    borderCurve: 'continuous',
     padding: 6,
     boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
     elevation: 20,
@@ -266,6 +267,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 12,
+    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

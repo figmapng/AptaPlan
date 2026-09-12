@@ -6,12 +6,12 @@ export function ViewModeSwitcher({ value, onChange }: { value: ViewMode; onChang
   const { colors, isDark } = useTheme();
   const options: [ViewMode, string][] = [['week', 'Апта'], ['month', 'Ай'], ['year', 'Жыл']];
   return (
-    <View style={{ alignSelf: 'center', height: 42, flexDirection: 'row', backgroundColor: colors.control, borderRadius: 21, padding: 3 }}>
+    <View style={{ alignSelf: 'center', height: 42, flexDirection: 'row', backgroundColor: colors.control, borderRadius: 21, borderCurve: 'continuous', padding: 3 }}>
       {options.map(([key, label]) => (
         <Pressable
           key={key}
           onPress={() => onChange(key)}
-          style={{ minWidth: 60, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: value === key ? (isDark ? colors.card : '#FFFFFF') : 'transparent' }}
+          style={{ minWidth: 60, height: 36, borderRadius: 18, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', backgroundColor: value === key ? (isDark ? colors.card : '#FFFFFF') : 'transparent' }}
         >
           <Text style={{ fontSize: 14, lineHeight: 16, fontWeight: '600', color: value === key ? colors.text : colors.secondary }}>
             {label}

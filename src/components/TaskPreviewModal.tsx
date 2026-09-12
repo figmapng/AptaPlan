@@ -535,6 +535,7 @@ const styles = StyleSheet.create({
   taskCard: {
     backgroundColor: colors.card,
     borderRadius: 24,
+    borderCurve: 'continuous',
     padding: 18,
     borderWidth: 1,
     borderColor: colors.cardBorder,
@@ -633,6 +634,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 50,
     borderRadius: 25,
+    borderCurve: 'continuous',
     backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
@@ -661,6 +663,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
+    borderCurve: 'continuous',
     backgroundColor: '#FFF0F0',
     alignItems: 'center',
     justifyContent: 'center',
