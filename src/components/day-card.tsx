@@ -299,8 +299,10 @@ export const DayCard = memo(function DayCardComponent({
     backgroundColor: colors.card,
     borderRadius: 16,
     borderCurve: 'continuous' as const,
-    borderWidth: isDark ? 1 : 0,
-    borderColor: isDark ? colors.cardBorder : 'transparent',
+    borderWidth: today ? 1.5 : (isDark ? 1 : 0),
+    borderColor: today
+      ? colors.today
+      : (isDark ? colors.cardBorder : 'transparent'),
     paddingHorizontal: 10,
     paddingTop: 10,
     paddingBottom: 10,
