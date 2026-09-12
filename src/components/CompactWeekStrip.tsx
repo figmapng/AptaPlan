@@ -62,22 +62,21 @@ export function CompactWeekStrip({
 
           const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
-          // Only active (today) day has the theme accent color
-          // Inactive days look like inactive card colors
+          // Active (today) day uses theme accent color
+          // Date number is slightly softer/lighter, day label is slightly richer/darker
           const numColor = isTodayDay
             ? colors.today
             : isSelected
-            ? (isDark ? colors.text : '#31383E')
-            : (isDark ? '#7E8B9F' : '#9CA3AF');
+            ? (isDark ? colors.text : '#4B5563')
+            : (isDark ? '#6B7280' : '#9CA3AF');
 
-          // Weekdays (non-weekend) have a richer/darker color (#31383E), weekend days are muted (#9CA3AF)
           const labelColor = isTodayDay
             ? colors.today
             : isSelected
-            ? (isDark ? colors.text : '#31383E')
+            ? (isDark ? colors.text : '#1F2937')
             : isWeekend
-            ? (isDark ? '#7E8B9F' : '#9CA3AF')
-            : (isDark ? '#D1D5DB' : '#31383E');
+            ? (isDark ? '#9CA3AF' : '#6B7280')
+            : (isDark ? '#E5E7EB' : '#4B5563');
 
           const fontWeight = (isSelected || isTodayDay) ? '700' : '600';
 
