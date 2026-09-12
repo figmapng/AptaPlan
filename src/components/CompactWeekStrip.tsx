@@ -62,23 +62,15 @@ export function CompactWeekStrip({
           // Capitalize first letter e.g. "Ср", "Wed"
           const formattedDayShort = dayShort.charAt(0).toUpperCase() + dayShort.slice(1);
 
-          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-
-          // In user design:
-          // Top is Day name ("Wed"), Bottom is Day number ("10")
-          // Selected day has an elevated rounded rectangle/pill background
-          const labelColor = isTodayDay
-            ? colors.today
-            : isSelected
-            ? (isDark ? '#CBD5E1' : '#707684')
-            : (isDark ? '#64748B' : '#9CA3AF');
+          // Subtle, soft colors matching clean iOS design
+          const labelColor = isSelected
+            ? (isDark ? '#E2E8F0' : '#475569')
+            : (isDark ? '#64748B' : '#94A3B8');
 
           const numColor = isTodayDay
             ? colors.today
             : isSelected
-            ? (isDark ? colors.text : '#1E293B')
-            : isWeekend
-            ? (isDark ? '#94A3B8' : '#64748B')
+            ? (isDark ? '#F8FAFC' : '#1E293B')
             : (isDark ? '#94A3B8' : '#64748B');
 
           return (
@@ -91,8 +83,7 @@ export function CompactWeekStrip({
                 isSelected && [
                   styles.selectedCell,
                   {
-                    backgroundColor: isDark ? '#2C3446' : '#EFF0F3',
-                    borderColor: isDark ? '#3D485C' : '#E2E5EB',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F3F5',
                   },
                 ],
               ]}
@@ -114,7 +105,7 @@ export function CompactWeekStrip({
                     styles.cellNum,
                     {
                       color: numColor,
-                      fontWeight: isSelected ? '700' : '600',
+                      fontWeight: isSelected ? '700' : '500',
                     },
                   ]}
                 >
@@ -131,12 +122,12 @@ export function CompactWeekStrip({
 
 const styles = StyleSheet.create({
   container: {
-    height: 60,
+    height: 54,
     marginHorizontal: 16,
-    borderRadius: 20,
+    borderRadius: 18,
     borderCurve: 'continuous',
     paddingHorizontal: 4,
-    paddingVertical: 4,
+    paddingVertical: 5,
     position: 'relative',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
@@ -152,33 +143,28 @@ const styles = StyleSheet.create({
   },
   dayCell: {
     flex: 1,
-    height: 52,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
+    borderRadius: 12,
     borderCurve: 'continuous',
   },
   selectedCell: {
-    borderWidth: 1,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 1,
+    borderWidth: 0,
   },
   cellContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: 1,
   },
   cellLabel: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 10,
+    lineHeight: 13,
     textAlign: 'center',
   },
   cellNum: {
-    fontSize: 16,
-    lineHeight: 19,
+    fontSize: 15,
+    lineHeight: 18,
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },
