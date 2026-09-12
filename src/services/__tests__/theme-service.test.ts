@@ -24,23 +24,22 @@ describe('Theme System', () => {
     const oceanColors = getThemeColors('ocean');
     expect(oceanColors.today).toBe('#0195FF');
     expect(oceanColors.primary).toBe('#0195FF');
-    expect(oceanColors.background).toBe('#FFFFFF');
+    expect(oceanColors.background).toBe('#EFF0F2');
 
     const emeraldColors = getThemeColors('emerald');
     expect(emeraldColors.today).toBe('#00A15F');
     expect(emeraldColors.primary).toBe('#00A15F');
-    expect(emeraldColors.background).toBe('#FFFFFF');
+    expect(emeraldColors.background).toBe('#EFF0F2');
     expect(emeraldColors.tintBg).toBe('#F0FAF4');
 
     const amberColors = getThemeColors('amber');
     expect(amberColors.today).toBe('#FFAA01');
-    expect(amberColors.background).toBe('#FFFFFF');
-    expect(amberColors.cardHeaderBg).toBe('#F2F0ED');
-    expect(amberColors.inputBg).toBe('#FCFAF7');
+    expect(amberColors.background).toBe('#EFF0F2');
+    expect(amberColors.text).toBe('#31383E');
 
     const violetColors = getThemeColors('violet');
     expect(violetColors.today).toBe('#906AF4');
-    expect(violetColors.background).toBe('#FFFFFF');
+    expect(violetColors.background).toBe('#EFF0F2');
 
     const pinkColors = getThemeColors('pink');
     expect(pinkColors.today).toBe('#FF87C4');
@@ -48,7 +47,7 @@ describe('Theme System', () => {
 
     const fallbackColors = getThemeColors(undefined as any);
     expect(fallbackColors.today).toBe('#0195FF');
-    expect(fallbackColors.background).toBe('#FFFFFF');
+    expect(fallbackColors.background).toBe('#EFF0F2');
   });
 
   it('getThemeColors with isDark=true returns dark palette with theme accent', () => {

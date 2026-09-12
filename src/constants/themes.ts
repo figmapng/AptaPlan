@@ -383,38 +383,16 @@ export function getThemeColors(themeId?: ThemeId, isDark: boolean = false): AppC
 
   return {
     ...lightColors,
-    background: theme.background,
     primary: theme.primary,
     primaryDark: theme.primaryDark,
     tintBg: theme.tintBg,
     today: theme.today,
     todayDark: theme.todayDark,
-    activeHeaderBg: theme.activeHeaderBg,
-    activeCardBorder: theme.activeCardBorder,
-    activeHeaderText: theme.activeHeaderText,
-    inputFocusedBorder: theme.inputFocusedBorder,
-    inputCursor: theme.inputCursor,
-
-    // Hue-harmonized chromatic neutrals
-    inputBg: theme.inputBg,
-    inputBorder: theme.inputBorder,
-    cardHeaderBg: theme.cardHeaderBg,
-    cardBorder: theme.cardBorder,
-    dateNumBg: theme.dateNumBg,
-    dateNumText: theme.dateNumText,
-    capsule: theme.capsule,
-    text: theme.text,
-    secondary: theme.secondary,
-    inputPlaceholder: theme.inputPlaceholder,
-    inputPlusIcon: theme.inputPlusIcon,
-    checkboxBorder: theme.checkboxBorder,
-    checkedCheckboxBg: theme.checkedCheckboxBg,
-    checkedTaskText: theme.secondary,
-    divider: theme.divider,
-
-    // Chip tokens harmonized with active theme
-    chipBg: theme.inputBg,
-    chipBorder: theme.inputBorder,
-    chipText: theme.text,
+    activeHeaderBg: theme.today,
+    activeCardBorder: theme.today,
+    activeHeaderText: '#FFFFFF',
+    inputFocusedBorder: theme.today,
+    inputCursor: theme.today,
+    inputPlusIcon: theme.primary,
   };
 }
