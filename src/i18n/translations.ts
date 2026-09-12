@@ -195,11 +195,11 @@ export const translations: Record<Language, Translations> = {
       appIconSubtitle: 'Экрандағы негізгі белгіше',
       themeNames: {
         slate: 'Әдепкі',
-        ocean: 'Көк',
+        ocean: 'Көк (Әдепкі)',
         emerald: 'Жасыл',
         amber: 'Сары',
         pink: 'Қызғылт',
-        coral: 'Оранжевый',
+        coral: 'Қызғылт сары',
         violet: 'Күлгін',
         minimal: 'Қара',
         teal: 'Көк',

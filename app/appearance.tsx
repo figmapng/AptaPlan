@@ -23,9 +23,14 @@ export default function AppearanceScreen() {
   const { colors, isDark, themeMode, setThemeMode } = useTheme();
   const { t } = useI18n();
   const { settings, setPref } = usePlanner();
+  const scrollRef = React.useRef<ScrollView>(null);
 
   // App icon state (ready for future expansion)
   const [selectedIcon, setSelectedIcon] = useState<string>(settings.appIcon || 'default');
+
+  React.useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, []);
 
   const handleSelectTheme = (themeId: ThemeId) => {
     if (settings.haptics) {
@@ -81,6 +86,7 @@ export default function AppearanceScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scrollContent,
@@ -95,86 +101,103 @@ export default function AppearanceScreen() {
           </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, padding: 16 }]}>
-          {/* Live Accent Preview Banner */}
-          {(() => {
-            const activeThemeId = THEME_LIST.some((t) => t.id === settings.theme) ? (settings.theme || 'ocean') : 'ocean';
-            const activeLocalizedName = t.settings.themeNames[activeThemeId as keyof typeof t.settings.themeNames] || 'Көк';
-            return (
-              <View
-                style={[
-                  styles.livePreviewBar,
-                  {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FFFFFF',
-                    borderColor: isDark ? '#2C3446' : '#E9ECEF',
-                  },
-                ]}
-              >
-                <View style={[styles.livePreviewCheck, { borderColor: colors.today, backgroundColor: isDark ? `${colors.today}33` : colors.tintBg }]}>
-                  <Ionicons name="checkmark" size={13} color={colors.today} />
-                </View>
-                <Text style={[styles.livePreviewText, { color: colors.text }]}>
-                  {activeLocalizedName} • {t.settings.accentColor}
-                </Text>
-                <View style={[styles.livePreviewBadge, { backgroundColor: colors.today }]}>
-                  <Text style={styles.livePreviewBadgeText}>Бүгін</Text>
-                </View>
-              </View>
-            );
-          })()}
-
-          {/* All 7 Accent Colors Grid (No horizontal scrolling) */}
-          <View style={styles.colorPaletteGrid}>
+        <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, padding: 12 }]}>
+          {/* 7 Premium Segmented Color Cards */}
+          <View style={styles.colorTileList}>
             {THEME_LIST.map((th) => {
               const activeThemeId = THEME_LIST.some((t) => t.id === settings.theme) ? (settings.theme || 'ocean') : 'ocean';
               const isSelected = activeThemeId === th.id;
               const localizedName = t.settings.themeNames[th.id] || th.name;
-              const isYellow = th.id === 'amber';
               const isBlack = th.id === 'minimal';
-              const checkColor = isYellow ? '#18181B' : '#FFFFFF';
 
               return (
                 <AnimatedPressable
                   key={th.id}
-                  activeScale={0.90}
+                  activeScale={0.98}
                   onPress={() => handleSelectTheme(th.id)}
-                  style={styles.colorPaletteItem}
+                  style={[
+                    styles.colorTileCard,
+                    {
+                      backgroundColor: isDark ? (isSelected ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)') : (isSelected ? '#FFFFFF' : 'transparent'),
+                      borderColor: isSelected ? (isBlack && isDark ? '#FFFFFF' : th.primary) : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'),
+                    },
+                    isSelected && styles.colorTileCardSelected,
+                  ]}
                   accessibilityRole="button"
                   accessibilityLabel={localizedName}
                 >
-                  <View
-                    style={[
-                      styles.colorBubbleRing,
-                      isSelected
-                        ? {
-                            borderColor: isBlack && isDark ? '#FFFFFF' : th.primary,
-                            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
-                          }
-                        : { borderColor: 'transparent' },
-                    ]}
-                  >
+                  {/* Left: Color dot with glow & icon */}
+                  <View style={styles.colorTileLeft}>
                     <View
                       style={[
-                        styles.colorBubble,
+                        styles.colorTileSwatch,
                         { backgroundColor: th.primary },
-                        isBlack && isDark && { borderColor: '#3A3A3C', borderWidth: 1 },
+                        isBlack && isDark && { borderColor: '#52525B', borderWidth: 1 },
+                      ]}
+                    />
+                    <View style={styles.colorTileMeta}>
+                      <Text
+                        style={[
+                          styles.colorTileName,
+                          {
+                            color: colors.text,
+                            fontWeight: isSelected ? '700' : '600',
+                          },
+                        ]}
+                      >
+                        {localizedName}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Right: Micro UI Preview (Badge + Checkbox + Selection Ring) */}
+                  <View style={styles.colorTileRight}>
+                    {/* Micro UI Elements previewing how this color looks in the app */}
+                    <View style={styles.colorMicroUI}>
+                      <View style={[styles.microBadge, { backgroundColor: th.primary }]}>
+                        <Text style={styles.microBadgeText}>Бүгін</Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.microCheck,
+                          {
+                            borderColor: th.primary,
+                            backgroundColor: isDark ? `${th.primary}26` : th.tintBg,
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name="checkmark"
+                          size={10}
+                          color={th.primary}
+                        />
+                      </View>
+                    </View>
+
+                    {/* Radio checkmark circle */}
+                    <View
+                      style={[
+                        styles.colorTileRadio,
+                        isSelected
+                          ? {
+                              backgroundColor: isBlack && isDark ? '#FFFFFF' : th.primary,
+                              borderColor: isBlack && isDark ? '#FFFFFF' : th.primary,
+                            }
+                          : {
+                              borderColor: isDark ? '#3F485A' : '#D1D5DB',
+                              backgroundColor: 'transparent',
+                            },
                       ]}
                     >
                       {isSelected && (
-                        <Ionicons name="checkmark" size={20} color={checkColor} />
+                        <Ionicons
+                          name="checkmark"
+                          size={13}
+                          color={th.id === 'amber' ? '#18181B' : (isBlack && isDark ? '#000000' : '#FFFFFF')}
+                        />
                       )}
                     </View>
                   </View>
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      styles.colorLabel,
-                      { color: isSelected ? colors.text : colors.secondary },
-                      isSelected && { fontWeight: '700' },
-                    ]}
-                  >
-                    {localizedName}
-                  </Text>
                 </AnimatedPressable>
               );
             })}
@@ -374,74 +397,87 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
   },
-  livePreviewBar: {
+
+  colorTileList: {
+    gap: 8,
+  },
+  colorTileCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 14,
-    borderWidth: 1,
-    gap: 10,
+    borderWidth: 1.5,
   },
-  livePreviewCheck: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
+  colorTileCardSelected: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  colorTileLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  colorTileSwatch: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  colorTileMeta: {
+    justifyContent: 'center',
+  },
+  colorTileName: {
+    fontSize: 15,
+    letterSpacing: -0.2,
+  },
+  colorTileSub: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  colorTileRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  colorMicroUI: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  microBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  microBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  microCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  livePreviewText: {
-    fontSize: 13,
-    fontWeight: '600',
-    flex: 1,
-  },
-  livePreviewBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  livePreviewBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  colorPaletteGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 16,
-    rowGap: 16,
-  },
-  colorPaletteItem: {
-    width: '25%',
+  colorTileRadio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  colorBubbleRing: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  colorBubble: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  colorLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 6,
-    textAlign: 'center',
   },
   modeRow: {
     flexDirection: 'row',
