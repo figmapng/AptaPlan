@@ -195,7 +195,7 @@ export const translations: Record<Language, Translations> = {
       appIconSubtitle: 'Экрандағы негізгі белгіше',
       themeNames: {
         slate: 'Әдепкі',
-        ocean: 'Көк (Әдепкі)',
+        ocean: 'Көк',
         emerald: 'Жасыл',
         amber: 'Сары',
         pink: 'Қызғылт',

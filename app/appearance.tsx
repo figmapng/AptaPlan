@@ -101,107 +101,74 @@ export default function AppearanceScreen() {
           </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, padding: 12 }]}>
-          {/* 7 Premium Segmented Color Cards */}
-          <View style={styles.colorTileList}>
-            {THEME_LIST.map((th) => {
-              const activeThemeId = THEME_LIST.some((t) => t.id === settings.theme) ? (settings.theme || 'ocean') : 'ocean';
-              const isSelected = activeThemeId === th.id;
-              const localizedName = t.settings.themeNames[th.id] || th.name;
-              const isBlack = th.id === 'minimal';
+        <View
+          style={[
+            styles.appleGroupedCard,
+            {
+              backgroundColor: isDark ? colors.card : '#FFFFFF',
+              borderColor: colors.cardBorder,
+            },
+          ]}
+        >
+          {THEME_LIST.map((th, index) => {
+            const activeThemeId = THEME_LIST.some((t) => t.id === settings.theme) ? (settings.theme || 'ocean') : 'ocean';
+            const isSelected = activeThemeId === th.id;
+            const localizedName = t.settings.themeNames[th.id] || th.name;
+            const isBlack = th.id === 'minimal';
+            const isLast = index === THEME_LIST.length - 1;
 
-              return (
-                <AnimatedPressable
-                  key={th.id}
-                  activeScale={0.98}
-                  onPress={() => handleSelectTheme(th.id)}
-                  style={[
-                    styles.colorTileCard,
-                    {
-                      backgroundColor: isDark ? (isSelected ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)') : (isSelected ? '#FFFFFF' : 'transparent'),
-                      borderColor: isSelected ? (isBlack && isDark ? '#FFFFFF' : th.primary) : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'),
-                    },
-                    isSelected && styles.colorTileCardSelected,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={localizedName}
-                >
-                  {/* Left: Color dot with glow & icon */}
-                  <View style={styles.colorTileLeft}>
-                    <View
-                      style={[
-                        styles.colorTileSwatch,
-                        { backgroundColor: th.primary },
-                        isBlack && isDark && { borderColor: '#52525B', borderWidth: 1 },
-                      ]}
+            return (
+              <AnimatedPressable
+                key={th.id}
+                activeScale={0.99}
+                onPress={() => handleSelectTheme(th.id)}
+                style={styles.appleRowPressable}
+                accessibilityRole="button"
+                accessibilityLabel={localizedName}
+              >
+                <View style={styles.appleRowContent}>
+                  {/* Left: Apple circular color dot */}
+                  <View
+                    style={[
+                      styles.appleColorDot,
+                      { backgroundColor: th.primary },
+                      isBlack && isDark && { borderColor: '#52525B', borderWidth: 1 },
+                    ]}
+                  />
+
+                  {/* Middle: Color Title */}
+                  <Text
+                    style={[
+                      styles.appleRowTitle,
+                      { color: colors.text },
+                      isSelected && { fontWeight: '600' },
+                    ]}
+                  >
+                    {localizedName}
+                  </Text>
+
+                  {/* Right: Apple Blue Checkmark (Native iOS Navigation/Settings checkmark) */}
+                  {isSelected && (
+                    <Ionicons
+                      name="checkmark"
+                      size={20}
+                      color={isBlack && isDark ? '#FFFFFF' : (isBlack ? '#18181B' : th.primary)}
                     />
-                    <View style={styles.colorTileMeta}>
-                      <Text
-                        style={[
-                          styles.colorTileName,
-                          {
-                            color: colors.text,
-                            fontWeight: isSelected ? '700' : '600',
-                          },
-                        ]}
-                      >
-                        {localizedName}
-                      </Text>
-                    </View>
-                  </View>
+                  )}
+                </View>
 
-                  {/* Right: Micro UI Preview (Badge + Checkbox + Selection Ring) */}
-                  <View style={styles.colorTileRight}>
-                    {/* Micro UI Elements previewing how this color looks in the app */}
-                    <View style={styles.colorMicroUI}>
-                      <View style={[styles.microBadge, { backgroundColor: th.primary }]}>
-                        <Text style={styles.microBadgeText}>Бүгін</Text>
-                      </View>
-                      <View
-                        style={[
-                          styles.microCheck,
-                          {
-                            borderColor: th.primary,
-                            backgroundColor: isDark ? `${th.primary}26` : th.tintBg,
-                          },
-                        ]}
-                      >
-                        <Ionicons
-                          name="checkmark"
-                          size={10}
-                          color={th.primary}
-                        />
-                      </View>
-                    </View>
-
-                    {/* Radio checkmark circle */}
-                    <View
-                      style={[
-                        styles.colorTileRadio,
-                        isSelected
-                          ? {
-                              backgroundColor: isBlack && isDark ? '#FFFFFF' : th.primary,
-                              borderColor: isBlack && isDark ? '#FFFFFF' : th.primary,
-                            }
-                          : {
-                              borderColor: isDark ? '#3F485A' : '#D1D5DB',
-                              backgroundColor: 'transparent',
-                            },
-                      ]}
-                    >
-                      {isSelected && (
-                        <Ionicons
-                          name="checkmark"
-                          size={13}
-                          color={th.id === 'amber' ? '#18181B' : (isBlack && isDark ? '#000000' : '#FFFFFF')}
-                        />
-                      )}
-                    </View>
-                  </View>
-                </AnimatedPressable>
-              );
-            })}
-          </View>
+                {/* Apple Table View Inset Separator */}
+                {!isLast && (
+                  <View
+                    style={[
+                      styles.appleRowSeparator,
+                      { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(60,60,67,0.12)' },
+                    ]}
+                  />
+                )}
+              </AnimatedPressable>
+            );
+          })}
         </View>
 
         {/* ── Section 2: Режим (Mode: Light / Dark / System) ── */}
@@ -398,86 +365,34 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  colorTileList: {
-    gap: 8,
-  },
-  colorTileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+  appleGroupedCard: {
     borderRadius: 14,
-    borderWidth: 1.5,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
   },
-  colorTileCardSelected: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+  appleRowPressable: {
+    width: '100%',
   },
-  colorTileLeft: {
+  appleRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    paddingHorizontal: 16,
+    height: 48,
+    gap: 14,
   },
-  colorTileSwatch: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  colorTileMeta: {
-    justifyContent: 'center',
-  },
-  colorTileName: {
-    fontSize: 15,
-    letterSpacing: -0.2,
-  },
-  colorTileSub: {
-    fontSize: 11,
-    marginTop: 1,
-  },
-  colorTileRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  colorMicroUI: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  microBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  microBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  microCheck: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  colorTileRadio: {
+  appleColorDot: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+  appleRowTitle: {
+    fontSize: 16,
+    letterSpacing: -0.3,
+    flex: 1,
+  },
+  appleRowSeparator: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 52, // Inset matching dot (16 + 22 + 14 = 52)
   },
   modeRow: {
     flexDirection: 'row',
