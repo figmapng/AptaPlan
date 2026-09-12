@@ -7,9 +7,9 @@ describe('Theme System', () => {
     expect(defaultSettings.themeMode).toBe('system');
   });
 
-  it('contains all 9 required themes with valid hex colors', () => {
-    const expectedThemes = ['ocean', 'pink', 'violet', 'teal', 'amber', 'emerald', 'coral', 'slate', 'minimal'];
-    expect(THEME_LIST.length).toBe(9);
+  it('contains all 8 required themes with valid hex colors', () => {
+    const expectedThemes = ['slate', 'ocean', 'emerald', 'amber', 'pink', 'coral', 'violet', 'minimal'];
+    expect(THEME_LIST.length).toBe(8);
     for (const themeId of expectedThemes) {
       const theme = THEMES[themeId as keyof typeof THEMES];
       expect(theme).toBeDefined();
@@ -27,23 +27,23 @@ describe('Theme System', () => {
     expect(oceanColors.background).toBe('#EFF0F2');
 
     const emeraldColors = getThemeColors('emerald');
-    expect(emeraldColors.today).toBe('#00A15F');
-    expect(emeraldColors.primary).toBe('#00A15F');
+    expect(emeraldColors.today).toBe('#53B55A');
+    expect(emeraldColors.primary).toBe('#53B55A');
     expect(emeraldColors.background).toBe('#EFF0F2');
-    expect(emeraldColors.tintBg).toBe('#F0FAF4');
+    expect(emeraldColors.tintBg).toBe('#EDF7EE');
 
     const amberColors = getThemeColors('amber');
-    expect(amberColors.today).toBe('#FFAA01');
+    expect(amberColors.today).toBe('#F6C543');
     expect(amberColors.background).toBe('#EFF0F2');
     expect(amberColors.text).toBe('#31383E');
 
     const violetColors = getThemeColors('violet');
-    expect(violetColors.today).toBe('#906AF4');
+    expect(violetColors.today).toBe('#8A52EE');
     expect(violetColors.background).toBe('#EFF0F2');
 
     const pinkColors = getThemeColors('pink');
-    expect(pinkColors.today).toBe('#FF87C4');
-    expect(pinkColors.primary).toBe('#FF87C4');
+    expect(pinkColors.today).toBe('#F077AF');
+    expect(pinkColors.primary).toBe('#F077AF');
 
     const fallbackColors = getThemeColors(undefined as any);
     expect(fallbackColors.today).toBe('#0195FF');
