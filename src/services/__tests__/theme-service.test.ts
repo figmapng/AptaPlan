@@ -7,9 +7,9 @@ describe('Theme System', () => {
     expect(defaultSettings.themeMode).toBe('system');
   });
 
-  it('contains all 8 required themes with valid hex colors', () => {
-    const expectedThemes = ['slate', 'ocean', 'emerald', 'amber', 'pink', 'coral', 'violet', 'minimal'];
-    expect(THEME_LIST.length).toBe(8);
+  it('contains all 7 required themes with valid hex colors', () => {
+    const expectedThemes = ['ocean', 'emerald', 'amber', 'pink', 'coral', 'violet', 'minimal'];
+    expect(THEME_LIST.length).toBe(7);
     for (const themeId of expectedThemes) {
       const theme = THEMES[themeId as keyof typeof THEMES];
       expect(theme).toBeDefined();

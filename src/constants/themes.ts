@@ -308,7 +308,6 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
 };
 
 export const THEME_LIST: ThemeConfig[] = [
-  THEMES.slate,
   THEMES.ocean,
   THEMES.emerald,
   THEMES.amber,
@@ -325,7 +324,8 @@ export type AppColors = ColorPalette & {
 };
 
 export function getThemeColors(themeId?: ThemeId, isDark: boolean = false): AppColors {
-  const theme = (themeId && THEMES[themeId]) ? THEMES[themeId] : THEMES.ocean;
+  const effectiveThemeId = (!themeId || themeId === 'slate' || themeId === 'teal') ? 'ocean' : themeId;
+  const theme = THEMES[effectiveThemeId] || THEMES.ocean;
 
   if (isDark) {
     if (theme.id === 'minimal') {

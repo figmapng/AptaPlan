@@ -95,48 +95,90 @@ export default function AppearanceScreen() {
           </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, paddingHorizontal: 0, paddingVertical: 12 }]}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.themeCarousel}
-          >
+        <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, padding: 16 }]}>
+          {/* Live Accent Preview Banner */}
+          {(() => {
+            const activeThemeId = THEME_LIST.some((t) => t.id === settings.theme) ? (settings.theme || 'ocean') : 'ocean';
+            const activeLocalizedName = t.settings.themeNames[activeThemeId as keyof typeof t.settings.themeNames] || 'Көк';
+            return (
+              <View
+                style={[
+                  styles.livePreviewBar,
+                  {
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FFFFFF',
+                    borderColor: isDark ? '#2C3446' : '#E9ECEF',
+                  },
+                ]}
+              >
+                <View style={[styles.livePreviewCheck, { borderColor: colors.today, backgroundColor: isDark ? `${colors.today}33` : colors.tintBg }]}>
+                  <Ionicons name="checkmark" size={13} color={colors.today} />
+                </View>
+                <Text style={[styles.livePreviewText, { color: colors.text }]}>
+                  {activeLocalizedName} • {t.settings.accentColor}
+                </Text>
+                <View style={[styles.livePreviewBadge, { backgroundColor: colors.today }]}>
+                  <Text style={styles.livePreviewBadgeText}>Бүгін</Text>
+                </View>
+              </View>
+            );
+          })()}
+
+          {/* All 7 Accent Colors Grid (No horizontal scrolling) */}
+          <View style={styles.colorPaletteGrid}>
             {THEME_LIST.map((th) => {
-              const isSelected = (settings.theme || 'ocean') === th.id;
+              const activeThemeId = THEME_LIST.some((t) => t.id === settings.theme) ? (settings.theme || 'ocean') : 'ocean';
+              const isSelected = activeThemeId === th.id;
               const localizedName = t.settings.themeNames[th.id] || th.name;
+              const isYellow = th.id === 'amber';
+              const isBlack = th.id === 'minimal';
+              const checkColor = isYellow ? '#18181B' : '#FFFFFF';
+
               return (
                 <AnimatedPressable
                   key={th.id}
-                  activeScale={0.92}
+                  activeScale={0.90}
                   onPress={() => handleSelectTheme(th.id)}
-                  style={styles.themeCarouselItem}
+                  style={styles.colorPaletteItem}
                   accessibilityRole="button"
                   accessibilityLabel={localizedName}
                 >
                   <View
                     style={[
-                      styles.themeBubbleOuter,
-                      isSelected && {
-                        borderColor: th.primary,
-                        backgroundColor: '#FFFFFF',
-                      },
+                      styles.colorBubbleRing,
+                      isSelected
+                        ? {
+                            borderColor: isBlack && isDark ? '#FFFFFF' : th.primary,
+                            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                          }
+                        : { borderColor: 'transparent' },
                     ]}
                   >
                     <View
                       style={[
-                        styles.themeBubble,
+                        styles.colorBubble,
                         { backgroundColor: th.primary },
+                        isBlack && isDark && { borderColor: '#3A3A3C', borderWidth: 1 },
                       ]}
                     >
                       {isSelected && (
-                        <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                        <Ionicons name="checkmark" size={20} color={checkColor} />
                       )}
                     </View>
                   </View>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.colorLabel,
+                      { color: isSelected ? colors.text : colors.secondary },
+                      isSelected && { fontWeight: '700' },
+                    ]}
+                  >
+                    {localizedName}
+                  </Text>
                 </AnimatedPressable>
               );
             })}
-          </ScrollView>
+          </View>
         </View>
 
         {/* ── Section 2: Режим (Mode: Light / Dark / System) ── */}
@@ -332,25 +374,58 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
   },
-  themeCarousel: {
-    paddingHorizontal: 16,
-    gap: 12,
+  livePreviewBar: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 10,
   },
-  themeCarouselItem: {
+  livePreviewCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  themeBubbleOuter: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  livePreviewText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  livePreviewBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  livePreviewBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  colorPaletteGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 16,
+    rowGap: 16,
+  },
+  colorPaletteItem: {
+    width: '25%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colorBubbleRing: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     borderWidth: 2.5,
-    borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  themeBubble: {
+  colorBubble: {
     width: 38,
     height: 38,
     borderRadius: 19,
@@ -361,6 +436,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.16,
     shadowRadius: 3,
     elevation: 2,
+  },
+  colorLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 6,
+    textAlign: 'center',
   },
   modeRow: {
     flexDirection: 'row',
