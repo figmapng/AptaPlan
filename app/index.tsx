@@ -897,7 +897,7 @@ export default function Home() {
   // ── Layout metrics ──────────────────────────────────────
   const currDates = Array.from({ length: 7 }, (_, i) => addDays(activeWeekStart, i));
   
-  const headerSpace = insets.top + 68;
+  const headerSpace = insets.top + 76;
   const bottomInputBarHeight = 48;
   const cardToInputGap = 16;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + bottomInputBarHeight + cardToInputGap;
@@ -1156,7 +1156,7 @@ export default function Home() {
               outputRange: [insets.top + 8, 16],
             }),
             paddingHorizontal: 16,
-            paddingBottom: 4,
+            paddingBottom: 11,
             backgroundColor: colors.background,
             zIndex: 10,
           }}
