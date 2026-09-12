@@ -340,14 +340,14 @@ export function TaskPreviewModal({
                   styles.checkbox,
                   { borderColor: colors.checkboxBorder, backgroundColor: colors.card },
                   taskObj.isCompleted && {
-                    backgroundColor: colors.checkedCheckboxBg,
-                    borderColor: colors.checkedCheckboxBg,
+                    backgroundColor: isDark ? `${colors.today}33` : colors.tintBg,
+                    borderColor: colors.today,
                   },
                 ]}
                 hitSlop={8}
               >
                 {taskObj.isCompleted && (
-                  <CheckmarkIcon size={12} color="#FFFFFF" />
+                  <CheckmarkIcon size={12} color={colors.today} strokeWidth={3.0} />
                 )}
               </Pressable>
 

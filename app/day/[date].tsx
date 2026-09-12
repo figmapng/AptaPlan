@@ -198,7 +198,7 @@ export default function DayScreen() {
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: isSelectedToday ? '#0195FF' : isDark ? colors.text : '#31383E',
+              color: isSelectedToday ? colors.today : isDark ? colors.text : '#31383E',
               letterSpacing: -0.2,
             }}
           >

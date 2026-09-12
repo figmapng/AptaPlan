@@ -382,10 +382,13 @@ export function TaskDetailModal({
                     style={[
                       styles.checkbox,
                       { borderColor: colors.checkboxBorder, backgroundColor: colors.card },
-                      isCompleted && { borderColor: colors.checkedCheckboxBg, backgroundColor: colors.checkedCheckboxBg },
+                      isCompleted && {
+                        borderColor: colors.today,
+                        backgroundColor: isDark ? `${colors.today}33` : colors.tintBg,
+                      },
                     ]}
                   >
-                    {isCompleted && <CheckmarkIcon size={12} color="#FFFFFF" />}
+                    {isCompleted && <CheckmarkIcon size={12} color={colors.today} strokeWidth={3.0} />}
                   </Pressable>
                 </Animated.View>
 

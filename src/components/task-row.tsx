@@ -364,8 +364,8 @@ export const TaskRow = React.memo(function TaskRow({
                 borderWidth: compact || cardSurface ? 1.2 : 1.5,
               },
               task.isCompleted && {
-                borderColor: '#0195FF',
-                backgroundColor: isDark ? 'rgba(1, 149, 255, 0.2)' : '#E6F4FF',
+                borderColor: colors.today,
+                backgroundColor: isDark ? `${colors.today}33` : colors.tintBg,
               },
               { transform: [{ scale: boxScale }] },
             ]}
@@ -380,7 +380,7 @@ export const TaskRow = React.memo(function TaskRow({
               >
                 <CheckmarkIcon
                   size={compact ? 10 : cardSurface ? 11 : 13}
-                  color="#0195FF"
+                  color={colors.today}
                   strokeWidth={compact ? 3.0 : cardSurface ? 3.0 : 3.2}
                 />
               </Animated.View>

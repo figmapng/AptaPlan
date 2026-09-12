@@ -299,14 +299,14 @@ const CarouselCard = React.memo(function CarouselCard({
             overflow: 'hidden',
           }}
         >
-          {/* Weekday Name, Date and Month: vibrant blue only if active (today), otherwise inactive card color */}
+          {/* Weekday Name, Date and Month: theme accent color only if active (today), otherwise inactive card color */}
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: isTodayCard ? '#0195FF' : isDark ? colors.text : '#31383E',
+              color: isTodayCard ? colors.today : isDark ? colors.text : '#31383E',
               letterSpacing: -0.2,
             }}
           >
