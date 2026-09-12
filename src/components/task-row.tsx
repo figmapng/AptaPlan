@@ -387,7 +387,7 @@ export const TaskRow = React.memo(function TaskRow({
               >
                 <CheckmarkIcon
                   size={compact ? 10 : cardSurface ? 11 : 13}
-                  color={compact ? (isDark ? '#94A3B8' : '#64748B') : colors.today}
+                  color={compact ? (isDark ? '#475569' : '#CBD5E1') : colors.today}
                   strokeWidth={compact ? 2.6 : cardSurface ? 3.0 : 3.2}
                 />
               </Animated.View>
