@@ -579,7 +579,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const activeDayTasks = tasks.filter((t) => t.date === activeDateKey);
   const taskCount = activeDayTasks.length;
   const openedCardTop = insets.top + 78;
-  const cardToInputGap = 22;
+  const cardToInputGap = 26;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 48 + cardToInputGap;
   const maxHeight = height - openedCardTop - bottomBarSpace;
   const emptyCardHeight = maxHeight;

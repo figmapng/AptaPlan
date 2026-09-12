@@ -899,7 +899,7 @@ export default function Home() {
   
   const headerSpace = insets.top + 76;
   const bottomInputBarHeight = 48;
-  const cardToInputGap = 22;
+  const cardToInputGap = 26;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + bottomInputBarHeight + cardToInputGap;
   const rawAvailableHeight = screenHeight - headerSpace - bottomBarSpace;
   const availableHeight = measuredContentHeight > 0
