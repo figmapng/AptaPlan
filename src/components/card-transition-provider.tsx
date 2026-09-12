@@ -435,9 +435,13 @@ const CarouselCard = React.memo(function CarouselCard({
               ref={scrollRef}
               scrollEnabled={scrollEnabled}
               nestedScrollEnabled
+              directionalLockEnabled={true}
+              alwaysBounceHorizontal={false}
+              showsHorizontalScrollIndicator={false}
               showsVerticalScrollIndicator={false}
               bounces={true}
               alwaysBounceVertical={true}
+              keyboardShouldPersistTaps="handled"
               onScroll={(e) => {
                 handleTaskListScroll();
                 scrollYRef.current = e.nativeEvent.contentOffset.y;
@@ -742,23 +746,23 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
       onStartShouldSetPanResponder: () => false,
       onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_, gesture) => {
-        if (!scrollEnabledRef.current || isAnimatingRef.current) return false;
-        return Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy);
+        if (isAnimatingRef.current) return false;
+        return Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.1;
       },
       onMoveShouldSetPanResponderCapture: (_, gesture) => {
-        if (!scrollEnabledRef.current || isAnimatingRef.current) return false;
-        return Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy);
+        if (isAnimatingRef.current) return false;
+        return Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.1;
       },
       onPanResponderGrant: () => {
         carouselX.stopAnimation();
       },
       onPanResponderMove: (_, gesture) => {
-        if (!scrollEnabledRef.current || isAnimatingRef.current) return;
+        if (isAnimatingRef.current) return;
         carouselX.setValue(-pageIndexRef.current * width + gesture.dx);
       },
       onPanResponderRelease: (_, gesture) => {
-        if (!scrollEnabledRef.current || isAnimatingRef.current) return;
-        const threshold = 40;
+        if (isAnimatingRef.current) return;
+        const threshold = 35;
         const velocity = gesture.vx;
 
         let targetIndex = pageIndexRef.current;
@@ -850,7 +854,10 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
         </Animated.View>
 
         {current && (
-          <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 1000 }]}>
+          <View
+            style={[StyleSheet.absoluteFill, { zIndex: 1000 }]}
+            {...carouselPanResponder.panHandlers}
+          >
             <Pressable onPress={closeCard} style={[StyleSheet.absoluteFill, { zIndex: 1 }]}>
               <Animated.View
                 style={[
@@ -870,7 +877,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
             <View
               pointerEvents="box-none"
               style={[StyleSheet.absoluteFill, { zIndex: 2 }]}
-              {...carouselPanResponder.panHandlers}
             >
               {renderedIndices.map((virtualIndex) => {
                 const cardDate = addDays(current.date, virtualIndex);
