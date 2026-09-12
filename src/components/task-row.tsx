@@ -335,6 +335,7 @@ export const TaskRow = React.memo(function TaskRow({
           styles.rowContainer,
           compact && styles.compactRowContainer,
           cardSurface && styles.cardRowContainer,
+          compact && task.isCompleted && { opacity: 0.36 },
         ]}
       >
         <Pressable
@@ -365,8 +366,9 @@ export const TaskRow = React.memo(function TaskRow({
               },
               task.isCompleted && (compact
                 ? {
-                    borderColor: isDark ? '#475569' : '#CBD5E1',
-                    backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                    borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#D1D5DB',
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
                   }
                 : {
                     borderColor: colors.today,
@@ -384,9 +386,9 @@ export const TaskRow = React.memo(function TaskRow({
                 }}
               >
                 <CheckmarkIcon
-                  size={compact ? 10 : cardSurface ? 11 : 13}
-                  color={compact ? (isDark ? '#64748B' : '#94A3B8') : colors.today}
-                  strokeWidth={compact ? 2.6 : cardSurface ? 3.0 : 3.2}
+                  size={compact ? 9 : cardSurface ? 11 : 13}
+                  color={compact ? (isDark ? '#94A3B8' : '#6B7280') : colors.today}
+                  strokeWidth={compact ? 2.2 : cardSurface ? 3.0 : 3.2}
                 />
               </Animated.View>
             )}
