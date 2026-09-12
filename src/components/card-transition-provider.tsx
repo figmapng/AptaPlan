@@ -110,7 +110,7 @@ const CarouselCard = React.memo(function CarouselCard({
   const taskListHeight = localListHeight > 0 ? localListHeight : (cardTaskCount > 0 ? cardTaskCount * 48 + 12 : 80);
   const rawCardContentHeight = 44 + 8 + taskListHeight;
   const cardContentHeight = Math.max(emptyCardHeight, rawCardContentHeight);
-  const cardTargetHeight = Math.min(maxHeight, cardContentHeight);
+  const cardTargetHeight = maxHeight;
 
   const cardTranslateX = Animated.add(virtualIndex * width, carouselX);
   const isCenter = virtualIndex === pageIndex;
@@ -578,13 +578,13 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const activeDateKey = toDateKey(activeCardDate);
   const activeDayTasks = tasks.filter((t) => t.date === activeDateKey);
   const taskCount = activeDayTasks.length;
-  const emptyCardHeight = Math.round(height * 0.48);
-  const rawContentHeight = 52 + 16 + (measuredListHeight > 0 ? measuredListHeight : (taskCount > 0 ? taskCount * 56 : 80));
-  const contentHeight = Math.max(emptyCardHeight, rawContentHeight);
   const openedCardTop = insets.top + 78;
   const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 48 + 16;
   const maxHeight = height - openedCardTop - bottomBarSpace;
-  const targetHeight = Math.min(maxHeight, contentHeight);
+  const emptyCardHeight = maxHeight;
+  const rawContentHeight = 52 + 16 + (measuredListHeight > 0 ? measuredListHeight : (taskCount > 0 ? taskCount * 56 : 80));
+  const contentHeight = maxHeight;
+  const targetHeight = maxHeight;
 
   const scrollEnabledRef = useRef(true);
   const handleScrollEnabled = useCallback((enabled: boolean) => {
@@ -665,7 +665,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     setIsTransitionSettled(false);
     const calcTaskCount = cardTasks.length;
     const calcContentHeight = Math.max(emptyCardHeight, 52 + 16 + calcTaskCount * 56 + 60);
-    const calcTargetHeight = Math.min(maxHeight, calcContentHeight);
+    const calcTargetHeight = maxHeight;
     const frameSnapshot = Object.freeze({
       x: typeof frame?.x === 'number' && !isNaN(frame.x) ? frame.x : 16,
       y: typeof frame?.y === 'number' && !isNaN(frame.y) ? frame.y : insets.top + 78,
