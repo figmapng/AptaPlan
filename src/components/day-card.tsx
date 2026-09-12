@@ -187,7 +187,10 @@ export const DayCard = memo(function DayCardComponent({
           color: headerTextColor,
         }}
       >
-        {dayName.toUpperCase()} • {dayNumber} {monthShort}
+        {dayName.toUpperCase()}
+        <Text style={{ color: isDark ? '#94A3B8' : '#707684', fontWeight: '500' }}>
+          {' '}• {dayNumber} {monthShort}
+        </Text>
       </Text>
     </AnimatedPressable>
   );

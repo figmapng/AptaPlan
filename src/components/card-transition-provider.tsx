@@ -310,7 +310,10 @@ const CarouselCard = React.memo(function CarouselCard({
               letterSpacing: -0.2,
             }}
           >
-            {`${(t.date.weekdays[cardDate.getDay()] ?? '').toUpperCase()} • ${format(cardDate, 'd')} ${t.date.monthsShort[cardDate.getMonth()] ?? ''}`}
+            {(t.date.weekdays[cardDate.getDay()] ?? '').toUpperCase()}
+            <Text style={{ color: isDark ? '#94A3B8' : '#707684', fontWeight: '500' }}>
+              {` • ${format(cardDate, 'd')} ${t.date.monthsShort[cardDate.getMonth()] ?? ''}`}
+            </Text>
           </Text>
 
           {/* Progress fraction e.g. 1/4 */}
