@@ -50,7 +50,7 @@ export function TaskBottomSheet({
   onTaskDeleted,
 }: TaskBottomSheetProps) {
   const planner = usePlanner();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useI18n();
 
   const [title, setTitle] = useState('');
@@ -351,16 +351,20 @@ export function TaskBottomSheet({
                 style={({ pressed }) => [
                   styles.sendBtn,
                   {
-                    backgroundColor: isEnabled ? colors.today : colors.inputBorder,
+                    backgroundColor: isEnabled
+                      ? colors.today
+                      : isDark
+                      ? 'rgba(255, 255, 255, 0.12)'
+                      : '#E5E7EB',
                     borderColor: isEnabled ? colors.todayDark : 'transparent',
                   },
                   pressed && isEnabled && styles.sendBtnPressed,
                 ]}
               >
                 {editingTask ? (
-                  <CheckIcon color={isEnabled ? '#FFFFFF' : colors.inputPlaceholder} />
+                  <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
                 ) : (
-                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : colors.inputPlaceholder} />
+                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
                 )}
               </Pressable>
             </View>
