@@ -581,7 +581,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const openedCardTop = insets.top + 78;
   const cardToInputGap = 26;
   const bottomInputBarHeight = 50;
-  const bottomBarBottomOffset = insets.bottom > 0 ? Math.max(insets.bottom - 10, 10) : 16;
+  const bottomBarBottomOffset = insets.bottom > 0 ? Math.max(insets.bottom - 6, 14) : 20;
   const bottomBarSpace = bottomBarBottomOffset + bottomInputBarHeight + cardToInputGap;
   const maxHeight = height - openedCardTop - bottomBarSpace;
   const emptyCardHeight = maxHeight;
