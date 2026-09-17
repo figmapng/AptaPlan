@@ -1003,14 +1003,21 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   borderRadius: 25,
                   borderCurve: 'continuous',
                   borderWidth: 1,
-                  borderColor: colors.cardBorder,
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#EBEBEF',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : colors.cardBorder,
+                  overflow: 'hidden',
+                  position: 'relative',
                   flexDirection: 'row',
                   alignItems: 'center',
                   paddingHorizontal: 16,
                   gap: 8,
                 }}
               >
+                <BlurView
+                  tint={isDark ? 'systemThinMaterialDark' : 'systemThinMaterialLight'}
+                  intensity={95}
+                  style={StyleSheet.absoluteFill}
+                  pointerEvents="none"
+                />
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M12 4.5v15M4.5 12h15"

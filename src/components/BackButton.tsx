@@ -1,5 +1,7 @@
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
@@ -29,13 +31,20 @@ export function BackButton({
         height: size,
         borderRadius: size / 2,
         borderCurve: 'continuous',
-        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#EBEBEF',
         borderWidth: 1,
-        borderColor: colors.cardBorder,
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : colors.cardBorder,
+        overflow: 'hidden',
+        position: 'relative',
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
+      <BlurView
+        tint={isDark ? 'systemThinMaterialDark' : 'systemThinMaterialLight'}
+        intensity={95}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
       <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
         <Path
           d="M15 18l-6-6 6-6"
