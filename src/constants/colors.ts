@@ -53,7 +53,7 @@ export type ColorPalette = {
 export type ColorTheme = ColorPalette;
 
 export const lightColors: ColorPalette = {
-  background: '#EFF0F2',
+  background: '#F3F3F7',
   card: '#FFFFFF',
   cardBorder: '#D9DDE5',
   cardHeaderBg: '#EDEFF2',
@@ -76,10 +76,10 @@ export const lightColors: ColorPalette = {
   checkedCheckboxCheck: '#FFFFFF',
   checkedTaskText: '#ADB3BD',
   strikeLine: '#8F97A4',
-  inputBg: '#F8FAFC',
-  inputBorder: '#EDF1F5',
-  inputPlaceholder: '#9AA1AF',
-  inputPlusIcon: '#0195FF',
+  inputBg: '#EBEBEF',
+  inputBorder: 'transparent',
+  inputPlaceholder: '#8E8E93',
+  inputPlusIcon: '#8E8E93',
   inputFocusedBorder: '#0195FF',
   inputEnteredText: '#31383E',
   inputCursor: '#0195FF',

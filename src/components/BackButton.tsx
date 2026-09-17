@@ -13,7 +13,7 @@ interface BackButtonProps {
 export function BackButton({
   onPress,
   accessibilityLabel,
-  size = 52,
+  size = 50,
 }: BackButtonProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
@@ -29,7 +29,7 @@ export function BackButton({
         height: size,
         borderRadius: size / 2,
         borderCurve: 'continuous',
-        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#EBEDF0',
+        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#EBEBEF',
         borderWidth: isDark ? 1 : 0,
         borderColor: isDark ? colors.cardBorder : 'transparent',
         alignItems: 'center',
@@ -39,7 +39,7 @@ export function BackButton({
       <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
         <Path
           d="M15 18l-6-6 6-6"
-          stroke={isDark ? colors.text : '#31383E'}
+          stroke={isDark ? colors.text : '#8E8E93'}
           strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"

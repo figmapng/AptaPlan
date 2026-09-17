@@ -580,8 +580,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const taskCount = activeDayTasks.length;
   const openedCardTop = insets.top + 78;
   const cardToInputGap = 26;
-  const bottomInputBarHeight = 52;
-  const bottomBarBottomOffset = Math.max(insets.bottom - 6, 12);
+  const bottomInputBarHeight = 50;
+  const bottomBarBottomOffset = insets.bottom > 0 ? Math.max(insets.bottom - 10, 10) : 16;
   const bottomBarSpace = bottomBarBottomOffset + bottomInputBarHeight + cardToInputGap;
   const maxHeight = height - openedCardTop - bottomBarSpace;
   const emptyCardHeight = maxHeight;
@@ -990,7 +990,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 }),
               }}
             >
-              <BackButton onPress={closeCard} />
+              <BackButton onPress={closeCard} size={50} />
 
               <AnimatedPressable
                 accessibilityRole="button"
@@ -999,28 +999,28 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 activeScale={0.97}
                 style={{
                   flex: 1,
-                  height: 52,
-                  borderRadius: 26,
+                  height: 50,
+                  borderRadius: 25,
                   borderCurve: 'continuous',
                   borderWidth: isDark ? 1 : 0,
                   borderColor: isDark ? colors.cardBorder : 'transparent',
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#EBEDF0',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#EBEBEF',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  paddingHorizontal: 18,
-                  gap: 10,
+                  paddingHorizontal: 16,
+                  gap: 8,
                 }}
               >
                 <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M12 4.5v15M4.5 12h15"
-                    stroke={colors.today}
-                    strokeWidth="2.8"
+                    stroke={isDark ? '#94A0B4' : '#8E8E93'}
+                    strokeWidth="2.4"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                 </Svg>
-                <Text style={{ flex: 1, fontSize: 15, fontWeight: '500', color: isDark ? '#94A0B4' : '#707684' }}>
+                <Text style={{ flex: 1, fontSize: 16, fontWeight: '400', color: isDark ? '#94A0B4' : '#8E8E93' }}>
                   {t.common.addTask}
                 </Text>
               </AnimatedPressable>
