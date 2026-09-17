@@ -30,8 +30,8 @@ export function BackButton({
         borderRadius: size / 2,
         borderCurve: 'continuous',
         backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#EBEBEF',
-        borderWidth: isDark ? 1 : 0,
-        borderColor: isDark ? colors.cardBorder : 'transparent',
+        borderWidth: 1,
+        borderColor: colors.cardBorder,
         alignItems: 'center',
         justifyContent: 'center',
       }}
