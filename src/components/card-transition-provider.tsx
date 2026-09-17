@@ -1002,34 +1002,47 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   height: 50,
                   borderRadius: 25,
                   borderCurve: 'continuous',
-                  borderWidth: 1,
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : colors.cardBorder,
-                  overflow: 'hidden',
-                  position: 'relative',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingHorizontal: 16,
-                  gap: 8,
+                  shadowColor: '#000000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: isDark ? 0.3 : 0.08,
+                  shadowRadius: 12,
+                  elevation: 3,
                 }}
               >
-                <BlurView
-                  tint={isDark ? 'systemThinMaterialDark' : 'systemThinMaterialLight'}
-                  intensity={95}
-                  style={StyleSheet.absoluteFill}
-                  pointerEvents="none"
-                />
-                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M12 4.5v15M4.5 12h15"
-                    stroke={isDark ? '#94A0B4' : '#8E8E93'}
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                <View
+                  style={{
+                    flex: 1,
+                    borderRadius: 25,
+                    borderCurve: 'continuous',
+                    borderWidth: 1,
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.85)',
+                    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.4)' : 'rgba(255, 255, 255, 0.65)',
+                    overflow: 'hidden',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 16,
+                    gap: 8,
+                  }}
+                >
+                  <BlurView
+                    tint={isDark ? 'systemThinMaterialDark' : 'systemUltraThinMaterialLight'}
+                    intensity={80}
+                    style={StyleSheet.absoluteFill}
+                    pointerEvents="none"
                   />
-                </Svg>
-                <Text style={{ flex: 1, fontSize: 16, fontWeight: '400', color: isDark ? '#94A0B4' : '#8E8E93' }}>
-                  {t.common.addTask}
-                </Text>
+                  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                    <Path
+                      d="M12 4.5v15M4.5 12h15"
+                      stroke={isDark ? '#94A0B4' : '#707684'}
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </Svg>
+                  <Text style={{ flex: 1, fontSize: 16, fontWeight: '400', color: isDark ? '#94A0B4' : '#707684' }}>
+                    {t.common.addTask}
+                  </Text>
+                </View>
               </AnimatedPressable>
             </Animated.View>
 

@@ -31,29 +31,42 @@ export function BackButton({
         height: size,
         borderRadius: size / 2,
         borderCurve: 'continuous',
-        borderWidth: 1,
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : colors.cardBorder,
-        overflow: 'hidden',
-        position: 'relative',
-        alignItems: 'center',
-        justifyContent: 'center',
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: isDark ? 0.3 : 0.08,
+        shadowRadius: 12,
+        elevation: 3,
       }}
     >
-      <BlurView
-        tint={isDark ? 'systemThinMaterialDark' : 'systemThinMaterialLight'}
-        intensity={95}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-      <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M15 18l-6-6 6-6"
-          stroke={isDark ? colors.text : '#8E8E93'}
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      <View
+        style={{
+          flex: 1,
+          borderRadius: size / 2,
+          borderCurve: 'continuous',
+          borderWidth: 1,
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.85)',
+          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.4)' : 'rgba(255, 255, 255, 0.65)',
+          overflow: 'hidden',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <BlurView
+          tint={isDark ? 'systemThinMaterialDark' : 'systemUltraThinMaterialLight'}
+          intensity={80}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
         />
-      </Svg>
+        <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M15 18l-6-6 6-6"
+            stroke={isDark ? colors.text : '#707684'}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      </View>
     </AnimatedPressable>
   );
 }
