@@ -1507,9 +1507,8 @@ export default function Home() {
               <Defs>
                 <LinearGradient id="bottomFadeGradientIndex" x1="0" y1="0" x2="0" y2="1">
                   <Stop offset="0" stopColor={colors.background} stopOpacity="0" />
-                  <Stop offset="0.2" stopColor={colors.background} stopOpacity="0.7" />
-                  <Stop offset="0.45" stopColor={colors.background} stopOpacity="1" />
-                  <Stop offset="1" stopColor={colors.background} stopOpacity="1" />
+                  <Stop offset="0.5" stopColor={colors.background} stopOpacity="0.35" />
+                  <Stop offset="1" stopColor={colors.background} stopOpacity="0.85" />
                 </LinearGradient>
               </Defs>
               <Rect x="0" y="0" width="100%" height="100%" fill="url(#bottomFadeGradientIndex)" />
@@ -1699,11 +1698,12 @@ function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => v
         height: 50,
         borderRadius: 25,
         borderCurve: 'continuous',
+        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)',
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: isDark ? 0.3 : 0.08,
-        shadowRadius: 12,
-        elevation: 3,
+        shadowOpacity: isDark ? 0.35 : 0.08,
+        shadowRadius: 14,
+        elevation: 4,
       }}
     >
       <View
@@ -1712,8 +1712,7 @@ function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => v
           borderRadius: 25,
           borderCurve: 'continuous',
           borderWidth: 1,
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.85)',
-          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.4)' : 'rgba(255, 255, 255, 0.65)',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
           overflow: 'hidden',
           flexDirection: 'row',
           alignItems: 'center',
@@ -1722,8 +1721,8 @@ function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => v
         }}
       >
         <BlurView
-          tint={isDark ? 'systemThinMaterialDark' : 'systemUltraThinMaterialLight'}
-          intensity={80}
+          tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
+          intensity={95}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />

@@ -1002,11 +1002,12 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   height: 50,
                   borderRadius: 25,
                   borderCurve: 'continuous',
+                  backgroundColor: isDark ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)',
                   shadowColor: '#000000',
                   shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: isDark ? 0.3 : 0.08,
-                  shadowRadius: 12,
-                  elevation: 3,
+                  shadowOpacity: isDark ? 0.35 : 0.08,
+                  shadowRadius: 14,
+                  elevation: 4,
                 }}
               >
                 <View
@@ -1015,8 +1016,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     borderRadius: 25,
                     borderCurve: 'continuous',
                     borderWidth: 1,
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.85)',
-                    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.4)' : 'rgba(255, 255, 255, 0.65)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
                     overflow: 'hidden',
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -1025,8 +1025,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   }}
                 >
                   <BlurView
-                    tint={isDark ? 'systemThinMaterialDark' : 'systemUltraThinMaterialLight'}
-                    intensity={80}
+                    tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
+                    intensity={95}
                     style={StyleSheet.absoluteFill}
                     pointerEvents="none"
                   />
