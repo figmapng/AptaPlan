@@ -13,7 +13,7 @@ interface BackButtonProps {
 export function BackButton({
   onPress,
   accessibilityLabel,
-  size = 48,
+  size = 52,
 }: BackButtonProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
@@ -29,14 +29,9 @@ export function BackButton({
         height: size,
         borderRadius: size / 2,
         borderCurve: 'continuous',
-        backgroundColor: colors.card,
+        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#EBEDF0',
         borderWidth: isDark ? 1 : 0,
         borderColor: isDark ? colors.cardBorder : 'transparent',
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: isDark ? 0.2 : 0.06,
-        shadowRadius: 10,
-        elevation: 3,
         alignItems: 'center',
         justifyContent: 'center',
       }}

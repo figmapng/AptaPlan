@@ -580,7 +580,9 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const taskCount = activeDayTasks.length;
   const openedCardTop = insets.top + 78;
   const cardToInputGap = 26;
-  const bottomBarSpace = Math.max(insets.bottom + 8, 16) + 48 + cardToInputGap;
+  const bottomInputBarHeight = 52;
+  const bottomBarBottomOffset = Math.max(insets.bottom - 6, 12);
+  const bottomBarSpace = bottomBarBottomOffset + bottomInputBarHeight + cardToInputGap;
   const maxHeight = height - openedCardTop - bottomBarSpace;
   const emptyCardHeight = maxHeight;
   const rawContentHeight = 52 + 16 + (measuredListHeight > 0 ? measuredListHeight : (taskCount > 0 ? taskCount * 56 : 80));
@@ -976,7 +978,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 position: 'absolute',
                 left: 16,
                 right: 16,
-                bottom: Math.max(insets.bottom + 8, 16),
+                bottom: bottomBarBottomOffset,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 10,
@@ -997,32 +999,28 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 activeScale={0.97}
                 style={{
                   flex: 1,
-                  height: 48,
-                  borderRadius: 24,
+                  height: 52,
+                  borderRadius: 26,
+                  borderCurve: 'continuous',
                   borderWidth: isDark ? 1 : 0,
                   borderColor: isDark ? colors.cardBorder : 'transparent',
-                  backgroundColor: colors.card,
-                  shadowColor: '#000000',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: isDark ? 0.2 : 0.06,
-                  shadowRadius: 10,
-                  elevation: 3,
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#EBEDF0',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  paddingHorizontal: 16,
+                  paddingHorizontal: 18,
                   gap: 10,
                 }}
               >
-                <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                   <Path
                     d="M12 4.5v15M4.5 12h15"
-                    stroke={isDark ? '#7E8B9F' : '#9CA3AF'}
+                    stroke={colors.today}
                     strokeWidth="2.8"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                 </Svg>
-                <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: isDark ? '#7E8B9F' : '#9CA3AF' }}>
+                <Text style={{ flex: 1, fontSize: 15, fontWeight: '500', color: isDark ? '#94A0B4' : '#707684' }}>
                   {t.common.addTask}
                 </Text>
               </AnimatedPressable>

@@ -898,9 +898,10 @@ export default function Home() {
   const currDates = Array.from({ length: 7 }, (_, i) => addDays(activeWeekStart, i));
   
   const headerSpace = insets.top + 76;
-  const bottomInputBarHeight = 48;
+  const bottomInputBarHeight = 52;
   const cardToInputGap = 26;
-  const bottomBarSpace = Math.max(insets.bottom + 8, 16) + bottomInputBarHeight + cardToInputGap;
+  const bottomBarBottomOffset = Math.max(insets.bottom - 6, 12);
+  const bottomBarSpace = bottomBarBottomOffset + bottomInputBarHeight + cardToInputGap;
   const rawAvailableHeight = screenHeight - headerSpace - bottomBarSpace;
   const availableHeight = measuredContentHeight > 0
     ? measuredContentHeight - bottomBarSpace
@@ -1498,7 +1499,7 @@ export default function Home() {
               left: 0,
               right: 0,
               bottom: 0,
-              height: Math.max(insets.bottom + 8, 16) + 54,
+              height: bottomBarBottomOffset + bottomInputBarHeight + 10,
               zIndex: 25,
             }}
           >
@@ -1515,7 +1516,7 @@ export default function Home() {
             </Svg>
           </View>
 
-          <View style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ position: 'absolute', left: 16, right: 16, bottom: bottomBarBottomOffset, zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             {fromYearMode && mode === 'month' && (
               <BackButton
                 accessibilityLabel={t.common.back}
@@ -1542,9 +1543,10 @@ export default function Home() {
                 }
                 activeScale={0.93}
                 style={{
-                  height: 48,
-                  borderRadius: 24,
-                  paddingHorizontal: 14,
+                  height: 52,
+                  borderRadius: 26,
+                  borderCurve: 'continuous',
+                  paddingHorizontal: 16,
                   backgroundColor: colors.today,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1685,7 +1687,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
 });
 
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useI18n();
   return (
     <AnimatedPressable
@@ -1694,28 +1696,28 @@ function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => v
       onPress={() => { onInteraction?.(); onAddTask(); }}
       activeScale={0.97}
       style={{
-        height: 48,
-        borderRadius: 24,
+        height: 52,
+        borderRadius: 26,
         borderCurve: 'continuous',
-        borderWidth: 1,
-        borderColor: colors.inputBorder,
-        backgroundColor: colors.inputBg,
+        borderWidth: isDark ? 1 : 0,
+        borderColor: isDark ? colors.cardBorder : 'transparent',
+        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#EBEDF0',
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
+        paddingHorizontal: 18,
         gap: 10,
       }}
     >
-      <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
         <Path
           d="M12 4.5v15M4.5 12h15"
-          stroke={colors.inputPlusIcon}
+          stroke={colors.today}
           strokeWidth="2.8"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
       </Svg>
-      <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: colors.inputPlaceholder }}>{t.common.addTask}</Text>
+      <Text style={{ flex: 1, fontSize: 15, fontWeight: '500', color: isDark ? '#94A0B4' : '#707684' }}>{t.common.addTask}</Text>
     </AnimatedPressable>
   );
 }
