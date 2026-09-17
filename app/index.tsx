@@ -1698,7 +1698,7 @@ function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => v
         height: 50,
         borderRadius: 25,
         borderCurve: 'continuous',
-        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.72)',
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: isDark ? 0.35 : 0.08,
