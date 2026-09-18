@@ -1269,51 +1269,22 @@ export default function Home() {
           </View>
 
           {/* Unified GlassView Pill Controls (View Mode & Settings in one frame) */}
-          <View
-            style={{
-              height: 36,
-              borderRadius: 18,
-              borderCurve: 'continuous',
-              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : 'rgba(255, 255, 255, 0.82)',
-              shadowColor: '#000000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: isDark ? 0.3 : 0.06,
-              shadowRadius: 8,
-              elevation: 2,
-            }}
-          >
-            <View
+          {isLiquidGlass ? (
+            <GlassView
+              glassEffectStyle="regular"
+              isInteractive={true}
+              colorScheme={isDark ? 'dark' : 'light'}
+              borderRadius={21}
+              borderCurve="continuous"
               style={{
-                flex: 1,
-                borderRadius: 18,
+                height: 42,
+                borderRadius: 21,
                 borderCurve: 'continuous',
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
-                overflow: 'hidden',
                 flexDirection: 'row',
                 alignItems: 'center',
               }}
             >
-              {isLiquidGlass ? (
-                <GlassView
-                  glassEffectStyle="regular"
-                  isInteractive={false}
-                  colorScheme={isDark ? 'dark' : 'light'}
-                  borderRadius={18}
-                  borderCurve="continuous"
-                  style={StyleSheet.absoluteFill}
-                  pointerEvents="none"
-                />
-              ) : (
-                <BlurView
-                  tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
-                  intensity={95}
-                  style={StyleSheet.absoluteFill}
-                  pointerEvents="none"
-                />
-              )}
-
-              {/* View Mode Segment - in the same frame, no separate inner frame */}
+              {/* View Mode Segment */}
               <AnimatedPressable
                 ref={modeButtonRef}
                 collapsable={false}
@@ -1322,16 +1293,16 @@ export default function Home() {
                 onPress={openModePicker}
                 activeScale={0.95}
                 style={{
-                  height: 36,
-                  paddingLeft: 12,
-                  paddingRight: 9,
+                  height: 42,
+                  paddingLeft: 14,
+                  paddingRight: 10,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 6,
+                  gap: 7,
                 }}
               >
                 <CalendarIcon color={colors.text} />
-                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', letterSpacing: -0.2 }}>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', letterSpacing: -0.2 }}>
                   {modeLabels[mode]}
                 </Text>
                 <SelectorChevronIcon color={colors.secondary} />
@@ -1341,8 +1312,8 @@ export default function Home() {
               <View
                 style={{
                   width: 1,
-                  height: 16,
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.08)',
+                  height: 18,
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
                 }}
               />
 
@@ -1353,16 +1324,99 @@ export default function Home() {
                 onPress={() => { collapseWeek(); router.push('/settings'); }}
                 activeScale={0.90}
                 style={{
-                  width: 36,
-                  height: 36,
+                  width: 42,
+                  height: 42,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
                 <SettingsIcon color={colors.text} />
               </AnimatedPressable>
+            </GlassView>
+          ) : (
+            <View
+              style={{
+                height: 42,
+                borderRadius: 21,
+                borderCurve: 'continuous',
+                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : 'rgba(255, 255, 255, 0.82)',
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isDark ? 0.3 : 0.06,
+                shadowRadius: 8,
+                elevation: 2,
+              }}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  borderRadius: 21,
+                  borderCurve: 'continuous',
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
+                  overflow: 'hidden',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <BlurView
+                  tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
+                  intensity={95}
+                  style={StyleSheet.absoluteFill}
+                  pointerEvents="none"
+                />
+
+                {/* View Mode Segment - in the same frame, no separate inner frame */}
+                <AnimatedPressable
+                  ref={modeButtonRef}
+                  collapsable={false}
+                  accessibilityRole="button"
+                  accessibilityLabel="Режим таңдау"
+                  onPress={openModePicker}
+                  activeScale={0.95}
+                  style={{
+                    height: 42,
+                    paddingLeft: 14,
+                    paddingRight: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 7,
+                  }}
+                >
+                  <CalendarIcon color={colors.text} />
+                  <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', letterSpacing: -0.2 }}>
+                    {modeLabels[mode]}
+                  </Text>
+                  <SelectorChevronIcon color={colors.secondary} />
+                </AnimatedPressable>
+
+                {/* Divider */}
+                <View
+                  style={{
+                    width: 1,
+                    height: 18,
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.08)',
+                  }}
+                />
+
+                {/* Settings Segment */}
+                <AnimatedPressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Баптаулар"
+                  onPress={() => { collapseWeek(); router.push('/settings'); }}
+                  activeScale={0.90}
+                  style={{
+                    width: 42,
+                    height: 42,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <SettingsIcon color={colors.text} />
+                </AnimatedPressable>
+              </View>
             </View>
-          </View>
+          )}
         </View>
       </Animated.View>
 
