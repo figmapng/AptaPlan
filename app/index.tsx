@@ -1299,6 +1299,8 @@ export default function Home() {
                   glassEffectStyle="regular"
                   isInteractive={false}
                   colorScheme={isDark ? 'dark' : 'light'}
+                  borderRadius={18}
+                  borderCurve="continuous"
                   style={StyleSheet.absoluteFill}
                   pointerEvents="none"
                 />

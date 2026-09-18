@@ -1,20 +1,30 @@
+import React from 'react';
 import { Platform } from 'react-native';
 import {
-  GlassView,
+  GlassView as ExpoGlassView,
   GlassContainer,
   isLiquidGlassAvailable,
   isGlassEffectAPIAvailable,
-  type GlassViewProps,
+  type GlassViewProps as BaseGlassViewProps,
   type GlassStyle,
   type GlassColorScheme,
 } from 'expo-glass-effect';
 
+export type GlassViewProps = BaseGlassViewProps & {
+  borderRadius?: number;
+  borderCurve?: 'continuous' | 'circular';
+  borderTopLeftRadius?: number;
+  borderTopRightRadius?: number;
+  borderBottomLeftRadius?: number;
+  borderBottomRightRadius?: number;
+};
+
+export const GlassView = ExpoGlassView as unknown as React.ComponentType<GlassViewProps>;
+
 export {
-  GlassView,
   GlassContainer,
   isLiquidGlassAvailable,
   isGlassEffectAPIAvailable,
-  type GlassViewProps,
   type GlassStyle,
   type GlassColorScheme,
 };
@@ -27,8 +37,12 @@ export function checkIsLiquidGlassSupported(): boolean {
     return false;
   }
   try {
-    return Boolean(isLiquidGlassAvailable?.() && isGlassEffectAPIAvailable?.());
-  } catch {
+    const lga = Boolean(isLiquidGlassAvailable?.());
+    const gea = Boolean(isGlassEffectAPIAvailable?.());
+    console.log('[LiquidGlass Diagnosis]', { lga, gea });
+    return lga && gea;
+  } catch (e) {
+    console.log('[LiquidGlass Diagnosis Error]', e);
     return false;
   }
 }

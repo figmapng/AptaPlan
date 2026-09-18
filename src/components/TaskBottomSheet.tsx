@@ -23,6 +23,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { getTodayKey } from '@/utils/dateHelpers';
 import { useI18n } from '@/i18n/use-i18n';
 import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
+import { BlurView } from 'expo-blur';
 import { TaskInput } from './TaskInput';
 import { DateChip } from './DateChip';
 import { TimeChip } from './TimeChip';
@@ -328,12 +329,19 @@ export function TaskBottomSheet({
           style={[
             styles.sheetContainer,
             {
-              backgroundColor: colors.sheetBg,
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.78)' : 'rgba(255, 255, 255, 0.82)',
               transform: [{ translateY }],
               paddingBottom: animatedPaddingBottom,
             },
           ]}
         >
+          <BlurView
+            intensity={85}
+            tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+
           {/* Input & Send Button Row (Send button inside input) */}
           <View style={styles.inputRow}>
             {isLiquidGlass ? (
@@ -341,6 +349,8 @@ export function TaskBottomSheet({
                 glassEffectStyle="regular"
                 isInteractive={isFocused}
                 colorScheme={isDark ? 'dark' : 'light'}
+                borderRadius={26}
+                borderCurve="continuous"
                 style={[
                   styles.inputWrapper,
                   {
@@ -348,7 +358,7 @@ export function TaskBottomSheet({
                     borderRadius: 26,
                     borderCurve: 'continuous',
                     borderWidth: 0,
-                    backgroundColor: 'transparent',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.35)',
                   },
                 ]}
               >
@@ -554,12 +564,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheetContainer: {
-    backgroundColor: colors.sheetBg,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 16,
     paddingTop: 20,
-    boxShadow: '0 -4px 20px rgba(0,0,0,0.12)',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 8,
   },
   inputRow: {
     marginTop: 0,

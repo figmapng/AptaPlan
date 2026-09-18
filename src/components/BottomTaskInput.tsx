@@ -31,6 +31,64 @@ export function BottomTaskInput({
     onAddTask();
   };
 
+  if (isLiquidGlass) {
+    return (
+      <AnimatedPressable
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel || t.common.addTask}
+        onPress={handlePress}
+        activeScale={0.97}
+        style={[
+          {
+            height: 50,
+            borderRadius: 25,
+            borderCurve: 'continuous',
+          },
+          style,
+        ]}
+      >
+        <GlassView
+          glassEffectStyle="regular"
+          isInteractive={true}
+          colorScheme={isDark ? 'dark' : 'light'}
+          borderRadius={25}
+          borderCurve="continuous"
+          style={{
+            flex: 1,
+            borderRadius: 25,
+            borderCurve: 'continuous',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            gap: 8,
+          }}
+        >
+          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+            <Path
+              d="M12 4.5v15M4.5 12h15"
+              stroke={isDark ? '#94A0B4' : '#707684'}
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
+          <Text
+            numberOfLines={1}
+            style={{
+              flex: 1,
+              fontSize: 16,
+              fontWeight: '400',
+              color: isDark ? '#CBD5E1' : '#475569',
+            }}
+          >
+            {t.common.addTask}
+          </Text>
+        </GlassView>
+      </AnimatedPressable>
+    );
+  }
+
   return (
     <AnimatedPressable
       testID={testID}
@@ -67,22 +125,12 @@ export function BottomTaskInput({
           gap: 8,
         }}
       >
-        {isLiquidGlass ? (
-          <GlassView
-            glassEffectStyle="regular"
-            isInteractive={false}
-            colorScheme={isDark ? 'dark' : 'light'}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
-        ) : (
-          <BlurView
-            tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
-            intensity={95}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
-        )}
+        <BlurView
+          tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
+          intensity={95}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
         <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
           <Path
             d="M12 4.5v15M4.5 12h15"
