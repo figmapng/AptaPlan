@@ -22,6 +22,7 @@ import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { getTodayKey } from '@/utils/dateHelpers';
 import { useI18n } from '@/i18n/use-i18n';
+import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
 import { TaskInput } from './TaskInput';
 import { DateChip } from './DateChip';
 import { TimeChip } from './TimeChip';
@@ -70,6 +71,9 @@ export function TaskBottomSheet({
   const keyboardHeightAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(340)).current;
   const inputRef = useRef<TextInput>(null);
+
+  const isLiquidGlass = useMemo(() => checkIsLiquidGlassSupported(), []);
+  const [isFocused, setIsFocused] = useState(true);
 
   useEffect(() => {
     if (visible) {
@@ -332,42 +336,110 @@ export function TaskBottomSheet({
         >
           {/* Input & Send Button Row (Send button inside input) */}
           <View style={styles.inputRow}>
-              <View style={[styles.inputWrapper, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }, { minHeight: Math.max(52, titleInputHeight + 10) }]}>
-                <View style={styles.inputContent}>
-                  <TaskInput
-                  ref={inputRef}
-                  value={title}
-                  onChangeText={setTitle}
-                  onHeightChange={setTitleInputHeight}
-                  onSubmit={handleSend}
-                />
-              </View>
-
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t.common.save}
-                disabled={!isEnabled}
-                onPress={handleSend}
-                style={({ pressed }) => [
-                  styles.sendBtn,
+            {isLiquidGlass ? (
+              <GlassView
+                glassEffectStyle="regular"
+                isInteractive={isFocused}
+                colorScheme={isDark ? 'dark' : 'light'}
+                style={[
+                  styles.inputWrapper,
                   {
-                    backgroundColor: isEnabled
-                      ? colors.today
-                      : isDark
-                      ? 'rgba(255, 255, 255, 0.12)'
-                      : '#E5E7EB',
-                    borderColor: isEnabled ? colors.todayDark : 'transparent',
+                    minHeight: Math.max(52, titleInputHeight + 10),
+                    borderRadius: 26,
+                    borderCurve: 'continuous',
+                    borderWidth: 0,
+                    backgroundColor: 'transparent',
                   },
-                  pressed && isEnabled && styles.sendBtnPressed,
                 ]}
               >
-                {editingTask ? (
-                  <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
-                ) : (
-                  <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
-                )}
-              </Pressable>
-            </View>
+                <View style={styles.inputContent}>
+                  <TaskInput
+                    ref={inputRef}
+                    value={title}
+                    onChangeText={setTitle}
+                    onHeightChange={setTitleInputHeight}
+                    onSubmit={handleSend}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                  />
+                </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t.common.save}
+                  disabled={!isEnabled}
+                  onPress={handleSend}
+                  style={({ pressed }) => [
+                    styles.sendBtn,
+                    {
+                      backgroundColor: isEnabled
+                        ? colors.today
+                        : isDark
+                        ? 'rgba(255, 255, 255, 0.12)'
+                        : '#E5E7EB',
+                      borderColor: isEnabled ? colors.todayDark : 'transparent',
+                    },
+                    pressed && isEnabled && styles.sendBtnPressed,
+                  ]}
+                >
+                  {editingTask ? (
+                    <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
+                  ) : (
+                    <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
+                  )}
+                </Pressable>
+              </GlassView>
+            ) : (
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: colors.inputBg,
+                    borderColor: isFocused ? colors.inputFocusedBorder : colors.inputBorder,
+                    minHeight: Math.max(52, titleInputHeight + 10),
+                    borderRadius: 26,
+                    borderCurve: 'continuous',
+                  },
+                ]}
+              >
+                <View style={styles.inputContent}>
+                  <TaskInput
+                    ref={inputRef}
+                    value={title}
+                    onChangeText={setTitle}
+                    onHeightChange={setTitleInputHeight}
+                    onSubmit={handleSend}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                  />
+                </View>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t.common.save}
+                  disabled={!isEnabled}
+                  onPress={handleSend}
+                  style={({ pressed }) => [
+                    styles.sendBtn,
+                    {
+                      backgroundColor: isEnabled
+                        ? colors.today
+                        : isDark
+                        ? 'rgba(255, 255, 255, 0.12)'
+                        : '#E5E7EB',
+                      borderColor: isEnabled ? colors.todayDark : 'transparent',
+                    },
+                    pressed && isEnabled && styles.sendBtnPressed,
+                  ]}
+                >
+                  {editingTask ? (
+                    <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
+                  ) : (
+                    <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
+                  )}
+                </Pressable>
+              </View>
+            )}
           </View>
 
 

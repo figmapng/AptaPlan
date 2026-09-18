@@ -45,7 +45,7 @@ export function TaskDetailModal({
   onTaskDeleted,
 }: TaskDetailModalProps) {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, language, getShortRepeatLabel, describeCustomRepeat } = useI18n();
   const { update, remove, toggle, create, settings } = usePlanner();
 
@@ -694,13 +694,13 @@ function MoreHorizontalIcon({ size = 18, color = '#374151' }: { size?: number; c
   );
 }
 
-function CheckmarkIcon({ size = 12, color = '#FFFFFF' }: { size?: number; color?: string }) {
+function CheckmarkIcon({ size = 12, color = '#FFFFFF', strokeWidth = 3.0 }: { size?: number; color?: string; strokeWidth?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M4.5 12.75l6 6 9-13.5"
+        d="m5 12 4 4L19 6"
         stroke={color}
-        strokeWidth="3.4"
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
       />

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { BlurView } from 'expo-blur';
+import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
@@ -19,7 +20,50 @@ export function BackButton({
 }: BackButtonProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
+  const isLiquidGlass = useMemo(() => checkIsLiquidGlassSupported(), []);
   const iconSize = Math.round((size * 20) / 48);
+
+  if (isLiquidGlass) {
+    return (
+      <AnimatedPressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel || t.common.back}
+        onPress={onPress}
+        activeScale={0.94}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          borderCurve: 'continuous',
+          overflow: 'hidden',
+        }}
+      >
+        <GlassView
+          glassEffectStyle="regular"
+          isInteractive={false}
+          colorScheme={isDark ? 'dark' : 'light'}
+          style={{
+            flex: 1,
+            borderRadius: size / 2,
+            borderCurve: 'continuous',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
+            <Path
+              d="M15 18l-6-6 6-6"
+              stroke={isDark ? colors.text : '#707684'}
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
+        </GlassView>
+      </AnimatedPressable>
+    );
+  }
+
   return (
     <AnimatedPressable
       accessibilityRole="button"

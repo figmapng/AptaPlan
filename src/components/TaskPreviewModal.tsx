@@ -25,13 +25,13 @@ import { TimeModal } from './TimeModal';
 import { RepeatActionSheet } from './RepeatActionSheet';
 import { CustomRepeatConfig } from './CustomRepeatModal';
 
-function CheckmarkIcon({ size = 12, color = '#FFFFFF' }: { size?: number; color?: string }) {
+function CheckmarkIcon({ size = 12, color = '#FFFFFF', strokeWidth = 3.0 }: { size?: number; color?: string; strokeWidth?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M4.5 12.75l6 6 9-13.5"
         stroke={color}
-        strokeWidth="3.4"
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
       />

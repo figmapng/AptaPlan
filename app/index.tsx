@@ -17,6 +17,7 @@ import {
 import Svg, { Circle, Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
 import { router } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
@@ -1688,6 +1689,51 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
 function BottomTaskInput({ onInteraction, onAddTask }: { onInteraction?: () => void; onAddTask: () => void }) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
+  const isLiquidGlass = useMemo(() => checkIsLiquidGlassSupported(), []);
+
+  if (isLiquidGlass) {
+    return (
+      <AnimatedPressable
+        accessibilityRole="button"
+        accessibilityLabel={t.common.addTask}
+        onPress={() => { onInteraction?.(); onAddTask(); }}
+        activeScale={0.97}
+        style={{
+          height: 50,
+          borderRadius: 25,
+          borderCurve: 'continuous',
+          overflow: 'hidden',
+        }}
+      >
+        <GlassView
+          glassEffectStyle="regular"
+          isInteractive={false}
+          colorScheme={isDark ? 'dark' : 'light'}
+          style={{
+            flex: 1,
+            borderRadius: 25,
+            borderCurve: 'continuous',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            gap: 8,
+          }}
+        >
+          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+            <Path
+              d="M12 4.5v15M4.5 12h15"
+              stroke={isDark ? '#94A0B4' : '#707684'}
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
+          <Text style={{ flex: 1, fontSize: 16, fontWeight: '400', color: isDark ? '#94A0B4' : '#707684' }}>{t.common.addTask}</Text>
+        </GlassView>
+      </AnimatedPressable>
+    );
+  }
+
   return (
     <AnimatedPressable
       accessibilityRole="button"
