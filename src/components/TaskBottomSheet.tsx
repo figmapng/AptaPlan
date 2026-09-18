@@ -329,7 +329,7 @@ export function TaskBottomSheet({
           style={[
             styles.sheetContainer,
             {
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.78)' : 'rgba(255, 255, 255, 0.82)',
+              backgroundColor: isDark ? 'rgba(16, 19, 26, 0.85)' : 'rgba(243, 243, 247, 0.88)',
               transform: [{ translateY }],
               paddingBottom: animatedPaddingBottom,
             },

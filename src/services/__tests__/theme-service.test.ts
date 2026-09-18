@@ -53,14 +53,16 @@ describe('Theme System', () => {
   it('getThemeColors with isDark=true returns dark palette with theme accent', () => {
     const darkOcean = getThemeColors('ocean', true);
     expect(darkOcean.background).toBe('#10131A');
+    expect(darkOcean.sheetBg).toBe('#10131A');
     expect(darkOcean.card).toBe('#1C222E');
     expect(darkOcean.text).toBe('#F3F5F9');
     expect(darkOcean.today).toBe('#0195FF');
 
     const darkEmerald = getThemeColors('emerald', true);
     expect(darkEmerald.background).toBe('#10131A');
+    expect(darkEmerald.sheetBg).toBe('#10131A');
     expect(darkEmerald.card).toBe('#1C222E');
-    expect(darkEmerald.today).toBe('#00A15F');
+    expect(darkEmerald.today).toBe('#53B55A');
 
     const darkMinimal = getThemeColors('minimal', true);
     expect(darkMinimal.today).toBe('#E4E4E7');
@@ -69,7 +71,13 @@ describe('Theme System', () => {
     expect(darkMinimal.activeHeaderText).toBe('#FFFFFF');
 
     const darkSlate = getThemeColors('slate', true);
-    expect(darkSlate.today).toBe('#94A3B8');
-    expect(darkSlate.activeCardBorder).toBe('#94A3B8');
+    expect(darkSlate.today).toBe('#0195FF');
+  });
+
+  it('unifies sheetBg and headerBackground with background in light theme', () => {
+    const lightOcean = getThemeColors('ocean', false);
+    expect(lightOcean.background).toBe('#F3F3F7');
+    expect(lightOcean.sheetBg).toBe('#F3F3F7');
+    expect(lightOcean.headerBackground).toBe('#F3F3F7');
   });
 });

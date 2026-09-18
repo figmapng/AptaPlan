@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/use-theme';
 import { fromDateKey, toDateKey } from '@/services/date-service';
 import { useI18n } from '@/i18n/use-i18n';
 import type { RepeatType, Task, TaskInput } from '@/types/task';
@@ -15,6 +15,7 @@ export function TaskForm({
   onSave: (v: TaskInput) => Promise<void>;
   onDelete?: () => void;
 }) {
+  const { colors } = useTheme();
   const { t } = useI18n();
   const [title, setTitle] = useState(initial?.title ?? '');
   const [note, setNote] = useState(initial?.note ?? '');
@@ -63,39 +64,66 @@ export function TaskForm({
     ['monthly', t.repeat.monthly],
   ];
 
+  const inputStyle = useMemo(
+    () => ({
+      backgroundColor: colors.inputBg,
+      borderRadius: 14,
+      borderCurve: 'continuous' as const,
+      paddingHorizontal: 15,
+      paddingVertical: 14,
+      fontSize: 17,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+    }),
+    [colors.inputBg, colors.text, colors.inputBorder]
+  );
+
+  const rowStyle = useMemo(
+    () => ({
+      ...inputStyle,
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'space-between' as const,
+    }),
+    [inputStyle]
+  );
+
   return (
     <KeyboardAvoidingView
       behavior={process.env.EXPO_OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: colors.background }}
     >
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 20, gap: 18 }}
+        contentContainerStyle={{ padding: 20, gap: 18, backgroundColor: colors.background }}
       >
-        <Field label={t.task.taskPlaceholder}>
+        <Field label={t.task.taskPlaceholder} labelColor={colors.secondary}>
           <TextInput
             autoFocus={!initial}
             value={title}
             onChangeText={setTitle}
             placeholder={t.task.whatNeedsToBeDone}
-            style={input}
+            placeholderTextColor={colors.inputPlaceholder}
+            style={inputStyle}
           />
         </Field>
 
-        <Field label={t.task.note}>
+        <Field label={t.task.note} labelColor={colors.secondary}>
           <TextInput
             value={note}
             onChangeText={setNote}
             multiline
             placeholder={t.task.notePlaceholder}
-            style={[input, { minHeight: 90, textAlignVertical: 'top' }]}
+            placeholderTextColor={colors.inputPlaceholder}
+            style={[inputStyle, { minHeight: 90, textAlignVertical: 'top' }]}
           />
         </Field>
 
-        <Field label={t.date.date}>
-          <Pressable onPress={() => setShowDate(true)} style={input}>
-            <Text style={{ fontSize: 17 }}>{date}</Text>
+        <Field label={t.date.date} labelColor={colors.secondary}>
+          <Pressable onPress={() => setShowDate(true)} style={inputStyle}>
+            <Text style={{ fontSize: 17, color: colors.text }}>{date}</Text>
           </Pressable>
         </Field>
         {showDate && (
@@ -109,8 +137,8 @@ export function TaskForm({
           />
         )}
 
-        <Field label={t.task.timeOptional}>
-          <Pressable onPress={() => setShowTime(true)} style={input}>
+        <Field label={t.task.timeOptional} labelColor={colors.secondary}>
+          <Pressable onPress={() => setShowTime(true)} style={inputStyle}>
             <Text style={{ fontSize: 17, color: time ? colors.text : colors.secondary }}>
               {time ?? t.time.pickTime}
             </Text>
@@ -131,12 +159,12 @@ export function TaskForm({
           />
         )}
 
-        <View style={row}>
-          <Text style={{ fontSize: 17 }}>{t.task.important}</Text>
+        <View style={rowStyle}>
+          <Text style={{ fontSize: 17, color: colors.text }}>{t.task.important}</Text>
           <Switch value={important} onValueChange={setImportant} trackColor={{ true: colors.today }} />
         </View>
 
-        <Field label={t.repeat.title}>
+        <Field label={t.repeat.title} labelColor={colors.secondary}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {repeatOptions.map(([v, l]) => (
               <Pressable
@@ -149,7 +177,7 @@ export function TaskForm({
                   backgroundColor: repeatType === v ? colors.text : colors.capsule,
                 }}
               >
-                <Text style={{ color: repeatType === v ? 'white' : colors.text }}>{l}</Text>
+                <Text style={{ color: repeatType === v ? colors.background : colors.text }}>{l}</Text>
               </Pressable>
             ))}
           </View>
@@ -186,31 +214,12 @@ export function TaskForm({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, labelColor, children }: { label: string; labelColor: string; children: React.ReactNode }) {
   return (
     <View style={{ gap: 7 }}>
-      <Text style={{ fontSize: 14, fontWeight: '600', color: colors.secondary }}>{label}</Text>
+      <Text style={{ fontSize: 14, fontWeight: '600', color: labelColor }}>{label}</Text>
       {children}
     </View>
   );
 }
-
-const input = {
-  backgroundColor: 'white',
-  borderRadius: 14,
-  borderCurve: 'continuous' as const,
-  paddingHorizontal: 15,
-  paddingVertical: 14,
-  fontSize: 17,
-  color: colors.text,
-  borderWidth: 1,
-  borderColor: colors.divider,
-};
-
-const row = {
-  ...input,
-  flexDirection: 'row' as const,
-  alignItems: 'center' as const,
-  justifyContent: 'space-between' as const,
-};
 
