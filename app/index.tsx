@@ -286,12 +286,17 @@ export default function Home() {
   const userSundayStateRef = useRef<'expanded' | 'collapsed' | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
 
+  // ── Feature flag: Daily Overview (Күндік шолу) ────────────────────
+  // Кейін қайта қосу үшін осы мәнді true етіп өзгертуге болады.
+  const ENABLE_DAILY_OVERVIEW = false;
+
   // ── Motivational Header reveal ──────────────────────────────────
   const motivationalAnim = useRef(new Animated.Value(0)).current;
   const isMotivationalOpenRef = useRef(false);
   const [isMotivationalOpen, setIsMotivationalOpen] = useState(false);
 
   const openMotivationalHeader = useCallback(() => {
+    if (!ENABLE_DAILY_OVERVIEW) return;
     isMotivationalOpenRef.current = true;
     setIsMotivationalOpen(true);
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
@@ -556,7 +561,7 @@ export default function Home() {
       if (isMonthHorizontal.current) {
         isSwipingRef.current = true;
         monthCarouselX.setValue(monthTouchStartCarouselX.current + dx);
-      } else {
+      } else if (ENABLE_DAILY_OVERVIEW) {
         if (isMotivationalOpenRef.current) {
           if (dy < 0) {
             const val = Math.max(0, 1 + dy / 130);
@@ -595,7 +600,7 @@ export default function Home() {
           isMonthAnimatingRef.current = false;
           setTimeout(() => { isSwipingRef.current = false; }, 50);
         });
-      } else {
+      } else if (ENABLE_DAILY_OVERVIEW) {
         const dy = e.nativeEvent.pageY - monthTouchStartY.current;
         if (isMotivationalOpenRef.current) {
           if (dy < -15) {
@@ -610,6 +615,8 @@ export default function Home() {
             closeMotivationalHeader();
           }
         }
+        setTimeout(() => { isSwipingRef.current = false; }, 150);
+      } else {
         setTimeout(() => { isSwipingRef.current = false; }, 150);
       }
     },
@@ -657,7 +664,7 @@ export default function Home() {
       if (isYearHorizontal.current) {
         isSwipingRef.current = true;
         yearCarouselX.setValue(yearTouchStartCarouselX.current + dx);
-      } else {
+      } else if (ENABLE_DAILY_OVERVIEW) {
         if (isMotivationalOpenRef.current) {
           if (dy < 0) {
             const val = Math.max(0, 1 + dy / 130);
@@ -696,7 +703,7 @@ export default function Home() {
           isYearAnimatingRef.current = false;
           setTimeout(() => { isSwipingRef.current = false; }, 50);
         });
-      } else {
+      } else if (ENABLE_DAILY_OVERVIEW) {
         const dy = e.nativeEvent.pageY - yearTouchStartY.current;
         if (isMotivationalOpenRef.current) {
           if (dy < -15) {
@@ -711,6 +718,8 @@ export default function Home() {
             closeMotivationalHeader();
           }
         }
+        setTimeout(() => { isSwipingRef.current = false; }, 150);
+      } else {
         setTimeout(() => { isSwipingRef.current = false; }, 150);
       }
     },
@@ -761,7 +770,7 @@ export default function Home() {
         isSwipingRef.current = true;
         weekCarouselX.setValue(weekTouchStartCarouselX.current + dx);
       } else {
-        if (isMotivationalOpenRef.current) {
+        if (ENABLE_DAILY_OVERVIEW && isMotivationalOpenRef.current) {
           if (dy < 0) {
             const val = Math.max(0, 1 + dy / 130);
             motivationalAnim.setValue(val);
@@ -773,7 +782,7 @@ export default function Home() {
             weekProgress.setValue(newVal);
           }
         } else {
-          if (dy > 0) {
+          if (ENABLE_DAILY_OVERVIEW && dy > 0) {
             const val = Math.min(1, dy / 130);
             motivationalAnim.setValue(val);
           } else {
@@ -814,7 +823,7 @@ export default function Home() {
       } else {
         const dy = e.nativeEvent.pageY - touchStartY.current;
 
-        if (isMotivationalOpenRef.current) {
+        if (ENABLE_DAILY_OVERVIEW && isMotivationalOpenRef.current) {
           if (dy < -20) {
             closeMotivationalHeader();
           } else {
@@ -827,13 +836,13 @@ export default function Home() {
             expandWeek();
           }
         } else {
-          if (dy > 25) {
+          if (ENABLE_DAILY_OVERVIEW && dy > 25) {
             openMotivationalHeader();
           } else if (dy < -45) {
-            closeMotivationalHeader();
+            if (ENABLE_DAILY_OVERVIEW) closeMotivationalHeader();
             expandWeek();
           } else {
-            closeMotivationalHeader();
+            if (ENABLE_DAILY_OVERVIEW) closeMotivationalHeader();
             collapseWeek();
           }
         }
@@ -1109,41 +1118,47 @@ export default function Home() {
     );
 
   return (
-    <View style={{ flex: 1, backgroundColor: isDark ? colors.background : '#18181A' }}>
-      <StatusBar style={isMotivationalOpen || isDark ? 'light' : 'dark'} animated />
-      {/* ── Dark Motivational Header Reveal ────────────────────────── */}
-      <Animated.View
-        style={{
-          overflow: 'hidden',
-          maxHeight: motivationalAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 360],
-          }),
-          opacity: motivationalAnim,
-          zIndex: 30,
-        }}
-      >
-        <MotivationalHeader
-          tasks={tasks}
-          insetsTop={insets.top}
-          onClose={closeMotivationalHeader}
-          anim={motivationalAnim}
-        />
-      </Animated.View>
+    <View style={{ flex: 1, backgroundColor: isDark ? colors.background : (ENABLE_DAILY_OVERVIEW ? '#18181A' : colors.background) }}>
+      <StatusBar style={ENABLE_DAILY_OVERVIEW && isMotivationalOpen || isDark ? 'light' : 'dark'} animated />
+      {/* ── Dark Motivational Header Reveal (Күндік шолу) ─────────── */}
+      {ENABLE_DAILY_OVERVIEW && (
+        <Animated.View
+          style={{
+            overflow: 'hidden',
+            maxHeight: motivationalAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 360],
+            }),
+            opacity: motivationalAnim,
+            zIndex: 30,
+          }}
+        >
+          <MotivationalHeader
+            tasks={tasks}
+            insetsTop={insets.top}
+            onClose={closeMotivationalHeader}
+            anim={motivationalAnim}
+          />
+        </Animated.View>
+      )}
 
       {/* ── Main Content Sheet ──────────────────────────────── */}
       <Animated.View
         style={{
           flex: 1,
           backgroundColor: colors.background,
-          borderTopLeftRadius: motivationalAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 32],
-          }),
-          borderTopRightRadius: motivationalAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 32],
-          }),
+          borderTopLeftRadius: ENABLE_DAILY_OVERVIEW
+            ? motivationalAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 32],
+              })
+            : 0,
+          borderTopRightRadius: ENABLE_DAILY_OVERVIEW
+            ? motivationalAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 32],
+              })
+            : 0,
           borderCurve: 'continuous',
           overflow: 'hidden',
         }}
@@ -1152,10 +1167,12 @@ export default function Home() {
         {/* ── Header ───────────────────────────────────────────────── */}
         <Animated.View
           style={{
-            paddingTop: motivationalAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [insets.top + 8, 16],
-            }),
+            paddingTop: ENABLE_DAILY_OVERVIEW
+              ? motivationalAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [insets.top + 8, 16],
+                })
+              : insets.top + 8,
             paddingHorizontal: 16,
             paddingBottom: 11,
             backgroundColor: colors.background,
