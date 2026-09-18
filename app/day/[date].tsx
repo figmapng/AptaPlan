@@ -24,6 +24,7 @@ import { TaskPreviewModal } from '@/components/TaskPreviewModal';
 import { SortableTaskList } from '@/components/SortableTaskList';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { BackButton } from '@/components/BackButton';
+import { BottomTaskInput } from '@/components/BottomTaskInput';
 import { CompactWeekStrip } from '@/components/CompactWeekStrip';
 import { useI18n } from '@/i18n/use-i18n';
 import type { Task } from '@/types/task';
@@ -315,44 +316,11 @@ export default function DayScreen() {
         </Pressable>
       </View>
     )}
-    <View pointerEvents="box-none" style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), height: 48, flexDirection: 'row', alignItems: 'center', gap: 10, zIndex: 30 }}>
-      <BackButton onPress={returnToList} />
-      <AnimatedPressable
-        accessibilityRole="button"
-        accessibilityLabel={t.common.addTask}
-        onPress={beginAdding}
-        activeScale={0.97}
-        style={{
-          flex: 1,
-          height: 48,
-          borderRadius: 24,
-          borderWidth: isDark ? 1 : 0,
-          borderColor: isDark ? colors.cardBorder : 'transparent',
-          backgroundColor: colors.card,
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: isDark ? 0.2 : 0.06,
-          shadowRadius: 10,
-          elevation: 3,
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 16,
-          gap: 10,
-        }}
-      >
-        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-          <Path
-            d="M12 4.5v15M4.5 12h15"
-            stroke={isDark ? '#7E8B9F' : '#9CA3AF'}
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </Svg>
-        <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: isDark ? '#7E8B9F' : '#9CA3AF' }}>
-          {t.common.addTask}
-        </Text>
-      </AnimatedPressable>
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 16, right: 16, bottom: Math.max(insets.bottom + 8, 16), height: 50, flexDirection: 'row', alignItems: 'center', gap: 10, zIndex: 30 }}>
+      <BackButton onPress={returnToList} size={50} />
+      <View style={{ flex: 1 }}>
+        <BottomTaskInput onAddTask={beginAdding} />
+      </View>
     </View>
     <TaskPreviewModal
       visible={!!previewTask}
