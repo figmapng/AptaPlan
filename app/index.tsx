@@ -1121,7 +1121,7 @@ export default function Home() {
     );
 
   return (
-    <View style={{ flex: 1, backgroundColor: isDark ? colors.background : (ENABLE_DAILY_OVERVIEW ? '#18181A' : colors.background) }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={ENABLE_DAILY_OVERVIEW && isMotivationalOpen || isDark ? 'light' : 'dark'} animated />
       {/* ── Dark Motivational Header Reveal (Күндік шолу) ─────────── */}
       {ENABLE_DAILY_OVERVIEW && (
@@ -1980,7 +1980,7 @@ const MonthDayCell = memo(function MonthDayCellComponent({
     }
   };
 
-  const normalCellBg = isDark ? colors.card : colors.capsule;
+  const normalCellBg = colors.card;
   const normalCellBorder = colors.cardBorder;
 
   const cellBg = isToday

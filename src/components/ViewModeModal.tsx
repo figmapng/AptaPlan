@@ -110,7 +110,7 @@ export function ViewModeModal({
             activeScale={0.96}
             style={[
               styles.optionItem,
-              { backgroundColor: currentMode === 'week' ? `${colors.today}14` : colors.inputBg },
+              { backgroundColor: currentMode === 'week' ? `${colors.today}14` : 'transparent' },
             ]}
             onPress={() => handleSelect('week')}
           >
@@ -130,7 +130,7 @@ export function ViewModeModal({
             activeScale={0.96}
             style={[
               styles.optionItem,
-              { backgroundColor: currentMode === 'month' ? `${colors.today}14` : colors.inputBg },
+              { backgroundColor: currentMode === 'month' ? `${colors.today}14` : 'transparent' },
             ]}
             onPress={() => handleSelect('month')}
           >
@@ -150,7 +150,7 @@ export function ViewModeModal({
             activeScale={0.96}
             style={[
               styles.optionItem,
-              { backgroundColor: currentMode === 'year' ? `${colors.today}14` : colors.inputBg },
+              { backgroundColor: currentMode === 'year' ? `${colors.today}14` : 'transparent' },
             ]}
             onPress={() => handleSelect('year')}
           >

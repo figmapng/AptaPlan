@@ -101,7 +101,7 @@ export default function AppearanceScreen() {
           </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, paddingVertical: 14, paddingHorizontal: 0 }]}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder, paddingVertical: 14, paddingHorizontal: 0 }]}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -168,7 +168,7 @@ export default function AppearanceScreen() {
             onPress={() => handleSelectMode('light')}
             style={[
               styles.modeCard,
-              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              { backgroundColor: colors.card, borderColor: colors.cardBorder },
               themeMode === 'light' && { borderColor: colors.today, borderWidth: 2 },
             ]}
           >
@@ -192,7 +192,7 @@ export default function AppearanceScreen() {
             onPress={() => handleSelectMode('dark')}
             style={[
               styles.modeCard,
-              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              { backgroundColor: colors.card, borderColor: colors.cardBorder },
               themeMode === 'dark' && { borderColor: colors.today, borderWidth: 2 },
             ]}
           >
@@ -218,18 +218,18 @@ export default function AppearanceScreen() {
             onPress={() => handleSelectMode('system')}
             style={[
               styles.modeCard,
-              { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+              { backgroundColor: colors.card, borderColor: colors.cardBorder },
               themeMode === 'system' && { borderColor: colors.today, borderWidth: 2 },
             ]}
           >
             {/* System Split Mockup Preview */}
             <View style={styles.modePreviewSystem}>
               <View style={styles.modePreviewSystemLeft}>
-                <View style={{ width: 6, height: 3, borderRadius: 1.5, backgroundColor: '#CBD5E1', marginBottom: 4 }} />
+                <View style={{ width: 10, height: 3, borderRadius: 1.5, backgroundColor: '#CBD5E1', marginBottom: 4 }} />
                 <View style={{ width: '80%', height: 10, borderRadius: 2, backgroundColor: '#FFFFFF', borderWidth: 0.5, borderColor: '#E2E8F0' }} />
               </View>
               <View style={styles.modePreviewSystemRight}>
-                <View style={{ width: 6, height: 3, borderRadius: 1.5, backgroundColor: '#475569', marginBottom: 4 }} />
+                <View style={{ width: 10, height: 3, borderRadius: 1.5, backgroundColor: '#475569', marginBottom: 4 }} />
                 <View style={{ width: '80%', height: 10, borderRadius: 2, backgroundColor: '#334155' }} />
               </View>
             </View>
@@ -239,15 +239,15 @@ export default function AppearanceScreen() {
           </AnimatedPressable>
         </View>
 
-        {/* ── Section 3: Қосымша белгішесі (App Icon) ── */}
-        <View style={[styles.sectionHeaderContainer, { marginTop: 24 }]}>
+        {/* ── Section 3: Қолданба белгішесі (App Icon) ── */}
+        <View style={styles.sectionHeaderContainer}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.settings.appIcon}</Text>
           <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>
             {t.settings.appIconSubtitle}
           </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           <View style={styles.iconGrid}>
             {appIcons.map((ico) => {
               const isSelected = selectedIcon === ico.id;

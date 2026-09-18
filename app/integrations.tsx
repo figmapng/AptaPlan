@@ -274,7 +274,7 @@ export default function IntegrationsScreen() {
 function Section({ children }: { children: React.ReactNode }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
       {children}
     </View>
   );

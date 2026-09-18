@@ -432,7 +432,7 @@ function Section({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
       {children}
     </View>
   );
@@ -544,7 +544,7 @@ function OptionModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{title}</Text>
@@ -798,7 +798,7 @@ function DefaultViewModeModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.defaultViewMode}</Text>
@@ -817,7 +817,7 @@ function DefaultViewModeModal({
                   activeScale={0.95}
                   style={[
                     styles.visualCard,
-                    { backgroundColor: colors.inputBg, borderColor: colors.inputBorder },
+                    { backgroundColor: colors.card, borderColor: colors.cardBorder },
                     isSelected && { backgroundColor: colors.tintBg, borderColor: colors.today },
                   ]}
                   onPress={() => setSelected(opt.mode)}
@@ -958,7 +958,7 @@ function LastDayVisibilityModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.lastDayVisibility}</Text>
@@ -1128,7 +1128,7 @@ function MonthPickerStyleModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.inputBg, width: CAROUSEL_WIDTH + 32, paddingHorizontal: 16, paddingBottom: 16 }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, width: CAROUSEL_WIDTH + 32, paddingHorizontal: 16, paddingBottom: 16 }]}>
           {/* Header */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.monthPickerStyle}</Text>
@@ -1266,11 +1266,11 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   card: {
-    backgroundColor: colors.inputBg,
+    backgroundColor: colors.card,
     borderRadius: 20,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: colors.inputBorder,
+    borderColor: colors.cardBorder,
     marginBottom: 16,
     overflow: 'hidden',
   },
