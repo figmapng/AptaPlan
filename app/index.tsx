@@ -1271,7 +1271,7 @@ export default function Home() {
           {/* Unified GlassView Pill Controls (View Mode & Settings in one frame) */}
           {isLiquidGlass ? (
             <GlassView
-              glassEffectStyle="regular"
+              glassEffectStyle="clear"
               isInteractive={true}
               colorScheme={isDark ? 'dark' : 'light'}
               borderRadius={21}
@@ -1282,6 +1282,9 @@ export default function Home() {
                 borderCurve: 'continuous',
                 flexDirection: 'row',
                 alignItems: 'center',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.35)',
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
               }}
             >
               {/* View Mode Segment */}
