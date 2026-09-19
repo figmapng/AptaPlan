@@ -19,6 +19,7 @@ import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { BackButton } from '@/components/BackButton';
 
 export default function IntegrationsScreen() {
   const insets = useSafeAreaInsets();
@@ -123,8 +124,7 @@ export default function IntegrationsScreen() {
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       {/* iOS-style Navigation Bar */}
       <View style={styles.header}>
-        <AnimatedPressable
-          activeScale={0.85}
+        <BackButton
           onPress={() => {
             if (router.canGoBack()) {
               router.back();
@@ -132,11 +132,8 @@ export default function IntegrationsScreen() {
               router.replace('/settings');
             }
           }}
-          style={[styles.backButton, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
-          accessibilityLabel={t.common.back}
-        >
-          <Ionicons name="chevron-back" size={20} color={colors.secondary} style={{ marginLeft: -1 }} />
-        </AnimatedPressable>
+          size={40}
+        />
 
         <Text style={[styles.headerTitle, { color: colors.text }]}>{t.integrations.title}</Text>
 
@@ -429,7 +426,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   headerSpacer: {
-    width: 38,
+    width: 40,
+    height: 40,
   },
   scrollContent: {
     paddingHorizontal: 16,

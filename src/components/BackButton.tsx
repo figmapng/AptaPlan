@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
 import { useTheme } from '@/hooks/use-theme';
@@ -11,17 +11,19 @@ interface BackButtonProps {
   onPress: () => void;
   accessibilityLabel?: string;
   size?: number;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function BackButton({
   onPress,
   accessibilityLabel,
-  size = 50,
+  size = 40,
+  style,
 }: BackButtonProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const isLiquidGlass = useMemo(() => checkIsLiquidGlassSupported(), []);
-  const iconSize = Math.round((size * 20) / 48);
+  const iconSize = Math.max(18, Math.round((size * 20) / 40));
 
   if (isLiquidGlass) {
     return (
@@ -29,16 +31,19 @@ export function BackButton({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel || t.common.back}
         onPress={onPress}
-        activeScale={0.94}
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          borderCurve: 'continuous',
-        }}
+        activeScale={0.92}
+        style={[
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            borderCurve: 'continuous',
+          },
+          style,
+        ]}
       >
         <GlassView
-          glassEffectStyle="regular"
+          glassEffectStyle="clear"
           isInteractive={true}
           colorScheme={isDark ? 'dark' : 'light'}
           borderRadius={size / 2}
@@ -49,17 +54,17 @@ export function BackButton({
             borderCurve: 'continuous',
             alignItems: 'center',
             justifyContent: 'center',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.35)',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
           }}
         >
-          <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
-            <Path
-              d="M15 18l-6-6 6-6"
-              stroke={isDark ? colors.text : '#707684'}
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </Svg>
+          <Ionicons
+            name="chevron-back"
+            size={iconSize}
+            color={colors.text}
+            style={{ marginLeft: -1 }}
+          />
         </GlassView>
       </AnimatedPressable>
     );
@@ -70,19 +75,22 @@ export function BackButton({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || t.common.back}
       onPress={onPress}
-      activeScale={0.94}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        borderCurve: 'continuous',
-        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : 'rgba(255, 255, 255, 0.82)',
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: isDark ? 0.35 : 0.08,
-        shadowRadius: 14,
-        elevation: 4,
-      }}
+      activeScale={0.92}
+      style={[
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          borderCurve: 'continuous',
+          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : 'rgba(255, 255, 255, 0.82)',
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.3 : 0.06,
+          shadowRadius: 8,
+          elevation: 2,
+        },
+        style,
+      ]}
     >
       <View
         style={{
@@ -98,19 +106,16 @@ export function BackButton({
       >
         <BlurView
           tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
-          intensity={95}
+          intensity={60}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />
-        <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none">
-          <Path
-            d="M15 18l-6-6 6-6"
-            stroke={isDark ? colors.text : '#707684'}
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </Svg>
+        <Ionicons
+          name="chevron-back"
+          size={iconSize}
+          color={colors.text}
+          style={{ marginLeft: -1 }}
+        />
       </View>
     </AnimatedPressable>
   );
