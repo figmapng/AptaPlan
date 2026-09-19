@@ -27,16 +27,21 @@ function LayoutContent() {
             headerShadowVisible: false,
             headerStyle: { backgroundColor: colors.background },
             contentStyle: { backgroundColor: colors.background },
-            headerBackTitle: 'Артқа',
+            headerTintColor: colors.text,
+            headerTitleStyle: {
+              fontWeight: '600',
+              fontSize: 17,
+            },
+            headerBackButtonDisplayMode: 'default',
           }}
         >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="index" options={{ headerShown: false, headerBackTitle: 'Артқа' }} />
           <Stack.Screen name="day/[date]" options={{ headerShown: false, animation: 'none' }} />
           <Stack.Screen name="task/new" options={{ title: 'Жаңа тапсырма', presentation: 'modal' }} />
           <Stack.Screen name="task/[id]" options={{ title: 'Тапсырманы өңдеу', presentation: 'modal' }} />
-          <Stack.Screen name="settings" options={{ headerShown: false }} />
-          <Stack.Screen name="appearance" options={{ headerShown: false }} />
-          <Stack.Screen name="integrations" options={{ headerShown: false }} />
+          <Stack.Screen name="settings" options={{ headerShown: true, title: 'Баптаулар', headerBackTitle: 'Артқа' }} />
+          <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Сыртқы түрі', headerBackTitle: 'Артқа' }} />
+          <Stack.Screen name="integrations" options={{ headerShown: true, title: 'Интеграция', headerBackTitle: 'Артқа' }} />
         </Stack>
       </CardTransitionProvider>
     </View>

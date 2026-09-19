@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
@@ -19,7 +19,6 @@ import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
-import { BackButton } from '@/components/BackButton';
 
 export default function IntegrationsScreen() {
   const insets = useSafeAreaInsets();
@@ -121,24 +120,20 @@ export default function IntegrationsScreen() {
   const isAndroid = Platform.OS === 'android';
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
-      {/* iOS-style Navigation Bar */}
-      <View style={styles.header}>
-        <BackButton
-          onPress={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/settings');
-            }
-          }}
-          size={40}
-        />
-
-        <Text style={[styles.headerTitle, { color: colors.text }]}>{t.integrations.title}</Text>
-
-        <View style={styles.headerSpacer} />
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: t.integrations.title,
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+          headerTitleStyle: {
+            fontWeight: '600',
+            fontSize: 17,
+          },
+        }}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
