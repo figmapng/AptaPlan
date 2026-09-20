@@ -417,7 +417,7 @@ function Section({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={[styles.card, { backgroundColor: colors.card }]}>
       {children}
     </View>
   );
@@ -1255,8 +1255,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: 20,
     borderCurve: 'continuous',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderWidth: 0,
     marginBottom: 16,
     overflow: 'hidden',
   },

@@ -259,7 +259,7 @@ export default function IntegrationsScreen() {
 function Section({ children }: { children: React.ReactNode }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+    <View style={[styles.card, { backgroundColor: colors.card }]}>
       {children}
     </View>
   );
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 18,
-    borderWidth: 1,
+    borderWidth: 0,
     overflow: 'hidden',
   },
   rowPressable: {

@@ -82,7 +82,7 @@ export default function AppearanceScreen() {
           </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder, paddingVertical: 14, paddingHorizontal: 0 }]}>
+        <View style={[styles.card, { backgroundColor: colors.card, paddingVertical: 14, paddingHorizontal: 0 }]}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -228,7 +228,7 @@ export default function AppearanceScreen() {
           </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
           <View style={styles.iconGrid}>
             {appIcons.map((ico) => {
               const isSelected = selectedIcon === ico.id;
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 20,
-    borderWidth: 1,
+    borderWidth: 0,
     padding: 16,
   },
 
