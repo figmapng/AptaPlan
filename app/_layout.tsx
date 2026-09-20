@@ -1,7 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { View } from 'react-native';
 
 import { PlannerProvider } from '@/store/planner-store';
 import { CardTransitionProvider } from '@/components/card-transition-provider';
@@ -25,24 +24,7 @@ function LayoutContent() {
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <Stack
           screenOptions={{
-            headerTransparent: true,
-            headerBackground: () => (
-              <View style={StyleSheet.absoluteFill}>
-                <BlurView
-                  tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
-                  intensity={80}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View
-                  style={{
-                    ...StyleSheet.absoluteFillObject,
-                    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.45)' : 'rgba(255, 255, 255, 0.40)',
-                    borderBottomWidth: StyleSheet.hairlineWidth,
-                    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                  }}
-                />
-              </View>
-            ),
+            headerStyle: { backgroundColor: colors.background },
             headerShadowVisible: false,
             contentStyle: { backgroundColor: colors.background },
             headerTintColor: colors.text,
