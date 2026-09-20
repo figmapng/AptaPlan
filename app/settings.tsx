@@ -27,6 +27,7 @@ import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { BackButton } from '@/components/BackButton';
 import { UserGuideModal } from '@/components/UserGuideModal';
 import { getDatabase } from '@/database/database';
 import { exportBackup, importBackup } from '@/services/backup-service';
@@ -91,18 +92,19 @@ export default function SettingsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
-          headerShown: true,
           title: t.settings.title,
-          headerTransparent: true,
-          headerBlurEffect: isDark ? 'systemMaterialDark' : 'systemMaterialLight',
-          headerShadowVisible: false,
-          headerTintColor: colors.text,
-          headerBackButtonDisplayMode: 'minimal',
-          headerBackTitle: ' ',
-          headerTitleStyle: {
-            fontWeight: '600',
-            fontSize: 17,
-          },
+          headerLeft: () => (
+            <BackButton
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/');
+                }
+              }}
+              size={38}
+            />
+          ),
         }}
       />
 

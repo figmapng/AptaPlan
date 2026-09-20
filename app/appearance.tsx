@@ -16,6 +16,7 @@ import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { BackButton } from '@/components/BackButton';
 
 export default function AppearanceScreen() {
   const insets = useSafeAreaInsets();
@@ -61,18 +62,19 @@ export default function AppearanceScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
-          headerShown: true,
           title: t.settings.appearance,
-          headerTransparent: true,
-          headerBlurEffect: isDark ? 'systemMaterialDark' : 'systemMaterialLight',
-          headerShadowVisible: false,
-          headerTintColor: colors.text,
-          headerBackButtonDisplayMode: 'minimal',
-          headerBackTitle: ' ',
-          headerTitleStyle: {
-            fontWeight: '600',
-            fontSize: 17,
-          },
+          headerLeft: () => (
+            <BackButton
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/settings');
+                }
+              }}
+              size={38}
+            />
+          ),
         }}
       />
 
