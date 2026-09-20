@@ -49,7 +49,7 @@ export function BottomTaskInput({
         ]}
       >
         <GlassView
-          glassEffectStyle="regular"
+          glassEffectStyle="clear"
           isInteractive={true}
           colorScheme={isDark ? 'dark' : 'light'}
           borderRadius={25}
@@ -62,6 +62,9 @@ export function BottomTaskInput({
             alignItems: 'center',
             paddingHorizontal: 16,
             gap: 8,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.35)',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
           }}
         >
           <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
