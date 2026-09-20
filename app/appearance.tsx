@@ -28,10 +28,6 @@ export default function AppearanceScreen() {
   // App icon state (ready for future expansion)
   const [selectedIcon, setSelectedIcon] = useState<string>(settings.appIcon || 'default');
 
-  React.useEffect(() => {
-    scrollRef.current?.scrollTo({ y: 0, animated: false });
-  }, []);
-
   const handleSelectTheme = (themeId: ThemeId) => {
     if (settings.haptics) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -67,9 +63,12 @@ export default function AppearanceScreen() {
         options={{
           headerShown: true,
           title: t.settings.appearance,
+          headerTransparent: true,
+          headerBlurEffect: isDark ? 'systemMaterialDark' : 'systemMaterialLight',
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
+          headerBackButtonDisplayMode: 'minimal',
+          headerBackTitle: ' ',
           headerTitleStyle: {
             fontWeight: '600',
             fontSize: 17,
@@ -80,6 +79,7 @@ export default function AppearanceScreen() {
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: insets.bottom + 32 },

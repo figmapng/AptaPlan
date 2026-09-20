@@ -23,7 +23,7 @@ import { AnimatedPressable } from '@/components/AnimatedPressable';
 export default function IntegrationsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const {
     settings,
@@ -125,9 +125,12 @@ export default function IntegrationsScreen() {
         options={{
           headerShown: true,
           title: t.integrations.title,
+          headerTransparent: true,
+          headerBlurEffect: isDark ? 'systemMaterialDark' : 'systemMaterialLight',
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
+          headerBackButtonDisplayMode: 'minimal',
+          headerBackTitle: ' ',
           headerTitleStyle: {
             fontWeight: '600',
             fontSize: 17,
@@ -137,6 +140,7 @@ export default function IntegrationsScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: insets.bottom + 32 },

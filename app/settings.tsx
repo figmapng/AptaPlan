@@ -34,7 +34,7 @@ import { exportBackup, importBackup } from '@/services/backup-service';
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { theme, themeConfig, colors, setTheme } = useTheme();
+  const { theme, themeConfig, colors, setTheme, isDark } = useTheme();
   const { language, setLanguage, t } = useI18n();
   const {
     settings,
@@ -93,9 +93,12 @@ export default function SettingsScreen() {
         options={{
           headerShown: true,
           title: t.settings.title,
+          headerTransparent: true,
+          headerBlurEffect: isDark ? 'systemMaterialDark' : 'systemMaterialLight',
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
+          headerBackButtonDisplayMode: 'minimal',
+          headerBackTitle: ' ',
           headerTitleStyle: {
             fontWeight: '600',
             fontSize: 17,
@@ -105,6 +108,7 @@ export default function SettingsScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: insets.bottom + 32 },
