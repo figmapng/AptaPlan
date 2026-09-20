@@ -1,4 +1,4 @@
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -6,7 +6,6 @@ import { BlurView } from 'expo-blur';
 import { PlannerProvider } from '@/store/planner-store';
 import { CardTransitionProvider } from '@/components/card-transition-provider';
 import { useTheme } from '@/hooks/use-theme';
-import { BackButton } from '@/components/BackButton';
 
 // Expo Router error boundary – prevents full crashes, shows recovery UI
 export { ErrorBoundary } from 'expo-router';
@@ -19,7 +18,6 @@ export const unstable_settings = {
 
 function LayoutContent() {
   const { colors, isDark } = useTheme();
-  const router = useRouter();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -28,7 +26,6 @@ function LayoutContent() {
         <Stack
           screenOptions={{
             headerTransparent: true,
-            headerBackVisible: false,
             headerBackground: () => (
               <View style={StyleSheet.absoluteFill}>
                 <BlurView
@@ -61,9 +58,9 @@ function LayoutContent() {
           <Stack.Screen name="day/[date]" options={{ headerShown: false, animation: 'none' }} />
           <Stack.Screen name="task/new" options={{ title: 'Жаңа тапсырма', presentation: 'modal' }} />
           <Stack.Screen name="task/[id]" options={{ title: 'Тапсырманы өңдеу', presentation: 'modal' }} />
-          <Stack.Screen name="settings" options={{ headerShown: true, title: 'Баптаулар' }} />
-          <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Сыртқы түрі' }} />
-          <Stack.Screen name="integrations" options={{ headerShown: true, title: 'Интеграция' }} />
+          <Stack.Screen name="settings" options={{ headerShown: true, title: 'Баптаулар', headerBackButtonDisplayMode: 'minimal', headerBackTitle: ' ' }} />
+          <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Сыртқы түрі', headerBackButtonDisplayMode: 'minimal', headerBackTitle: ' ' }} />
+          <Stack.Screen name="integrations" options={{ headerShown: true, title: 'Интеграция', headerBackButtonDisplayMode: 'minimal', headerBackTitle: ' ' }} />
         </Stack>
       </CardTransitionProvider>
     </View>

@@ -19,7 +19,6 @@ import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
-import { BackButton } from '@/components/BackButton';
 
 export default function IntegrationsScreen() {
   const insets = useSafeAreaInsets();
@@ -125,18 +124,6 @@ export default function IntegrationsScreen() {
       <Stack.Screen
         options={{
           title: t.integrations.title,
-          headerLeft: () => (
-            <BackButton
-              onPress={() => {
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace('/settings');
-                }
-              }}
-              size={38}
-            />
-          ),
         }}
       />
 
