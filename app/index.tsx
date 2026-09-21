@@ -2290,7 +2290,7 @@ const YearView = memo(function YearViewComponent({
                   yearStyles.monthBlock,
                   {
                     height: monthBlockHeight,
-                    backgroundColor: isCurrentMonth ? (isDark ? `${colors.today}25` : colors.tintBg) : colors.card,
+                    backgroundColor: colors.card,
                     borderColor: isCurrentMonth ? colors.today : colors.cardBorder,
                     borderWidth: isCurrentMonth ? 1.5 : 1,
                   },
