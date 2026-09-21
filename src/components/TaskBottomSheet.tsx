@@ -393,9 +393,9 @@ export function TaskBottomSheet({
                   ]}
                 >
                   {editingTask ? (
-                    <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
+                    <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? colors.secondary : '#9CA3AF')} />
                   ) : (
-                    <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
+                    <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? colors.secondary : '#9CA3AF')} />
                   )}
                 </Pressable>
               </GlassView>
@@ -443,9 +443,9 @@ export function TaskBottomSheet({
                   ]}
                 >
                   {editingTask ? (
-                    <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
+                    <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? colors.secondary : '#9CA3AF')} />
                   ) : (
-                    <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? '#94A0B4' : '#9CA3AF')} />
+                    <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? colors.secondary : '#9CA3AF')} />
                   )}
                 </Pressable>
               </View>

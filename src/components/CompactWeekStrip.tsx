@@ -127,14 +127,14 @@ export function CompactWeekStrip({
           const formattedDayShort = dayShort.charAt(0).toUpperCase() + dayShort.slice(1);
 
           const labelColor = isSelected
-            ? (isDark ? '#E2E8F0' : '#475569')
-            : (isDark ? '#64748B' : '#94A3B8');
+            ? (isDark ? '#F5F5F5' : '#475569')
+            : (isDark ? '#8E8E8E' : '#94A3B8');
 
           const numColor = isTodayDay
             ? colors.today
             : isSelected
-            ? (isDark ? '#F8FAFC' : '#1E293B')
-            : (isDark ? '#94A3B8' : '#64748B');
+            ? (isDark ? '#F5F5F5' : '#1E293B')
+            : (isDark ? '#8E8E8E' : '#64748B');
 
           return (
             <Pressable

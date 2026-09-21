@@ -127,7 +127,7 @@ const CarouselCard = React.memo(function CarouselCard({
     ? colors.today
     : isWeekendCard
     ? (isDark ? '#4A252A' : '#FFE0DC')
-    : (isDark ? '#2C3446' : '#E8EDF3');
+    : (isDark ? colors.cardBorder : '#E8EDF3');
 
   const safeFrameX = typeof currentFrame?.x === 'number' && !isNaN(currentFrame.x) ? currentFrame.x : 16;
   const safeFrameY = typeof currentFrame?.y === 'number' && !isNaN(currentFrame.y) ? currentFrame.y : insets.top + 78;
@@ -1020,7 +1020,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
               >
                 <View
                   style={{
-                    backgroundColor: '#1E293B',
+                    backgroundColor: isDark ? '#2C2C2E' : '#1E293B',
                     borderRadius: 14,
                     paddingHorizontal: 16,
                     paddingVertical: 14,

@@ -22,7 +22,7 @@ export function BottomTaskInput({
   testID,
   accessibilityLabel,
 }: BottomTaskInputProps) {
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
   const { t } = useI18n();
   const isLiquidGlass = useMemo(() => checkIsLiquidGlassSupported(), []);
 
@@ -70,7 +70,7 @@ export function BottomTaskInput({
           <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
             <Path
               d="M12 4.5v15M4.5 12h15"
-              stroke={isDark ? '#94A0B4' : '#707684'}
+              stroke={isDark ? colors.secondary : '#707684'}
               strokeWidth="2.4"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -82,7 +82,7 @@ export function BottomTaskInput({
               flex: 1,
               fontSize: 16,
               fontWeight: '400',
-              color: isDark ? '#CBD5E1' : '#475569',
+              color: isDark ? colors.text : '#475569',
             }}
           >
             {t.common.addTask}
@@ -104,7 +104,7 @@ export function BottomTaskInput({
           height: 50,
           borderRadius: 25,
           borderCurve: 'continuous',
-          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : 'rgba(255, 255, 255, 0.82)',
+          backgroundColor: isDark ? 'rgba(28, 28, 30, 0.85)' : 'rgba(255, 255, 255, 0.82)',
           shadowColor: '#000000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: isDark ? 0.35 : 0.08,
@@ -137,7 +137,7 @@ export function BottomTaskInput({
         <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
           <Path
             d="M12 4.5v15M4.5 12h15"
-            stroke={isDark ? '#94A0B4' : '#707684'}
+            stroke={isDark ? colors.secondary : '#707684'}
             strokeWidth="2.4"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -149,7 +149,7 @@ export function BottomTaskInput({
             flex: 1,
             fontSize: 16,
             fontWeight: '400',
-            color: isDark ? '#94A0B4' : '#707684',
+            color: isDark ? colors.secondary : '#707684',
           }}
         >
           {t.common.addTask}

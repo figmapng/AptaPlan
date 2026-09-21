@@ -357,17 +357,17 @@ export const TaskRow = React.memo(function TaskRow({
               cardSurface && styles.cardSurfaceCheckbox,
               {
                 borderColor: compact || cardSurface
-                  ? (isDark ? '#3A3A3C' : '#DEE2E8')
+                  ? (isDark ? colors.cardBorder : '#DEE2E8')
                   : colors.checkboxBorder,
                 backgroundColor: compact || cardSurface
-                  ? (isDark ? '#242C3C' : '#F7F9FC')
+                  ? (isDark ? colors.checkboxBg : '#F7F9FC')
                   : 'transparent',
                 borderWidth: compact || cardSurface ? 1.2 : 1.5,
               },
               task.isCompleted && (compact
                 ? {
-                    borderColor: isDark ? '#475569' : '#CBD5E1',
-                    backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                    borderColor: isDark ? colors.cardBorder : '#CBD5E1',
+                    backgroundColor: isDark ? colors.checkedCheckboxBg : '#F1F5F9',
                     borderWidth: 1.2,
                   }
                 : {
@@ -387,7 +387,7 @@ export const TaskRow = React.memo(function TaskRow({
               >
                 <CheckmarkIcon
                   size={compact ? 10 : cardSurface ? 11 : 13}
-                  color={compact ? (isDark ? '#475569' : '#CBD5E1') : colors.today}
+                  color={compact ? (isDark ? colors.checkedCheckboxCheck : '#CBD5E1') : colors.today}
                   strokeWidth={compact ? 2.6 : cardSurface ? 3.0 : 3.2}
                 />
               </Animated.View>
@@ -431,13 +431,13 @@ export const TaskRow = React.memo(function TaskRow({
               <View
                 style={[
                   styles.compactTimePill,
-                  { backgroundColor: isDark ? '#2C3446' : '#F3F4F7' },
+                  { backgroundColor: isDark ? colors.capsule : '#F3F4F7' },
                 ]}
               >
                 <Text
                   style={[
                     styles.compactTimeText,
-                    { color: isDark ? '#94A0B4' : '#6B7280' },
+                    { color: isDark ? colors.secondary : '#6B7280' },
                   ]}
                 >
                   {task.time}
@@ -494,7 +494,7 @@ function CheckmarkIcon({ size = 12, color = '#FFFFFF', strokeWidth = 3.4 }: { si
   );
 }
 
-function CalendarIcon({ size = 13, color = '#8E8E93' }: { size?: number; color?: string }) {
+function CalendarIcon({ size = 13, color = '#8E8E8E' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
       <Rect x="1.75" y="2.75" width="12.5" height="11" rx="2.25" stroke={color} strokeWidth="1.3" />
@@ -506,7 +506,7 @@ function CalendarIcon({ size = 13, color = '#8E8E93' }: { size?: number; color?:
   );
 }
 
-function ClockIcon({ size = 13, color = '#8E8E93' }: { size?: number; color?: string }) {
+function ClockIcon({ size = 13, color = '#8E8E8E' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
       <Circle cx="8" cy="8" r="6.25" stroke={color} strokeWidth="1.3" />
@@ -515,7 +515,7 @@ function ClockIcon({ size = 13, color = '#8E8E93' }: { size?: number; color?: st
   );
 }
 
-function RepeatIcon({ size = 13, color = '#8E8E93' }: { size?: number; color?: string }) {
+function RepeatIcon({ size = 13, color = '#8E8E8E' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
       <Path
