@@ -1829,7 +1829,7 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
         locations={[0, 0.25, 0.5, 0.75, 1]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
 
       {/* 2. Soft center spine crease seam */}

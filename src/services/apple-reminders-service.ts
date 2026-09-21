@@ -87,7 +87,7 @@ export async function syncAppleRemindersToAptaPlan(db: SQLiteDatabase): Promise<
     const endDate = new Date();
     endDate.setFullYear(endDate.getFullYear() + 2);
 
-    const reminders = await Calendar.getRemindersAsync(calendarIds, null, startDate, endDate);
+    const reminders = await Calendar.getRemindersAsync(calendarIds, null as any, startDate, endDate);
 
     let importedCount = 0;
     let updatedCount = 0;

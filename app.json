@@ -6,7 +6,6 @@
     "orientation": "default",
     "scheme": "aptaplan",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "platforms": [
       "ios",
       "android"
@@ -20,7 +19,8 @@
         {
           "remindersPermission": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,
@@ -32,7 +32,6 @@
       }
     },
     "android": {
-      "edgeToEdgeEnabled": true,
       "package": "com.nurserikz.aptaplan",
       "versionCode": 1
     },

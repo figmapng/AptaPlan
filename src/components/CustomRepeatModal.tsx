@@ -554,7 +554,7 @@ function MinusIcon({ color }: { color: string }) {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end',
     zIndex: 1000,
@@ -788,7 +788,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   popoverOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 9999,
     elevation: 9999,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',

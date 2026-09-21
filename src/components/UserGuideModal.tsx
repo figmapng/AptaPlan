@@ -70,7 +70,7 @@ export function UserGuideModal({ visible, onClose }: UserGuideModalProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={[styles.overlay, { backgroundColor: colors.modalOverlay }]}>
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         
         <View style={[styles.container, { backgroundColor: colors.card }]}>
           {/* Header Bar */}

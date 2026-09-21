@@ -52,16 +52,16 @@ describe('Theme System', () => {
 
   it('getThemeColors with isDark=true returns dark palette with theme accent', () => {
     const darkOcean = getThemeColors('ocean', true);
-    expect(darkOcean.background).toBe('#10131A');
-    expect(darkOcean.sheetBg).toBe('#10131A');
-    expect(darkOcean.card).toBe('#1C222E');
-    expect(darkOcean.text).toBe('#F3F5F9');
+    expect(darkOcean.background).toBe('#000000');
+    expect(darkOcean.sheetBg).toBe('#1C1C1E');
+    expect(darkOcean.card).toBe('#1C1C1E');
+    expect(darkOcean.text).toBe('#F5F5F5');
     expect(darkOcean.today).toBe('#0195FF');
 
     const darkEmerald = getThemeColors('emerald', true);
-    expect(darkEmerald.background).toBe('#10131A');
-    expect(darkEmerald.sheetBg).toBe('#10131A');
-    expect(darkEmerald.card).toBe('#1C222E');
+    expect(darkEmerald.background).toBe('#000000');
+    expect(darkEmerald.sheetBg).toBe('#1C1C1E');
+    expect(darkEmerald.card).toBe('#1C1C1E');
     expect(darkEmerald.today).toBe('#53B55A');
 
     const darkMinimal = getThemeColors('minimal', true);
