@@ -1797,30 +1797,32 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
       pointerEvents="none"
       style={{
         position: 'absolute',
-        top: 6,
-        bottom: 6,
+        top: 14,
+        bottom: 14,
         left: '50%',
         marginLeft: -5,
         width: 10,
+        borderRadius: 4,
+        overflow: 'hidden',
         zIndex: 2,
       }}
     >
-      {/* 1. Book spine groove / concave fold shadow across the gap */}
+      {/* 1. Subtle book spine groove fold shadow across the gap */}
       <ExpoLinearGradient
         colors={
           isDark
             ? [
                 'rgba(0, 0, 0, 0)',
-                'rgba(0, 0, 0, 0.45)',
-                'rgba(0, 0, 0, 0.85)',
-                'rgba(0, 0, 0, 0.45)',
+                'rgba(0, 0, 0, 0.10)',
+                'rgba(0, 0, 0, 0.25)',
+                'rgba(0, 0, 0, 0.10)',
                 'rgba(0, 0, 0, 0)',
               ]
             : [
                 'rgba(25, 18, 10, 0)',
-                'rgba(25, 18, 10, 0.10)',
-                'rgba(25, 18, 10, 0.28)',
-                'rgba(25, 18, 10, 0.10)',
+                'rgba(25, 18, 10, 0.02)',
+                'rgba(25, 18, 10, 0.07)',
+                'rgba(25, 18, 10, 0.02)',
                 'rgba(25, 18, 10, 0)',
               ]
         }
@@ -1830,64 +1832,26 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* 2. Center spine deep crease seam */}
-      <View
-        style={{
-          position: 'absolute',
-          top: 4,
-          bottom: 4,
-          left: 4.25,
-          width: 1,
-          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.95)' : 'rgba(20, 15, 8, 0.42)',
-        }}
-      />
-      {/* 3. Crease highlight reflection for 3D paper fold groove effect */}
-      <View
-        style={{
-          position: 'absolute',
-          top: 4,
-          bottom: 4,
-          left: 5.25,
-          width: 0.75,
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.60)',
-        }}
-      />
-
-      {/* 4. Top spine headband cap (каптал) */}
+      {/* 2. Soft center spine crease seam */}
       <View
         style={{
           position: 'absolute',
           top: 0,
-          left: 0.5,
-          width: 9,
-          height: 4,
-          borderRadius: 2,
-          backgroundColor: isDark ? '#3A3A3E' : '#CFC9BD',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.20)',
-          borderWidth: 0.5,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: isDark ? 0.35 : 0.12,
-          shadowRadius: 1,
+          bottom: 0,
+          left: 4.5,
+          width: 0.75,
+          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.30)' : 'rgba(20, 15, 8, 0.11)',
         }}
       />
-
-      {/* 5. Bottom spine headband cap (каптал) */}
+      {/* 3. Subtle crease highlight reflection */}
       <View
         style={{
           position: 'absolute',
+          top: 0,
           bottom: 0,
-          left: 0.5,
-          width: 9,
-          height: 4,
-          borderRadius: 2,
-          backgroundColor: isDark ? '#3A3A3E' : '#CFC9BD',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.20)',
-          borderWidth: 0.5,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -1 },
-          shadowOpacity: isDark ? 0.35 : 0.12,
-          shadowRadius: 1,
+          left: 5.25,
+          width: 0.5,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.30)',
         }}
       />
     </View>
