@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
+import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
@@ -1786,6 +1787,154 @@ function SelectorChevronIcon({ color = colors.today }: { color?: string }) {
 
 const WEEK_GRID_GAP = 10;
 
+const BookSpineDivider = memo(function BookSpineDividerComponent({
+  isDark,
+}: {
+  isDark: boolean;
+}) {
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: '50%',
+        marginLeft: -23,
+        width: 46,
+        zIndex: 5,
+      }}
+    >
+      {/* 1. Wide page curvature roll shadow (overlapping ~18px onto left and right cards) */}
+      <ExpoLinearGradient
+        colors={
+          isDark
+            ? [
+                'rgba(0, 0, 0, 0)',
+                'rgba(0, 0, 0, 0.06)',
+                'rgba(0, 0, 0, 0.18)',
+                'rgba(0, 0, 0, 0.38)',
+                'rgba(0, 0, 0, 0.55)',
+                'rgba(0, 0, 0, 0.38)',
+                'rgba(0, 0, 0, 0.18)',
+                'rgba(0, 0, 0, 0.06)',
+                'rgba(0, 0, 0, 0)',
+              ]
+            : [
+                'rgba(30, 22, 12, 0)',
+                'rgba(30, 22, 12, 0.02)',
+                'rgba(30, 22, 12, 0.06)',
+                'rgba(30, 22, 12, 0.14)',
+                'rgba(30, 22, 12, 0.24)',
+                'rgba(30, 22, 12, 0.14)',
+                'rgba(30, 22, 12, 0.06)',
+                'rgba(30, 22, 12, 0.02)',
+                'rgba(30, 22, 12, 0)',
+              ]
+        }
+        locations={[0, 0.22, 0.36, 0.46, 0.5, 0.54, 0.64, 0.78, 1]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* 2. Concentrated deep gutter trough shadow */}
+      <ExpoLinearGradient
+        colors={
+          isDark
+            ? [
+                'rgba(0, 0, 0, 0)',
+                'rgba(0, 0, 0, 0.35)',
+                'rgba(0, 0, 0, 0.70)',
+                'rgba(0, 0, 0, 0.35)',
+                'rgba(0, 0, 0, 0)',
+              ]
+            : [
+                'rgba(20, 15, 8, 0)',
+                'rgba(20, 15, 8, 0.12)',
+                'rgba(20, 15, 8, 0.28)',
+                'rgba(20, 15, 8, 0.12)',
+                'rgba(20, 15, 8, 0)',
+              ]
+        }
+        locations={[0, 0.25, 0.5, 0.75, 1]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: 17,
+          width: 12,
+        }}
+      />
+
+      {/* 3. Deep center binding crease seam */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 2,
+          bottom: 2,
+          left: 22.5,
+          width: 1,
+          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(25, 18, 10, 0.35)',
+        }}
+      />
+      {/* Subtle crease highlight reflection */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 2,
+          bottom: 2,
+          left: 23.5,
+          width: 0.5,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.40)',
+        }}
+      />
+
+      {/* 4. Top spine headband cap (каптал) */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 15.5,
+          width: 15,
+          height: 5,
+          borderBottomLeftRadius: 3,
+          borderBottomRightRadius: 3,
+          backgroundColor: isDark ? '#2E2E32' : '#D0C9BD',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.18)',
+          borderWidth: 0.5,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: isDark ? 0.35 : 0.12,
+          shadowRadius: 1,
+        }}
+      />
+
+      {/* 5. Bottom spine headband cap (каптал) */}
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 15.5,
+          width: 15,
+          height: 5,
+          borderTopLeftRadius: 3,
+          borderTopRightRadius: 3,
+          backgroundColor: isDark ? '#2E2E32' : '#D0C9BD',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.18)',
+          borderWidth: 0.5,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -1 },
+          shadowOpacity: isDark ? 0.35 : 0.12,
+          shadowRadius: 1,
+        }}
+      />
+    </View>
+  );
+});
+
 const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 138, expandedBodyHeight = 88, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef, showBookDivider = false }: {
   days: DayDataItem[]; progress: Animated.Value;
   onInteraction?: () => void; collapsedBodyHeight?: number; expandedBodyHeight?: number;
@@ -1793,37 +1942,48 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
   isSwipingRef?: React.RefObject<boolean>;
   showBookDivider?: boolean;
 }) {
-  const { colors, isDark } = useTheme();
+  const { isDark } = useTheme();
 
   return (
     <View style={{ gap: WEEK_GRID_GAP }}>
-      <View style={{ flexDirection: 'row', gap: WEEK_GRID_GAP, position: 'relative' }}>
+      <View style={{ flexDirection: 'row', gap: showBookDivider ? 0 : WEEK_GRID_GAP, position: 'relative' }}>
         <View style={{ flex: 1, gap: WEEK_GRID_GAP }}>
           {days.slice(0, 3).map((day) => (
-            <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} monthLabel={day.monthLabel} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
+            <DayCard
+              key={day.dateKey}
+              date={day.date}
+              tasks={day.tasks}
+              monthLabel={day.monthLabel}
+              progress={progress}
+              onInteraction={onInteraction}
+              collapsedBodyHeight={collapsedBodyHeight}
+              expandedBodyHeight={expandedBodyHeight}
+              onLayoutMeasured={onLayoutMeasured}
+              isSwipingRef={isSwipingRef}
+              columnSide={showBookDivider ? 'left' : undefined}
+            />
           ))}
         </View>
 
         {showBookDivider && (
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: 6,
-              bottom: 6,
-              left: '50%',
-              marginLeft: -0.5,
-              width: 1,
-              backgroundColor: isDark ? colors.cardBorder : '#D9DDE5',
-              opacity: isDark ? 0.7 : 0.85,
-              borderRadius: 0.5,
-            }}
-          />
+          <BookSpineDivider isDark={isDark} />
         )}
 
         <View style={{ flex: 1, gap: WEEK_GRID_GAP }}>
           {days.slice(3, 6).map((day) => (
-            <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} monthLabel={day.monthLabel} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
+            <DayCard
+              key={day.dateKey}
+              date={day.date}
+              tasks={day.tasks}
+              monthLabel={day.monthLabel}
+              progress={progress}
+              onInteraction={onInteraction}
+              collapsedBodyHeight={collapsedBodyHeight}
+              expandedBodyHeight={expandedBodyHeight}
+              onLayoutMeasured={onLayoutMeasured}
+              isSwipingRef={isSwipingRef}
+              columnSide={showBookDivider ? 'right' : undefined}
+            />
           ))}
         </View>
       </View>

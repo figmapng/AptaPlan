@@ -27,6 +27,7 @@ type DayCardProps = {
   onScrollYChange?: (scrollY: number) => void;
   scrollEnabled?: boolean;
   monthLabel?: string;
+  columnSide?: 'left' | 'right' | 'full';
 };
 
 export const DayCard = memo(function DayCardComponent({
@@ -44,6 +45,7 @@ export const DayCard = memo(function DayCardComponent({
   onScrollYChange,
   scrollEnabled = true,
   monthLabel,
+  columnSide,
 }: DayCardProps) {
   const key = toDateKey(date);
   const today = isToday(date);
@@ -297,9 +299,21 @@ export const DayCard = memo(function DayCardComponent({
 
   const cardContainerStyle = {
     backgroundColor: colors.card,
-    borderRadius: 16,
-    borderCurve: 'continuous' as const,
-    borderWidth: today ? 1.5 : 1,
+    ...(columnSide === 'left' ? {
+      borderTopLeftRadius: 16,
+      borderBottomLeftRadius: 16,
+      borderTopRightRadius: 0.01,
+      borderBottomRightRadius: 0.01,
+    } : columnSide === 'right' ? {
+      borderTopLeftRadius: 0.01,
+      borderBottomLeftRadius: 0.01,
+      borderTopRightRadius: 16,
+      borderBottomRightRadius: 16,
+    } : {
+      borderRadius: 16,
+      borderCurve: 'continuous' as const,
+    }),
+    borderWidth: 1,
     borderColor: today
       ? colors.today
       : colors.cardBorder,
