@@ -172,6 +172,24 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            icon="book-outline"
+            label={t.settings.bookDivider}
+            rightElement={
+              <Switch
+                value={settings.showBookDivider ?? false}
+                onValueChange={(v) => {
+                  if (settings.haptics) {
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                  void setPref('showBookDivider', v);
+                }}
+                trackColor={{ false: '#E2E5EB', true: colors.today }}
+                thumbColor="#FFFFFF"
+              />
+            }
+          />
+          <Divider />
+          <SettingRow
             icon="grid-outline"
             label={t.settings.monthPickerStyle}
             valueText={

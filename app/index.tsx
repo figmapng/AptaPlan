@@ -1507,6 +1507,7 @@ export default function Home() {
                   expandedSundayHeight={expandedSundayHeight}
                   onLayoutMeasured={offset === 0 ? handleCardLayoutMeasured : undefined}
                   isSwipingRef={isSwipingRef}
+                  showBookDivider={settings.showBookDivider ?? false}
                 />
               </Animated.View>
             );
@@ -1785,20 +1786,41 @@ function SelectorChevronIcon({ color = colors.today }: { color?: string }) {
 
 const WEEK_GRID_GAP = 10;
 
-const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 138, expandedBodyHeight = 88, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef }: {
+const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 138, expandedBodyHeight = 88, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef, showBookDivider = false }: {
   days: DayDataItem[]; progress: Animated.Value;
   onInteraction?: () => void; collapsedBodyHeight?: number; expandedBodyHeight?: number;
   expandedSundayHeight?: number; onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
   isSwipingRef?: React.RefObject<boolean>;
+  showBookDivider?: boolean;
 }) {
+  const { colors, isDark } = useTheme();
+
   return (
     <View style={{ gap: WEEK_GRID_GAP }}>
-      <View style={{ flexDirection: 'row', gap: WEEK_GRID_GAP }}>
+      <View style={{ flexDirection: 'row', gap: WEEK_GRID_GAP, position: 'relative' }}>
         <View style={{ flex: 1, gap: WEEK_GRID_GAP }}>
           {days.slice(0, 3).map((day) => (
             <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} monthLabel={day.monthLabel} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
           ))}
         </View>
+
+        {showBookDivider && (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: 6,
+              bottom: 6,
+              left: '50%',
+              marginLeft: -0.5,
+              width: 1,
+              backgroundColor: isDark ? colors.cardBorder : '#D9DDE5',
+              opacity: isDark ? 0.7 : 0.85,
+              borderRadius: 0.5,
+            }}
+          />
+        )}
+
         <View style={{ flex: 1, gap: WEEK_GRID_GAP }}>
           {days.slice(3, 6).map((day) => (
             <DayCard key={day.dateKey} date={day.date} tasks={day.tasks} monthLabel={day.monthLabel} progress={progress} onInteraction={onInteraction} collapsedBodyHeight={collapsedBodyHeight} expandedBodyHeight={expandedBodyHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />

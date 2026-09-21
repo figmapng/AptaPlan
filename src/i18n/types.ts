@@ -189,6 +189,7 @@ export interface Translations {
     lastDayVisibility: string;
     lastDayVisible: string;
     lastDayHidden: string;
+    bookDivider: string;
     lastDayPreviewTitleVisible: string;
     lastDayPreviewSubVisible: string;
     lastDayPreviewTitleHidden: string;

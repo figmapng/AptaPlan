@@ -61,6 +61,7 @@ export type PlannerSettings = {
   sortMode: 'time' | 'manual';
   firstDayOfWeek?: 'mon' | 'sat' | 'sun';
   lastDayVisibility?: 'visible' | 'hidden';
+  showBookDivider?: boolean;
   defaultViewMode?: 'day' | 'week' | 'month' | 'year';
   theme?: ThemeId;
   themeMode?: ThemeMode;
@@ -78,6 +79,7 @@ export const defaultSettings: PlannerSettings = {
   sortMode: 'time',
   firstDayOfWeek: 'mon',
   lastDayVisibility: 'visible',
+  showBookDivider: false,
   defaultViewMode: 'week',
   theme: 'ocean',
   themeMode: 'system',
