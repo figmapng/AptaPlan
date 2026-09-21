@@ -24,6 +24,7 @@ import { getTodayKey } from '@/utils/dateHelpers';
 import { useI18n } from '@/i18n/use-i18n';
 import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
 import { BlurView } from 'expo-blur';
+import { AnimatedPressable } from './AnimatedPressable';
 import { TaskInput } from './TaskInput';
 import { DateChip } from './DateChip';
 import { TimeChip } from './TimeChip';
@@ -329,7 +330,7 @@ export function TaskBottomSheet({
           style={[
             styles.sheetContainer,
             {
-              backgroundColor: isDark ? 'rgba(16, 19, 26, 0.85)' : 'rgba(243, 243, 247, 0.88)',
+              backgroundColor: isDark ? 'rgba(28, 28, 30, 0.88)' : 'rgba(243, 243, 247, 0.88)',
               transform: [{ translateY }],
               paddingBottom: animatedPaddingBottom,
             },
@@ -357,8 +358,13 @@ export function TaskBottomSheet({
                     minHeight: Math.max(52, titleInputHeight + 10),
                     borderRadius: 26,
                     borderCurve: 'continuous',
-                    borderWidth: 0,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.35)',
+                    borderWidth: 1,
+                    borderColor: isFocused
+                      ? colors.today
+                      : isDark
+                      ? 'rgba(255, 255, 255, 0.16)'
+                      : 'rgba(0, 0, 0, 0.08)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.35)',
                   },
                 ]}
               >
@@ -374,44 +380,82 @@ export function TaskBottomSheet({
                   />
                 </View>
 
-                <Pressable
+                <AnimatedPressable
                   accessibilityRole="button"
                   accessibilityLabel={t.common.save}
                   disabled={!isEnabled}
                   onPress={handleSend}
-                  style={({ pressed }) => [
-                    styles.sendBtn,
-                    {
-                      backgroundColor: isEnabled
-                        ? colors.today
-                        : isDark
-                        ? 'rgba(255, 255, 255, 0.12)'
-                        : '#E5E7EB',
-                      borderColor: isEnabled ? colors.todayDark : 'transparent',
-                    },
-                    pressed && isEnabled && styles.sendBtnPressed,
-                  ]}
+                  activeScale={0.92}
+                  style={styles.sendBtn}
                 >
-                  {editingTask ? (
-                    <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? colors.secondary : '#9CA3AF')} />
+                  {isEnabled ? (
+                    <View
+                      style={[
+                        StyleSheet.absoluteFill,
+                        styles.sendBtnInner,
+                        {
+                          backgroundColor: colors.today,
+                          borderColor: colors.todayDark,
+                        },
+                      ]}
+                    >
+                      {editingTask ? (
+                        <CheckIcon color="#FFFFFF" />
+                      ) : (
+                        <ArrowUpIcon color="#FFFFFF" />
+                      )}
+                    </View>
                   ) : (
-                    <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? colors.secondary : '#9CA3AF')} />
+                    <GlassView
+                      glassEffectStyle="clear"
+                      isInteractive={false}
+                      colorScheme={isDark ? 'dark' : 'light'}
+                      borderRadius={20}
+                      borderCurve="continuous"
+                      style={[
+                        StyleSheet.absoluteFill,
+                        styles.sendBtnInner,
+                        {
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.45)',
+                          borderWidth: 1,
+                          borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
+                        },
+                      ]}
+                    >
+                      {editingTask ? (
+                        <CheckIcon color={colors.secondary} />
+                      ) : (
+                        <ArrowUpIcon color={colors.secondary} />
+                      )}
+                    </GlassView>
                   )}
-                </Pressable>
+                </AnimatedPressable>
               </GlassView>
             ) : (
               <View
                 style={[
                   styles.inputWrapper,
                   {
-                    backgroundColor: colors.inputBg,
-                    borderColor: isFocused ? colors.inputFocusedBorder : colors.inputBorder,
+                    backgroundColor: isDark ? 'rgba(28, 28, 30, 0.85)' : 'rgba(255, 255, 255, 0.82)',
+                    borderColor: isFocused
+                      ? colors.today
+                      : isDark
+                      ? 'rgba(255, 255, 255, 0.16)'
+                      : 'rgba(0, 0, 0, 0.08)',
+                    borderWidth: 1,
                     minHeight: Math.max(52, titleInputHeight + 10),
                     borderRadius: 26,
                     borderCurve: 'continuous',
+                    overflow: 'hidden',
                   },
                 ]}
               >
+                <BlurView
+                  intensity={95}
+                  tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
+                  style={StyleSheet.absoluteFill}
+                  pointerEvents="none"
+                />
                 <View style={styles.inputContent}>
                   <TaskInput
                     ref={inputRef}
@@ -424,30 +468,40 @@ export function TaskBottomSheet({
                   />
                 </View>
 
-                <Pressable
+                <AnimatedPressable
                   accessibilityRole="button"
                   accessibilityLabel={t.common.save}
                   disabled={!isEnabled}
                   onPress={handleSend}
-                  style={({ pressed }) => [
-                    styles.sendBtn,
-                    {
-                      backgroundColor: isEnabled
-                        ? colors.today
-                        : isDark
-                        ? 'rgba(255, 255, 255, 0.12)'
-                        : '#E5E7EB',
-                      borderColor: isEnabled ? colors.todayDark : 'transparent',
-                    },
-                    pressed && isEnabled && styles.sendBtnPressed,
-                  ]}
+                  activeScale={0.92}
+                  style={styles.sendBtn}
                 >
-                  {editingTask ? (
-                    <CheckIcon color={isEnabled ? '#FFFFFF' : (isDark ? colors.secondary : '#9CA3AF')} />
-                  ) : (
-                    <ArrowUpIcon color={isEnabled ? '#FFFFFF' : (isDark ? colors.secondary : '#9CA3AF')} />
-                  )}
-                </Pressable>
+                  <View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      styles.sendBtnInner,
+                      {
+                        backgroundColor: isEnabled
+                          ? colors.today
+                          : isDark
+                          ? 'rgba(255, 255, 255, 0.08)'
+                          : '#E5E7EB',
+                        borderWidth: 1,
+                        borderColor: isEnabled
+                          ? colors.todayDark
+                          : isDark
+                          ? 'rgba(255, 255, 255, 0.12)'
+                          : 'rgba(0, 0, 0, 0.06)',
+                      },
+                    ]}
+                  >
+                    {editingTask ? (
+                      <CheckIcon color={isEnabled ? '#FFFFFF' : colors.secondary} />
+                    ) : (
+                      <ArrowUpIcon color={isEnabled ? '#FFFFFF' : colors.secondary} />
+                    )}
+                  </View>
+                </AnimatedPressable>
               </View>
             )}
           </View>
@@ -602,17 +656,15 @@ const styles = StyleSheet.create({
   sendBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    borderCurve: 'continuous',
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
     position: 'absolute',
     right: 5,
     bottom: 5,
   },
-  sendBtnPressed: {
-    transform: [{ scale: 0.94 }],
+  sendBtnInner: {
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chipsRow: {
     flexDirection: 'row',
