@@ -1623,62 +1623,79 @@ export default function Home() {
           </View>
 
           <View style={{ position: 'absolute', left: 16, right: 16, bottom: bottomBarBottomOffset, zIndex: 30, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {fromYearMode && mode === 'month' && (
-              <BackButton
-                accessibilityLabel={t.common.back}
-                onPress={handleBackToYearFromMonth}
-              />
-            )}
-            <View style={{ flex: 1 }}>
-              <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
-            </View>
-            {!fromYearMode && (
-              ((mode as ViewMode) === 'day' && !isToday(dayDate)) ||
-              ((mode as ViewMode) === 'week' && (isFutureWeek || isPastWeek)) ||
-              ((mode as ViewMode) === 'month' && !isSameMonth(activeMonth, new Date()))
-            ) && (
-              <AnimatedPressable
-                accessibilityRole="button"
-                accessibilityLabel={t.common.today}
-                onPress={
-                  (mode as ViewMode) === 'day'
-                    ? () => setDayDate(new Date())
-                    : (mode as ViewMode) === 'month'
-                    ? resetToCurrentMonth
-                    : resetToCurrentWeek
-                }
-                activeScale={0.93}
-                style={{
-                  height: 50,
-                  borderRadius: 25,
-                  borderCurve: 'continuous',
-                  paddingHorizontal: 16,
-                  backgroundColor: colors.today,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'row',
-                  gap: 6,
-                }}
-              >
-                {(((mode as ViewMode) === 'day' && dayDate > new Date()) || ((mode as ViewMode) === 'week' && isFutureWeek) || ((mode as ViewMode) === 'month' && activeMonth > new Date())) && (
-                  <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-                    <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
-                )}
-                <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
-                  {language === 'en'
-                    ? `${t.date.monthsShort[new Date().getMonth()]} ${format(new Date(), 'dd')}`
-                    : `${format(new Date(), 'dd')} ${t.date.monthsShort[new Date().getMonth()]}.`}
-                </Text>
-                {(((mode as ViewMode) === 'day' && dayDate < new Date()) || ((mode as ViewMode) === 'week' && isPastWeek) || ((mode as ViewMode) === 'month' && activeMonth < new Date())) && (
-                  <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-                    <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
-                )}
-              </AnimatedPressable>
-            )}
+            {(() => {
+              const isFuture =
+                ((mode as ViewMode) === 'day' && dayDate.getTime() > new Date().setHours(23, 59, 59, 999)) ||
+                ((mode as ViewMode) === 'week' && isFutureWeek) ||
+                ((mode as ViewMode) === 'month' && activeMonth > new Date());
+
+              const isPast =
+                ((mode as ViewMode) === 'day' && dayDate.getTime() < new Date().setHours(0, 0, 0, 0)) ||
+                ((mode as ViewMode) === 'week' && isPastWeek) ||
+                ((mode as ViewMode) === 'month' && activeMonth < new Date());
+
+              const showToday = !fromYearMode && (isFuture || isPast);
+
+              const todayButton = showToday ? (
+                <AnimatedPressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t.common.today}
+                  onPress={
+                    (mode as ViewMode) === 'day'
+                      ? () => setDayDate(new Date())
+                      : (mode as ViewMode) === 'month'
+                      ? resetToCurrentMonth
+                      : resetToCurrentWeek
+                  }
+                  activeScale={0.93}
+                  style={{
+                    height: 50,
+                    borderRadius: 25,
+                    borderCurve: 'continuous',
+                    paddingHorizontal: 16,
+                    backgroundColor: colors.today,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    gap: 6,
+                  }}
+                >
+                  {isFuture && (
+                    <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+                      <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <Path d="M4 9h11a5 5 0 0 1 5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    </Svg>
+                  )}
+                  <Text style={{ color: 'white', fontSize: 13, fontWeight: '700' }}>
+                    {language === 'en'
+                      ? `${t.date.monthsShort[new Date().getMonth()]} ${format(new Date(), 'dd')}`
+                      : `${format(new Date(), 'dd')} ${t.date.monthsShort[new Date().getMonth()]}.`}
+                  </Text>
+                  {isPast && (
+                    <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+                      <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    </Svg>
+                  )}
+                </AnimatedPressable>
+              ) : null;
+
+              return (
+                <>
+                  {fromYearMode && mode === 'month' && (
+                    <BackButton
+                      accessibilityLabel={t.common.back}
+                      onPress={handleBackToYearFromMonth}
+                    />
+                  )}
+                  {isFuture && todayButton}
+                  <View style={{ flex: 1 }}>
+                    <BottomTaskInput onInteraction={collapseWeek} onAddTask={() => { collapseWeek(); setShowBottomSheet(true); }} />
+                  </View>
+                  {isPast && todayButton}
+                </>
+              );
+            })()}
           </View>
         </>
       )}

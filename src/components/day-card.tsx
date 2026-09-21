@@ -306,11 +306,6 @@ export const DayCard = memo(function DayCardComponent({
     paddingHorizontal: 10,
     paddingTop: 10,
     paddingBottom: 10,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: isDark ? 0.2 : 0.05,
-    shadowRadius: 15,
-    elevation: 4,
   };
 
   if (wide) {

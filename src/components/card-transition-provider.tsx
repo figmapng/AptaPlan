@@ -174,7 +174,10 @@ const CarouselCard = React.memo(function CarouselCard({
           borderColor: isDark ? colors.cardBorder : 'transparent',
           shadowColor: '#000000',
           shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: isDark ? 0.2 : 0.05,
+          shadowOpacity: progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, isDark ? 0.2 : 0.05],
+          }),
           shadowRadius: 20,
           elevation: 4,
           opacity: 1,
