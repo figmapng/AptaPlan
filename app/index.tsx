@@ -1797,98 +1797,59 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
       pointerEvents="none"
       style={{
         position: 'absolute',
-        top: 0,
-        bottom: 0,
+        top: 6,
+        bottom: 6,
         left: '50%',
-        marginLeft: -23,
-        width: 46,
-        zIndex: 5,
+        marginLeft: -5,
+        width: 10,
+        zIndex: 2,
       }}
     >
-      {/* 1. Wide page curvature roll shadow (overlapping ~18px onto left and right cards) */}
+      {/* 1. Book spine groove / concave fold shadow across the gap */}
       <ExpoLinearGradient
         colors={
           isDark
             ? [
                 'rgba(0, 0, 0, 0)',
-                'rgba(0, 0, 0, 0.06)',
-                'rgba(0, 0, 0, 0.18)',
-                'rgba(0, 0, 0, 0.38)',
-                'rgba(0, 0, 0, 0.55)',
-                'rgba(0, 0, 0, 0.38)',
-                'rgba(0, 0, 0, 0.18)',
-                'rgba(0, 0, 0, 0.06)',
+                'rgba(0, 0, 0, 0.45)',
+                'rgba(0, 0, 0, 0.85)',
+                'rgba(0, 0, 0, 0.45)',
                 'rgba(0, 0, 0, 0)',
               ]
             : [
-                'rgba(30, 22, 12, 0)',
-                'rgba(30, 22, 12, 0.02)',
-                'rgba(30, 22, 12, 0.06)',
-                'rgba(30, 22, 12, 0.14)',
-                'rgba(30, 22, 12, 0.24)',
-                'rgba(30, 22, 12, 0.14)',
-                'rgba(30, 22, 12, 0.06)',
-                'rgba(30, 22, 12, 0.02)',
-                'rgba(30, 22, 12, 0)',
-              ]
-        }
-        locations={[0, 0.22, 0.36, 0.46, 0.5, 0.54, 0.64, 0.78, 1]}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-
-      {/* 2. Concentrated deep gutter trough shadow */}
-      <ExpoLinearGradient
-        colors={
-          isDark
-            ? [
-                'rgba(0, 0, 0, 0)',
-                'rgba(0, 0, 0, 0.35)',
-                'rgba(0, 0, 0, 0.70)',
-                'rgba(0, 0, 0, 0.35)',
-                'rgba(0, 0, 0, 0)',
-              ]
-            : [
-                'rgba(20, 15, 8, 0)',
-                'rgba(20, 15, 8, 0.12)',
-                'rgba(20, 15, 8, 0.28)',
-                'rgba(20, 15, 8, 0.12)',
-                'rgba(20, 15, 8, 0)',
+                'rgba(25, 18, 10, 0)',
+                'rgba(25, 18, 10, 0.10)',
+                'rgba(25, 18, 10, 0.28)',
+                'rgba(25, 18, 10, 0.10)',
+                'rgba(25, 18, 10, 0)',
               ]
         }
         locations={[0, 0.25, 0.5, 0.75, 1]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: 17,
-          width: 12,
-        }}
+        style={StyleSheet.absoluteFillObject}
       />
 
-      {/* 3. Deep center binding crease seam */}
+      {/* 2. Center spine deep crease seam */}
       <View
         style={{
           position: 'absolute',
-          top: 2,
-          bottom: 2,
-          left: 22.5,
+          top: 4,
+          bottom: 4,
+          left: 4.25,
           width: 1,
-          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.85)' : 'rgba(25, 18, 10, 0.35)',
+          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.95)' : 'rgba(20, 15, 8, 0.42)',
         }}
       />
-      {/* Subtle crease highlight reflection */}
+      {/* 3. Crease highlight reflection for 3D paper fold groove effect */}
       <View
         style={{
           position: 'absolute',
-          top: 2,
-          bottom: 2,
-          left: 23.5,
-          width: 0.5,
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.40)',
+          top: 4,
+          bottom: 4,
+          left: 5.25,
+          width: 0.75,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.60)',
         }}
       />
 
@@ -1897,13 +1858,12 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
         style={{
           position: 'absolute',
           top: 0,
-          left: 15.5,
-          width: 15,
-          height: 5,
-          borderBottomLeftRadius: 3,
-          borderBottomRightRadius: 3,
-          backgroundColor: isDark ? '#2E2E32' : '#D0C9BD',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.18)',
+          left: 0.5,
+          width: 9,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: isDark ? '#3A3A3E' : '#CFC9BD',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.20)',
           borderWidth: 0.5,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 1 },
@@ -1917,13 +1877,12 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
         style={{
           position: 'absolute',
           bottom: 0,
-          left: 15.5,
-          width: 15,
-          height: 5,
-          borderTopLeftRadius: 3,
-          borderTopRightRadius: 3,
-          backgroundColor: isDark ? '#2E2E32' : '#D0C9BD',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(0, 0, 0, 0.18)',
+          left: 0.5,
+          width: 9,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: isDark ? '#3A3A3E' : '#CFC9BD',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.20)',
           borderWidth: 0.5,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -1 },
@@ -1946,7 +1905,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
 
   return (
     <View style={{ gap: WEEK_GRID_GAP }}>
-      <View style={{ flexDirection: 'row', gap: showBookDivider ? 0 : WEEK_GRID_GAP, position: 'relative' }}>
+      <View style={{ flexDirection: 'row', gap: WEEK_GRID_GAP, position: 'relative' }}>
         <View style={{ flex: 1, gap: WEEK_GRID_GAP }}>
           {days.slice(0, 3).map((day) => (
             <DayCard
@@ -1960,7 +1919,6 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
               expandedBodyHeight={expandedBodyHeight}
               onLayoutMeasured={onLayoutMeasured}
               isSwipingRef={isSwipingRef}
-              columnSide={showBookDivider ? 'left' : undefined}
             />
           ))}
         </View>
@@ -1982,7 +1940,6 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
               expandedBodyHeight={expandedBodyHeight}
               onLayoutMeasured={onLayoutMeasured}
               isSwipingRef={isSwipingRef}
-              columnSide={showBookDivider ? 'right' : undefined}
             />
           ))}
         </View>
