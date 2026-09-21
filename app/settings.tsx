@@ -103,8 +103,8 @@ export default function SettingsScreen() {
           { paddingBottom: insets.bottom + 32 },
         ]}
       >
-        {/* Бөлім 1: Жекелендіру және тіл */}
-        <Section>
+        {/* Бөлім 1: Сыртқы түрі мен тіл */}
+        <Section title={t.settings.appearanceAndLanguage}>
           <SettingRow
             icon="globe-outline"
             label={t.settings.language}
@@ -133,7 +133,7 @@ export default function SettingsScreen() {
         </Section>
 
         {/* Бөлім 2: Күнтізбе және көрініс */}
-        <Section>
+        <Section title={t.settings.calendarAndView}>
           <SettingRow
             icon="options-outline"
             label={t.settings.defaultViewMode}
@@ -200,7 +200,7 @@ export default function SettingsScreen() {
         </Section>
 
         {/* Бөлім 3: Тапсырмалар */}
-        <Section>
+        <Section title={t.settings.tasksSection}>
           <SettingRow
             icon="layers-outline"
             label={t.settings.completedPlacement}
@@ -218,22 +218,6 @@ export default function SettingsScreen() {
             }
             onPress={() => setSortModalOpen(true)}
           />
-        </Section>
-
-        {/* Бөлім 4: Интеграция және жүйе */}
-        <Section>
-          <SettingRow
-            icon="extension-puzzle-outline"
-            label={t.settings.integrations}
-            valueText={
-              Platform.OS === 'ios'
-                ? settings.syncAppleReminders
-                  ? 'Apple Reminders'
-                  : t.common.close
-                : t.integrations.googleCalendar
-            }
-            onPress={() => router.push('/integrations' as any)}
-          />
           <Divider />
           <SettingRow
             icon="pulse-outline"
@@ -249,8 +233,21 @@ export default function SettingsScreen() {
           />
         </Section>
 
-        {/* Бөлім 5: Деректер мен сақтық көшірме */}
-        <Section>
+        {/* Бөлім 4: Интеграция және деректер */}
+        <Section title={t.settings.integrationsAndData}>
+          <SettingRow
+            icon="extension-puzzle-outline"
+            label={t.settings.integrations}
+            valueText={
+              Platform.OS === 'ios'
+                ? settings.syncAppleReminders
+                  ? 'Apple Reminders'
+                  : t.common.close
+                : t.integrations.googleCalendar
+            }
+            onPress={() => router.push('/integrations' as any)}
+          />
+          <Divider />
           <SettingRow
             icon="cloud-upload-outline"
             label={t.settings.exportBackup}
@@ -269,6 +266,15 @@ export default function SettingsScreen() {
             label={t.settings.clearAllData}
             labelStyle={{ color: '#FF4B3E', fontWeight: '600' }}
             onPress={clear}
+          />
+        </Section>
+
+        {/* Бөлім 5: Қосымша және көмек */}
+        <Section title={t.settings.aboutAndSupport}>
+          <SettingRow
+            icon="help-circle-outline"
+            label={t.settings.userGuide}
+            onPress={() => setGuideOpen(true)}
           />
         </Section>
 
@@ -429,14 +435,23 @@ export default function SettingsScreen() {
 // Subcomponents
 
 function Section({
+  title,
   children,
 }: {
+  title?: string;
   children: React.ReactNode;
 }) {
   const { colors } = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }]}>
-      {children}
+    <View style={styles.sectionContainer}>
+      {title ? (
+        <Text style={[styles.sectionTitle, { color: colors.secondary }]}>
+          {title}
+        </Text>
+      ) : null}
+      <View style={[styles.card, { backgroundColor: colors.card }]}>
+        {children}
+      </View>
     </View>
   );
 }
@@ -1269,12 +1284,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
   },
+  sectionContainer: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginHorizontal: 12,
+    marginBottom: 8,
+    marginTop: 2,
+  },
   card: {
     backgroundColor: colors.card,
     borderRadius: 20,
     borderCurve: 'continuous',
     borderWidth: 0,
-    marginBottom: 16,
     overflow: 'hidden',
   },
   rowPressable: {

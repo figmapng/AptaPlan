@@ -170,6 +170,7 @@ export interface Translations {
     appIconSubtitle: string;
     themeNames: Record<ThemeId, string>;
     iconNames: Record<string, string>;
+    appearanceAndLanguage: string;
     calendarAndView: string;
     defaultViewMode: string;
     monthPickerStyle: string;
@@ -208,6 +209,10 @@ export interface Translations {
     exportBackup: string;
     importBackup: string;
     clearAllData: string;
+    integrationsAndData: string;
+    aboutAndSupport: string;
+    userGuide: string;
+    appVersion: string;
     clearAllConfirmTitle: string;
     clearAllConfirmDesc: string;
     clearAllFinalTitle: string;
