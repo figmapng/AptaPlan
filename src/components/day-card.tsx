@@ -188,7 +188,7 @@ export const DayCard = memo(function DayCardComponent({
         }}
       >
         {dayName.toUpperCase()}
-        <Text style={{ color: isDark ? '#94A3B8' : '#707684', fontWeight: '500' }}>
+        <Text style={{ color: isDark ? colors.secondary : '#707684', fontWeight: '500' }}>
           {' '}• {dayNumber} {monthShort}
         </Text>
       </Text>
@@ -258,7 +258,7 @@ export const DayCard = memo(function DayCardComponent({
                 borderRadius: 5,
                 borderWidth: 1,
                 borderColor: isDark ? '#3A3A3C' : '#DEE2E8',
-                backgroundColor: isDark ? '#242C3C' : '#F7F9FC',
+                backgroundColor: isDark ? colors.checkboxBg : '#F7F9FC',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -266,14 +266,14 @@ export const DayCard = memo(function DayCardComponent({
               <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M12 5v14M5 12h15"
-                  stroke={isDark ? '#7E8B9F' : '#9CA3AF'}
+                  stroke={isDark ? colors.secondary : '#9CA3AF'}
                   strokeWidth="2.4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </Svg>
             </View>
-            <Text style={{ color: isDark ? '#7E8B9F' : '#9CA3AF', fontSize: 13, lineHeight: 18, fontWeight: '400' }}>
+            <Text style={{ color: isDark ? colors.secondary : '#9CA3AF', fontSize: 13, lineHeight: 18, fontWeight: '400' }}>
               {t.common.addTask}
             </Text>
           </View>
