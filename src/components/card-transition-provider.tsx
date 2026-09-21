@@ -170,16 +170,22 @@ const CarouselCard = React.memo(function CarouselCard({
           }),
           borderCurve: 'continuous',
           backgroundColor: colors.card,
-          borderWidth: 1,
+          borderWidth: isDark
+            ? 1
+            : progress.interpolate({
+                inputRange: [0, 0.4, 1],
+                outputRange: [1, 0, 0],
+                extrapolate: 'clamp',
+              }),
           borderColor: colors.cardBorder,
           shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 10 },
+          shadowOffset: { width: 0, height: 12 },
           shadowOpacity: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: [0, isDark ? 0.2 : 0.05],
+            outputRange: [0, isDark ? 0.25 : 0.09],
           }),
-          shadowRadius: 20,
-          elevation: 4,
+          shadowRadius: 24,
+          elevation: isDark ? 4 : 6,
           opacity: 1,
           zIndex: isCenter ? 9999 : 9998,
           transform: [{ translateX: cardTranslateX }],
