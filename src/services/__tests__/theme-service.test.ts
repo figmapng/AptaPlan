@@ -35,7 +35,7 @@ describe('Theme System', () => {
     const amberColors = getThemeColors('amber');
     expect(amberColors.today).toBe('#F6C543');
     expect(amberColors.background).toBe('#F3F3F7');
-    expect(amberColors.text).toBe('#31383E');
+    expect(amberColors.text).toBe('#1C1C1E');
 
     const violetColors = getThemeColors('violet');
     expect(violetColors.today).toBe('#8A52EE');

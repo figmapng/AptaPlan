@@ -218,7 +218,7 @@ const CarouselCard = React.memo(function CarouselCard({
               fontSize: isTodayCard ? 13 : 12,
               fontWeight: isTodayCard ? '800' : '600',
               lineHeight: 16,
-              color: isTodayCard ? colors.today : isWeekendCard ? colors.weekend : '#2D3748',
+              color: isTodayCard ? colors.today : isWeekendCard ? colors.weekend : colors.text,
               fontVariant: ['tabular-nums'],
               textAlign: 'center',
               marginBottom: 2,
@@ -235,7 +235,7 @@ const CarouselCard = React.memo(function CarouselCard({
                   fontSize: 9,
                   fontWeight: '400',
                   lineHeight: 12,
-                  color: task.isCompleted ? '#A0AEC0' : '#4A5568',
+                  color: task.isCompleted ? colors.checkedTaskText : colors.text,
                   textDecorationLine: task.isCompleted ? 'line-through' : 'none',
                 }}
               >
@@ -245,7 +245,7 @@ const CarouselCard = React.memo(function CarouselCard({
             {cardTasks.length > 3 && (
               <View
                 style={{
-                  backgroundColor: isTodayCard ? `${colors.today}25` : '#E2E8F0',
+                  backgroundColor: isTodayCard ? `${colors.today}25` : colors.dateNumBg,
                   borderRadius: 3.5,
                   paddingHorizontal: 3.5,
                   paddingVertical: 0.5,
@@ -258,7 +258,7 @@ const CarouselCard = React.memo(function CarouselCard({
                     fontSize: 8.5,
                     fontWeight: '700',
                     lineHeight: 11,
-                    color: isTodayCard ? colors.today : '#4A5568',
+                    color: isTodayCard ? colors.today : colors.dateNumText,
                     fontVariant: ['tabular-nums'],
                   }}
                 >
@@ -315,12 +315,12 @@ const CarouselCard = React.memo(function CarouselCard({
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: isTodayCard ? colors.today : isDark ? colors.text : '#31383E',
+              color: isTodayCard ? colors.today : colors.text,
               letterSpacing: -0.2,
             }}
           >
             {(t.date.weekdays[cardDate.getDay()] ?? '').toUpperCase()}
-            <Text style={{ color: isDark ? '#94A3B8' : '#707684', fontWeight: '500' }}>
+            <Text style={{ color: colors.secondary, fontWeight: '500' }}>
               {` • ${format(cardDate, 'd')} ${t.date.monthsShort[cardDate.getMonth()] ?? ''}`}
             </Text>
           </Text>
@@ -339,11 +339,11 @@ const CarouselCard = React.memo(function CarouselCard({
               style={{
                 fontSize: 14,
                 fontWeight: '500',
-                color: isDark ? '#8E8E93' : '#9CA3AF',
+                color: colors.secondary,
                 fontVariant: ['tabular-nums'],
               }}
             >
-              <Text style={{ fontWeight: '600', color: isDark ? colors.text : '#31383E' }}>
+              <Text style={{ fontWeight: '600', color: colors.text }}>
                 {completedCount}
               </Text>
               /{cardTasks.length}
@@ -355,7 +355,7 @@ const CarouselCard = React.memo(function CarouselCard({
         <Animated.View
           style={{
             height: 1,
-            backgroundColor: isDark ? colors.cardBorder : '#EDEEF1',
+            backgroundColor: colors.divider,
             marginHorizontal: 16,
             marginTop: 0,
             marginBottom: 4,
@@ -493,7 +493,7 @@ const CarouselCard = React.memo(function CarouselCard({
                         isActive={isActive}
                         onSwipeX={onSwipeX}
                         onScrollEnabledChange={onScrollEnabledChangeItem}
-                        cardBg="#FFFFFF"
+                        cardBg={colors.card}
                         cardSurface
                       />
                     )}

@@ -158,9 +158,7 @@ export const DayCard = memo(function DayCardComponent({
 
   const headerTextColor = today
     ? colors.today
-    : isDark
-    ? colors.text
-    : '#31383E';
+    : colors.text;
 
   const dayName = t.date.weekdays[date.getDay()] ?? '';
   const dayNumber = format(date, 'd');
@@ -188,7 +186,7 @@ export const DayCard = memo(function DayCardComponent({
         }}
       >
         {dayName.toUpperCase()}
-        <Text style={{ color: isDark ? colors.secondary : '#707684', fontWeight: '500' }}>
+        <Text style={{ color: colors.secondary, fontWeight: '500' }}>
           {' '}• {dayNumber} {monthShort}
         </Text>
       </Text>
@@ -200,7 +198,7 @@ export const DayCard = memo(function DayCardComponent({
       <View
         style={{
           height: 1,
-          backgroundColor: isDark ? colors.cardBorder : '#EDEEF1',
+          backgroundColor: colors.divider,
           marginTop: 8,
           marginBottom: 8,
         }}
@@ -257,8 +255,8 @@ export const DayCard = memo(function DayCardComponent({
                 height: 16,
                 borderRadius: 5,
                 borderWidth: 1,
-                borderColor: isDark ? '#3A3A3C' : '#DEE2E8',
-                backgroundColor: isDark ? colors.checkboxBg : '#F7F9FC',
+                borderColor: colors.checkboxBorder,
+                backgroundColor: colors.checkboxBg,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -266,14 +264,14 @@ export const DayCard = memo(function DayCardComponent({
               <Svg width={10} height={10} viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M12 5v14M5 12h15"
-                  stroke={isDark ? colors.secondary : '#9CA3AF'}
+                  stroke={colors.secondary}
                   strokeWidth="2.4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </Svg>
             </View>
-            <Text style={{ color: isDark ? colors.secondary : '#9CA3AF', fontSize: 13, lineHeight: 18, fontWeight: '400' }}>
+            <Text style={{ color: colors.secondary, fontSize: 13, lineHeight: 18, fontWeight: '400' }}>
               {t.common.addTask}
             </Text>
           </View>

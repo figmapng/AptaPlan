@@ -199,7 +199,7 @@ export default function DayScreen() {
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: isSelectedToday ? colors.today : isDark ? colors.text : '#31383E',
+              color: isSelectedToday ? colors.today : colors.text,
               letterSpacing: -0.2,
             }}
           >
@@ -210,11 +210,11 @@ export default function DayScreen() {
             style={{
               fontSize: 14,
               fontWeight: '500',
-              color: isDark ? '#8E8E93' : '#9CA3AF',
+              color: colors.secondary,
               fontVariant: ['tabular-nums'],
             }}
           >
-            <Text style={{ fontWeight: '600', color: isDark ? colors.text : '#31383E' }}>
+            <Text style={{ fontWeight: '600', color: colors.text }}>
               {completedCount}
             </Text>
             /{dayTasks.length}
@@ -258,7 +258,7 @@ export default function DayScreen() {
                     onPendingDelete={handlePendingDelete}
                     isActive={isActive}
                     cardSurface
-                    cardBg="#FFFFFF"
+                    cardBg={colors.card}
                   />
                 )}
               />

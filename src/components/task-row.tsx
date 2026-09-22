@@ -356,18 +356,16 @@ export const TaskRow = React.memo(function TaskRow({
               compact && styles.compactCheckbox,
               cardSurface && styles.cardSurfaceCheckbox,
               {
-                borderColor: compact || cardSurface
-                  ? (isDark ? colors.cardBorder : '#DEE2E8')
-                  : colors.checkboxBorder,
+                borderColor: colors.checkboxBorder,
                 backgroundColor: compact || cardSurface
-                  ? (isDark ? colors.checkboxBg : '#F7F9FC')
+                  ? colors.checkboxBg
                   : 'transparent',
                 borderWidth: compact || cardSurface ? 1.2 : 1.5,
               },
               task.isCompleted && (compact
                 ? {
-                    borderColor: isDark ? colors.cardBorder : '#CBD5E1',
-                    backgroundColor: isDark ? colors.checkedCheckboxBg : '#F1F5F9',
+                    borderColor: colors.checkboxBorder,
+                    backgroundColor: colors.checkedCheckboxBg,
                     borderWidth: 1.2,
                   }
                 : {
@@ -387,7 +385,7 @@ export const TaskRow = React.memo(function TaskRow({
               >
                 <CheckmarkIcon
                   size={compact ? 10 : cardSurface ? 11 : 13}
-                  color={compact ? (isDark ? colors.checkedCheckboxCheck : '#CBD5E1') : colors.today}
+                  color={compact ? colors.checkedCheckboxCheck : colors.today}
                   strokeWidth={compact ? 2.6 : cardSurface ? 3.0 : 3.2}
                 />
               </Animated.View>
@@ -419,9 +417,9 @@ export const TaskRow = React.memo(function TaskRow({
                 styles.title,
                 compact && styles.compactTitle,
                 cardSurface && styles.cardSurfaceTitle,
-                { color: isDark ? colors.text : '#31383E' },
+                { color: colors.text },
                 compact && { flex: 1 },
-                task.isCompleted && [styles.completedTitle, { color: isDark ? '#636366' : '#9CA3AF' }],
+                task.isCompleted && [styles.completedTitle, { color: colors.checkedTaskText }],
               ]}
             >
               {task.title}
@@ -431,13 +429,13 @@ export const TaskRow = React.memo(function TaskRow({
               <View
                 style={[
                   styles.compactTimePill,
-                  { backgroundColor: isDark ? colors.capsule : '#F3F4F7' },
+                  { backgroundColor: colors.capsule },
                 ]}
               >
                 <Text
                   style={[
                     styles.compactTimeText,
-                    { color: isDark ? colors.secondary : '#6B7280' },
+                    { color: colors.secondary },
                   ]}
                 >
                   {task.time}
@@ -595,8 +593,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     borderCurve: 'continuous',
     borderWidth: 1,
-    borderColor: '#DEE2E8',
-    backgroundColor: '#F7F9FC',
+    borderColor: '#D1D1D6',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -634,7 +632,7 @@ const styles = StyleSheet.create({
     color: colors.secondary,
   },
   compactTimePill: {
-    backgroundColor: '#F3F4F7',
+    backgroundColor: '#F2F2F7',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -647,7 +645,7 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     lineHeight: 14,
     fontWeight: '500',
-    color: '#6B7280',
+    color: '#8E8E93',
     fontVariant: ['tabular-nums'],
   },
   metadataRow: {

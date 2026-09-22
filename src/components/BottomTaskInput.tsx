@@ -107,7 +107,7 @@ export function BottomTaskInput({
           <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
             <Path
               d="M12 4.5v15M4.5 12h15"
-              stroke={isDark ? colors.secondary : '#707684'}
+              stroke={colors.secondary}
               strokeWidth="2.4"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -119,7 +119,7 @@ export function BottomTaskInput({
               flex: 1,
               fontSize: 16,
               fontWeight: '400',
-              color: isDark ? colors.text : '#475569',
+              color: colors.text,
             }}
           >
             {t.common.addTask}
@@ -199,7 +199,7 @@ export function BottomTaskInput({
         <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
           <Path
             d="M12 4.5v15M4.5 12h15"
-            stroke={isDark ? colors.secondary : '#707684'}
+            stroke={colors.secondary}
             strokeWidth="2.4"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -211,7 +211,7 @@ export function BottomTaskInput({
             flex: 1,
             fontSize: 16,
             fontWeight: '400',
-            color: isDark ? colors.secondary : '#707684',
+            color: colors.secondary,
           }}
         >
           {t.common.addTask}
