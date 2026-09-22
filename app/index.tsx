@@ -1778,6 +1778,7 @@ export default function Home() {
 function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Task; targetLayout: { x: number; y: number; width: number; height: number } } | null; onComplete: () => void }) {
   const { width: sw, height: sh } = useWindowDimensions();
   const anim = useRef(new Animated.Value(0)).current;
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (flyingTask) {
@@ -1791,7 +1792,6 @@ function FlyingTaskOverlay({ flyingTask, onComplete }: { flyingTask: { task: Tas
 
   if (!flyingTask) return null;
   const { task, targetLayout } = flyingTask;
-  const { colors } = useTheme();
   const sx = sw / 2 - 90, sy = sh - 160;
   const tx = targetLayout.x + targetLayout.width / 2 - 90;
   const ty = targetLayout.y + targetLayout.height / 2 - 18;
