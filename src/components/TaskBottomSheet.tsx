@@ -22,8 +22,8 @@ import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { getTodayKey } from '@/utils/dateHelpers';
 import { useI18n } from '@/i18n/use-i18n';
-import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
 import { BlurView } from 'expo-blur';
+import { BottomTaskInput } from './BottomTaskInput';
 import { AnimatedPressable } from './AnimatedPressable';
 import { TaskInput } from './TaskInput';
 import { DateChip } from './DateChip';
@@ -73,8 +73,6 @@ export function TaskBottomSheet({
   const keyboardHeightAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(340)).current;
   const inputRef = useRef<TextInput>(null);
-
-  const isLiquidGlass = useMemo(() => checkIsLiquidGlassSupported(), []);
   const [isFocused, setIsFocused] = useState(true);
 
   useEffect(() => {
@@ -345,156 +343,65 @@ export function TaskBottomSheet({
 
           {/* Input & Send Button Row (Send button inside input) */}
           <View style={styles.inputRow}>
-            {isLiquidGlass ? (
-              <GlassView
-                glassEffectStyle="clear"
-                isInteractive={true}
-                colorScheme={isDark ? 'dark' : 'light'}
-                borderRadius={25}
-                borderCurve="continuous"
-                style={[
-                  styles.inputWrapper,
-                  {
-                    minHeight: Math.max(50, titleInputHeight + 10),
-                    borderRadius: 25,
-                    borderCurve: 'continuous',
-                    borderWidth: 1,
-                    borderColor: isDark
-                      ? 'rgba(255, 255, 255, 0.16)'
-                      : 'rgba(0, 0, 0, 0.08)',
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
-                  },
-                ]}
-              >
-                <View style={styles.inputContent}>
-                  <TaskInput
-                    ref={inputRef}
-                    value={title}
-                    onChangeText={setTitle}
-                    onHeightChange={setTitleInputHeight}
-                    onSubmit={handleSend}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                  />
-                </View>
-
-                <AnimatedPressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t.common.save}
-                  disabled={!isEnabled}
-                  onPress={handleSend}
-                  activeScale={0.92}
-                  style={styles.sendBtn}
-                >
-                  {isEnabled ? (
-                    <View
-                      style={[
-                        StyleSheet.absoluteFill,
-                        styles.sendBtnInner,
-                        {
-                          backgroundColor: colors.today,
-                          borderColor: colors.todayDark,
-                        },
-                      ]}
-                    >
-                      {editingTask ? (
-                        <CheckIcon color="#FFFFFF" />
-                      ) : (
-                        <ArrowUpIcon color="#FFFFFF" />
-                      )}
-                    </View>
-                  ) : (
-                    <View
-                      style={[
-                        StyleSheet.absoluteFill,
-                        styles.sendBtnInner,
-                        {
-                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
-                          borderWidth: 1,
-                          borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)',
-                        },
-                      ]}
-                    >
-                      {editingTask ? (
-                        <CheckIcon color={isDark ? colors.secondary : '#8E8E93'} />
-                      ) : (
-                        <ArrowUpIcon color={isDark ? colors.secondary : '#8E8E93'} />
-                      )}
-                    </View>
-                  )}
-                </AnimatedPressable>
-              </GlassView>
-            ) : (
-              <View
-                style={[
-                  styles.inputWrapper,
-                  {
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
-                    borderColor: isDark
-                      ? 'rgba(255, 255, 255, 0.16)'
-                      : 'rgba(0, 0, 0, 0.08)',
-                    borderWidth: 1,
-                    minHeight: Math.max(50, titleInputHeight + 10),
-                    borderRadius: 25,
-                    borderCurve: 'continuous',
-                    overflow: 'hidden',
-                  },
-                ]}
-              >
-                <BlurView
-                  intensity={30}
-                  tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
-                  style={StyleSheet.absoluteFill}
-                  pointerEvents="none"
+            <BottomTaskInput minHeight={Math.max(50, titleInputHeight + 10)}>
+              <View style={styles.inputContent}>
+                <TaskInput
+                  ref={inputRef}
+                  value={title}
+                  onChangeText={setTitle}
+                  onHeightChange={setTitleInputHeight}
+                  onSubmit={handleSend}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
                 />
-                <View style={styles.inputContent}>
-                  <TaskInput
-                    ref={inputRef}
-                    value={title}
-                    onChangeText={setTitle}
-                    onHeightChange={setTitleInputHeight}
-                    onSubmit={handleSend}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                  />
-                </View>
+              </View>
 
-                <AnimatedPressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t.common.save}
-                  disabled={!isEnabled}
-                  onPress={handleSend}
-                  activeScale={0.92}
-                  style={styles.sendBtn}
-                >
+              <AnimatedPressable
+                accessibilityRole="button"
+                accessibilityLabel={t.common.save}
+                disabled={!isEnabled}
+                onPress={handleSend}
+                activeScale={0.92}
+                style={styles.sendBtn}
+              >
+                {isEnabled ? (
                   <View
                     style={[
                       StyleSheet.absoluteFill,
                       styles.sendBtnInner,
                       {
-                        backgroundColor: isEnabled
-                          ? colors.today
-                          : isDark
-                          ? 'rgba(255, 255, 255, 0.06)'
-                          : 'rgba(0, 0, 0, 0.05)',
-                        borderWidth: 1,
-                        borderColor: isEnabled
-                          ? colors.todayDark
-                          : isDark
-                          ? 'rgba(255, 255, 255, 0.10)'
-                          : 'rgba(0, 0, 0, 0.06)',
+                        backgroundColor: colors.today,
+                        borderColor: colors.todayDark,
                       },
                     ]}
                   >
                     {editingTask ? (
-                      <CheckIcon color={isEnabled ? '#FFFFFF' : colors.secondary} />
+                      <CheckIcon color="#FFFFFF" />
                     ) : (
-                      <ArrowUpIcon color={isEnabled ? '#FFFFFF' : colors.secondary} />
+                      <ArrowUpIcon color="#FFFFFF" />
                     )}
                   </View>
-                </AnimatedPressable>
-              </View>
-            )}
+                ) : (
+                  <View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      styles.sendBtnInner,
+                      {
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+                        borderWidth: 1,
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)',
+                      },
+                    ]}
+                  >
+                    {editingTask ? (
+                      <CheckIcon color={isDark ? colors.secondary : '#8E8E93'} />
+                    ) : (
+                      <ArrowUpIcon color={isDark ? colors.secondary : '#8E8E93'} />
+                    )}
+                  </View>
+                )}
+              </AnimatedPressable>
+            </BottomTaskInput>
           </View>
 
 
@@ -623,15 +530,6 @@ const styles = StyleSheet.create({
   inputRow: {
     marginTop: 0,
     marginBottom: 12,
-  },
-  inputWrapper: {
-    position: 'relative',
-    minHeight: 50,
-    borderRadius: 25,
-    borderCurve: 'continuous',
-    paddingLeft: 16,
-    paddingRight: 5,
-    paddingVertical: 5,
   },
   inputContent: {
     position: 'absolute',

@@ -8,8 +8,10 @@ import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 
 export interface BottomTaskInputProps {
-  onAddTask: () => void;
+  onAddTask?: () => void;
   onInteraction?: () => void;
+  children?: React.ReactNode;
+  minHeight?: number;
   style?: StyleProp<ViewStyle>;
   testID?: string;
   accessibilityLabel?: string;
@@ -18,6 +20,8 @@ export interface BottomTaskInputProps {
 export function BottomTaskInput({
   onAddTask,
   onInteraction,
+  children,
+  minHeight = 50,
   style,
   testID,
   accessibilityLabel,
@@ -28,10 +32,45 @@ export function BottomTaskInput({
 
   const handlePress = () => {
     onInteraction?.();
-    onAddTask();
+    onAddTask?.();
+  };
+
+  const hasChildren = Boolean(children);
+
+  const sharedShellStyle: ViewStyle = {
+    borderRadius: 25,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
   };
 
   if (isLiquidGlass) {
+    if (hasChildren) {
+      return (
+        <GlassView
+          glassEffectStyle="clear"
+          isInteractive={true}
+          colorScheme={isDark ? 'dark' : 'light'}
+          borderRadius={25}
+          borderCurve="continuous"
+          testID={testID}
+          accessibilityLabel={accessibilityLabel}
+          style={[
+            sharedShellStyle,
+            {
+              minHeight: Math.max(50, minHeight),
+              position: 'relative',
+              overflow: 'hidden',
+            },
+            style,
+          ]}
+        >
+          {children}
+        </GlassView>
+      );
+    }
+
     return (
       <AnimatedPressable
         testID={testID}
@@ -54,18 +93,16 @@ export function BottomTaskInput({
           colorScheme={isDark ? 'dark' : 'light'}
           borderRadius={25}
           borderCurve="continuous"
-          style={{
-            flex: 1,
-            borderRadius: 25,
-            borderCurve: 'continuous',
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 16,
-            gap: 8,
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
-          }}
+          style={[
+            sharedShellStyle,
+            {
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 16,
+              gap: 8,
+            },
+          ]}
         >
           <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
             <Path
@@ -92,6 +129,32 @@ export function BottomTaskInput({
     );
   }
 
+  if (hasChildren) {
+    return (
+      <View
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        style={[
+          sharedShellStyle,
+          {
+            minHeight: Math.max(50, minHeight),
+            position: 'relative',
+            overflow: 'hidden',
+          },
+          style,
+        ]}
+      >
+        <BlurView
+          tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
+          intensity={30}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        {children}
+      </View>
+    );
+  }
+
   return (
     <AnimatedPressable
       testID={testID}
@@ -104,7 +167,7 @@ export function BottomTaskInput({
           height: 50,
           borderRadius: 25,
           borderCurve: 'continuous',
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
+          backgroundColor: sharedShellStyle.backgroundColor,
           shadowColor: '#000000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: isDark ? 0.35 : 0.08,
@@ -115,18 +178,17 @@ export function BottomTaskInput({
       ]}
     >
       <View
-        style={{
-          flex: 1,
-          borderRadius: 25,
-          borderCurve: 'continuous',
-          borderWidth: 1,
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
-          overflow: 'hidden',
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 16,
-          gap: 8,
-        }}
+        style={[
+          sharedShellStyle,
+          {
+            flex: 1,
+            overflow: 'hidden',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            gap: 8,
+          },
+        ]}
       >
         <BlurView
           tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
