@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     minHeight: 24,
     backgroundColor: 'transparent',
-    textAlign: 'center',
+    textAlign: 'left',
     textAlignVertical: 'top',
   },
   measureText: {

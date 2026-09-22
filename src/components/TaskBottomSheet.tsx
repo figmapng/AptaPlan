@@ -77,40 +77,54 @@ export function TaskBottomSheet({
   const isLiquidGlass = useMemo(() => checkIsLiquidGlassSupported(), []);
   const [isFocused, setIsFocused] = useState(true);
 
+  const isSheetOpenRef = useRef(false);
+  const editingTaskIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (visible) {
-      if (editingTask) {
-        setTitle(editingTask.title);
-        setTitleInputHeight(24);
-        setSelectedDate(editingTask.date);
-        setSelectedTime(editingTask.time || null);
-        setSelectedRepeat(((editingTask.repeat as TaskRepeat) || (editingTask.repeatType as TaskRepeat) || 'none'));
-        setSelectedRepeatInterval(editingTask.repeatInterval || 1);
-        setSelectedCustomLabel(editingTask.repeatConfig ? describeCustomRepeat(editingTask.repeatConfig) : undefined);
-        setSelectedCustomUnit(editingTask.repeatConfig?.unit ?? undefined);
-        setSelectedCustomConfig(editingTask.repeatConfig ?? undefined);
-      } else {
-        setTitle('');
-        setTitleInputHeight(24);
-        setSelectedDate(initialDate || null);
-        setSelectedTime(null);
-        setSelectedRepeat('none');
-        setSelectedRepeatInterval(1);
-        setSelectedCustomLabel(undefined);
-        setSelectedCustomUnit(undefined);
-        setSelectedCustomConfig(undefined);
+      const currentTaskId = editingTask?.id ?? null;
+      const shouldInit = !isSheetOpenRef.current || editingTaskIdRef.current !== currentTaskId;
+      isSheetOpenRef.current = true;
+      editingTaskIdRef.current = currentTaskId;
+
+      if (shouldInit) {
+        if (editingTask) {
+          setTitle(editingTask.title);
+          setTitleInputHeight(24);
+          setSelectedDate(editingTask.date);
+          setSelectedTime(editingTask.time || null);
+          setSelectedRepeat(((editingTask.repeat as TaskRepeat) || (editingTask.repeatType as TaskRepeat) || 'none'));
+          setSelectedRepeatInterval(editingTask.repeatInterval || 1);
+          setSelectedCustomLabel(editingTask.repeatConfig ? describeCustomRepeat(editingTask.repeatConfig) : undefined);
+          setSelectedCustomUnit(editingTask.repeatConfig?.unit ?? undefined);
+          setSelectedCustomConfig(editingTask.repeatConfig ?? undefined);
+        } else {
+          setTitle('');
+          setTitleInputHeight(24);
+          setSelectedDate(initialDate || null);
+          setSelectedTime(null);
+          setSelectedRepeat('none');
+          setSelectedRepeatInterval(1);
+          setSelectedCustomLabel(undefined);
+          setSelectedCustomUnit(undefined);
+          setSelectedCustomConfig(undefined);
+        }
+
+        Animated.spring(translateY, {
+          toValue: 0,
+          friction: 8,
+          tension: 80,
+          useNativeDriver: false,
+        }).start();
+
+        const timer = setTimeout(() => {
+          inputRef.current?.focus();
+        }, 120);
+        return () => clearTimeout(timer);
       }
-      Animated.spring(translateY, {
-        toValue: 0,
-        friction: 8,
-        tension: 80,
-        useNativeDriver: false,
-      }).start();
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 120);
-      return () => clearTimeout(timer);
     } else {
+      isSheetOpenRef.current = false;
+      editingTaskIdRef.current = null;
       Animated.timing(translateY, {
         toValue: 340,
         duration: 180,
@@ -118,7 +132,7 @@ export function TaskBottomSheet({
         useNativeDriver: false,
       }).start();
     }
-  }, [visible, editingTask, initialDate, translateY]);
+  }, [visible, editingTask?.id, initialDate, translateY]);
 
   const lastKeyboardHeight = useRef(320);
 
