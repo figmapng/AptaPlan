@@ -31,7 +31,7 @@ export function TaskListFrame({
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const rows = (
-    <View style={{ gap: 2 }}>
+    <View style={{ gap: 4 }}>
       {tasks.map((task) => (
         <TaskRow
           key={`${task.id}:${task.date}`}
@@ -51,17 +51,17 @@ export function TaskListFrame({
             alignItems: 'center',
             alignSelf: 'flex-start',
             backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-            paddingHorizontal: 6,
-            paddingVertical: 1.5,
-            borderRadius: 6,
+            paddingHorizontal: 7,
+            paddingVertical: 2,
+            borderRadius: 7,
             borderCurve: 'continuous',
-            marginTop: 1,
+            marginTop: 2,
           }}
         >
           <Text
             style={{
-              fontSize: 10,
-              lineHeight: 12,
+              fontSize: 10.5,
+              lineHeight: 13,
               fontWeight: '600',
               color: colors.today,
               fontVariant: ['tabular-nums'],
