@@ -219,48 +219,6 @@ export const DayCard = memo(function DayCardComponent({
     ? measuredBodyHeight
     : (wide ? expandedSundayHeight : collapsedBodyHeight);
 
-  const { visibleTasks, moreCount } = useMemo(() => {
-    if (!tasks || tasks.length === 0) return { visibleTasks: [], moreCount: 0 };
-
-    const usableHeight = Math.max(30, activeBodyHeight - 4);
-    const TASK_ROW_HEIGHT = 21;
-    const TASK_GAP = 4;
-    const BADGE_HEIGHT = 17;
-    const BADGE_MARGIN_TOP = 2;
-
-    const totalHeight = (count: number) => {
-      if (count <= 0) return 0;
-      return count * TASK_ROW_HEIGHT + (count - 1) * TASK_GAP;
-    };
-
-    // 1. If all tasks fit (with a 2px tolerance), render ALL tasks
-    if (totalHeight(tasks.length) <= usableHeight + 2) {
-      return { visibleTasks: tasks, moreCount: 0 };
-    }
-
-    // 2. Otherwise find the maximum number of tasks that can fit alongside the "+N more" badge
-    let bestCount = 1;
-    for (let k = 1; k < tasks.length; k++) {
-      const heightWithBadge = totalHeight(k) + TASK_GAP + BADGE_MARGIN_TOP + BADGE_HEIGHT;
-      if (heightWithBadge <= usableHeight) {
-        bestCount = k;
-      } else {
-        break;
-      }
-    }
-
-    // 3. If only 1 task is left unrendered (tasks.length - bestCount === 1),
-    // and that single task can fit within a minor margin, show the task instead of "+1 more"
-    if (tasks.length - bestCount === 1 && totalHeight(tasks.length) <= usableHeight + 4) {
-      return { visibleTasks: tasks, moreCount: 0 };
-    }
-
-    return {
-      visibleTasks: tasks.slice(0, bestCount),
-      moreCount: tasks.length - bestCount,
-    };
-  }, [tasks, activeBodyHeight]);
-
   const cardBodyContent = (
     <Animated.View
       onLayout={(e) => {
@@ -277,25 +235,33 @@ export const DayCard = memo(function DayCardComponent({
         wide ? undefined : { height: bodyHeight },
       ]}
     >
-      <Pressable
-        onPressIn={handlePressIn}
-        onPress={open}
-        style={{
-          flex: 1,
-          paddingVertical: 2,
-          paddingHorizontal: 0,
-        }}
-      >
-        {tasks.length ? (
+      {tasks.length ? (
+        <View
+          style={{
+            flex: 1,
+            paddingVertical: 1,
+            paddingHorizontal: 0,
+          }}
+        >
           <TaskListFrame
-            tasks={visibleTasks}
-            moreCount={moreCount}
+            tasks={tasks}
+            containerHeight={activeBodyHeight}
             onPress={open}
             onInteraction={onInteraction}
             isSwipingRef={isSwipingRef}
             singleLine
           />
-        ) : (
+        </View>
+      ) : (
+        <Pressable
+          onPressIn={handlePressIn}
+          onPress={open}
+          style={{
+            flex: 1,
+            paddingVertical: 2,
+            paddingHorizontal: 0,
+          }}
+        >
           <View
             style={{
               flexDirection: 'row',
@@ -330,8 +296,8 @@ export const DayCard = memo(function DayCardComponent({
               {t.common.addTask}
             </Text>
           </View>
-        )}
-      </Pressable>
+        </Pressable>
+      )}
     </Animated.View>
   );
 
