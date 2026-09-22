@@ -555,9 +555,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   compactRowContainer: {
-    minHeight: 22,
-    paddingTop: 2.5,
-    paddingBottom: 2.5,
+    minHeight: 20,
+    paddingTop: 2,
+    paddingBottom: 2,
     paddingHorizontal: 0,
     gap: 8,
     alignItems: 'center',

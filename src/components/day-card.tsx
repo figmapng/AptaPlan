@@ -223,9 +223,9 @@ export const DayCard = memo(function DayCardComponent({
     if (!tasks || tasks.length === 0) return { visibleTasks: [], moreCount: 0 };
 
     const usableHeight = Math.max(30, activeBodyHeight - 4);
-    const TASK_ROW_HEIGHT = 22;
-    const TASK_GAP = 4;
-    const BADGE_HEIGHT = 18;
+    const TASK_ROW_HEIGHT = 20;
+    const TASK_GAP = 3;
+    const BADGE_HEIGHT = 17;
 
     const totalHeightRequired = (count: number) => {
       if (count <= 0) return 0;
@@ -236,8 +236,19 @@ export const DayCard = memo(function DayCardComponent({
       return { visibleTasks: tasks, moreCount: 0 };
     }
 
-    const heightForTasks = usableHeight - BADGE_HEIGHT - TASK_GAP;
-    const maxFitting = Math.max(1, Math.floor((heightForTasks + TASK_GAP) / (TASK_ROW_HEIGHT + TASK_GAP)));
+    const availableForTasksAndBadge = usableHeight - BADGE_HEIGHT;
+    const maxFitting = Math.max(
+      1,
+      Math.floor((availableForTasksAndBadge + TASK_GAP) / (TASK_ROW_HEIGHT + TASK_GAP))
+    );
+
+    // If only 1 task would be hidden, prefer showing that task over the badge if it fits within a minor margin
+    if (tasks.length - maxFitting === 1) {
+      if (totalHeightRequired(tasks.length) <= usableHeight + 3) {
+        return { visibleTasks: tasks, moreCount: 0 };
+      }
+    }
+
     const visibleCount = Math.min(maxFitting, tasks.length - 1);
 
     return {

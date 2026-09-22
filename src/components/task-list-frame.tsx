@@ -31,7 +31,7 @@ export function TaskListFrame({
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const rows = (
-    <View style={{ gap: 4 }}>
+    <View style={{ gap: 3 }}>
       {tasks.map((task) => (
         <TaskRow
           key={`${task.id}:${task.date}`}
