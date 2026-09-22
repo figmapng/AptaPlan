@@ -1,4 +1,4 @@
-import React, { memo, useRef } from 'react';
+import React, { memo, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { format, isToday } from 'date-fns';
@@ -213,8 +213,47 @@ export const DayCard = memo(function DayCardComponent({
       })
     : Math.max(80, expandedSundayHeight - 48);
 
+  const [measuredBodyHeight, setMeasuredBodyHeight] = useState<number>(0);
+
+  const activeBodyHeight = measuredBodyHeight > 0
+    ? measuredBodyHeight
+    : (wide ? expandedSundayHeight : collapsedBodyHeight);
+
+  const { visibleTasks, moreCount } = useMemo(() => {
+    if (!tasks || tasks.length === 0) return { visibleTasks: [], moreCount: 0 };
+
+    const usableHeight = Math.max(30, activeBodyHeight - 4);
+    const TASK_ROW_HEIGHT = 22;
+    const TASK_GAP = 4;
+    const BADGE_HEIGHT = 18;
+
+    const totalHeightRequired = (count: number) => {
+      if (count <= 0) return 0;
+      return count * TASK_ROW_HEIGHT + (count - 1) * TASK_GAP;
+    };
+
+    if (totalHeightRequired(tasks.length) <= usableHeight) {
+      return { visibleTasks: tasks, moreCount: 0 };
+    }
+
+    const heightForTasks = usableHeight - BADGE_HEIGHT - TASK_GAP;
+    const maxFitting = Math.max(1, Math.floor((heightForTasks + TASK_GAP) / (TASK_ROW_HEIGHT + TASK_GAP)));
+    const visibleCount = Math.min(maxFitting, tasks.length - 1);
+
+    return {
+      visibleTasks: tasks.slice(0, visibleCount),
+      moreCount: tasks.length - visibleCount,
+    };
+  }, [tasks, activeBodyHeight]);
+
   const cardBodyContent = (
     <Animated.View
+      onLayout={(e) => {
+        const h = Math.round(e.nativeEvent.layout.height);
+        if (h > 0 && Math.abs(h - measuredBodyHeight) > 2) {
+          setMeasuredBodyHeight(h);
+        }
+      }}
       style={[
         {
           overflow: 'hidden',
@@ -234,7 +273,8 @@ export const DayCard = memo(function DayCardComponent({
       >
         {tasks.length ? (
           <TaskListFrame
-            tasks={tasks}
+            tasks={visibleTasks}
+            moreCount={moreCount}
             onPress={open}
             onInteraction={onInteraction}
             isSwipingRef={isSwipingRef}

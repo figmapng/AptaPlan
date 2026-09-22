@@ -37,6 +37,7 @@ export interface Translations {
     addTask: string;
     tasksCount: string;
     completedOf: (done: number, total: number) => string;
+    moreTasks: (count: number) => string;
   };
 
   // View modes

@@ -29,6 +29,7 @@ export const translations: Record<Language, Translations> = {
       addTask: 'Тапсырма қосу',
       tasksCount: 'тапсырма',
       completedOf: (done: number, total: number) => `${done}/${total} орындалды`,
+      moreTasks: (count: number) => `+${count} тағы`,
     },
     viewModes: {
       day: 'Күн',
@@ -368,6 +369,7 @@ export const translations: Record<Language, Translations> = {
       addTask: 'Добавить задачу',
       tasksCount: 'задач',
       completedOf: (done: number, total: number) => `${done}/${total} выполнено`,
+      moreTasks: (count: number) => `+${count} ещё`,
     },
     viewModes: {
       day: 'День',
@@ -707,6 +709,7 @@ export const translations: Record<Language, Translations> = {
       addTask: 'Add task',
       tasksCount: 'tasks',
       completedOf: (done: number, total: number) => `${done}/${total} completed`,
+      moreTasks: (count: number) => `+${count} more`,
     },
     viewModes: {
       day: 'Day',
