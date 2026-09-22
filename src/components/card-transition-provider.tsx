@@ -993,10 +993,15 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 gap: 10,
                 zIndex: 10001,
                 elevation: 12,
-                opacity: progress.interpolate({
-                  inputRange: [0.3, 1],
-                  outputRange: [0, 1],
-                }),
+                transform: [
+                  {
+                    translateY: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [100, 0],
+                      extrapolate: 'clamp',
+                    }),
+                  },
+                ],
               }}
             >
               <BackButton onPress={closeCard} size={50} />
