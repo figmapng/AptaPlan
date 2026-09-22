@@ -222,38 +222,41 @@ export const DayCard = memo(function DayCardComponent({
   const { visibleTasks, moreCount } = useMemo(() => {
     if (!tasks || tasks.length === 0) return { visibleTasks: [], moreCount: 0 };
 
-    const usableHeight = Math.max(30, activeBodyHeight - 4);
-    const TASK_ROW_HEIGHT = 20;
-    const TASK_GAP = 3;
-    const BADGE_HEIGHT = 17;
+    const usableHeight = Math.max(30, activeBodyHeight - 2);
+    const TASK_ROW_HEIGHT = 18;
+    const TASK_GAP = 2;
+    const BADGE_HEIGHT = 15;
 
-    const totalHeightRequired = (count: number) => {
+    const totalHeight = (count: number) => {
       if (count <= 0) return 0;
       return count * TASK_ROW_HEIGHT + (count - 1) * TASK_GAP;
     };
 
-    if (totalHeightRequired(tasks.length) <= usableHeight) {
+    // 1. If all tasks fit (with a 3px tolerance), render ALL tasks
+    if (totalHeight(tasks.length) <= usableHeight + 3) {
       return { visibleTasks: tasks, moreCount: 0 };
     }
 
-    const availableForTasksAndBadge = usableHeight - BADGE_HEIGHT;
-    const maxFitting = Math.max(
-      1,
-      Math.floor((availableForTasksAndBadge + TASK_GAP) / (TASK_ROW_HEIGHT + TASK_GAP))
-    );
-
-    // If only 1 task would be hidden, prefer showing that task over the badge if it fits within a minor margin
-    if (tasks.length - maxFitting === 1) {
-      if (totalHeightRequired(tasks.length) <= usableHeight + 3) {
-        return { visibleTasks: tasks, moreCount: 0 };
+    // 2. Otherwise find the maximum number of tasks that can fit alongside the "+N more" badge
+    let bestCount = 1;
+    for (let k = 1; k < tasks.length; k++) {
+      const heightWithBadge = totalHeight(k) + TASK_GAP + BADGE_HEIGHT;
+      if (heightWithBadge <= usableHeight + 2) {
+        bestCount = k;
+      } else {
+        break;
       }
     }
 
-    const visibleCount = Math.min(maxFitting, tasks.length - 1);
+    // 3. If only 1 task is left unrendered (tasks.length - bestCount === 1),
+    // and that single task can fit within a minor margin, show the task instead of "+1 more"
+    if (tasks.length - bestCount === 1 && totalHeight(tasks.length) <= usableHeight + 5) {
+      return { visibleTasks: tasks, moreCount: 0 };
+    }
 
     return {
-      visibleTasks: tasks.slice(0, visibleCount),
-      moreCount: tasks.length - visibleCount,
+      visibleTasks: tasks.slice(0, bestCount),
+      moreCount: tasks.length - bestCount,
     };
   }, [tasks, activeBodyHeight]);
 
@@ -278,7 +281,7 @@ export const DayCard = memo(function DayCardComponent({
         onPress={open}
         style={{
           flex: 1,
-          paddingVertical: 2,
+          paddingVertical: 1,
           paddingHorizontal: 0,
         }}
       >
