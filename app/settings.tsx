@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -28,6 +28,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { UserGuideModal } from '@/components/UserGuideModal';
+import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
 import { getDatabase } from '@/database/database';
 import { exportBackup, importBackup } from '@/services/backup-service';
 
@@ -510,6 +511,68 @@ function Divider() {
   return <View style={[styles.divider, { backgroundColor: colors.inputBorder }]} />;
 }
 
+function ModalActionButton({
+  onPress,
+  label,
+  style,
+}: {
+  onPress: () => void;
+  label: string;
+  style?: any;
+}) {
+  const { colors, isDark } = useTheme();
+  const isLiquidGlass = useMemo(() => checkIsLiquidGlassSupported(), []);
+
+  return (
+    <AnimatedPressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      activeScale={0.96}
+      style={[styles.modalContinueButton, style]}
+    >
+      {isLiquidGlass ? (
+        <GlassView
+          glassEffectStyle="clear"
+          isInteractive={true}
+          colorScheme={isDark ? 'dark' : 'light'}
+          borderRadius={26}
+          borderCurve="continuous"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: colors.today,
+              borderRadius: 26,
+              borderCurve: 'continuous',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.25)',
+            },
+          ]}
+        >
+          <Text style={styles.modalContinueButtonText}>{label}</Text>
+        </GlassView>
+      ) : (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: colors.today,
+              borderRadius: 26,
+              borderCurve: 'continuous',
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+          ]}
+        >
+          <Text style={styles.modalContinueButtonText}>{label}</Text>
+        </View>
+      )}
+    </AnimatedPressable>
+  );
+}
+
 function OptionModal({
   visible,
   title,
@@ -590,9 +653,7 @@ function OptionModal({
           </View>
 
           {/* Bottom Action Button */}
-          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
-            <Text style={styles.modalContinueButtonText}>{t.common.confirm}</Text>
-          </Pressable>
+          <ModalActionButton onPress={handleConfirm} label={t.common.confirm} />
         </View>
       </View>
     </Modal>
@@ -855,9 +916,7 @@ function DefaultViewModeModal({
           </View>
 
           {/* Confirm Button */}
-          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
-            <Text style={styles.modalContinueButtonText}>{t.common.save}</Text>
-          </Pressable>
+          <ModalActionButton onPress={handleConfirm} label={t.common.save} />
         </View>
       </View>
     </Modal>
@@ -1029,9 +1088,7 @@ function LastDayVisibilityModal({
           </View>
 
           {/* Confirm Button */}
-          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today }]} onPress={handleConfirm}>
-            <Text style={styles.modalContinueButtonText}>Сақтау</Text>
-          </Pressable>
+          <ModalActionButton onPress={handleConfirm} label="Сақтау" />
         </View>
       </View>
     </Modal>
@@ -1230,9 +1287,7 @@ function MonthPickerStyleModal({
           </View>
 
           {/* Confirm Button */}
-          <Pressable style={[styles.modalContinueButton, { backgroundColor: colors.today, marginTop: 12 }]} onPress={handleConfirm}>
-            <Text style={styles.modalContinueButtonText}>{t.common.save}</Text>
-          </Pressable>
+          <ModalActionButton onPress={handleConfirm} label={t.common.save} style={{ marginTop: 12 }} />
         </View>
       </View>
     </Modal>

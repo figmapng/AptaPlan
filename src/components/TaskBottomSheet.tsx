@@ -23,6 +23,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { getTodayKey } from '@/utils/dateHelpers';
 import { useI18n } from '@/i18n/use-i18n';
 import { BlurView } from 'expo-blur';
+import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
 import { BottomTaskInput } from './BottomTaskInput';
 import { AnimatedPressable } from './AnimatedPressable';
 import { TaskInput } from './TaskInput';
@@ -73,6 +74,7 @@ export function TaskBottomSheet({
   const keyboardHeightAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(340)).current;
   const inputRef = useRef<TextInput>(null);
+  const isLiquidGlass = useMemo(() => checkIsLiquidGlassSupported(), []);
   const [isFocused, setIsFocused] = useState(true);
 
   useEffect(() => {
@@ -365,40 +367,90 @@ export function TaskBottomSheet({
                 style={styles.sendBtn}
               >
                 {isEnabled ? (
-                  <View
-                    style={[
-                      StyleSheet.absoluteFill,
-                      styles.sendBtnInner,
-                      {
-                        backgroundColor: colors.today,
-                        borderColor: colors.todayDark,
-                      },
-                    ]}
-                  >
-                    {editingTask ? (
-                      <CheckIcon color="#FFFFFF" />
-                    ) : (
-                      <ArrowUpIcon color="#FFFFFF" />
-                    )}
-                  </View>
+                  isLiquidGlass ? (
+                    <GlassView
+                      glassEffectStyle="clear"
+                      isInteractive={true}
+                      colorScheme={isDark ? 'dark' : 'light'}
+                      borderRadius={20}
+                      borderCurve="continuous"
+                      style={[
+                        StyleSheet.absoluteFill,
+                        styles.sendBtnInner,
+                        {
+                          backgroundColor: colors.today,
+                          borderWidth: 1,
+                          borderColor: 'rgba(255, 255, 255, 0.25)',
+                        },
+                      ]}
+                    >
+                      {editingTask ? (
+                        <CheckIcon color="#FFFFFF" />
+                      ) : (
+                        <ArrowUpIcon color="#FFFFFF" />
+                      )}
+                    </GlassView>
+                  ) : (
+                    <View
+                      style={[
+                        StyleSheet.absoluteFill,
+                        styles.sendBtnInner,
+                        {
+                          backgroundColor: colors.today,
+                          borderColor: colors.todayDark,
+                        },
+                      ]}
+                    >
+                      {editingTask ? (
+                        <CheckIcon color="#FFFFFF" />
+                      ) : (
+                        <ArrowUpIcon color="#FFFFFF" />
+                      )}
+                    </View>
+                  )
                 ) : (
-                  <View
-                    style={[
-                      StyleSheet.absoluteFill,
-                      styles.sendBtnInner,
-                      {
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
-                        borderWidth: 1,
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)',
-                      },
-                    ]}
-                  >
-                    {editingTask ? (
-                      <CheckIcon color={isDark ? colors.secondary : '#8E8E93'} />
-                    ) : (
-                      <ArrowUpIcon color={isDark ? colors.secondary : '#8E8E93'} />
-                    )}
-                  </View>
+                  isLiquidGlass ? (
+                    <GlassView
+                      glassEffectStyle="clear"
+                      isInteractive={false}
+                      colorScheme={isDark ? 'dark' : 'light'}
+                      borderRadius={20}
+                      borderCurve="continuous"
+                      style={[
+                        StyleSheet.absoluteFill,
+                        styles.sendBtnInner,
+                        {
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+                          borderWidth: 1,
+                          borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)',
+                        },
+                      ]}
+                    >
+                      {editingTask ? (
+                        <CheckIcon color={isDark ? colors.secondary : '#8E8E93'} />
+                      ) : (
+                        <ArrowUpIcon color={isDark ? colors.secondary : '#8E8E93'} />
+                      )}
+                    </GlassView>
+                  ) : (
+                    <View
+                      style={[
+                        StyleSheet.absoluteFill,
+                        styles.sendBtnInner,
+                        {
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+                          borderWidth: 1,
+                          borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)',
+                        },
+                      ]}
+                    >
+                      {editingTask ? (
+                        <CheckIcon color={isDark ? colors.secondary : '#8E8E93'} />
+                      ) : (
+                        <ArrowUpIcon color={isDark ? colors.secondary : '#8E8E93'} />
+                      )}
+                    </View>
+                  )
                 )}
               </AnimatedPressable>
             </BottomTaskInput>

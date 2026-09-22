@@ -1639,30 +1639,8 @@ export default function Home() {
 
               const showToday = !fromYearMode && (isFuture || isPast);
 
-              const todayButton = showToday ? (
-                <AnimatedPressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t.common.today}
-                  onPress={
-                    (mode as ViewMode) === 'day'
-                      ? () => setDayDate(new Date())
-                      : (mode as ViewMode) === 'month'
-                      ? resetToCurrentMonth
-                      : resetToCurrentWeek
-                  }
-                  activeScale={0.93}
-                  style={{
-                    height: 50,
-                    borderRadius: 25,
-                    borderCurve: 'continuous',
-                    paddingHorizontal: 16,
-                    backgroundColor: colors.today,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexDirection: 'row',
-                    gap: 6,
-                  }}
-                >
+              const todayButtonContent = (
+                <>
                   {isFuture && (
                     <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
                       <Path d="M9 14L4 9l5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
@@ -1679,6 +1657,67 @@ export default function Home() {
                       <Path d="M15 14l5-5-5-5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                       <Path d="M20 9H9a5 5 0 0 0-5 5v2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                     </Svg>
+                  )}
+                </>
+              );
+
+              const todayButton = showToday ? (
+                <AnimatedPressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t.common.today}
+                  onPress={
+                    (mode as ViewMode) === 'day'
+                      ? () => setDayDate(new Date())
+                      : (mode as ViewMode) === 'month'
+                      ? resetToCurrentMonth
+                      : resetToCurrentWeek
+                  }
+                  activeScale={0.93}
+                  style={{
+                    height: 50,
+                    borderRadius: 25,
+                    borderCurve: 'continuous',
+                  }}
+                >
+                  {isLiquidGlass ? (
+                    <GlassView
+                      glassEffectStyle="clear"
+                      isInteractive={true}
+                      colorScheme={isDark ? 'dark' : 'light'}
+                      borderRadius={25}
+                      borderCurve="continuous"
+                      style={{
+                        flex: 1,
+                        borderRadius: 25,
+                        borderCurve: 'continuous',
+                        paddingHorizontal: 16,
+                        backgroundColor: colors.today,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'row',
+                        gap: 6,
+                        borderWidth: 1,
+                        borderColor: 'rgba(255, 255, 255, 0.25)',
+                      }}
+                    >
+                      {todayButtonContent}
+                    </GlassView>
+                  ) : (
+                    <View
+                      style={{
+                        flex: 1,
+                        borderRadius: 25,
+                        borderCurve: 'continuous',
+                        paddingHorizontal: 16,
+                        backgroundColor: colors.today,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'row',
+                        gap: 6,
+                      }}
+                    >
+                      {todayButtonContent}
+                    </View>
                   )}
                 </AnimatedPressable>
               ) : null;
