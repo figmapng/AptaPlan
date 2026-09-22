@@ -104,7 +104,7 @@ export function BottomTaskInput({
           height: 50,
           borderRadius: 25,
           borderCurve: 'continuous',
-          backgroundColor: isDark ? 'rgba(28, 28, 30, 0.85)' : 'rgba(255, 255, 255, 0.82)',
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
           shadowColor: '#000000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: isDark ? 0.35 : 0.08,
@@ -130,7 +130,7 @@ export function BottomTaskInput({
       >
         <BlurView
           tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
-          intensity={95}
+          intensity={30}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />

@@ -436,7 +436,7 @@ export function TaskBottomSheet({
                 style={[
                   styles.inputWrapper,
                   {
-                    backgroundColor: isDark ? 'rgba(28, 28, 30, 0.85)' : 'rgba(255, 255, 255, 0.82)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
                     borderColor: isFocused
                       ? colors.today
                       : isDark
@@ -451,7 +451,7 @@ export function TaskBottomSheet({
                 ]}
               >
                 <BlurView
-                  intensity={95}
+                  intensity={30}
                   tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
                   style={StyleSheet.absoluteFill}
                   pointerEvents="none"

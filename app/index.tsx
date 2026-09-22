@@ -1344,7 +1344,7 @@ export default function Home() {
                 height: 42,
                 borderRadius: 21,
                 borderCurve: 'continuous',
-                backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : 'rgba(255, 255, 255, 0.82)',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
                 shadowColor: '#000000',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: isDark ? 0.3 : 0.06,
@@ -1366,7 +1366,7 @@ export default function Home() {
               >
                 <BlurView
                   tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
-                  intensity={95}
+                  intensity={30}
                   style={StyleSheet.absoluteFill}
                   pointerEvents="none"
                 />

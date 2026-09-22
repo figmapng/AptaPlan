@@ -82,7 +82,7 @@ export function BackButton({
           height: size,
           borderRadius: size / 2,
           borderCurve: 'continuous',
-          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : 'rgba(255, 255, 255, 0.82)',
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
           shadowColor: '#000000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.3 : 0.06,
@@ -106,7 +106,7 @@ export function BackButton({
       >
         <BlurView
           tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
-          intensity={60}
+          intensity={30}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         />
