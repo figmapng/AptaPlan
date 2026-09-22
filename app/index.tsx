@@ -1270,68 +1270,158 @@ export default function Home() {
             })()}
           </View>
 
-          {/* iOS Unified Capsule Controls (View Mode & Settings in one frame) */}
-          <View
-            style={{
-              height: 42,
-              borderRadius: 21,
-              borderCurve: 'continuous',
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.07)',
-              borderWidth: 1,
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
-            }}
-          >
-            {/* View Mode Segment */}
-            <AnimatedPressable
-              ref={modeButtonRef}
-              collapsable={false}
-              accessibilityRole="button"
-              accessibilityLabel="Режим таңдау"
-              onPress={openModePicker}
-              activeScale={0.95}
+          {/* iOS Native Liquid Glass Capsule Controls */}
+          {isLiquidGlass ? (
+            <GlassView
+              glassEffectStyle="clear"
+              isInteractive={true}
+              colorScheme={isDark ? 'dark' : 'light'}
+              borderRadius={21}
+              borderCurve="continuous"
               style={{
                 height: 42,
-                paddingLeft: 14,
-                paddingRight: 10,
+                borderRadius: 21,
+                borderCurve: 'continuous',
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 7,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
               }}
             >
-              <CalendarIcon color={colors.text} />
-              <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', letterSpacing: -0.2 }}>
-                {modeLabels[mode]}
-              </Text>
-              <SelectorChevronIcon color={colors.secondary} />
-            </AnimatedPressable>
+              {/* View Mode Segment */}
+              <AnimatedPressable
+                ref={modeButtonRef}
+                collapsable={false}
+                accessibilityRole="button"
+                accessibilityLabel="Режим таңдау"
+                onPress={openModePicker}
+                activeScale={0.95}
+                style={{
+                  height: 42,
+                  paddingLeft: 14,
+                  paddingRight: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 7,
+                }}
+              >
+                <CalendarIcon color={colors.text} />
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', letterSpacing: -0.2 }}>
+                  {modeLabels[mode]}
+                </Text>
+                <SelectorChevronIcon color={colors.secondary} />
+              </AnimatedPressable>
 
-            {/* Divider */}
+              {/* Divider */}
+              <View
+                style={{
+                  width: 1,
+                  height: 18,
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
+                }}
+              />
+
+              {/* Settings Segment */}
+              <AnimatedPressable
+                accessibilityRole="button"
+                accessibilityLabel="Баптаулар"
+                onPress={() => { collapseWeek(); router.push('/settings'); }}
+                activeScale={0.90}
+                style={{
+                  width: 42,
+                  height: 42,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <SettingsIcon color={colors.text} />
+              </AnimatedPressable>
+            </GlassView>
+          ) : (
             <View
               style={{
-                width: 1,
-                height: 18,
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
-              }}
-            />
-
-            {/* Settings Segment */}
-            <AnimatedPressable
-              accessibilityRole="button"
-              accessibilityLabel="Баптаулар"
-              onPress={() => { collapseWeek(); router.push('/settings'); }}
-              activeScale={0.90}
-              style={{
-                width: 42,
                 height: 42,
-                alignItems: 'center',
-                justifyContent: 'center',
+                borderRadius: 21,
+                borderCurve: 'continuous',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: isDark ? 0.3 : 0.06,
+                shadowRadius: 8,
+                elevation: 2,
               }}
             >
-              <SettingsIcon color={colors.text} />
-            </AnimatedPressable>
-          </View>
+              <View
+                style={{
+                  flex: 1,
+                  borderRadius: 21,
+                  borderCurve: 'continuous',
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
+                  overflow: 'hidden',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <BlurView
+                  tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
+                  intensity={30}
+                  style={StyleSheet.absoluteFill}
+                  pointerEvents="none"
+                />
+
+                {/* View Mode Segment */}
+                <AnimatedPressable
+                  ref={modeButtonRef}
+                  collapsable={false}
+                  accessibilityRole="button"
+                  accessibilityLabel="Режим таңдау"
+                  onPress={openModePicker}
+                  activeScale={0.95}
+                  style={{
+                    height: 42,
+                    paddingLeft: 14,
+                    paddingRight: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 7,
+                  }}
+                >
+                  <CalendarIcon color={colors.text} />
+                  <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', letterSpacing: -0.2 }}>
+                    {modeLabels[mode]}
+                  </Text>
+                  <SelectorChevronIcon color={colors.secondary} />
+                </AnimatedPressable>
+
+                {/* Divider */}
+                <View
+                  style={{
+                    width: 1,
+                    height: 18,
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.08)',
+                  }}
+                />
+
+                {/* Settings Segment */}
+                <AnimatedPressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Баптаулар"
+                  onPress={() => { collapseWeek(); router.push('/settings'); }}
+                  activeScale={0.90}
+                  style={{
+                    width: 42,
+                    height: 42,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <SettingsIcon color={colors.text} />
+                </AnimatedPressable>
+              </View>
+            </View>
+          )}
         </View>
       </Animated.View>
 
