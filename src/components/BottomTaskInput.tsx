@@ -62,7 +62,7 @@ export function BottomTaskInput({
             alignItems: 'center',
             paddingHorizontal: 16,
             gap: 8,
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.35)',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
             borderWidth: 1,
             borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
           }}
