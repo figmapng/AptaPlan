@@ -347,21 +347,19 @@ export function TaskBottomSheet({
           <View style={styles.inputRow}>
             {isLiquidGlass ? (
               <GlassView
-                glassEffectStyle="regular"
-                isInteractive={isFocused}
+                glassEffectStyle="clear"
+                isInteractive={true}
                 colorScheme={isDark ? 'dark' : 'light'}
-                borderRadius={26}
+                borderRadius={25}
                 borderCurve="continuous"
                 style={[
                   styles.inputWrapper,
                   {
-                    minHeight: Math.max(52, titleInputHeight + 10),
-                    borderRadius: 26,
+                    minHeight: Math.max(50, titleInputHeight + 10),
+                    borderRadius: 25,
                     borderCurve: 'continuous',
                     borderWidth: 1,
-                    borderColor: isFocused
-                      ? colors.today
-                      : isDark
+                    borderColor: isDark
                       ? 'rgba(255, 255, 255, 0.16)'
                       : 'rgba(0, 0, 0, 0.08)',
                     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
@@ -406,28 +404,23 @@ export function TaskBottomSheet({
                       )}
                     </View>
                   ) : (
-                    <GlassView
-                      glassEffectStyle="clear"
-                      isInteractive={false}
-                      colorScheme={isDark ? 'dark' : 'light'}
-                      borderRadius={20}
-                      borderCurve="continuous"
+                    <View
                       style={[
                         StyleSheet.absoluteFill,
                         styles.sendBtnInner,
                         {
-                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.45)',
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
                           borderWidth: 1,
-                          borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
+                          borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)',
                         },
                       ]}
                     >
                       {editingTask ? (
-                        <CheckIcon color={colors.secondary} />
+                        <CheckIcon color={isDark ? colors.secondary : '#8E8E93'} />
                       ) : (
-                        <ArrowUpIcon color={colors.secondary} />
+                        <ArrowUpIcon color={isDark ? colors.secondary : '#8E8E93'} />
                       )}
-                    </GlassView>
+                    </View>
                   )}
                 </AnimatedPressable>
               </GlassView>
@@ -437,14 +430,12 @@ export function TaskBottomSheet({
                   styles.inputWrapper,
                   {
                     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.10)',
-                    borderColor: isFocused
-                      ? colors.today
-                      : isDark
+                    borderColor: isDark
                       ? 'rgba(255, 255, 255, 0.16)'
                       : 'rgba(0, 0, 0, 0.08)',
                     borderWidth: 1,
-                    minHeight: Math.max(52, titleInputHeight + 10),
-                    borderRadius: 26,
+                    minHeight: Math.max(50, titleInputHeight + 10),
+                    borderRadius: 25,
                     borderCurve: 'continuous',
                     overflow: 'hidden',
                   },
@@ -484,13 +475,13 @@ export function TaskBottomSheet({
                         backgroundColor: isEnabled
                           ? colors.today
                           : isDark
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : '#E5E7EB',
+                          ? 'rgba(255, 255, 255, 0.06)'
+                          : 'rgba(0, 0, 0, 0.05)',
                         borderWidth: 1,
                         borderColor: isEnabled
                           ? colors.todayDark
                           : isDark
-                          ? 'rgba(255, 255, 255, 0.12)'
+                          ? 'rgba(255, 255, 255, 0.10)'
                           : 'rgba(0, 0, 0, 0.06)',
                       },
                     ]}
@@ -635,15 +626,12 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     position: 'relative',
-    minHeight: 52,
-    borderWidth: 1,
-    borderColor: colors.inputBorder,
-    borderRadius: 26,
+    minHeight: 50,
+    borderRadius: 25,
     borderCurve: 'continuous',
     paddingLeft: 16,
     paddingRight: 5,
     paddingVertical: 5,
-    backgroundColor: colors.inputBg,
   },
   inputContent: {
     position: 'absolute',
