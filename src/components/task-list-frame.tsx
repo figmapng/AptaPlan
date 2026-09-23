@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
-import { Animated, Platform, Pressable, ScrollView, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Animated, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { Task } from '@/types/task';
 import { TaskRow } from './task-row';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 
 interface TaskListFrameProps {
   tasks: Task[];
@@ -35,6 +36,7 @@ function RouletteRow({
   cardBg,
   singleLine,
   rowStride,
+  extraOpacity,
 }: {
   task: Task;
   index: number;
@@ -47,12 +49,13 @@ function RouletteRow({
   cardBg?: string;
   singleLine?: boolean;
   rowStride: number;
+  extraOpacity?: Animated.AnimatedInterpolation<number>;
 }) {
   const itemTop = index * rowStride;
   const b1 = itemTop - (containerHeight + 14);
   const b2 = itemTop - (containerHeight - rowStride - 4);
 
-  const opacity = canScroll
+  const rouletteOpacity = canScroll
     ? scrollY.interpolate({
         inputRange: [b1, b2],
         outputRange: [0.45, 1],
@@ -67,6 +70,10 @@ function RouletteRow({
         extrapolate: 'clamp',
       })
     : 1;
+
+  const opacity = extraOpacity
+    ? (Animated.multiply(rouletteOpacity, extraOpacity) as unknown as Animated.AnimatedInterpolation<number>)
+    : rouletteOpacity;
 
   return (
     <Animated.View
@@ -101,7 +108,10 @@ export function TaskListFrame({
   isCardScrollingRef,
   singleLine = false,
 }: TaskListFrameProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const { t } = useI18n();
+  const [isAtTop, setIsAtTop] = useState(true);
+  const isAtTopRef = useRef(true);
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const lastHapticIndexRef = useRef(0);
@@ -126,6 +136,21 @@ export function TaskListFrame({
   const rowStride = ROW_HEIGHT + gap;
 
   const canScroll = scrollable && scrollEnabled && tasks.length > N;
+  const hasOverflow = canScroll && tasks.length > N;
+  const badgeIndex = N - 1;
+  const computedMoreCount = hasOverflow ? tasks.length - badgeIndex : 0;
+
+  const badgeOpacity = scrollY.interpolate({
+    inputRange: [0, 8],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const taskOpacity = scrollY.interpolate({
+    inputRange: [0, 8],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
   return (
     <View style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -156,6 +181,13 @@ export function TaskListFrame({
             listener: (event: any) => {
               const y = event.nativeEvent.contentOffset.y;
               onScrollYChange?.(y);
+
+              const atTop = y <= 2;
+              if (atTop !== isAtTopRef.current) {
+                isAtTopRef.current = atTop;
+                setIsAtTop(atTop);
+              }
+
               if (canScroll) {
                 if (isSwipingRef) (isSwipingRef as any).current = true;
                 if (isCardScrollingRef) (isCardScrollingRef as any).current = true;
@@ -170,6 +202,13 @@ export function TaskListFrame({
           }
         )}
         onScrollEndDrag={(e) => {
+          const y = e.nativeEvent.contentOffset?.y ?? 0;
+          const atTop = y <= 2;
+          if (atTop !== isAtTopRef.current) {
+            isAtTopRef.current = atTop;
+            setIsAtTop(atTop);
+          }
+
           const velocityY = e.nativeEvent.velocity?.y ?? 0;
           if (Math.abs(velocityY) < 0.1) {
             triggerScrollHaptic();
@@ -183,7 +222,14 @@ export function TaskListFrame({
           if (isSwipingRef) (isSwipingRef as any).current = true;
           if (isCardScrollingRef) (isCardScrollingRef as any).current = true;
         }}
-        onMomentumScrollEnd={() => {
+        onMomentumScrollEnd={(e) => {
+          const y = e.nativeEvent.contentOffset?.y ?? 0;
+          const atTop = y <= 2;
+          if (atTop !== isAtTopRef.current) {
+            isAtTopRef.current = atTop;
+            setIsAtTop(atTop);
+          }
+
           triggerScrollHaptic();
           setTimeout(() => {
             if (isSwipingRef) (isSwipingRef as any).current = false;
@@ -206,22 +252,94 @@ export function TaskListFrame({
           flexGrow: 1,
         }}
       >
-        {tasks.map((task, index) => (
-          <RouletteRow
-            key={`${task.id}:${task.date}`}
-            task={task}
-            index={index}
-            scrollY={scrollY}
-            containerHeight={containerHeight}
-            canScroll={canScroll}
-            onPress={onPress}
-            onInteraction={onInteraction}
-            isSwipingRef={isSwipingRef}
-            cardBg={colors.card}
-            singleLine={singleLine}
-            rowStride={rowStride}
-          />
-        ))}
+        {tasks.map((task, index) => {
+          const isBadgeRow = hasOverflow && index === badgeIndex;
+          if (isBadgeRow) {
+            return (
+              <View
+                key={`${task.id}:${task.date}`}
+                style={{
+                  height: ROW_HEIGHT,
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                <RouletteRow
+                  task={task}
+                  index={index}
+                  scrollY={scrollY}
+                  containerHeight={containerHeight}
+                  canScroll={canScroll}
+                  onPress={onPress}
+                  onInteraction={onInteraction}
+                  isSwipingRef={isSwipingRef}
+                  cardBg={colors.card}
+                  singleLine={singleLine}
+                  rowStride={rowStride}
+                  extraOpacity={taskOpacity}
+                />
+                <Animated.View
+                  pointerEvents={isAtTop ? 'auto' : 'none'}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    justifyContent: 'center',
+                    opacity: badgeOpacity,
+                  }}
+                >
+                  <Pressable
+                    onPress={onPress}
+                    hitSlop={{ top: 4, bottom: 4, left: 8, right: 8 }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        alignSelf: 'flex-start',
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                        paddingHorizontal: 7,
+                        paddingVertical: 2,
+                        borderRadius: 7,
+                        borderCurve: 'continuous',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 10.5,
+                          lineHeight: 13,
+                          fontWeight: '600',
+                          color: colors.today,
+                          fontVariant: ['tabular-nums'],
+                        }}
+                      >
+                        {t.common.moreTasks ? t.common.moreTasks(computedMoreCount) : `+${computedMoreCount} тағы`}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </Animated.View>
+              </View>
+            );
+          }
+
+          return (
+            <RouletteRow
+              key={`${task.id}:${task.date}`}
+              task={task}
+              index={index}
+              scrollY={scrollY}
+              containerHeight={containerHeight}
+              canScroll={canScroll}
+              onPress={onPress}
+              onInteraction={onInteraction}
+              isSwipingRef={isSwipingRef}
+              cardBg={colors.card}
+              singleLine={singleLine}
+              rowStride={rowStride}
+            />
+          );
+        })}
         {/* Empty area tap-to-open */}
         <Pressable
           style={{ flex: 1, minHeight: canScroll ? 0 : 8 }}
