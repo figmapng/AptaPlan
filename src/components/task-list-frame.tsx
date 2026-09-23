@@ -46,37 +46,31 @@ function RouletteRow({
   cardBg?: string;
   singleLine?: boolean;
 }) {
-  const itemCenter = index * ROW_STRIDE + ROW_HEIGHT / 2;
-  const H = Math.max(60, containerHeight);
-  const R = H / 2;
-  const C = itemCenter - R;
-
-  const gap = 18;
-  const s1 = C - R - gap;
-  const s2 = C - R + gap;
-  const s3 = Math.max(s2 + 1, C + R - gap);
-  const s4 = s3 + 2 * gap;
+  const itemTop = index * ROW_STRIDE;
+  // Curve ONLY applies at the bottom of the card for overflowing tasks
+  const b1 = itemTop - (containerHeight + 14);
+  const b2 = itemTop - (containerHeight - ROW_STRIDE - 4);
 
   const rotateX = canScroll
     ? scrollY.interpolate({
-        inputRange: [s1, s2, s3, s4],
-        outputRange: ['-42deg', '0deg', '0deg', '42deg'],
+        inputRange: [b1, b2],
+        outputRange: ['40deg', '0deg'],
         extrapolate: 'clamp',
       })
     : '0deg';
 
   const opacity = canScroll
     ? scrollY.interpolate({
-        inputRange: [s1, s2, s3, s4],
-        outputRange: [0.45, 1, 1, 0.45],
+        inputRange: [b1, b2],
+        outputRange: [0.45, 1],
         extrapolate: 'clamp',
       })
     : 1;
 
   const scale = canScroll
     ? scrollY.interpolate({
-        inputRange: [s1, s2, s3, s4],
-        outputRange: [0.92, 1, 1, 0.92],
+        inputRange: [b1, b2],
+        outputRange: [0.93, 1],
         extrapolate: 'clamp',
       })
     : 1;
@@ -209,30 +203,6 @@ export function TaskListFrame({
           onPress={onPress}
         />
       </Animated.ScrollView>
-
-      {/* Top subtle fade gradient when scrolled */}
-      {canScroll && (
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 10,
-          }}
-        >
-          <Svg width="100%" height={10}>
-            <Defs>
-              <LinearGradient id="rouletteTopFade" x1="0" y1="1" x2="0" y2="0">
-                <Stop offset="0" stopColor={colors.card} stopOpacity="0" />
-                <Stop offset="1" stopColor={colors.card} stopOpacity="0.85" />
-              </LinearGradient>
-            </Defs>
-            <Rect x="0" y="0" width="100%" height={10} fill="url(#rouletteTopFade)" />
-          </Svg>
-        </View>
-      )}
 
       {/* Bottom subtle cylinder fade gradient for the roulette curve */}
       {canScroll && (
