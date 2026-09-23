@@ -116,8 +116,12 @@ export function TaskListFrame({
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const lastHapticIndexRef = useRef(0);
+  const lastHapticTimeRef = useRef(0);
 
   const triggerScrollHaptic = () => {
+    const now = Date.now();
+    if (now - lastHapticTimeRef.current < 60) return;
+    lastHapticTimeRef.current = now;
     if (Platform.OS === 'ios') {
       void Haptics.selectionAsync();
     } else if (Platform.OS === 'android') {
@@ -126,9 +130,7 @@ export function TaskListFrame({
   };
 
   const totalTasksHeight = tasks.length * ROW_HEIGHT + Math.max(0, tasks.length - 1) * GAP;
-  const canScroll = scrollable && scrollEnabled && totalTasksHeight > containerHeight - 4;
-
-  const snapOffsets = tasks.map((_, i) => i * ROW_STRIDE);
+  const canScroll = scrollable && scrollEnabled && (tasks.length > 4 || totalTasksHeight > containerHeight - 20);
 
   return (
     <View style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -140,10 +142,9 @@ export function TaskListFrame({
         bounces={canScroll}
         alwaysBounceVertical={false}
         scrollEventThrottle={16}
-        snapToOffsets={snapOffsets}
+        snapToInterval={ROW_STRIDE}
         snapToAlignment="start"
         decelerationRate="fast"
-        disableIntervalMomentum={true}
         onTouchMove={() => {
           if (canScroll && isCardScrollingRef) {
             (isCardScrollingRef as any).current = true;
@@ -174,32 +175,25 @@ export function TaskListFrame({
           }
         )}
         onScrollEndDrag={(e) => {
-          const y = e.nativeEvent.contentOffset.y;
-          const targetIdx = Math.max(0, Math.min(tasks.length - 1, Math.round(y / ROW_STRIDE)));
-          const targetY = targetIdx * ROW_STRIDE;
-          if (Math.abs(y - targetY) > 0.5) {
-            (scrollViewRef.current as any)?.scrollTo({ y: targetY, animated: true });
+          const velocityY = e.nativeEvent.velocity?.y ?? 0;
+          if (Math.abs(velocityY) < 0.1) {
+            triggerScrollHaptic();
           }
           setTimeout(() => {
             if (isSwipingRef) (isSwipingRef as any).current = false;
             if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
-          }, 120);
+          }, 100);
         }}
         onMomentumScrollBegin={() => {
           if (isSwipingRef) (isSwipingRef as any).current = true;
           if (isCardScrollingRef) (isCardScrollingRef as any).current = true;
         }}
-        onMomentumScrollEnd={(e) => {
-          const y = e.nativeEvent.contentOffset.y;
-          const targetIdx = Math.max(0, Math.min(tasks.length - 1, Math.round(y / ROW_STRIDE)));
-          const targetY = targetIdx * ROW_STRIDE;
-          if (Math.abs(y - targetY) > 0.5) {
-            (scrollViewRef.current as any)?.scrollTo({ y: targetY, animated: true });
-          }
+        onMomentumScrollEnd={() => {
+          triggerScrollHaptic();
           setTimeout(() => {
             if (isSwipingRef) (isSwipingRef as any).current = false;
             if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
-          }, 120);
+          }, 100);
         }}
         onTouchEnd={() => {
           setTimeout(() => {
