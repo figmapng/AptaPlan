@@ -128,9 +128,9 @@ export const DayCard = memo(function DayCardComponent({
   const bodyHeight = progress
     ? progress.interpolate({
         inputRange: [0, 1],
-        outputRange: [collapsedBodyHeight, expandedBodyHeight],
+        outputRange: [collapsedBodyHeight + 10, expandedBodyHeight + 10],
       })
-    : collapsedBodyHeight;
+    : collapsedBodyHeight + 10;
 
   const wideHeight = progress
     ? progress.interpolate({
@@ -249,7 +249,7 @@ export const DayCard = memo(function DayCardComponent({
         >
           <TaskListFrame
             tasks={tasks}
-            containerHeight={activeBodyHeight}
+            containerHeight={activeBodyHeight + 10}
             onPress={open}
             onInteraction={onInteraction}
             isSwipingRef={isSwipingRef}
@@ -264,6 +264,7 @@ export const DayCard = memo(function DayCardComponent({
           style={{
             flex: 1,
             paddingVertical: 2,
+            paddingBottom: 10,
             paddingHorizontal: 0,
           }}
         >
@@ -329,7 +330,8 @@ export const DayCard = memo(function DayCardComponent({
       : colors.cardBorder,
     paddingHorizontal: 10,
     paddingTop: 10,
-    paddingBottom: 10,
+    paddingBottom: 0,
+    overflow: 'hidden' as const,
   };
 
   if (wide) {
