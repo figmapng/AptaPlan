@@ -15,6 +15,7 @@ interface TaskListFrameProps {
   onPress: () => void;
   onInteraction?: () => void;
   isSwipingRef?: React.RefObject<boolean>;
+  isCardScrollingRef?: React.RefObject<boolean>;
   singleLine?: boolean;
 }
 
@@ -113,6 +114,7 @@ export function TaskListFrame({
   onPress,
   onInteraction,
   isSwipingRef,
+  isCardScrollingRef,
   singleLine = false,
 }: TaskListFrameProps) {
   const { colors } = useTheme();
@@ -130,17 +132,58 @@ export function TaskListFrame({
         bounces={canScroll}
         alwaysBounceVertical={false}
         scrollEventThrottle={16}
+        snapToInterval={ROW_STRIDE}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        onTouchMove={() => {
+          if (canScroll && isCardScrollingRef) {
+            (isCardScrollingRef as any).current = true;
+          }
+        }}
+        onScrollBeginDrag={() => {
+          if (isSwipingRef) (isSwipingRef as any).current = true;
+          if (isCardScrollingRef) (isCardScrollingRef as any).current = true;
+        }}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           {
             useNativeDriver: true,
             listener: (event: any) => {
               onScrollYChange?.(event.nativeEvent.contentOffset.y);
+              if (canScroll) {
+                if (isSwipingRef) (isSwipingRef as any).current = true;
+                if (isCardScrollingRef) (isCardScrollingRef as any).current = true;
+              }
             },
           }
         )}
+        onScrollEndDrag={() => {
+          setTimeout(() => {
+            if (isSwipingRef) (isSwipingRef as any).current = false;
+            if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
+          }, 120);
+        }}
+        onMomentumScrollBegin={() => {
+          if (isSwipingRef) (isSwipingRef as any).current = true;
+          if (isCardScrollingRef) (isCardScrollingRef as any).current = true;
+        }}
+        onMomentumScrollEnd={() => {
+          setTimeout(() => {
+            if (isSwipingRef) (isSwipingRef as any).current = false;
+            if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
+          }, 120);
+        }}
+        onTouchEnd={() => {
+          setTimeout(() => {
+            if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
+          }, 120);
+        }}
+        onTouchCancel={() => {
+          if (isSwipingRef) (isSwipingRef as any).current = false;
+          if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
+        }}
         contentContainerStyle={{
-          paddingBottom: canScroll ? 14 : 0,
+          paddingBottom: canScroll ? ROW_STRIDE : 0,
           gap: GAP,
           flexGrow: 1,
         }}

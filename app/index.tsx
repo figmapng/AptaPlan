@@ -419,6 +419,7 @@ export default function Home() {
   const isHorizontalGesture = useRef(false);
   const hasDetermined = useRef(false);
   const isSwipingRef = useRef(false);
+  const isCardScrollingRef = useRef(false);
 
   const resetToCurrentWeek = useCallback(() => {
     if (isAnimatingRef.current) return;
@@ -751,7 +752,7 @@ export default function Home() {
 
   const gestureHandlers = {
     onTouchStart: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (modeRef.current !== 'week' || isAnimatingRef.current || isSwipingRef.current) return;
+      if (modeRef.current !== 'week' || isAnimatingRef.current || isSwipingRef.current || isCardScrollingRef.current) return;
       touchStartX.current = e.nativeEvent.pageX;
       touchStartY.current = e.nativeEvent.pageY;
       isHorizontalGesture.current = false;
@@ -760,7 +761,8 @@ export default function Home() {
       weekCarouselX.stopAnimation();
     },
     onTouchMove: (e: { nativeEvent: { pageX: number; pageY: number } }) => {
-      if (modeRef.current !== 'week' || isAnimatingRef.current || isSwipingRef.current) return;
+      if (modeRef.current !== 'week' || isAnimatingRef.current) return;
+      if ((isSwipingRef.current || isCardScrollingRef.current) && !isHorizontalGesture.current) return;
       const dx = e.nativeEvent.pageX - touchStartX.current;
       const dy = e.nativeEvent.pageY - touchStartY.current;
 
@@ -774,6 +776,7 @@ export default function Home() {
         isSwipingRef.current = true;
         weekCarouselX.setValue(weekTouchStartCarouselX.current + dx);
       } else {
+        if (isCardScrollingRef.current || isSwipingRef.current) return;
         if (ENABLE_DAILY_OVERVIEW && isMotivationalOpenRef.current) {
           if (dy < 0) {
             const val = Math.max(0, 1 + dy / 130);
@@ -825,6 +828,12 @@ export default function Home() {
           }, 50);
         });
       } else {
+        if (isCardScrollingRef.current || isSwipingRef.current) {
+          if (!isExpandedRef.current) {
+            weekProgress.setValue(0);
+          }
+          return;
+        }
         const dy = e.nativeEvent.pageY - touchStartY.current;
 
         if (ENABLE_DAILY_OVERVIEW && isMotivationalOpenRef.current) {
@@ -1459,6 +1468,8 @@ export default function Home() {
                   expandedSundayHeight={dayCardH}
                   collapsedBodyHeight={dayCardH - 35}
                   scrollEnabled={!isMotivationalOpen}
+                  isSwipingRef={isSwipingRef}
+                  isCardScrollingRef={isCardScrollingRef}
                   onScrollYChange={(y) => {
                     if (offset === 0) dayScrollYRef.current = y;
                   }}
@@ -1508,6 +1519,7 @@ export default function Home() {
                   expandedSundayHeight={expandedSundayHeight}
                   onLayoutMeasured={offset === 0 ? handleCardLayoutMeasured : undefined}
                   isSwipingRef={isSwipingRef}
+                  isCardScrollingRef={isCardScrollingRef}
                   showBookDivider={settings.showBookDivider ?? false}
                 />
               </Animated.View>
@@ -1897,11 +1909,12 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
   );
 });
 
-const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 138, expandedBodyHeight = 88, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef, showBookDivider = false }: {
+const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 138, expandedBodyHeight = 88, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef, isCardScrollingRef, showBookDivider = false }: {
   days: DayDataItem[]; progress: Animated.Value;
   onInteraction?: () => void; collapsedBodyHeight?: number; expandedBodyHeight?: number;
   expandedSundayHeight?: number; onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
   isSwipingRef?: React.RefObject<boolean>;
+  isCardScrollingRef?: React.RefObject<boolean>;
   showBookDivider?: boolean;
 }) {
   const { isDark } = useTheme();
@@ -1922,6 +1935,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
               expandedBodyHeight={expandedBodyHeight}
               onLayoutMeasured={onLayoutMeasured}
               isSwipingRef={isSwipingRef}
+              isCardScrollingRef={isCardScrollingRef}
             />
           ))}
         </View>
@@ -1943,12 +1957,13 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
               expandedBodyHeight={expandedBodyHeight}
               onLayoutMeasured={onLayoutMeasured}
               isSwipingRef={isSwipingRef}
+              isCardScrollingRef={isCardScrollingRef}
             />
           ))}
         </View>
       </View>
       {days[6] && (
-        <DayCard key={days[6].dateKey} date={days[6].date} tasks={days[6].tasks} monthLabel={days[6].monthLabel} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} />
+        <DayCard key={days[6].dateKey} date={days[6].date} tasks={days[6].tasks} monthLabel={days[6].monthLabel} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} isCardScrollingRef={isCardScrollingRef} />
       )}
     </View>
   );

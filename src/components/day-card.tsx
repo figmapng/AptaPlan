@@ -23,6 +23,7 @@ type DayCardProps = {
   expandedSundayHeight?: number;
   onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
   isSwipingRef?: React.RefObject<boolean>;
+  isCardScrollingRef?: React.RefObject<boolean>;
   disableOpen?: boolean;
   onScrollYChange?: (scrollY: number) => void;
   scrollEnabled?: boolean;
@@ -40,6 +41,7 @@ export const DayCard = memo(function DayCardComponent({
   expandedSundayHeight = 156,
   onLayoutMeasured,
   isSwipingRef,
+  isCardScrollingRef,
   disableOpen = false,
   onScrollYChange,
   scrollEnabled = true,
@@ -73,6 +75,10 @@ export const DayCard = memo(function DayCardComponent({
   const open = (e?: any) => {
     if (disableOpen) return;
 
+    if (isSwipingRef?.current || isCardScrollingRef?.current) {
+      return;
+    }
+
     // Prevent accidental click during drag/swipe gesture (if finger moved > 8px)
     if (e?.nativeEvent && touchStartPos.current) {
       const dx = Math.abs(e.nativeEvent.pageX - touchStartPos.current.x);
@@ -80,8 +86,6 @@ export const DayCard = memo(function DayCardComponent({
       if (dx > 8 || dy > 8) {
         return;
       }
-    } else if (isSwipingRef?.current) {
-      return;
     }
 
     onInteraction?.();
@@ -249,6 +253,7 @@ export const DayCard = memo(function DayCardComponent({
             onPress={open}
             onInteraction={onInteraction}
             isSwipingRef={isSwipingRef}
+            isCardScrollingRef={isCardScrollingRef}
             singleLine
           />
         </View>
