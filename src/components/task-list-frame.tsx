@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { Animated, Pressable, View } from 'react-native';
+import { Animated, Platform, Pressable, ScrollView, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import type { Task } from '@/types/task';
 import { TaskRow } from './task-row';
 import { useTheme } from '@/hooks/use-theme';
@@ -77,6 +78,7 @@ function RouletteRow({
   return (
     <Animated.View
       style={{
+        height: ROW_HEIGHT,
         transform: [
           { perspective: 400 },
           { rotateX },
@@ -112,22 +114,36 @@ export function TaskListFrame({
 }: TaskListFrameProps) {
   const { colors } = useTheme();
   const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const lastHapticIndexRef = useRef(0);
+
+  const triggerScrollHaptic = () => {
+    if (Platform.OS === 'ios') {
+      void Haptics.selectionAsync();
+    } else if (Platform.OS === 'android') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
 
   const totalTasksHeight = tasks.length * ROW_HEIGHT + Math.max(0, tasks.length - 1) * GAP;
   const canScroll = scrollable && scrollEnabled && totalTasksHeight > containerHeight - 4;
 
+  const snapOffsets = tasks.map((_, i) => i * ROW_STRIDE);
+
   return (
     <View style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
       <Animated.ScrollView
+        ref={scrollViewRef}
         scrollEnabled={canScroll}
         nestedScrollEnabled
         showsVerticalScrollIndicator={false}
         bounces={canScroll}
         alwaysBounceVertical={false}
         scrollEventThrottle={16}
-        snapToInterval={ROW_STRIDE}
+        snapToOffsets={snapOffsets}
         snapToAlignment="start"
         decelerationRate="fast"
+        disableIntervalMomentum={true}
         onTouchMove={() => {
           if (canScroll && isCardScrollingRef) {
             (isCardScrollingRef as any).current = true;
@@ -142,15 +158,28 @@ export function TaskListFrame({
           {
             useNativeDriver: true,
             listener: (event: any) => {
-              onScrollYChange?.(event.nativeEvent.contentOffset.y);
+              const y = event.nativeEvent.contentOffset.y;
+              onScrollYChange?.(y);
               if (canScroll) {
                 if (isSwipingRef) (isSwipingRef as any).current = true;
                 if (isCardScrollingRef) (isCardScrollingRef as any).current = true;
+
+                const currentIdx = Math.max(0, Math.min(tasks.length - 1, Math.round(y / ROW_STRIDE)));
+                if (currentIdx !== lastHapticIndexRef.current) {
+                  lastHapticIndexRef.current = currentIdx;
+                  triggerScrollHaptic();
+                }
               }
             },
           }
         )}
-        onScrollEndDrag={() => {
+        onScrollEndDrag={(e) => {
+          const y = e.nativeEvent.contentOffset.y;
+          const targetIdx = Math.max(0, Math.min(tasks.length - 1, Math.round(y / ROW_STRIDE)));
+          const targetY = targetIdx * ROW_STRIDE;
+          if (Math.abs(y - targetY) > 0.5) {
+            (scrollViewRef.current as any)?.scrollTo({ y: targetY, animated: true });
+          }
           setTimeout(() => {
             if (isSwipingRef) (isSwipingRef as any).current = false;
             if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
@@ -160,7 +189,13 @@ export function TaskListFrame({
           if (isSwipingRef) (isSwipingRef as any).current = true;
           if (isCardScrollingRef) (isCardScrollingRef as any).current = true;
         }}
-        onMomentumScrollEnd={() => {
+        onMomentumScrollEnd={(e) => {
+          const y = e.nativeEvent.contentOffset.y;
+          const targetIdx = Math.max(0, Math.min(tasks.length - 1, Math.round(y / ROW_STRIDE)));
+          const targetY = targetIdx * ROW_STRIDE;
+          if (Math.abs(y - targetY) > 0.5) {
+            (scrollViewRef.current as any)?.scrollTo({ y: targetY, animated: true });
+          }
           setTimeout(() => {
             if (isSwipingRef) (isSwipingRef as any).current = false;
             if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
@@ -176,7 +211,7 @@ export function TaskListFrame({
           if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
         }}
         contentContainerStyle={{
-          paddingBottom: canScroll ? 6 : 0,
+          paddingBottom: canScroll ? 10 : 0,
           gap: GAP,
           flexGrow: 1,
         }}
