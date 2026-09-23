@@ -128,9 +128,9 @@ export const DayCard = memo(function DayCardComponent({
   const bodyHeight = progress
     ? progress.interpolate({
         inputRange: [0, 1],
-        outputRange: [collapsedBodyHeight + 10, expandedBodyHeight + 10],
+        outputRange: [collapsedBodyHeight, expandedBodyHeight],
       })
-    : collapsedBodyHeight + 10;
+    : collapsedBodyHeight;
 
   const wideHeight = progress
     ? progress.interpolate({
@@ -204,7 +204,7 @@ export const DayCard = memo(function DayCardComponent({
           height: 1,
           backgroundColor: colors.divider,
           marginTop: 8,
-          marginBottom: 8,
+          marginBottom: 0,
         }}
       />
     </Pressable>
@@ -213,15 +213,15 @@ export const DayCard = memo(function DayCardComponent({
   const wideBodyHeight = progress
     ? progress.interpolate({
         inputRange: [0, 1],
-        outputRange: [0, Math.max(80, expandedSundayHeight - 48)],
+        outputRange: [0, Math.max(80, expandedSundayHeight - 35)],
       })
-    : Math.max(80, expandedSundayHeight - 48);
+    : Math.max(80, expandedSundayHeight - 35);
 
   const [measuredBodyHeight, setMeasuredBodyHeight] = useState<number>(0);
 
   const activeBodyHeight = measuredBodyHeight > 0
     ? measuredBodyHeight
-    : (wide ? expandedSundayHeight : collapsedBodyHeight);
+    : (wide ? (expandedSundayHeight - 35) : (progress ? expandedBodyHeight : collapsedBodyHeight));
 
   const cardBodyContent = (
     <Animated.View
@@ -240,16 +240,10 @@ export const DayCard = memo(function DayCardComponent({
       ]}
     >
       {tasks.length ? (
-        <View
-          style={{
-            flex: 1,
-            paddingVertical: 1,
-            paddingHorizontal: 0,
-          }}
-        >
+        <View style={{ flex: 1 }}>
           <TaskListFrame
             tasks={tasks}
-            containerHeight={activeBodyHeight + 10}
+            containerHeight={activeBodyHeight}
             onPress={open}
             onInteraction={onInteraction}
             isSwipingRef={isSwipingRef}
@@ -263,8 +257,8 @@ export const DayCard = memo(function DayCardComponent({
           onPress={open}
           style={{
             flex: 1,
-            paddingVertical: 2,
-            paddingBottom: 10,
+            paddingTop: 8,
+            paddingBottom: 8,
             paddingHorizontal: 0,
           }}
         >

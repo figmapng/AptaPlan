@@ -921,7 +921,7 @@ export default function Home() {
   
   const headerSpace = insets.top + 76;
   const bottomInputBarHeight = 50;
-  const cardToInputGap = 26;
+  const cardToInputGap = 16;
   const bottomBarBottomOffset = insets.bottom > 0 ? Math.max(insets.bottom - 2, 18) : 24;
   const bottomBarSpace = bottomBarBottomOffset + bottomInputBarHeight + cardToInputGap;
   const rawAvailableHeight = screenHeight - headerSpace - bottomBarSpace;
@@ -931,11 +931,25 @@ export default function Home() {
 
   // Month grid uses the same available height as week view
   const monthGridAvailH = availableHeight;
-  const WEEK_CARD_GAP = 10;
-  const cardNonBodyHeight = 53; // 10 paddingTop + 16 header + 17 divider + 10 paddingBottom
-  const expandedBodyHeight = Math.max(40, Math.floor((availableHeight - 3 * WEEK_CARD_GAP - 4 * cardNonBodyHeight) / 4));
-  const collapsedBodyHeight = Math.max(60, Math.floor((availableHeight - 2 * WEEK_CARD_GAP - 3 * cardNonBodyHeight) / 3));
-  const expandedSundayHeight = cardNonBodyHeight + expandedBodyHeight;
+  const WEEK_CARD_ROW_GAP = 8;
+  const CARD_HEADER_NON_BODY = 35; // 10 paddingTop + 16 header + 8 divider marginTop + 1 divider line
+  const TASK_STRIDE = 27; // 22 row height + 5 gap
+  const TASK_EDGE_PAD = 8; // Top gap (divider to 1st task) and bottom gap (last task to bottom edge)
+  const BODY_PAD_TOTAL = 2 * TASK_EDGE_PAD - 5; // 8 + 8 - 5 = 11
+
+  // 1. Expanded mode: Sunday is SHOWN (4 rows: 3 rows of 2 cards + Sunday)
+  const availFor4 = availableHeight - 3 * WEEK_CARD_ROW_GAP;
+  const maxBodyH4 = Math.floor(availFor4 / 4) - CARD_HEADER_NON_BODY;
+  const nExpanded = Math.max(2, Math.floor((maxBodyH4 - BODY_PAD_TOTAL) / TASK_STRIDE));
+  const expandedBodyHeight = TASK_STRIDE * nExpanded + BODY_PAD_TOTAL;
+  const expandedSundayHeight = CARD_HEADER_NON_BODY + expandedBodyHeight;
+
+  // 2. Collapsed mode: Sunday is NOT SHOWN (3 rows of 2 cards)
+  const availFor3 = availableHeight - 2 * WEEK_CARD_ROW_GAP;
+  const maxBodyH3 = Math.floor(availFor3 / 3) - CARD_HEADER_NON_BODY;
+  const nCollapsed = Math.max(nExpanded + 1, Math.floor((maxBodyH3 - BODY_PAD_TOTAL) / TASK_STRIDE));
+  const collapsedBodyHeight = TASK_STRIDE * nCollapsed + BODY_PAD_TOTAL;
+
   const cardGridBottomPadding = bottomBarSpace;
   const title = derivedWeekData.headerTitle;
   const isFutureWeek = derivedWeekData.isFutureWeek;
@@ -1836,7 +1850,8 @@ function SelectorChevronIcon({ color = colors.today }: { color?: string }) {
   );
 }
 
-const WEEK_GRID_GAP = 10;
+const WEEK_GRID_ROW_GAP = 8;
+const WEEK_GRID_COL_GAP = 10;
 
 const BookSpineDivider = memo(function BookSpineDividerComponent({
   isDark,
@@ -1920,9 +1935,9 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
   const { isDark } = useTheme();
 
   return (
-    <View style={{ gap: WEEK_GRID_GAP }}>
-      <View style={{ flexDirection: 'row', gap: WEEK_GRID_GAP, position: 'relative' }}>
-        <View style={{ flex: 1, gap: WEEK_GRID_GAP }}>
+    <View style={{ gap: WEEK_GRID_ROW_GAP }}>
+      <View style={{ flexDirection: 'row', gap: WEEK_GRID_COL_GAP, position: 'relative' }}>
+        <View style={{ flex: 1, gap: WEEK_GRID_ROW_GAP }}>
           {days.slice(0, 3).map((day) => (
             <DayCard
               key={day.dateKey}
@@ -1944,7 +1959,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
           <BookSpineDivider isDark={isDark} />
         )}
 
-        <View style={{ flex: 1, gap: WEEK_GRID_GAP }}>
+        <View style={{ flex: 1, gap: WEEK_GRID_ROW_GAP }}>
           {days.slice(3, 6).map((day) => (
             <DayCard
               key={day.dateKey}

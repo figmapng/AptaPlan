@@ -129,8 +129,9 @@ export function TaskListFrame({
     }
   };
 
-  const totalTasksHeight = tasks.length * ROW_HEIGHT + Math.max(0, tasks.length - 1) * GAP;
-  const canScroll = scrollable && scrollEnabled && (tasks.length > 4 || totalTasksHeight > containerHeight - 20);
+  const TASK_EDGE_PAD = 8;
+  const visibleTasksCount = Math.max(1, Math.round((containerHeight - 11) / ROW_STRIDE));
+  const canScroll = scrollable && scrollEnabled && tasks.length > visibleTasksCount;
 
   return (
     <View style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -205,7 +206,8 @@ export function TaskListFrame({
           if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
         }}
         contentContainerStyle={{
-          paddingBottom: canScroll ? 10 : 0,
+          paddingTop: TASK_EDGE_PAD,
+          paddingBottom: TASK_EDGE_PAD,
           gap: GAP,
           flexGrow: 1,
         }}
