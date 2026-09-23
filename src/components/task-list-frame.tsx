@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import { Animated, Pressable, View } from 'react-native';
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import type { Task } from '@/types/task';
 import { TaskRow } from './task-row';
 import { useTheme } from '@/hooks/use-theme';
@@ -177,7 +176,7 @@ export function TaskListFrame({
           if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
         }}
         contentContainerStyle={{
-          paddingBottom: canScroll ? ROW_STRIDE : 0,
+          paddingBottom: canScroll ? 6 : 0,
           gap: GAP,
           flexGrow: 1,
         }}
@@ -203,30 +202,6 @@ export function TaskListFrame({
           onPress={onPress}
         />
       </Animated.ScrollView>
-
-      {/* Bottom subtle cylinder fade gradient for the roulette curve */}
-      {canScroll && (
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 14,
-          }}
-        >
-          <Svg width="100%" height={14}>
-            <Defs>
-              <LinearGradient id="rouletteBottomFade" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={colors.card} stopOpacity="0" />
-                <Stop offset="1" stopColor={colors.card} stopOpacity="0.85" />
-              </LinearGradient>
-            </Defs>
-            <Rect x="0" y="0" width="100%" height={14} fill="url(#rouletteBottomFade)" />
-          </Svg>
-        </View>
-      )}
     </View>
   );
 }
