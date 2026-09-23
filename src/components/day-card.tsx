@@ -17,6 +17,7 @@ type DayCardProps = {
   tasks: Task[];
   wide?: boolean;
   progress?: Animated.Value;
+  isSundayVisible?: boolean;
   onInteraction?: () => void;
   collapsedBodyHeight?: number;
   expandedBodyHeight?: number;
@@ -35,6 +36,7 @@ export const DayCard = memo(function DayCardComponent({
   tasks,
   wide = false,
   progress,
+  isSundayVisible = true,
   onInteraction,
   collapsedBodyHeight = 138,
   expandedBodyHeight = 88,
@@ -217,20 +219,12 @@ export const DayCard = memo(function DayCardComponent({
       })
     : Math.max(80, expandedSundayHeight - 35);
 
-  const [measuredBodyHeight, setMeasuredBodyHeight] = useState<number>(0);
-
-  const activeBodyHeight = measuredBodyHeight > 0
-    ? measuredBodyHeight
-    : (wide ? (expandedSundayHeight - 35) : (progress ? expandedBodyHeight : collapsedBodyHeight));
+  const activeBodyHeight = wide
+    ? Math.max(80, expandedSundayHeight - 35)
+    : (isSundayVisible ? expandedBodyHeight : collapsedBodyHeight);
 
   const cardBodyContent = (
     <Animated.View
-      onLayout={(e) => {
-        const h = Math.round(e.nativeEvent.layout.height);
-        if (h > 0 && Math.abs(h - measuredBodyHeight) > 2) {
-          setMeasuredBodyHeight(h);
-        }
-      }}
       style={[
         {
           overflow: 'hidden',

@@ -933,22 +933,13 @@ export default function Home() {
   const monthGridAvailH = availableHeight;
   const WEEK_CARD_ROW_GAP = 8;
   const CARD_HEADER_NON_BODY = 35; // 10 paddingTop + 16 header + 8 divider marginTop + 1 divider line
-  const TASK_STRIDE = 27; // 22 row height + 5 gap
-  const TASK_EDGE_PAD = 8; // Top gap (divider to 1st task) and bottom gap (last task to bottom edge)
-  const BODY_PAD_TOTAL = 2 * TASK_EDGE_PAD - 5; // 8 + 8 - 5 = 11
 
-  // 1. Expanded mode: Sunday is SHOWN (4 rows: 3 rows of 2 cards + Sunday)
-  const availFor4 = availableHeight - 3 * WEEK_CARD_ROW_GAP;
-  const maxBodyH4 = Math.floor(availFor4 / 4) - CARD_HEADER_NON_BODY;
-  const nExpanded = Math.max(2, Math.floor((maxBodyH4 - BODY_PAD_TOTAL) / TASK_STRIDE));
-  const expandedBodyHeight = TASK_STRIDE * nExpanded + BODY_PAD_TOTAL;
+  // 1. Expanded mode: Sunday is SHOWN (4 rows fill availableHeight)
+  const expandedBodyHeight = Math.max(40, Math.floor((availableHeight - 3 * WEEK_CARD_ROW_GAP - 4 * CARD_HEADER_NON_BODY) / 4));
   const expandedSundayHeight = CARD_HEADER_NON_BODY + expandedBodyHeight;
 
-  // 2. Collapsed mode: Sunday is NOT SHOWN (3 rows of 2 cards)
-  const availFor3 = availableHeight - 2 * WEEK_CARD_ROW_GAP;
-  const maxBodyH3 = Math.floor(availFor3 / 3) - CARD_HEADER_NON_BODY;
-  const nCollapsed = Math.max(nExpanded + 1, Math.floor((maxBodyH3 - BODY_PAD_TOTAL) / TASK_STRIDE));
-  const collapsedBodyHeight = TASK_STRIDE * nCollapsed + BODY_PAD_TOTAL;
+  // 2. Collapsed mode: Sunday is NOT SHOWN (3 rows fill availableHeight)
+  const collapsedBodyHeight = Math.max(60, Math.floor((availableHeight - 2 * WEEK_CARD_ROW_GAP - 3 * CARD_HEADER_NON_BODY) / 3));
 
   const cardGridBottomPadding = bottomBarSpace;
   const title = derivedWeekData.headerTitle;
@@ -1528,6 +1519,7 @@ export default function Home() {
                 <WeekView
                   days={days}
                   progress={weekProgress}
+                  isSundayVisible={settings.lastDayVisibility !== 'hidden'}
                   collapsedBodyHeight={collapsedBodyHeight}
                   expandedBodyHeight={expandedBodyHeight}
                   expandedSundayHeight={expandedSundayHeight}
@@ -1924,8 +1916,8 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
   );
 });
 
-const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction, collapsedBodyHeight = 138, expandedBodyHeight = 88, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef, isCardScrollingRef, showBookDivider = false }: {
-  days: DayDataItem[]; progress: Animated.Value;
+const WeekView = memo(function WeekViewComponent({ days, progress, isSundayVisible = true, onInteraction, collapsedBodyHeight = 138, expandedBodyHeight = 88, expandedSundayHeight = 159, onLayoutMeasured, isSwipingRef, isCardScrollingRef, showBookDivider = false }: {
+  days: DayDataItem[]; progress: Animated.Value; isSundayVisible?: boolean;
   onInteraction?: () => void; collapsedBodyHeight?: number; expandedBodyHeight?: number;
   expandedSundayHeight?: number; onLayoutMeasured?: (dateKey: string, layout: { x: number; y: number; width: number; height: number }) => void;
   isSwipingRef?: React.RefObject<boolean>;
@@ -1945,6 +1937,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
               tasks={day.tasks}
               monthLabel={day.monthLabel}
               progress={progress}
+              isSundayVisible={isSundayVisible}
               onInteraction={onInteraction}
               collapsedBodyHeight={collapsedBodyHeight}
               expandedBodyHeight={expandedBodyHeight}
@@ -1967,6 +1960,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
               tasks={day.tasks}
               monthLabel={day.monthLabel}
               progress={progress}
+              isSundayVisible={isSundayVisible}
               onInteraction={onInteraction}
               collapsedBodyHeight={collapsedBodyHeight}
               expandedBodyHeight={expandedBodyHeight}
@@ -1978,7 +1972,7 @@ const WeekView = memo(function WeekViewComponent({ days, progress, onInteraction
         </View>
       </View>
       {days[6] && (
-        <DayCard key={days[6].dateKey} date={days[6].date} tasks={days[6].tasks} monthLabel={days[6].monthLabel} wide progress={progress} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} isCardScrollingRef={isCardScrollingRef} />
+        <DayCard key={days[6].dateKey} date={days[6].date} tasks={days[6].tasks} monthLabel={days[6].monthLabel} wide progress={progress} isSundayVisible={isSundayVisible} onInteraction={onInteraction} expandedSundayHeight={expandedSundayHeight} onLayoutMeasured={onLayoutMeasured} isSwipingRef={isSwipingRef} isCardScrollingRef={isCardScrollingRef} />
       )}
     </View>
   );

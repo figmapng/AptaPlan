@@ -20,8 +20,8 @@ interface TaskListFrameProps {
 }
 
 const ROW_HEIGHT = 22;
-const GAP = 5;
-const ROW_STRIDE = ROW_HEIGHT + GAP;
+const MIN_GAP = 3.5;
+const MIN_PAD = 7;
 
 function RouletteRow({
   task,
@@ -34,6 +34,7 @@ function RouletteRow({
   isSwipingRef,
   cardBg,
   singleLine,
+  rowStride,
 }: {
   task: Task;
   index: number;
@@ -45,19 +46,11 @@ function RouletteRow({
   isSwipingRef?: React.RefObject<boolean>;
   cardBg?: string;
   singleLine?: boolean;
+  rowStride: number;
 }) {
-  const itemTop = index * ROW_STRIDE;
-  // Curve ONLY applies at the bottom of the card for overflowing tasks
+  const itemTop = index * rowStride;
   const b1 = itemTop - (containerHeight + 14);
-  const b2 = itemTop - (containerHeight - ROW_STRIDE - 4);
-
-  const rotateX = canScroll
-    ? scrollY.interpolate({
-        inputRange: [b1, b2],
-        outputRange: ['40deg', '0deg'],
-        extrapolate: 'clamp',
-      })
-    : '0deg';
+  const b2 = itemTop - (containerHeight - rowStride - 4);
 
   const opacity = canScroll
     ? scrollY.interpolate({
@@ -79,11 +72,7 @@ function RouletteRow({
     <Animated.View
       style={{
         height: ROW_HEIGHT,
-        transform: [
-          { perspective: 400 },
-          { rotateX },
-          { scale },
-        ],
+        transform: [{ scale }],
         opacity,
       }}
     >
@@ -129,9 +118,14 @@ export function TaskListFrame({
     }
   };
 
-  const TASK_EDGE_PAD = 8;
-  const visibleTasksCount = Math.max(1, Math.round((containerHeight - 11) / ROW_STRIDE));
-  const canScroll = scrollable && scrollEnabled && tasks.length > visibleTasksCount;
+  const N = Math.max(1, Math.floor((containerHeight + MIN_GAP - 2 * MIN_PAD) / (ROW_HEIGHT + MIN_GAP)));
+  const totalTasksH = N * ROW_HEIGHT;
+  const remaining = Math.max(0, containerHeight - totalTasksH);
+  const gap = N > 1 ? Math.min(6, Math.max(3, (remaining - 16) / (N - 1))) : 0;
+  const edgePad = Math.max(6, Math.round(((remaining - (N - 1) * gap) / 2) * 10) / 10);
+  const rowStride = ROW_HEIGHT + gap;
+
+  const canScroll = scrollable && scrollEnabled && tasks.length > N;
 
   return (
     <View style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -143,7 +137,7 @@ export function TaskListFrame({
         bounces={canScroll}
         alwaysBounceVertical={false}
         scrollEventThrottle={16}
-        snapToInterval={ROW_STRIDE}
+        snapToInterval={rowStride}
         snapToAlignment="start"
         decelerationRate="fast"
         onTouchMove={() => {
@@ -166,7 +160,7 @@ export function TaskListFrame({
                 if (isSwipingRef) (isSwipingRef as any).current = true;
                 if (isCardScrollingRef) (isCardScrollingRef as any).current = true;
 
-                const currentIdx = Math.max(0, Math.min(tasks.length - 1, Math.round(y / ROW_STRIDE)));
+                const currentIdx = Math.max(0, Math.min(tasks.length - 1, Math.round(y / rowStride)));
                 if (currentIdx !== lastHapticIndexRef.current) {
                   lastHapticIndexRef.current = currentIdx;
                   triggerScrollHaptic();
@@ -206,9 +200,9 @@ export function TaskListFrame({
           if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
         }}
         contentContainerStyle={{
-          paddingTop: TASK_EDGE_PAD,
-          paddingBottom: TASK_EDGE_PAD,
-          gap: GAP,
+          paddingTop: edgePad,
+          paddingBottom: edgePad,
+          gap,
           flexGrow: 1,
         }}
       >
@@ -225,6 +219,7 @@ export function TaskListFrame({
             isSwipingRef={isSwipingRef}
             cardBg={colors.card}
             singleLine={singleLine}
+            rowStride={rowStride}
           />
         ))}
         {/* Empty area tap-to-open */}
