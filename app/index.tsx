@@ -1860,7 +1860,7 @@ function SelectorChevronIcon({ color = colors.today }: { color?: string }) {
 }
 
 const WEEK_GRID_ROW_GAP = 8;
-const WEEK_GRID_COL_GAP = 10;
+const WEEK_GRID_COL_GAP = 16;
 
 const BookSpineDivider = memo(function BookSpineDividerComponent({
   isDark,
@@ -1875,8 +1875,8 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
         top: 14,
         bottom: 14,
         left: '50%',
-        marginLeft: -5,
-        width: 10,
+        marginLeft: -8,
+        width: 16,
         borderRadius: 4,
         overflow: 'hidden',
         zIndex: 2,
@@ -1913,7 +1913,7 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
           position: 'absolute',
           top: 0,
           bottom: 0,
-          left: 4.5,
+          left: 7.6,
           width: 0.75,
           backgroundColor: isDark ? 'rgba(0, 0, 0, 0.30)' : 'rgba(20, 15, 8, 0.11)',
         }}
@@ -1924,7 +1924,7 @@ const BookSpineDivider = memo(function BookSpineDividerComponent({
           position: 'absolute',
           top: 0,
           bottom: 0,
-          left: 5.25,
+          left: 8.35,
           width: 0.5,
           backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.30)',
         }}
