@@ -107,14 +107,16 @@ export default function SettingsScreen() {
         {/* Бөлім 1: Сыртқы түрі мен тіл */}
         <Section>
           <SettingRow
-            icon="globe-outline"
+            icon="globe"
+            iconBg="#007AFF"
             label={t.settings.language}
             valueText={t.settings.languages[language]}
             onPress={() => setLanguageModalOpen(true)}
           />
           <Divider />
           <SettingRow
-            icon="color-palette-outline"
+            icon="color-palette"
+            iconBg="#AF52DE"
             label={t.settings.appearance}
             valueText={themeDisplayName}
             rightElement={
@@ -136,7 +138,8 @@ export default function SettingsScreen() {
         {/* Бөлім 2: Күнтізбе және көрініс */}
         <Section>
           <SettingRow
-            icon="options-outline"
+            icon="options"
+            iconBg="#5856D6"
             label={t.settings.defaultViewMode}
             valueText={
               settings.defaultViewMode === 'month'
@@ -149,7 +152,8 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            icon="calendar-outline"
+            icon="calendar"
+            iconBg="#FF3B30"
             label={t.settings.firstDayOfWeek}
             valueText={
               settings.firstDayOfWeek === 'sat'
@@ -162,7 +166,8 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            icon="eye-outline"
+            icon="eye"
+            iconBg="#34C759"
             label={t.settings.lastDayVisibility}
             valueText={
               settings.lastDayVisibility === 'hidden'
@@ -173,7 +178,8 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            icon="book-outline"
+            icon="book"
+            iconBg="#FF9500"
             label={t.settings.bookDivider}
             rightElement={
               <Switch
@@ -191,7 +197,8 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            icon="grid-outline"
+            icon="grid"
+            iconBg="#FF2D55"
             label={t.settings.monthPickerStyle}
             valueText={
               t.settings.monthPickerStyles[settings.monthPickerStyle || 'circular']
@@ -203,7 +210,8 @@ export default function SettingsScreen() {
         {/* Бөлім 3: Тапсырмалар */}
         <Section>
           <SettingRow
-            icon="layers-outline"
+            icon="checkmark-done"
+            iconBg="#30B0C7"
             label={t.settings.completedPlacement}
             valueText={
               settings.completedPlacement === 'keep' ? t.settings.completedPlacementKeep : t.settings.completedPlacementBottom
@@ -212,7 +220,8 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            icon="swap-vertical-outline"
+            icon="swap-vertical"
+            iconBg="#5E5CE6"
             label={t.settings.sortMode}
             valueText={
               settings.sortMode === 'time' ? t.settings.sortModeTime : t.settings.sortModeManual
@@ -221,7 +230,8 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            icon="pulse-outline"
+            icon="pulse"
+            iconBg="#32D74B"
             label={t.settings.haptics}
             rightElement={
               <Switch
@@ -237,7 +247,8 @@ export default function SettingsScreen() {
         {/* Бөлім 4: Интеграция және деректер */}
         <Section>
           <SettingRow
-            icon="extension-puzzle-outline"
+            icon="extension-puzzle"
+            iconBg="#BF5AF2"
             label={t.settings.integrations}
             valueText={
               Platform.OS === 'ios'
@@ -250,22 +261,24 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            icon="cloud-upload-outline"
+            icon="cloud-upload"
+            iconBg="#0A84FF"
             label={t.settings.exportBackup}
             onPress={() => void handleExport()}
           />
           <Divider />
           <SettingRow
-            icon="cloud-download-outline"
+            icon="cloud-download"
+            iconBg="#64D2FF"
             label={t.settings.importBackup}
             onPress={() => void handleImport()}
           />
           <Divider />
           <SettingRow
-            icon="trash-outline"
-            iconColor="#FF4B3E"
+            icon="trash"
+            iconBg="#FF453A"
             label={t.settings.clearAllData}
-            labelStyle={{ color: '#FF4B3E', fontWeight: '600' }}
+            labelStyle={{ color: '#FF453A', fontWeight: '500' }}
             onPress={clear}
           />
         </Section>
@@ -273,7 +286,8 @@ export default function SettingsScreen() {
         {/* Бөлім 5: Қосымша және көмек */}
         <Section>
           <SettingRow
-            icon="help-circle-outline"
+            icon="help"
+            iconBg="#FF9F0A"
             label={t.settings.userGuide}
             onPress={() => setGuideOpen(true)}
           />
@@ -450,7 +464,8 @@ function Section({
 
 function SettingRow({
   icon,
-  iconColor,
+  iconColor = '#FFFFFF',
+  iconBg,
   customIcon,
   label,
   labelStyle,
@@ -460,6 +475,7 @@ function SettingRow({
 }: {
   icon?: string;
   iconColor?: string;
+  iconBg?: string;
   customIcon?: React.ReactNode;
   label: string;
   labelStyle?: object;
@@ -468,14 +484,14 @@ function SettingRow({
   onPress?: () => void;
 }) {
   const { colors } = useTheme();
-  const effectiveIconColor = iconColor || colors.text;
+  const effectiveIconBg = iconBg || colors.today;
   const content = (
     <View style={styles.rowInner}>
-      <View style={styles.iconBox}>
+      <View style={[styles.iconBox, { backgroundColor: effectiveIconBg }]}>
         {customIcon ? (
           customIcon
         ) : icon ? (
-          <Ionicons name={icon as any} size={21} color={effectiveIconColor} />
+          <Ionicons name={icon as any} size={18} color={iconColor} />
         ) : null}
       </View>
       <Text style={[styles.rowLabel, { color: colors.text }, labelStyle]}>
@@ -1349,11 +1365,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   iconBox: {
-    width: 28,
-    height: 28,
+    width: 30,
+    height: 30,
+    borderRadius: 7.5,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 13,
   },
   rowLabel: {
     flex: 1,
@@ -1375,9 +1393,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   divider: {
-    height: 1,
+    height: StyleSheet.hairlineWidth || 0.5,
     backgroundColor: colors.inputBorder,
-    marginLeft: 56,
+    marginLeft: 59,
   },
   footerVersion: {
     marginTop: 32,
