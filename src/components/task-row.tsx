@@ -633,9 +633,9 @@ const styles = StyleSheet.create({
   },
   compactTimePill: {
     backgroundColor: '#F2F2F7',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 4,
+    paddingHorizontal: 3.5,
+    paddingVertical: 0.5,
+    borderRadius: 3,
     borderCurve: 'continuous',
     marginLeft: 4,
     flexShrink: 0,
@@ -643,8 +643,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   compactTimeText: {
-    fontSize: 10,
-    lineHeight: 13,
+    fontSize: 9,
+    lineHeight: 11,
     fontWeight: '500',
     color: '#8E8E93',
     fontVariant: ['tabular-nums'],
