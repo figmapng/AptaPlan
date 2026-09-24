@@ -663,8 +663,7 @@ function OptionModal({
   };
 
   const insets = useSafeAreaInsets();
-  const screenRadius = getDeviceScreenRadius(insets);
-  const modalRadius = screenRadius > 0 ? screenRadius : 24;
+  const modalRadius = 28;
   const bottomPadding = insets.bottom > 0 ? insets.bottom : 16;
 
   return (
@@ -920,8 +919,7 @@ function DefaultViewModeModal({
   ];
 
   const insets = useSafeAreaInsets();
-  const screenRadius = getDeviceScreenRadius(insets);
-  const modalRadius = screenRadius > 0 ? screenRadius : 24;
+  const modalRadius = 28;
   const bottomPadding = insets.bottom > 0 ? insets.bottom : 16;
 
   return (
@@ -1083,8 +1081,7 @@ function LastDayVisibilityModal({
   ];
 
   const insets = useSafeAreaInsets();
-  const screenRadius = getDeviceScreenRadius(insets);
-  const modalRadius = screenRadius > 0 ? screenRadius : 24;
+  const modalRadius = 28;
   const bottomPadding = insets.bottom > 0 ? insets.bottom : 16;
 
   return (
@@ -1256,8 +1253,7 @@ function MonthPickerStyleModal({
   };
 
   const insets = useSafeAreaInsets();
-  const screenRadius = getDeviceScreenRadius(insets);
-  const modalRadius = screenRadius > 0 ? screenRadius : 24;
+  const modalRadius = 28;
   const bottomPadding = insets.bottom > 0 ? insets.bottom : 16;
 
   return (
@@ -1472,10 +1468,10 @@ const styles = StyleSheet.create({
   modalContentCard: {
     width: '100%',
     backgroundColor: colors.sheetBg,
-    borderRadius: 32,
+    borderRadius: 28,
     borderCurve: 'continuous',
-    paddingHorizontal: 22,
-    paddingTop: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 20,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 12 },
