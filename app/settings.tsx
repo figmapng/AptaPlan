@@ -30,6 +30,7 @@ import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { UserGuideModal } from '@/components/UserGuideModal';
 import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
+import { getDeviceScreenRadius, getConcentricRadius } from '@/utils/screen-radius';
 import { getDatabase } from '@/database/database';
 import { exportBackup, importBackup } from '@/services/backup-service';
 
@@ -661,11 +662,16 @@ function OptionModal({
     handleClose();
   };
 
+  const insets = useSafeAreaInsets();
+  const screenRadius = getDeviceScreenRadius(insets);
+  const modalRadius = screenRadius > 0 ? screenRadius : 24;
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : 16;
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, { paddingBottom: bottomPadding }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderRadius: modalRadius }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{title}</Text>
@@ -913,11 +919,16 @@ function DefaultViewModeModal({
     },
   ];
 
+  const insets = useSafeAreaInsets();
+  const screenRadius = getDeviceScreenRadius(insets);
+  const modalRadius = screenRadius > 0 ? screenRadius : 24;
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : 16;
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, { paddingBottom: bottomPadding }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderRadius: modalRadius }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.defaultViewMode}</Text>
@@ -1071,11 +1082,16 @@ function LastDayVisibilityModal({
     },
   ];
 
+  const insets = useSafeAreaInsets();
+  const screenRadius = getDeviceScreenRadius(insets);
+  const modalRadius = screenRadius > 0 ? screenRadius : 24;
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : 16;
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, { paddingBottom: bottomPadding }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderRadius: modalRadius }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.lastDayVisibility}</Text>
@@ -1239,11 +1255,16 @@ function MonthPickerStyleModal({
     onClose();
   };
 
+  const insets = useSafeAreaInsets();
+  const screenRadius = getDeviceScreenRadius(insets);
+  const modalRadius = screenRadius > 0 ? screenRadius : 24;
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : 16;
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, { paddingBottom: bottomPadding }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, width: CAROUSEL_WIDTH + 32, paddingHorizontal: 16, paddingBottom: 16 }]}>
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderRadius: modalRadius, width: CAROUSEL_WIDTH + 32, paddingHorizontal: 16, paddingBottom: 16 }]}>
           {/* Header */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{t.settings.monthPickerStyle}</Text>
@@ -1453,8 +1474,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sheetBg,
     borderRadius: 32,
     borderCurve: 'continuous',
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: 22,
+    paddingTop: 24,
     paddingBottom: 20,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 12 },
