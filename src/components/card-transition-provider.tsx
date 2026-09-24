@@ -126,7 +126,7 @@ const CarouselCard = React.memo(function CarouselCard({
     : (isDark ? colors.cardBorder : '#E5E5EA');
 
   const safeFrameX = typeof currentFrame?.x === 'number' && !isNaN(currentFrame.x) ? currentFrame.x : 16;
-  const safeFrameY = typeof currentFrame?.y === 'number' && !isNaN(currentFrame.y) ? currentFrame.y : insets.top + 78;
+  const safeFrameY = typeof currentFrame?.y === 'number' && !isNaN(currentFrame.y) ? currentFrame.y : insets.top + 74;
   const safeFrameW = typeof currentFrame?.width === 'number' && !isNaN(currentFrame.width) && currentFrame.width > 0 ? currentFrame.width : width - 32;
   const safeFrameH = typeof currentFrame?.height === 'number' && !isNaN(currentFrame.height) && currentFrame.height > 0 ? currentFrame.height : 200;
 
@@ -146,7 +146,7 @@ const CarouselCard = React.memo(function CarouselCard({
           }),
           top: progress.interpolate({
             inputRange: [0, 1],
-            outputRange: [safeFrameY, insets.top + 78],
+            outputRange: [safeFrameY, insets.top + 74],
             extrapolate: 'clamp',
           }),
           width: progress.interpolate({
@@ -583,7 +583,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const activeDateKey = toDateKey(activeCardDate);
   const activeDayTasks = tasks.filter((t) => t.date === activeDateKey);
   const taskCount = activeDayTasks.length;
-  const openedCardTop = insets.top + 78;
+  const openedCardTop = insets.top + 74;
   const cardToInputGap = 26;
   const bottomInputBarHeight = 50;
   const bottomBarBottomOffset = insets.bottom > 0 ? Math.max(insets.bottom - 2, 18) : 24;
@@ -676,7 +676,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     const calcTargetHeight = maxHeight;
     const frameSnapshot = Object.freeze({
       x: typeof frame?.x === 'number' && !isNaN(frame.x) ? frame.x : 16,
-      y: typeof frame?.y === 'number' && !isNaN(frame.y) ? frame.y : insets.top + 78,
+      y: typeof frame?.y === 'number' && !isNaN(frame.y) ? frame.y : insets.top + 74,
       width: typeof frame?.width === 'number' && !isNaN(frame.width) && frame.width > 0 ? frame.width : width - 32,
       height: typeof frame?.height === 'number' && !isNaN(frame.height) && frame.height > 0 ? frame.height : 200,
     });
