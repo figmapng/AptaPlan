@@ -1261,21 +1261,38 @@ export default function Home() {
               const total = wTasks.length;
               const done = wTasks.filter((t) => t.isCompleted).length;
 
+              let text = '';
               if (total === 0) {
-                return (
-                  <Text style={{ fontSize: 13, fontWeight: '500', color: colors.secondary, marginTop: 2 }}>
-                    {t.common.noTasks}
-                  </Text>
-                );
+                const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+                const quotes = t.motivation?.quotes ?? [];
+                text = quotes.length > 0 ? quotes[dayOfYear % quotes.length] : t.common.noTasks;
+              } else if (done === 0) {
+                text = t.motivation?.notStarted?.(total) ?? t.common.completedOf(done, total);
+              } else if (done === total) {
+                text = t.motivation?.completedAll?.(total) ?? t.common.completedOf(done, total);
+              } else if (done / total <= 0.4) {
+                text = t.motivation?.inProgressEarly?.(done, total) ?? t.common.completedOf(done, total);
+              } else {
+                text = t.motivation?.inProgressLate?.(done, total) ?? t.common.completedOf(done, total);
               }
 
               return (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '500', color: colors.secondary, fontVariant: ['tabular-nums'] }}>
-                    {t.common.completedOf(done, total)}
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '500',
+                      color: colors.secondary,
+                      fontVariant: ['tabular-nums'],
+                      flexShrink: 1,
+                    }}
+                  >
+                    {text}
                   </Text>
                   {done === total && total > 0 && (
-                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#E6F9F0', alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: isDark ? 'rgba(5, 150, 105, 0.25)' : '#E6F9F0', alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ fontSize: 9, color: '#059669', fontWeight: '800' }}>✓</Text>
                     </View>
                   )}

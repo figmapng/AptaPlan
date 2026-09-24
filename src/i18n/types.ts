@@ -140,6 +140,10 @@ export interface Translations {
     yearCountdownPrefix: string;
     yearCountdown: (days: number, months: number) => string;
     quotes: string[];
+    notStarted: (total: number) => string;
+    inProgressEarly: (done: number, total: number) => string;
+    inProgressLate: (done: number, total: number) => string;
+    completedAll: (total: number) => string;
   };
 
   // User Guide
