@@ -98,7 +98,7 @@ function RouletteRow({
 
 export function TaskListFrame({
   tasks,
-  containerHeight = 150,
+  containerHeight: propContainerHeight = 150,
   scrollable = true,
   scrollEnabled = true,
   onScrollYChange,
@@ -110,6 +110,8 @@ export function TaskListFrame({
 }: TaskListFrameProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
+  const [layoutHeight, setLayoutHeight] = useState(0);
+  const containerHeight = (layoutHeight > 0 ? layoutHeight : propContainerHeight) || 150;
   const [isAtTop, setIsAtTop] = useState(true);
   const isAtTopRef = useRef(true);
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -153,7 +155,15 @@ export function TaskListFrame({
   });
 
   return (
-    <View style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+    <View
+      onLayout={(e) => {
+        const h = Math.round(e.nativeEvent.layout.height);
+        if (h > 0 && Math.abs(h - layoutHeight) > 2) {
+          setLayoutHeight(h);
+        }
+      }}
+      style={{ flex: 1, position: 'relative', overflow: 'hidden' }}
+    >
       <Animated.ScrollView
         ref={scrollViewRef}
         scrollEnabled={canScroll}
@@ -323,6 +333,8 @@ export function TaskListFrame({
             );
           }
 
+          const isBelowBadge = hasOverflow && index > badgeIndex;
+
           return (
             <RouletteRow
               key={`${task.id}:${task.date}`}
@@ -337,6 +349,7 @@ export function TaskListFrame({
               cardBg={colors.card}
               singleLine={singleLine}
               rowStride={rowStride}
+              extraOpacity={isBelowBadge ? taskOpacity : undefined}
             />
           );
         })}
