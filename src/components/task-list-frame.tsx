@@ -119,12 +119,12 @@ export function TaskListFrame({
   const lastHapticIndexRef = useRef(0);
   const lastHapticTimeRef = useRef(0);
 
-  const triggerScrollHaptic = () => {
+  const triggerScrollHaptic = (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Rigid) => {
     const now = Date.now();
-    if (now - lastHapticTimeRef.current < 60) return;
+    if (now - lastHapticTimeRef.current < 16) return;
     lastHapticTimeRef.current = now;
     if (Platform.OS === 'ios') {
-      void Haptics.selectionAsync();
+      void Haptics.impactAsync(style);
     } else if (Platform.OS === 'android') {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -204,8 +204,14 @@ export function TaskListFrame({
 
                 const currentIdx = Math.max(0, Math.min(tasks.length - 1, Math.round(y / rowStride)));
                 if (currentIdx !== lastHapticIndexRef.current) {
+                  const diff = Math.abs(currentIdx - lastHapticIndexRef.current);
                   lastHapticIndexRef.current = currentIdx;
-                  triggerScrollHaptic();
+                  triggerScrollHaptic(Haptics.ImpactFeedbackStyle.Rigid);
+                  if (diff > 1) {
+                    setTimeout(() => {
+                      triggerScrollHaptic(Haptics.ImpactFeedbackStyle.Rigid);
+                    }, 24);
+                  }
                 }
               }
             },
@@ -221,7 +227,11 @@ export function TaskListFrame({
 
           const velocityY = e.nativeEvent.velocity?.y ?? 0;
           if (Math.abs(velocityY) < 0.1) {
-            triggerScrollHaptic();
+            const currentIdx = Math.max(0, Math.min(tasks.length - 1, Math.round(y / rowStride)));
+            if (currentIdx !== lastHapticIndexRef.current) {
+              lastHapticIndexRef.current = currentIdx;
+              triggerScrollHaptic(Haptics.ImpactFeedbackStyle.Rigid);
+            }
           }
           setTimeout(() => {
             if (isSwipingRef) (isSwipingRef as any).current = false;
@@ -240,7 +250,12 @@ export function TaskListFrame({
             setIsAtTop(atTop);
           }
 
-          triggerScrollHaptic();
+          const currentIdx = Math.max(0, Math.min(tasks.length - 1, Math.round(y / rowStride)));
+          if (currentIdx !== lastHapticIndexRef.current) {
+            lastHapticIndexRef.current = currentIdx;
+            triggerScrollHaptic(Haptics.ImpactFeedbackStyle.Rigid);
+          }
+
           setTimeout(() => {
             if (isSwipingRef) (isSwipingRef as any).current = false;
             if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
