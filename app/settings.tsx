@@ -635,79 +635,55 @@ function OptionModal({
   options: { label: string; sublabel?: string; selected: boolean; onSelect: () => void }[];
 }) {
   const { colors } = useTheme();
-  const { t } = useI18n();
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (visible) {
-      const idx = options.findIndex((o) => o.selected);
-      setSelectedIdx(idx >= 0 ? idx : 0);
-    } else {
-      setSelectedIdx(null);
-    }
-  }, [visible, options]);
-
-  const activeIndex = options.findIndex((o) => o.selected);
-  const currentIdx = selectedIdx !== null ? selectedIdx : activeIndex >= 0 ? activeIndex : 0;
-
-  const handleClose = () => {
-    setSelectedIdx(null);
-    onClose();
-  };
-
-  const handleConfirm = () => {
-    if (options[currentIdx]) {
-      options[currentIdx].onSelect();
-    }
-    handleClose();
-  };
-
   const insets = useSafeAreaInsets();
   const modalRadius = 28;
   const bottomPadding = insets.bottom > 0 ? insets.bottom : 16;
 
+  const handleSelect = (onSelect: () => void) => {
+    void Haptics.selectionAsync();
+    onSelect();
+    onClose();
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={[styles.modalOverlay, { paddingBottom: bottomPadding }]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderRadius: modalRadius }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View style={[styles.modalContentCard, { backgroundColor: colors.sheetBg, borderRadius: modalRadius, paddingBottom: 16 }]}>
           {/* Header with Title and Close X button */}
           <View style={styles.modalHeaderRow}>
             <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>{title}</Text>
-            <Pressable onPress={handleClose} style={styles.closeButton} hitSlop={8}>
+            <Pressable onPress={onClose} style={styles.closeButton} hitSlop={8}>
               <Ionicons name="close" size={18} color={colors.secondary} />
             </Pressable>
           </View>
 
-          {/* Options List with Radio buttons */}
-          <View style={styles.optionsList}>
+          {/* Options List */}
+          <View style={[styles.optionsList, { marginBottom: 4 }]}>
             {options.map((opt, i) => {
-              const isChecked = i === currentIdx;
               return (
-                <Pressable
+                <AnimatedPressable
                   key={i}
+                  activeScale={0.98}
                   style={styles.optionRowItem}
-                  onPress={() => setSelectedIdx(i)}
+                  onPress={() => handleSelect(opt.onSelect)}
                 >
                   <View style={styles.optionRowLeft}>
-                    <Text style={[styles.optionRowTitle, { color: colors.text }, isChecked && { fontWeight: '700' }]}>
+                    <Text style={[styles.optionRowTitle, { color: colors.text }, opt.selected && { fontWeight: '700' }]}>
                       {opt.label}
                     </Text>
                   </View>
                   <View style={[
                     styles.radioButton,
                     { borderColor: colors.cardBorder },
-                    isChecked && { borderColor: colors.today },
+                    opt.selected && { borderColor: colors.today },
                   ]}>
-                    {isChecked && <View style={[styles.radioButtonInner, { backgroundColor: colors.today }]} />}
+                    {opt.selected && <View style={[styles.radioButtonInner, { backgroundColor: colors.today }]} />}
                   </View>
-                </Pressable>
+                </AnimatedPressable>
               );
             })}
           </View>
-
-          {/* Bottom Action Button */}
-          <ModalActionButton onPress={handleConfirm} label={t.common.confirm} />
         </View>
       </View>
     </Modal>
