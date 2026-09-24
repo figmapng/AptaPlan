@@ -118,16 +118,12 @@ const CarouselCard = React.memo(function CarouselCard({
   const isWideOrigin = currentFrame.width > width * 0.7;
 
   const monthCellBg = isTodayCard
-    ? colors.tintBg
-    : isWeekendCard
-    ? (isDark ? '#2A181A' : '#FFF3F2')
-    : (isDark ? '#1C222E' : '#F6F8FA');
+    ? (isDark ? `${colors.today}25` : colors.tintBg)
+    : (isDark ? '#1C222E' : '#FFFFFF');
 
   const monthCellBorder = isTodayCard
     ? colors.today
-    : isWeekendCard
-    ? (isDark ? '#4A252A' : '#FFE0DC')
-    : (isDark ? colors.cardBorder : '#E8EDF3');
+    : (isDark ? colors.cardBorder : '#E5E5EA');
 
   const safeFrameX = typeof currentFrame?.x === 'number' && !isNaN(currentFrame.x) ? currentFrame.x : 16;
   const safeFrameY = typeof currentFrame?.y === 'number' && !isNaN(currentFrame.y) ? currentFrame.y : insets.top + 78;
@@ -315,7 +311,7 @@ const CarouselCard = React.memo(function CarouselCard({
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: isTodayCard ? colors.today : colors.text,
+              color: isTodayCard ? colors.today : isWeekendCard ? colors.weekend : colors.text,
               letterSpacing: -0.2,
             }}
           >

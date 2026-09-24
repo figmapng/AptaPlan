@@ -199,11 +199,14 @@ export default function DayScreen() {
             style={{
               fontSize: 16,
               fontWeight: '600',
-              color: isSelectedToday ? colors.today : colors.text,
+              color: isSelectedToday ? colors.today : isWeekend ? colors.weekend : colors.text,
               letterSpacing: -0.2,
             }}
           >
-            {`${(t.date.weekdays[selectedDate.getDay()] ?? '').toUpperCase()} • ${format(selectedDate, 'd')} ${t.date.monthsShort[selectedDate.getMonth()] ?? ''}`}
+            {(t.date.weekdays[selectedDate.getDay()] ?? '').toUpperCase()}
+            <Text style={{ color: colors.secondary, fontWeight: '500' }}>
+              {` • ${format(selectedDate, 'd')} ${t.date.monthsShort[selectedDate.getMonth()] ?? ''}`}
+            </Text>
           </Text>
 
           <Text

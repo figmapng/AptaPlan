@@ -2171,18 +2171,12 @@ const MonthDayCell = memo(function MonthDayCellComponent({
 
   const cellBg = isToday
     ? (isDark ? `${colors.today}25` : colors.tintBg)
-    : isWeekend
-    ? isOffMonth
-      ? (isDark ? '#201618' : '#FFF7F6')
-      : (isDark ? '#2D1A1D' : '#FFF0EE')
     : isOffMonth
     ? colors.background
     : normalCellBg;
 
   const cellBorderColor = isToday
     ? colors.today
-    : isWeekend
-    ? (isDark ? '#522328' : '#FAD2CE')
     : normalCellBorder;
 
   return (
@@ -2375,18 +2369,24 @@ const YearView = memo(function YearViewComponent({
 
 
                 <View style={yearStyles.dowRow}>
-                  {DOW_LABELS.map((d, i) => (
-                    <Text
-                      key={i}
-                      style={[
-                        yearStyles.dowLabel,
-                        { color: colors.secondary },
-                        i >= 5 && { color: '#FF7B75' },
-                      ]}
-                    >
-                      {d}
-                    </Text>
-                  ))}
+                  {DOW_LABELS.map((d, i) => {
+                    const isWeekendDow = firstDay === 'mon'
+                      ? i >= 5
+                      : firstDay === 'sun'
+                      ? (i === 0 || i === 6)
+                      : (i === 0 || i === 1);
+                    return (
+                      <Text
+                        key={i}
+                        style={[
+                          yearStyles.dowLabel,
+                          { color: isWeekendDow ? colors.weekend : colors.secondary },
+                        ]}
+                      >
+                        {d}
+                      </Text>
+                    );
+                  })}
                 </View>
 
                 {/* Weeks */}
@@ -2397,7 +2397,11 @@ const YearView = memo(function YearViewComponent({
                       const dateKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                       const isT = dateKey === todayKey;
                       const hasTasks = taskDateSet.has(dateKey);
-                      const isWeekend = di >= 5;
+                      const isWeekend = firstDay === 'mon'
+                        ? di >= 5
+                        : firstDay === 'sun'
+                        ? (di === 0 || di === 6)
+                        : (di === 0 || di === 1);
                       return (
                         <View key={di} style={yearStyles.dayCell}>
                           <View
@@ -2413,7 +2417,7 @@ const YearView = memo(function YearViewComponent({
                                 isT
                                   ? yearStyles.todayNum
                                   : isWeekend
-                                  ? { color: '#FF6B6B' }
+                                  ? { color: colors.weekend }
                                   : hasTasks
                                   ? { color: colors.today, fontWeight: '700' }
                                   : undefined,

@@ -164,6 +164,8 @@ export const DayCard = memo(function DayCardComponent({
 
   const headerTextColor = today
     ? colors.today
+    : isWeekend
+    ? colors.weekend
     : colors.text;
 
   const dayName = t.date.weekdays[date.getDay()] ?? '';

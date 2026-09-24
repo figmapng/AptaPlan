@@ -4,6 +4,7 @@ import { addDays, differenceInCalendarDays, isSameDay, isToday, startOfWeek } fr
 import { colors as defaultColors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
+import { usePlanner } from '@/store/planner-store';
 
 interface CompactWeekStripProps {
   selectedDate: Date;
@@ -26,7 +27,11 @@ export function CompactWeekStrip({
 }: CompactWeekStripProps) {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
+  const { settings } = usePlanner();
   const [rowWidth, setRowWidth] = React.useState<number>(0);
+
+  const firstDay = settings?.firstDayOfWeek ?? 'mon';
+  const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
 
   const currentDayDate = useMemo(() => {
     if (!selectedDate || isNaN(selectedDate.getTime())) return new Date();
@@ -34,8 +39,8 @@ export function CompactWeekStrip({
   }, [selectedDate]);
 
   const currentWeekStart = useMemo(
-    () => startOfWeek(currentDayDate, { weekStartsOn: 1 }),
-    [currentDayDate]
+    () => startOfWeek(currentDayDate, { weekStartsOn }),
+    [currentDayDate, weekStartsOn]
   );
 
   const days = useMemo(
@@ -122,16 +127,23 @@ export function CompactWeekStrip({
         {days.map((d, i) => {
           const isSelected = isSameDay(d, currentDayDate);
           const isTodayDay = isToday(d);
+          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
           const dayNum = d.getDate();
           const dayShort = (t.date.weekdaysShort[d.getDay()] || '');
           const formattedDayShort = dayShort.charAt(0).toUpperCase() + dayShort.slice(1);
 
-          const labelColor = isSelected
+          const labelColor = isTodayDay
+            ? colors.today
+            : isWeekend
+            ? colors.weekend
+            : isSelected
             ? (isDark ? '#F5F5F5' : '#475569')
             : (isDark ? '#8E8E8E' : '#94A3B8');
 
           const numColor = isTodayDay
             ? colors.today
+            : isWeekend
+            ? colors.weekend
             : isSelected
             ? (isDark ? '#F5F5F5' : '#1E293B')
             : (isDark ? '#8E8E8E' : '#64748B');
