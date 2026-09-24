@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { SymbolView, type SFSymbol } from 'expo-symbols';
 import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
@@ -107,6 +108,7 @@ export default function SettingsScreen() {
         {/* Бөлім 1: Сыртқы түрі мен тіл */}
         <Section>
           <SettingRow
+            sfSymbol="globe"
             icon="globe"
             iconBg="#007AFF"
             label={t.settings.language}
@@ -115,6 +117,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            sfSymbol="paintpalette.fill"
             icon="color-palette"
             iconBg="#AF52DE"
             label={t.settings.appearance}
@@ -138,6 +141,7 @@ export default function SettingsScreen() {
         {/* Бөлім 2: Күнтізбе және көрініс */}
         <Section>
           <SettingRow
+            sfSymbol="slider.horizontal.3"
             icon="options"
             iconBg="#5856D6"
             label={t.settings.defaultViewMode}
@@ -152,6 +156,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            sfSymbol="calendar"
             icon="calendar"
             iconBg="#FF3B30"
             label={t.settings.firstDayOfWeek}
@@ -166,6 +171,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            sfSymbol="eye.fill"
             icon="eye"
             iconBg="#34C759"
             label={t.settings.lastDayVisibility}
@@ -178,6 +184,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            sfSymbol="book.fill"
             icon="book"
             iconBg="#FF9500"
             label={t.settings.bookDivider}
@@ -197,6 +204,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            sfSymbol="circle.grid.cross.fill"
             icon="grid"
             iconBg="#FF2D55"
             label={t.settings.monthPickerStyle}
@@ -210,6 +218,7 @@ export default function SettingsScreen() {
         {/* Бөлім 3: Тапсырмалар */}
         <Section>
           <SettingRow
+            sfSymbol="checklist"
             icon="checkmark-done"
             iconBg="#30B0C7"
             label={t.settings.completedPlacement}
@@ -220,6 +229,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            sfSymbol="arrow.up.arrow.down"
             icon="swap-vertical"
             iconBg="#5E5CE6"
             label={t.settings.sortMode}
@@ -230,6 +240,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            sfSymbol="iphone.radiowaves.left.and.right"
             icon="pulse"
             iconBg="#32D74B"
             label={t.settings.haptics}
@@ -247,6 +258,7 @@ export default function SettingsScreen() {
         {/* Бөлім 4: Интеграция және деректер */}
         <Section>
           <SettingRow
+            sfSymbol="puzzlepiece.fill"
             icon="extension-puzzle"
             iconBg="#BF5AF2"
             label={t.settings.integrations}
@@ -261,6 +273,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            sfSymbol="square.and.arrow.up.fill"
             icon="cloud-upload"
             iconBg="#0A84FF"
             label={t.settings.exportBackup}
@@ -268,6 +281,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            sfSymbol="square.and.arrow.down.fill"
             icon="cloud-download"
             iconBg="#64D2FF"
             label={t.settings.importBackup}
@@ -275,6 +289,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
+            sfSymbol="trash.fill"
             icon="trash"
             iconBg="#FF453A"
             label={t.settings.clearAllData}
@@ -286,6 +301,7 @@ export default function SettingsScreen() {
         {/* Бөлім 5: Қосымша және көмек */}
         <Section>
           <SettingRow
+            sfSymbol="questionmark"
             icon="help"
             iconBg="#FF9F0A"
             label={t.settings.userGuide}
@@ -463,6 +479,7 @@ function Section({
 }
 
 function SettingRow({
+  sfSymbol,
   icon,
   iconColor = '#FFFFFF',
   iconBg,
@@ -473,6 +490,7 @@ function SettingRow({
   rightElement,
   onPress,
 }: {
+  sfSymbol?: SFSymbol;
   icon?: string;
   iconColor?: string;
   iconBg?: string;
@@ -485,14 +503,25 @@ function SettingRow({
 }) {
   const { colors } = useTheme();
   const effectiveIconBg = iconBg || colors.today;
+
+  const renderedIcon = customIcon ? (
+    customIcon
+  ) : sfSymbol && Platform.OS === 'ios' ? (
+    <SymbolView
+      name={sfSymbol}
+      size={18}
+      tintColor={iconColor}
+      weight="medium"
+      fallback={icon ? <Ionicons name={icon as any} size={18} color={iconColor} /> : null}
+    />
+  ) : icon ? (
+    <Ionicons name={icon as any} size={18} color={iconColor} />
+  ) : null;
+
   const content = (
     <View style={styles.rowInner}>
       <View style={[styles.iconBox, { backgroundColor: effectiveIconBg }]}>
-        {customIcon ? (
-          customIcon
-        ) : icon ? (
-          <Ionicons name={icon as any} size={18} color={iconColor} />
-        ) : null}
+        {renderedIcon}
       </View>
       <Text style={[styles.rowLabel, { color: colors.text }, labelStyle]}>
         {label}
