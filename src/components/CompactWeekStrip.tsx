@@ -118,7 +118,9 @@ export function CompactWeekStrip({
             styles.slidingIndicator,
             {
               width: cellWidth,
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F3F5',
+              backgroundColor: isToday(currentDayDate)
+                ? colors.tintBg
+                : (isDark ? 'rgba(255, 255, 255, 0.08)' : colors.cardHeaderBg),
               transform: [{ translateX: indicatorTranslateX }],
             },
           ]}
@@ -137,16 +139,16 @@ export function CompactWeekStrip({
             : isWeekend
             ? colors.weekend
             : isSelected
-            ? (isDark ? '#F5F5F5' : '#475569')
-            : (isDark ? '#8E8E8E' : '#94A3B8');
+            ? colors.text
+            : colors.secondary;
 
           const numColor = isTodayDay
             ? colors.today
             : isWeekend
             ? colors.weekend
             : isSelected
-            ? (isDark ? '#F5F5F5' : '#1E293B')
-            : (isDark ? '#8E8E8E' : '#64748B');
+            ? colors.text
+            : colors.secondary;
 
           return (
             <Pressable
