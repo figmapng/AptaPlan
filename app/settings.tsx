@@ -261,13 +261,17 @@ export default function SettingsScreen() {
             sfSymbol="link"
             icon="link"
             iconBg="#BF5AF2"
-            label={t.settings.integrations}
+            label={
+              Platform.OS === 'ios'
+                ? t.settings.syncAppleRemindersLabel
+                : t.settings.syncCalendarLabel
+            }
             valueText={
               Platform.OS === 'ios'
                 ? settings.syncAppleReminders
-                  ? 'Apple Reminders'
-                  : t.common.close
-                : t.integrations.googleCalendar
+                  ? t.settings.statusEnabled
+                  : t.settings.statusDisabled
+                : t.common.comingSoon
             }
             onPress={() => router.push('/integrations' as any)}
           />

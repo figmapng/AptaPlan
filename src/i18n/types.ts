@@ -205,6 +205,10 @@ export interface Translations {
     sortModeManual: string;
     integrationsSection: string;
     integrations: string;
+    syncAppleRemindersLabel: string;
+    syncCalendarLabel: string;
+    statusEnabled: string;
+    statusDisabled: string;
     haptics: string;
     backupSection: string;
     exportBackup: string;
