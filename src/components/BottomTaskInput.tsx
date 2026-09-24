@@ -119,7 +119,7 @@ export function BottomTaskInput({
               flex: 1,
               fontSize: 16,
               fontWeight: '400',
-              color: colors.text,
+              color: colors.secondary,
             }}
           >
             {t.common.addTask}

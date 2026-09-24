@@ -1403,7 +1403,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '400',
     color: colors.text,
     marginRight: 8,
   },
