@@ -117,8 +117,8 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            sfSymbol="paintpalette.fill"
-            icon="color-palette"
+            sfSymbol="paintbrush.fill"
+            icon="brush"
             iconBg="#AF52DE"
             label={t.settings.appearance}
             valueText={themeDisplayName}
@@ -204,7 +204,7 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            sfSymbol="circle.grid.cross.fill"
+            sfSymbol="square.grid.2x2.fill"
             icon="grid"
             iconBg="#FF2D55"
             label={t.settings.monthPickerStyle}
@@ -258,8 +258,8 @@ export default function SettingsScreen() {
         {/* Бөлім 4: Интеграция және деректер */}
         <Section>
           <SettingRow
-            sfSymbol="puzzlepiece.fill"
-            icon="extension-puzzle"
+            sfSymbol="link"
+            icon="link"
             iconBg="#BF5AF2"
             label={t.settings.integrations}
             valueText={
@@ -273,17 +273,17 @@ export default function SettingsScreen() {
           />
           <Divider />
           <SettingRow
-            sfSymbol="square.and.arrow.up.fill"
-            icon="cloud-upload"
-            iconBg="#0A84FF"
+            sfSymbol="square.and.arrow.up"
+            icon="share-outline"
+            iconBg="#007AFF"
             label={t.settings.exportBackup}
             onPress={() => void handleExport()}
           />
           <Divider />
           <SettingRow
-            sfSymbol="square.and.arrow.down.fill"
-            icon="cloud-download"
-            iconBg="#64D2FF"
+            sfSymbol="square.and.arrow.down"
+            icon="download-outline"
+            iconBg="#007AFF"
             label={t.settings.importBackup}
             onPress={() => void handleImport()}
           />
