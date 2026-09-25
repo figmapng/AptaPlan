@@ -1280,20 +1280,43 @@ export default function Home() {
               const wTasks = days.flatMap((d) => d.tasks);
               const total = wTasks.length;
               const done = wTasks.filter((t) => t.isCompleted).length;
+              const isPast = derivedWeekData.isPastWeek;
+              const isFuture = derivedWeekData.isFutureWeek;
 
               let text = '';
-              if (total === 0) {
-                const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-                const quotes = t.motivation?.quotes ?? [];
-                text = quotes.length > 0 ? quotes[dayOfYear % quotes.length] : t.common.noTasks;
-              } else if (done === 0) {
-                text = t.motivation?.notStarted?.(total) ?? t.common.completedOf(done, total);
-              } else if (done === total) {
-                text = t.motivation?.completedAll?.(total) ?? t.common.completedOf(done, total);
-              } else if (done / total <= 0.4) {
-                text = t.motivation?.inProgressEarly?.(done, total) ?? t.common.completedOf(done, total);
+              if (isPast) {
+                if (total === 0) {
+                  text = t.motivation?.pastWeekNoTasks ?? t.common.noTasks;
+                } else if (done === total) {
+                  text = t.motivation?.pastWeekAllDone?.(total) ?? t.common.completedOf(done, total);
+                } else if (done > 0) {
+                  text = t.motivation?.pastWeekResult?.(done, total) ?? t.common.completedOf(done, total);
+                } else {
+                  text = t.motivation?.pastWeekNoneDone?.(total) ?? t.common.completedOf(done, total);
+                }
+              } else if (isFuture) {
+                if (total === 0) {
+                  text = t.motivation?.futureWeekNoTasks ?? t.common.noTasks;
+                } else if (done === 0) {
+                  text = t.motivation?.futureWeekPlanned?.(total) ?? t.common.completedOf(done, total);
+                } else {
+                  text = t.motivation?.futureWeekProgress?.(done, total) ?? t.common.completedOf(done, total);
+                }
               } else {
-                text = t.motivation?.inProgressLate?.(done, total) ?? t.common.completedOf(done, total);
+                // Ағымдағы апта
+                if (total === 0) {
+                  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+                  const quotes = t.motivation?.quotes ?? [];
+                  text = quotes.length > 0 ? quotes[dayOfYear % quotes.length] : t.common.noTasks;
+                } else if (done === 0) {
+                  text = t.motivation?.notStarted?.(total) ?? t.common.completedOf(done, total);
+                } else if (done === total) {
+                  text = t.motivation?.completedAll?.(total) ?? t.common.completedOf(done, total);
+                } else if (done / total <= 0.4) {
+                  text = t.motivation?.inProgressEarly?.(done, total) ?? t.common.completedOf(done, total);
+                } else {
+                  text = t.motivation?.inProgressLate?.(done, total) ?? t.common.completedOf(done, total);
+                }
               }
 
               return (
@@ -1311,7 +1334,7 @@ export default function Home() {
                   >
                     {text}
                   </Text>
-                  {done === total && total > 0 && (
+                  {done === total && total > 0 && !isFuture && (
                     <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: isDark ? 'rgba(5, 150, 105, 0.25)' : '#E6F9F0', alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ fontSize: 9, color: '#059669', fontWeight: '800' }}>✓</Text>
                     </View>

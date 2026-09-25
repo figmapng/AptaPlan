@@ -144,6 +144,13 @@ export interface Translations {
     inProgressEarly: (done: number, total: number) => string;
     inProgressLate: (done: number, total: number) => string;
     completedAll: (total: number) => string;
+    pastWeekAllDone: (total: number) => string;
+    pastWeekResult: (done: number, total: number) => string;
+    pastWeekNoneDone: (total: number) => string;
+    pastWeekNoTasks: string;
+    futureWeekPlanned: (total: number) => string;
+    futureWeekProgress: (done: number, total: number) => string;
+    futureWeekNoTasks: string;
   };
 
   // User Guide
