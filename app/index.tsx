@@ -6,21 +6,15 @@ import {
   Animated,
   Easing,
   Keyboard,
-  LayoutAnimation,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  UIManager,
   unstable_batchedUpdates,
   useWindowDimensions,
   View,
 } from 'react-native';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 import Svg, { Circle, Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -370,14 +364,19 @@ export default function Home() {
     const defaultExpanded = settings.lastDayVisibility !== 'hidden';
     const target = defaultExpanded ? 1 : 0;
     isExpandedRef.current = target === 1;
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsSundayExpanded(defaultExpanded);
+    if (target === 0) {
+      setIsSundayExpanded(false);
+    }
     Animated.timing(weekProgress, {
       toValue: target,
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
+      duration: 250,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       useNativeDriver: false,
-    }).start();
+    }).start(({ finished }) => {
+      if (finished) {
+        setIsSundayExpanded(target === 1);
+      }
+    });
   }, [settings.lastDayVisibility, weekProgress]);
 
   // ── Month data load ─────────────────────────────────────────────
@@ -401,27 +400,34 @@ export default function Home() {
   const collapseWeek = useCallback(() => {
     userSundayStateRef.current = 'collapsed';
     isExpandedRef.current = false;
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsSundayExpanded(false);
-    Animated.timing(weekProgress, {
+    Animated.spring(weekProgress, {
       toValue: 0,
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
+      tension: 180,
+      friction: 18,
+      overshootClamping: true,
       useNativeDriver: false,
-    }).start();
+    }).start(({ finished }) => {
+      if (finished) {
+        setIsSundayExpanded(false);
+      }
+    });
   }, [weekProgress]);
 
   const expandWeek = useCallback(() => {
     userSundayStateRef.current = 'expanded';
     isExpandedRef.current = true;
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsSundayExpanded(true);
-    Animated.timing(weekProgress, {
+    Animated.spring(weekProgress, {
       toValue: 1,
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
+      tension: 180,
+      friction: 18,
+      overshootClamping: true,
       useNativeDriver: false,
-    }).start();
+    }).start(({ finished }) => {
+      if (finished) {
+        setIsSundayExpanded(true);
+      }
+    });
   }, [weekProgress]);
 
   const openModePicker = useCallback(() => {
