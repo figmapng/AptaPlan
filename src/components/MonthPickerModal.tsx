@@ -141,13 +141,17 @@ export function MonthPickerModal({
           <View style={styles.yearRow}>
             <AnimatedPressable
               activeScale={0.88}
-              style={styles.arrowBtn}
+              hitSlop={8}
+              style={[
+                styles.arrowBtn,
+                { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' },
+              ]}
               onPress={handlePrevYear}
               accessible
               accessibilityRole="button"
               accessibilityLabel={language === 'en' ? 'Previous year' : language === 'ru' ? 'Предыдущий год' : 'Алдыңғы жыл'}
             >
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M15 18l-6-6 6-6"
                   stroke={colors.text}
@@ -162,13 +166,17 @@ export function MonthPickerModal({
 
             <AnimatedPressable
               activeScale={0.88}
-              style={styles.arrowBtn}
+              hitSlop={8}
+              style={[
+                styles.arrowBtn,
+                { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' },
+              ]}
               onPress={handleNextYear}
               accessible
               accessibilityRole="button"
               accessibilityLabel={language === 'en' ? 'Next year' : language === 'ru' ? 'Следующий год' : 'Келесі жыл'}
             >
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M9 18l6-6-6-6"
                   stroke={colors.text}
@@ -317,18 +325,17 @@ const styles = StyleSheet.create({
   yearRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 12,
     backgroundColor: 'transparent',
-    paddingHorizontal: 12,
     paddingVertical: 2,
     marginTop: 4,
     marginBottom: 6,
   },
   arrowBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: 'transparent',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -337,6 +344,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1C1C1E',
     fontVariant: ['tabular-nums'],
+    paddingHorizontal: 4,
   },
   grid: {
     flexDirection: 'row',
