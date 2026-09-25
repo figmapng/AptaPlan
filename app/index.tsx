@@ -395,34 +395,24 @@ export default function Home() {
     userSundayStateRef.current = 'collapsed';
     isExpandedRef.current = false;
     setIsSundayExpanded(false);
-    Animated.spring(weekProgress, {
+    Animated.timing(weekProgress, {
       toValue: 0,
-      tension: 180,
-      friction: 18,
-      overshootClamping: true,
+      duration: 180,
+      easing: Easing.bezier(0.2, 0, 0, 1),
       useNativeDriver: false,
-    }).start(({ finished }) => {
-      if (finished) {
-        setIsSundayExpanded(false);
-      }
-    });
+    }).start();
   }, [weekProgress]);
 
   const expandWeek = useCallback(() => {
     userSundayStateRef.current = 'expanded';
     isExpandedRef.current = true;
     setIsSundayExpanded(true);
-    Animated.spring(weekProgress, {
+    Animated.timing(weekProgress, {
       toValue: 1,
-      tension: 180,
-      friction: 18,
-      overshootClamping: true,
+      duration: 180,
+      easing: Easing.bezier(0.2, 0, 0, 1),
       useNativeDriver: false,
-    }).start(({ finished }) => {
-      if (finished) {
-        setIsSundayExpanded(true);
-      }
-    });
+    }).start();
   }, [weekProgress]);
 
   const openModePicker = useCallback(() => {
@@ -814,16 +804,16 @@ export default function Home() {
           }
         } else if (isExpandedRef.current) {
           if (dy > 0) {
-            const delta = -dy / 160;
+            const delta = -dy / 100;
             const newVal = Math.max(0, Math.min(1, 1 + delta));
             weekProgress.setValue(newVal);
           }
         } else {
           if (ENABLE_DAILY_OVERVIEW && dy > 0) {
-            const val = Math.min(1, dy / 130);
+            const val = Math.min(1, dy / 100);
             motivationalAnim.setValue(val);
           } else {
-            const delta = -dy / 160;
+            const delta = -dy / 100;
             const newVal = Math.max(0, Math.min(1, delta));
             weekProgress.setValue(newVal);
           }
@@ -873,7 +863,7 @@ export default function Home() {
             openMotivationalHeader();
           }
         } else if (isExpandedRef.current) {
-          if (dy > 45) {
+          if (dy > 28) {
             collapseWeek();
           } else {
             expandWeek();
@@ -881,7 +871,7 @@ export default function Home() {
         } else {
           if (ENABLE_DAILY_OVERVIEW && dy > 25) {
             openMotivationalHeader();
-          } else if (dy < -45) {
+          } else if (dy < -28) {
             if (ENABLE_DAILY_OVERVIEW) closeMotivationalHeader();
             expandWeek();
           } else {

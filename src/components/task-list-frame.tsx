@@ -167,8 +167,8 @@ export function TaskListFrame({
       badgeTransitionAnim.setValue(0);
       Animated.timing(badgeTransitionAnim, {
         toValue: 1,
-        duration: 240,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        duration: 180,
+        easing: Easing.bezier(0.2, 0, 0, 1),
         useNativeDriver: true,
       }).start();
       return;
@@ -176,8 +176,8 @@ export function TaskListFrame({
 
     Animated.timing(badgeTransitionAnim, {
       toValue: hasOverflow ? 1 : 0,
-      duration: 240,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      duration: 180,
+      easing: Easing.bezier(0.2, 0, 0, 1),
       useNativeDriver: true,
     }).start();
   }, [hasOverflow, badgeIndex, badgeTransitionAnim]);
