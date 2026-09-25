@@ -137,7 +137,7 @@ export function MonthPickerModal({
             </AnimatedPressable>
           </View>
 
-          {/* Year Navigator (‹ 2026 ›) */}
+          {/* Year Roulette Navigator (‹ 2025  2026 жыл  2027 ›) */}
           <View style={styles.yearRow}>
             <AnimatedPressable
               activeScale={0.88}
@@ -162,7 +162,37 @@ export function MonthPickerModal({
               </Svg>
             </AnimatedPressable>
 
-            <Text style={[styles.yearText, { color: colors.text }]}>{yearLabel}</Text>
+            <View style={styles.rouletteContainer}>
+              <Pressable
+                onPress={handlePrevYear}
+                hitSlop={8}
+                style={styles.adjacentYearBtn}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`${selectedYear - 1}`}
+              >
+                <Text style={[styles.adjacentYearText, { color: colors.secondary }]}>
+                  {selectedYear - 1}
+                </Text>
+              </Pressable>
+
+              <View style={styles.activeYearWrapper}>
+                <Text style={[styles.yearText, { color: colors.text }]}>{yearLabel}</Text>
+              </View>
+
+              <Pressable
+                onPress={handleNextYear}
+                hitSlop={8}
+                style={styles.adjacentYearBtn}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`${selectedYear + 1}`}
+              >
+                <Text style={[styles.adjacentYearText, { color: colors.secondary }]}>
+                  {selectedYear + 1}
+                </Text>
+              </Pressable>
+            </View>
 
             <AnimatedPressable
               activeScale={0.88}
@@ -325,12 +355,33 @@ const styles = StyleSheet.create({
   yearRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
     backgroundColor: 'transparent',
+    paddingHorizontal: 8,
     paddingVertical: 2,
     marginTop: 4,
     marginBottom: 6,
+  },
+  rouletteContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  adjacentYearBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    opacity: 0.42,
+  },
+  adjacentYearText: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  activeYearWrapper: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
   },
   arrowBtn: {
     width: 32,
