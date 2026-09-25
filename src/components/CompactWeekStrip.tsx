@@ -5,6 +5,7 @@ import { colors as defaultColors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { usePlanner } from '@/store/planner-store';
+import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
 
 interface CompactWeekStripProps {
   selectedDate: Date;
@@ -29,6 +30,7 @@ export function CompactWeekStrip({
   const { t } = useI18n();
   const { settings } = usePlanner();
   const [rowWidth, setRowWidth] = React.useState<number>(0);
+  const isLiquidGlass = checkIsLiquidGlassSupported();
 
   const firstDay = settings?.firstDayOfWeek ?? 'mon';
   const weekStartsOn: 0 | 1 | 6 = firstDay === 'sun' ? 0 : firstDay === 'sat' ? 6 : 1;
@@ -90,6 +92,119 @@ export function CompactWeekStrip({
     ],
   });
 
+  const rowContent = (
+    <View
+      style={styles.weekRow}
+      onLayout={(e) => {
+        const w = e.nativeEvent.layout.width;
+        if (w > 0 && Math.abs(w - rowWidth) > 1) {
+          setRowWidth(w);
+        }
+      }}
+    >
+      {/* Smooth animated sliding indicator (rounded rectangle, not fully circular) */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.slidingIndicator,
+          {
+            width: cellWidth,
+            backgroundColor: isToday(currentDayDate)
+              ? (isLiquidGlass
+                  ? (isDark ? 'rgba(0, 122, 255, 0.22)' : 'rgba(0, 122, 255, 0.14)')
+                  : colors.tintBg)
+              : (isDark
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : (isLiquidGlass ? 'rgba(0, 0, 0, 0.05)' : colors.cardHeaderBg)),
+            transform: [{ translateX: indicatorTranslateX }],
+          },
+        ]}
+      />
+
+      {days.map((d, i) => {
+        const isSelected = isSameDay(d, currentDayDate);
+        const isTodayDay = isToday(d);
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+        const dayNum = d.getDate();
+        const dayShort = (t.date.weekdaysShort[d.getDay()] || '');
+        const formattedDayShort = dayShort.charAt(0).toUpperCase() + dayShort.slice(1);
+
+        const labelColor = isTodayDay
+          ? colors.today
+          : isWeekend
+          ? colors.weekend
+          : isSelected
+          ? colors.text
+          : colors.secondary;
+
+        const numColor = isTodayDay
+          ? colors.today
+          : isWeekend
+          ? colors.weekend
+          : isSelected
+          ? colors.text
+          : colors.secondary;
+
+        return (
+          <Pressable
+            key={`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${i}`}
+            onPress={() => onSelectDate(d)}
+            hitSlop={4}
+            style={styles.dayCell}
+          >
+            <View style={styles.cellContent}>
+              <Text
+                style={[
+                  styles.cellLabel,
+                  {
+                    color: labelColor,
+                    fontWeight: isSelected ? '600' : '500',
+                  },
+                ]}
+              >
+                {formattedDayShort}
+              </Text>
+              <Text
+                style={[
+                  styles.cellNum,
+                  {
+                    color: numColor,
+                    fontWeight: isSelected ? '700' : '500',
+                  },
+                ]}
+              >
+                {dayNum}
+              </Text>
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+
+  if (isLiquidGlass) {
+    return (
+      <GlassView
+        glassEffectStyle="clear"
+        isInteractive={true}
+        colorScheme={isDark ? 'dark' : 'light'}
+        borderRadius={27}
+        borderCurve="continuous"
+        style={[
+          styles.container,
+          {
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.65)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.06)',
+            borderWidth: 1,
+          },
+          style,
+        ]}
+      >
+        {rowContent}
+      </GlassView>
+    );
+  }
+
   return (
     <View
       style={[
@@ -102,89 +217,7 @@ export function CompactWeekStrip({
         style,
       ]}
     >
-      <View
-        style={styles.weekRow}
-        onLayout={(e) => {
-          const w = e.nativeEvent.layout.width;
-          if (w > 0 && Math.abs(w - rowWidth) > 1) {
-            setRowWidth(w);
-          }
-        }}
-      >
-        {/* Smooth animated sliding pill indicator */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.slidingIndicator,
-            {
-              width: cellWidth,
-              backgroundColor: isToday(currentDayDate)
-                ? colors.tintBg
-                : (isDark ? 'rgba(255, 255, 255, 0.08)' : colors.cardHeaderBg),
-              transform: [{ translateX: indicatorTranslateX }],
-            },
-          ]}
-        />
-
-        {days.map((d, i) => {
-          const isSelected = isSameDay(d, currentDayDate);
-          const isTodayDay = isToday(d);
-          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-          const dayNum = d.getDate();
-          const dayShort = (t.date.weekdaysShort[d.getDay()] || '');
-          const formattedDayShort = dayShort.charAt(0).toUpperCase() + dayShort.slice(1);
-
-          const labelColor = isTodayDay
-            ? colors.today
-            : isWeekend
-            ? colors.weekend
-            : isSelected
-            ? colors.text
-            : colors.secondary;
-
-          const numColor = isTodayDay
-            ? colors.today
-            : isWeekend
-            ? colors.weekend
-            : isSelected
-            ? colors.text
-            : colors.secondary;
-
-          return (
-            <Pressable
-              key={`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${i}`}
-              onPress={() => onSelectDate(d)}
-              hitSlop={4}
-              style={styles.dayCell}
-            >
-              <View style={styles.cellContent}>
-                <Text
-                  style={[
-                    styles.cellLabel,
-                    {
-                      color: labelColor,
-                      fontWeight: isSelected ? '600' : '500',
-                    },
-                  ]}
-                >
-                  {formattedDayShort}
-                </Text>
-                <Text
-                  style={[
-                    styles.cellNum,
-                    {
-                      color: numColor,
-                      fontWeight: isSelected ? '700' : '500',
-                    },
-                  ]}
-                >
-                  {dayNum}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
+      {rowContent}
     </View>
   );
 }
@@ -216,7 +249,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 14,
     borderCurve: 'continuous',
     zIndex: 0,
   },
@@ -225,7 +258,7 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 22,
+    borderRadius: 14,
     borderCurve: 'continuous',
     zIndex: 1,
   },
