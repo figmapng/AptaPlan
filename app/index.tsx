@@ -287,6 +287,7 @@ export default function Home() {
   const isDefaultExpanded = settings.lastDayVisibility !== 'hidden';
   const weekProgress = useRef(new Animated.Value(isDefaultExpanded ? 1 : 0)).current;
   const isExpandedRef = useRef(isDefaultExpanded);
+  const [isSundayExpanded, setIsSundayExpanded] = useState(isDefaultExpanded);
   const userSundayStateRef = useRef<'expanded' | 'collapsed' | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -353,6 +354,7 @@ export default function Home() {
         : userSundayStateRef.current === 'collapsed' ? 0
         : defaultExpanded ? 1 : 0;
       isExpandedRef.current = target === 1;
+      setIsSundayExpanded(target === 1);
       weekProgress.setValue(target);
     }
   }, [ready, activeWeekStart, loadRange, weekProgress, settings.lastDayVisibility]);
@@ -362,7 +364,13 @@ export default function Home() {
     const defaultExpanded = settings.lastDayVisibility !== 'hidden';
     const target = defaultExpanded ? 1 : 0;
     isExpandedRef.current = target === 1;
-    Animated.timing(weekProgress, { toValue: target, duration: 200, useNativeDriver: false }).start();
+    setIsSundayExpanded(defaultExpanded);
+    Animated.timing(weekProgress, {
+      toValue: target,
+      duration: 240,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      useNativeDriver: false,
+    }).start();
   }, [settings.lastDayVisibility, weekProgress]);
 
   // ── Month data load ─────────────────────────────────────────────
@@ -386,13 +394,27 @@ export default function Home() {
   const collapseWeek = useCallback(() => {
     userSundayStateRef.current = 'collapsed';
     isExpandedRef.current = false;
-    Animated.spring(weekProgress, { toValue: 0, tension: 180, friction: 18, useNativeDriver: false }).start();
+    setIsSundayExpanded(false);
+    Animated.spring(weekProgress, {
+      toValue: 0,
+      tension: 180,
+      friction: 18,
+      overshootClamping: true,
+      useNativeDriver: false,
+    }).start();
   }, [weekProgress]);
 
   const expandWeek = useCallback(() => {
     userSundayStateRef.current = 'expanded';
     isExpandedRef.current = true;
-    Animated.spring(weekProgress, { toValue: 1, tension: 180, friction: 18, useNativeDriver: false }).start();
+    setIsSundayExpanded(true);
+    Animated.spring(weekProgress, {
+      toValue: 1,
+      tension: 180,
+      friction: 18,
+      overshootClamping: true,
+      useNativeDriver: false,
+    }).start();
   }, [weekProgress]);
 
   const openModePicker = useCallback(() => {
@@ -1536,7 +1558,7 @@ export default function Home() {
                 <WeekView
                   days={days}
                   progress={weekProgress}
-                  isSundayVisible={settings.lastDayVisibility !== 'hidden'}
+                  isSundayVisible={isSundayExpanded}
                   collapsedBodyHeight={collapsedBodyHeight}
                   expandedBodyHeight={expandedBodyHeight}
                   expandedSundayHeight={expandedSundayHeight}

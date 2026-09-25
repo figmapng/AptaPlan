@@ -111,7 +111,7 @@ export function TaskListFrame({
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const [layoutHeight, setLayoutHeight] = useState(0);
-  const containerHeight = (layoutHeight > 0 ? layoutHeight : propContainerHeight) || 150;
+  const containerHeight = propContainerHeight || layoutHeight || 150;
   const [isAtTop, setIsAtTop] = useState(true);
   const isAtTopRef = useRef(true);
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -156,7 +156,7 @@ export function TaskListFrame({
 
   return (
     <View
-      onLayout={(e) => {
+      onLayout={propContainerHeight ? undefined : (e) => {
         const h = Math.round(e.nativeEvent.layout.height);
         if (h > 0 && Math.abs(h - layoutHeight) > 2) {
           setLayoutHeight(h);

@@ -221,22 +221,12 @@ export const DayCard = memo(function DayCardComponent({
       })
     : Math.max(80, expandedSundayHeight - 35);
 
-  const [measuredBodyHeight, setMeasuredBodyHeight] = useState<number>(0);
-
-  const activeBodyHeight = measuredBodyHeight > 0
-    ? measuredBodyHeight
-    : (wide
-        ? Math.max(80, expandedSundayHeight - 35)
-        : (isSundayVisible ? expandedBodyHeight : collapsedBodyHeight));
+  const activeBodyHeight = wide
+    ? Math.max(80, expandedSundayHeight - 35)
+    : (isSundayVisible ? expandedBodyHeight : collapsedBodyHeight);
 
   const cardBodyContent = (
     <Animated.View
-      onLayout={(e) => {
-        const h = Math.round(e.nativeEvent.layout.height);
-        if (h > 0 && Math.abs(h - measuredBodyHeight) > 2) {
-          setMeasuredBodyHeight(h);
-        }
-      }}
       style={[
         {
           overflow: 'hidden',
