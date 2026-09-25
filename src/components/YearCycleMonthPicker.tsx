@@ -820,7 +820,7 @@ export function YearCycleMonthPicker({
               <Path
                 d={selSeg.pathD}
                 fill={colors.today}
-                stroke={colors.todayDark ?? colors.today}
+                stroke={isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.18)'}
                 strokeWidth={1.5}
                 strokeLinejoin="round"
               />
@@ -842,6 +842,7 @@ export function YearCycleMonthPicker({
             </G>
           );
         })()}
+
 
         {/* Dedicated Synchronized Inner Year Progress Loop */}
         {/* Subtle Background Track */}
