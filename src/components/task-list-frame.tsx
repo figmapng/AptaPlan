@@ -130,13 +130,10 @@ export function TaskListFrame({
     }
   };
 
-  const N = Math.max(1, Math.floor((containerHeight + MIN_GAP - 2 * MIN_PAD) / (ROW_HEIGHT + MIN_GAP)));
-  const totalTasksH = N * ROW_HEIGHT;
-  const remaining = Math.max(0, containerHeight - totalTasksH);
-  const gap = N > 1 ? Math.min(6, Math.max(3, (remaining - 16) / (N - 1))) : 0;
-  const edgePad = Math.max(6, Math.round(((remaining - (N - 1) * gap) / 2) * 10) / 10);
-  const rowStride = ROW_HEIGHT + gap;
-
+  const FIXED_PAD = 8;
+  const FIXED_GAP = 5;
+  const rowStride = ROW_HEIGHT + FIXED_GAP;
+  const N = Math.max(1, Math.floor((containerHeight + FIXED_GAP - 2 * FIXED_PAD) / rowStride));
   const canScroll = scrollable && scrollEnabled && tasks.length > N;
   const hasOverflow = canScroll && tasks.length > N;
   const badgeIndex = N - 1;
@@ -271,9 +268,9 @@ export function TaskListFrame({
           if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
         }}
         contentContainerStyle={{
-          paddingTop: edgePad,
-          paddingBottom: edgePad,
-          gap,
+          paddingTop: FIXED_PAD,
+          paddingBottom: FIXED_PAD,
+          gap: FIXED_GAP,
           flexGrow: 1,
         }}
       >

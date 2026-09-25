@@ -221,33 +221,9 @@ export const DayCard = memo(function DayCardComponent({
       })
     : Math.max(80, expandedSundayHeight - 35);
 
-  const collapsedOpacity = progress
-    ? progress.interpolate({
-        inputRange: [0, 0.45, 0.85, 1],
-        outputRange: [1, 0.3, 0, 0],
-      })
-    : (isSundayVisible ? 0 : 1);
-
-  const expandedOpacity = progress
-    ? progress.interpolate({
-        inputRange: [0, 0.15, 0.55, 1],
-        outputRange: [0, 0, 0.7, 1],
-      })
-    : (isSundayVisible ? 1 : 0);
-
-  const collapsedY = progress
-    ? progress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 6],
-      })
-    : 0;
-
-  const expandedY = progress
-    ? progress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [-6, 0],
-      })
-    : 0;
+  const activeBodyHeight = wide
+    ? Math.max(80, expandedSundayHeight - 35)
+    : (isSundayVisible ? expandedBodyHeight : collapsedBodyHeight);
 
   const cardBodyContent = (
     <Animated.View
@@ -260,66 +236,17 @@ export const DayCard = memo(function DayCardComponent({
       ]}
     >
       {tasks.length ? (
-        wide ? (
-          <View style={{ flex: 1 }}>
-            <TaskListFrame
-              tasks={tasks}
-              containerHeight={Math.max(80, expandedSundayHeight - 35)}
-              onPress={open}
-              onInteraction={onInteraction}
-              isSwipingRef={isSwipingRef}
-              isCardScrollingRef={isCardScrollingRef}
-              singleLine
-            />
-          </View>
-        ) : (
-          <View style={{ flex: 1, position: 'relative' }}>
-            <Animated.View
-              pointerEvents={isSundayVisible ? 'none' : 'auto'}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: collapsedBodyHeight,
-                opacity: collapsedOpacity,
-                transform: [{ translateY: collapsedY }],
-              }}
-            >
-              <TaskListFrame
-                tasks={tasks}
-                containerHeight={collapsedBodyHeight}
-                onPress={open}
-                onInteraction={onInteraction}
-                isSwipingRef={isSwipingRef}
-                isCardScrollingRef={isCardScrollingRef}
-                singleLine
-              />
-            </Animated.View>
-            <Animated.View
-              pointerEvents={isSundayVisible ? 'auto' : 'none'}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: expandedBodyHeight,
-                opacity: expandedOpacity,
-                transform: [{ translateY: expandedY }],
-              }}
-            >
-              <TaskListFrame
-                tasks={tasks}
-                containerHeight={expandedBodyHeight}
-                onPress={open}
-                onInteraction={onInteraction}
-                isSwipingRef={isSwipingRef}
-                isCardScrollingRef={isCardScrollingRef}
-                singleLine
-              />
-            </Animated.View>
-          </View>
-        )
+        <View style={{ flex: 1 }}>
+          <TaskListFrame
+            tasks={tasks}
+            containerHeight={activeBodyHeight}
+            onPress={open}
+            onInteraction={onInteraction}
+            isSwipingRef={isSwipingRef}
+            isCardScrollingRef={isCardScrollingRef}
+            singleLine
+          />
+        </View>
       ) : (
         <Pressable
           onPressIn={handlePressIn}

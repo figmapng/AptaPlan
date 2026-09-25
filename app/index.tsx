@@ -6,14 +6,21 @@ import {
   Animated,
   Easing,
   Keyboard,
+  LayoutAnimation,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  UIManager,
   unstable_batchedUpdates,
   useWindowDimensions,
   View,
 } from 'react-native';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import Svg, { Circle, Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,7 +45,6 @@ import {
 import { DayCard } from '@/components/day-card';
 import { SettingsIcon } from '@/components/settings-icon';
 import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { TaskBottomSheet } from '@/components/TaskBottomSheet';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
@@ -364,11 +370,12 @@ export default function Home() {
     const defaultExpanded = settings.lastDayVisibility !== 'hidden';
     const target = defaultExpanded ? 1 : 0;
     isExpandedRef.current = target === 1;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsSundayExpanded(defaultExpanded);
     Animated.timing(weekProgress, {
       toValue: target,
-      duration: 240,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
       useNativeDriver: false,
     }).start();
   }, [settings.lastDayVisibility, weekProgress]);
@@ -394,12 +401,12 @@ export default function Home() {
   const collapseWeek = useCallback(() => {
     userSundayStateRef.current = 'collapsed';
     isExpandedRef.current = false;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsSundayExpanded(false);
-    Animated.spring(weekProgress, {
+    Animated.timing(weekProgress, {
       toValue: 0,
-      tension: 180,
-      friction: 18,
-      overshootClamping: true,
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
       useNativeDriver: false,
     }).start();
   }, [weekProgress]);
@@ -407,12 +414,12 @@ export default function Home() {
   const expandWeek = useCallback(() => {
     userSundayStateRef.current = 'expanded';
     isExpandedRef.current = true;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsSundayExpanded(true);
-    Animated.spring(weekProgress, {
+    Animated.timing(weekProgress, {
       toValue: 1,
-      tension: 180,
-      friction: 18,
-      overshootClamping: true,
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
       useNativeDriver: false,
     }).start();
   }, [weekProgress]);
