@@ -671,8 +671,8 @@ export function YearCycleMonthPicker({
     handleMonthPress(closestMonth);
   };
 
-  const trackBorderColor = isDark ? '#2E384D' : '#DFE4EA';
-  const dividerColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.07)';
+  const trackBorderColor = isDark ? '#3D485C' : '#CAD0D9';
+  const dividerColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.09)';
 
   return (
     <Pressable
@@ -803,6 +803,14 @@ export function YearCycleMonthPicker({
             strokeWidth={1}
           />
         ))}
+
+        {/* Continuous Racetrack Contour (Outer & Inner Perimeter Border) */}
+        <Path
+          d={trackPathD}
+          fill="none"
+          stroke={trackBorderColor}
+          strokeWidth={1.5}
+        />
 
         {/* 3. Highest Layer: Selected / Active Month Segment (On top of all segments & dividers) */}
         {(() => {
