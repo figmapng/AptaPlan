@@ -9,10 +9,6 @@ import { useI18n } from '@/i18n/use-i18n';
 interface TaskListFrameProps {
   tasks: Task[];
   containerHeight?: number;
-  collapsedContainerHeight?: number;
-  expandedContainerHeight?: number;
-  progress?: Animated.Value;
-  isSundayVisible?: boolean;
   moreCount?: number;
   scrollable?: boolean;
   scrollEnabled?: boolean;
@@ -109,10 +105,6 @@ function RouletteRow({
 export function TaskListFrame({
   tasks,
   containerHeight: propContainerHeight = 150,
-  collapsedContainerHeight,
-  expandedContainerHeight,
-  progress,
-  isSundayVisible = true,
   scrollable = true,
   scrollEnabled = true,
   onScrollYChange,
@@ -144,98 +136,51 @@ export function TaskListFrame({
     }
   };
 
-  const isAdaptive = Boolean(progress && collapsedContainerHeight && expandedContainerHeight);
-
-  const N_collapsed = isAdaptive
-    ? Math.max(1, Math.floor(((collapsedContainerHeight!) + MIN_GAP - 2 * MIN_PAD) / (ROW_HEIGHT + MIN_GAP)))
-    : Math.max(1, Math.floor((containerHeight + MIN_GAP - 2 * MIN_PAD) / (ROW_HEIGHT + MIN_GAP)));
-
-  const N_expanded = isAdaptive
-    ? Math.max(1, Math.floor(((expandedContainerHeight!) + MIN_GAP - 2 * MIN_PAD) / (ROW_HEIGHT + MIN_GAP)))
-    : N_collapsed;
-
-  const currentContainerH = isAdaptive
-    ? (isSundayVisible ? expandedContainerHeight! : collapsedContainerHeight!)
-    : containerHeight;
-
-  const currentN = isAdaptive
-    ? (isSundayVisible ? N_expanded : N_collapsed)
-    : N_collapsed;
-
-  // Stable spacing using maxN so rows don't shift vertically during height animation
-  const layoutHeightUsed = isAdaptive ? collapsedContainerHeight! : containerHeight;
-  const layoutN = isAdaptive ? N_collapsed : currentN;
-  const totalTasksH = layoutN * ROW_HEIGHT;
-  const remaining = Math.max(0, layoutHeightUsed - totalTasksH);
-  const gap = layoutN > 1 ? Math.min(6, Math.max(3, (remaining - 16) / (layoutN - 1))) : 0;
-  const edgePad = Math.max(6, Math.round(((remaining - (layoutN - 1) * gap) / 2) * 10) / 10);
+  const N = Math.max(1, Math.floor((containerHeight + MIN_GAP - 2 * MIN_PAD) / (ROW_HEIGHT + MIN_GAP)));
+  const totalTasksH = N * ROW_HEIGHT;
+  const remaining = Math.max(0, containerHeight - totalTasksH);
+  const gap = N > 1 ? Math.min(6, Math.max(3, (remaining - 16) / (N - 1))) : 0;
+  const edgePad = Math.max(6, Math.round(((remaining - (N - 1) * gap) / 2) * 10) / 10);
   const rowStride = ROW_HEIGHT + gap;
 
-  const canScroll = scrollable && scrollEnabled && tasks.length > currentN;
-
-  // ── Adaptive morph values ──────────────────────────────────────────
-  const hasOverflowExpanded = scrollable && scrollEnabled && tasks.length > N_expanded;
-  const badgeIndexExpanded = N_expanded - 1;
-  const computedMoreCountExpanded = hasOverflowExpanded ? tasks.length - badgeIndexExpanded : 0;
-
-  const hasOverflowCollapsed = scrollable && scrollEnabled && tasks.length > N_collapsed;
-  const badgeIndexCollapsed = N_collapsed - 1;
-  const computedMoreCountCollapsed = hasOverflowCollapsed ? tasks.length - badgeIndexCollapsed : 0;
-
-  const expandedBadgeProgressOpacity = progress
-    ? progress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 1],
-        extrapolate: 'clamp',
-      })
-    : undefined;
-
-  const expandedBadgeScale = progress
-    ? progress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0.92, 1],
-        extrapolate: 'clamp',
-      })
-    : undefined;
-
-  const expandedTaskProgressOpacity = progress
-    ? progress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [1, 0],
-        extrapolate: 'clamp',
-      })
-    : undefined;
-
-  const collapsedRowsFade = progress
-    ? progress.interpolate({
-        inputRange: [0, 0.65, 1],
-        outputRange: [1, 0.25, 0],
-        extrapolate: 'clamp',
-      })
-    : undefined;
-
-  // ── Standard non-adaptive values ──────────────────────────────────
-  const hasOverflow = canScroll && tasks.length > N_collapsed;
-  const badgeIndex = N_collapsed - 1;
+  const canScroll = scrollable && scrollEnabled && tasks.length > N;
+  const hasOverflow = canScroll && tasks.length > N;
+  const badgeIndex = N - 1;
   const computedMoreCount = hasOverflow ? tasks.length - badgeIndex : 0;
 
   const badgeTransitionAnim = useRef(new Animated.Value(hasOverflow ? 1 : 0)).current;
   const isFirstBadgeRender = useRef(true);
+  const prevBadgeIndexRef = useRef(badgeIndex);
 
   useEffect(() => {
-    if (isAdaptive) return;
     if (isFirstBadgeRender.current) {
       isFirstBadgeRender.current = false;
       badgeTransitionAnim.setValue(hasOverflow ? 1 : 0);
+      prevBadgeIndexRef.current = badgeIndex;
       return;
     }
+
+    const badgeIndexChanged = prevBadgeIndexRef.current !== badgeIndex;
+    prevBadgeIndexRef.current = badgeIndex;
+
+    if (badgeIndexChanged && hasOverflow) {
+      badgeTransitionAnim.setValue(0);
+      Animated.timing(badgeTransitionAnim, {
+        toValue: 1,
+        duration: 240,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        useNativeDriver: true,
+      }).start();
+      return;
+    }
+
     Animated.timing(badgeTransitionAnim, {
       toValue: hasOverflow ? 1 : 0,
       duration: 240,
       easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       useNativeDriver: true,
     }).start();
-  }, [hasOverflow, badgeIndex, badgeTransitionAnim, isAdaptive]);
+  }, [hasOverflow, badgeIndex, badgeTransitionAnim]);
 
   const badgeFadeOpacity = badgeTransitionAnim.interpolate({
     inputRange: [0, 1],
@@ -391,190 +336,6 @@ export function TaskListFrame({
         }}
       >
         {tasks.map((task, index) => {
-          if (isAdaptive) {
-            // ── ADAPTIVE MODE (Morph between collapsed & expanded) ──
-            if (hasOverflowExpanded && index === badgeIndexExpanded) {
-              return (
-                <View
-                  key={`${task.id}:${task.date}`}
-                  style={{
-                    height: ROW_HEIGHT,
-                    justifyContent: 'center',
-                    position: 'relative',
-                  }}
-                >
-                  <RouletteRow
-                    task={task}
-                    index={index}
-                    scrollY={scrollY}
-                    containerHeight={currentContainerH}
-                    canScroll={canScroll}
-                    onPress={onPress}
-                    onInteraction={onInteraction}
-                    isSwipingRef={isSwipingRef}
-                    cardBg={colors.card}
-                    singleLine={singleLine}
-                    rowStride={rowStride}
-                    extraOpacity={isAtTop ? expandedTaskProgressOpacity : taskScrollOpacity}
-                  />
-                  <Animated.View
-                    pointerEvents={isSundayVisible ? (isAtTop ? 'auto' : 'none') : 'none'}
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      justifyContent: 'center',
-                      opacity: expandedBadgeProgressOpacity,
-                      transform: [{ scale: expandedBadgeScale ?? 1 }],
-                    }}
-                  >
-                    <Animated.View style={{ opacity: badgeScrollOpacity }}>
-                      <Pressable
-                        onPress={onPress}
-                        hitSlop={{ top: 4, bottom: 4, left: 8, right: 8 }}
-                      >
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            alignSelf: 'flex-start',
-                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-                            paddingHorizontal: 7,
-                            paddingVertical: 2,
-                            borderRadius: 7,
-                            borderCurve: 'continuous',
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: 10.5,
-                              lineHeight: 13,
-                              fontWeight: '600',
-                              color: colors.today,
-                              fontVariant: ['tabular-nums'],
-                            }}
-                          >
-                            {t.common.moreTasks ? t.common.moreTasks(computedMoreCountExpanded) : `+${computedMoreCountExpanded} тағы`}
-                          </Text>
-                        </View>
-                      </Pressable>
-                    </Animated.View>
-                  </Animated.View>
-                </View>
-              );
-            }
-
-            if (index > badgeIndexExpanded) {
-              if (hasOverflowCollapsed && index === badgeIndexCollapsed) {
-                return (
-                  <View
-                    key={`${task.id}:${task.date}`}
-                    style={{
-                      height: ROW_HEIGHT,
-                      justifyContent: 'center',
-                      position: 'relative',
-                    }}
-                  >
-                    <RouletteRow
-                      task={task}
-                      index={index}
-                      scrollY={scrollY}
-                      containerHeight={currentContainerH}
-                      canScroll={canScroll}
-                      onPress={onPress}
-                      onInteraction={onInteraction}
-                      isSwipingRef={isSwipingRef}
-                      cardBg={colors.card}
-                      singleLine={singleLine}
-                      rowStride={rowStride}
-                      extraOpacity={isAtTop ? (!isSundayVisible ? undefined : collapsedRowsFade) : taskScrollOpacity}
-                    />
-                    <Animated.View
-                      pointerEvents={!isSundayVisible ? (isAtTop ? 'auto' : 'none') : 'none'}
-                      style={{
-                        position: 'absolute',
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        justifyContent: 'center',
-                        opacity: collapsedRowsFade,
-                      }}
-                    >
-                      <Animated.View style={{ opacity: badgeScrollOpacity }}>
-                        <Pressable
-                          onPress={onPress}
-                          hitSlop={{ top: 4, bottom: 4, left: 8, right: 8 }}
-                        >
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              alignSelf: 'flex-start',
-                              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-                              paddingHorizontal: 7,
-                              paddingVertical: 2,
-                              borderRadius: 7,
-                              borderCurve: 'continuous',
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: 10.5,
-                                lineHeight: 13,
-                                fontWeight: '600',
-                                color: colors.today,
-                                fontVariant: ['tabular-nums'],
-                              }}
-                            >
-                              {t.common.moreTasks ? t.common.moreTasks(computedMoreCountCollapsed) : `+${computedMoreCountCollapsed} тағы`}
-                            </Text>
-                          </View>
-                        </Pressable>
-                      </Animated.View>
-                    </Animated.View>
-                  </View>
-                );
-              }
-
-              return (
-                <RouletteRow
-                  key={`${task.id}:${task.date}`}
-                  task={task}
-                  index={index}
-                  scrollY={scrollY}
-                  containerHeight={currentContainerH}
-                  canScroll={canScroll}
-                  onPress={onPress}
-                  onInteraction={onInteraction}
-                  isSwipingRef={isSwipingRef}
-                  cardBg={colors.card}
-                  singleLine={singleLine}
-                  rowStride={rowStride}
-                  extraOpacity={isAtTop ? collapsedRowsFade : undefined}
-                />
-              );
-            }
-
-            return (
-              <RouletteRow
-                key={`${task.id}:${task.date}`}
-                task={task}
-                index={index}
-                scrollY={scrollY}
-                containerHeight={currentContainerH}
-                canScroll={canScroll}
-                onPress={onPress}
-                onInteraction={onInteraction}
-                isSwipingRef={isSwipingRef}
-                cardBg={colors.card}
-                singleLine={singleLine}
-                rowStride={rowStride}
-              />
-            );
-          }
-
-          // ── NON-ADAPTIVE (STANDARD) MODE ──
           const isBadgeRow = hasOverflow && index === badgeIndex;
           if (isBadgeRow) {
             return (

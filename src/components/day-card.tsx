@@ -240,10 +240,6 @@ export const DayCard = memo(function DayCardComponent({
           <TaskListFrame
             tasks={tasks}
             containerHeight={activeBodyHeight}
-            collapsedContainerHeight={wide ? undefined : collapsedBodyHeight}
-            expandedContainerHeight={wide ? undefined : expandedBodyHeight}
-            progress={wide ? undefined : progress}
-            isSundayVisible={isSundayVisible}
             onPress={open}
             onInteraction={onInteraction}
             isSwipingRef={isSwipingRef}
