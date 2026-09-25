@@ -21,8 +21,10 @@ interface TaskListFrameProps {
 }
 
 const ROW_HEIGHT = 22;
-const MIN_GAP = 3.5;
-const MIN_PAD = 7;
+const PAD_TOP = 6;
+const PAD_BOTTOM = 4;
+const GAP = 4;
+const ROW_STRIDE = ROW_HEIGHT + GAP; // 26px
 
 function RouletteRow({
   task,
@@ -136,12 +138,10 @@ export function TaskListFrame({
     }
   };
 
-  const N = Math.max(1, Math.floor((containerHeight + MIN_GAP - 2 * MIN_PAD) / (ROW_HEIGHT + MIN_GAP)));
-  const totalTasksH = N * ROW_HEIGHT;
-  const remaining = Math.max(0, containerHeight - totalTasksH);
-  const gap = N > 1 ? Math.min(6, Math.max(3, (remaining - 16) / (N - 1))) : 0;
-  const edgePad = Math.max(6, Math.round(((remaining - (N - 1) * gap) / 2) * 10) / 10);
-  const rowStride = ROW_HEIGHT + gap;
+  const rowStride = ROW_STRIDE;
+  const gap = GAP;
+  const edgePad = PAD_TOP;
+  const N = Math.max(1, Math.floor((containerHeight - PAD_TOP + GAP) / ROW_STRIDE));
 
   const canScroll = scrollable && scrollEnabled && tasks.length > N;
   const hasOverflow = canScroll && tasks.length > N;
@@ -329,9 +329,9 @@ export function TaskListFrame({
           if (isCardScrollingRef) (isCardScrollingRef as any).current = false;
         }}
         contentContainerStyle={{
-          paddingTop: edgePad,
-          paddingBottom: edgePad,
-          gap,
+          paddingTop: PAD_TOP,
+          paddingBottom: PAD_BOTTOM,
+          gap: GAP,
           flexGrow: 1,
         }}
       >
