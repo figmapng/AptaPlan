@@ -364,19 +364,13 @@ export default function Home() {
     const defaultExpanded = settings.lastDayVisibility !== 'hidden';
     const target = defaultExpanded ? 1 : 0;
     isExpandedRef.current = target === 1;
-    if (target === 0) {
-      setIsSundayExpanded(false);
-    }
+    setIsSundayExpanded(target === 1);
     Animated.timing(weekProgress, {
       toValue: target,
       duration: 250,
       easing: Easing.bezier(0.25, 0.1, 0.25, 1),
       useNativeDriver: false,
-    }).start(({ finished }) => {
-      if (finished) {
-        setIsSundayExpanded(target === 1);
-      }
-    });
+    }).start();
   }, [settings.lastDayVisibility, weekProgress]);
 
   // ── Month data load ─────────────────────────────────────────────
@@ -417,6 +411,7 @@ export default function Home() {
   const expandWeek = useCallback(() => {
     userSundayStateRef.current = 'expanded';
     isExpandedRef.current = true;
+    setIsSundayExpanded(true);
     Animated.spring(weekProgress, {
       toValue: 1,
       tension: 180,
