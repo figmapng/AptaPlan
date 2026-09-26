@@ -123,6 +123,39 @@ const CarouselCard = React.memo(function CarouselCard({
   const [localListHeight, setLocalListHeight] = useState(0);
   const { colors, isDark, theme } = useTheme();
   const { t } = useI18n();
+
+  const keyExtractor = useCallback((task: Task) => `${task.id}:${task.date}`, []);
+
+  const handleReorderCard = useCallback(
+    (newData: Task[]) => {
+      void handleReorder(newData, cardDate);
+    },
+    [handleReorder, cardDate]
+  );
+
+  const renderTaskItem = useCallback(
+    (
+      task: Task,
+      isActive: boolean,
+      index: number,
+      totalCount: number,
+      onSwipeX?: (anim: Animated.Value, onDelete?: () => void) => void,
+      onScrollEnabledChangeItem?: (enabled: boolean) => void
+    ) => (
+      <TaskRow
+        task={task}
+        isLast={index === totalCount - 1}
+        onPress={() => beginEditing(task)}
+        onPendingDelete={handlePendingDelete}
+        isActive={isActive}
+        onSwipeX={onSwipeX}
+        onScrollEnabledChange={onScrollEnabledChangeItem}
+        cardBg={colors.card}
+        cardSurface
+      />
+    ),
+    [beginEditing, handlePendingDelete, colors.card]
+  );
   const cardTaskCount = cardTasks.length;
   const taskListHeight = localListHeight > 0 ? localListHeight : (cardTaskCount > 0 ? cardTaskCount * 48 + 12 : 80);
   const rawCardContentHeight = 44 + 8 + taskListHeight;
@@ -487,8 +520,8 @@ const CarouselCard = React.memo(function CarouselCard({
                 >
                   <SortableTaskList
                     data={cardTasks}
-                    keyExtractor={(task) => `${task.id}:${task.date}`}
-                    onReorder={(newData) => void handleReorder(newData, cardDate)}
+                    keyExtractor={keyExtractor}
+                    onReorder={handleReorderCard}
                     onScrollEnabledChange={handleScrollEnabled}
                     onAutoScroll={handleAutoScroll}
                     isScrollingRef={isScrollingRef}
@@ -498,26 +531,7 @@ const CarouselCard = React.memo(function CarouselCard({
                     onDragMoveOverDeleteZone={onDragMoveOverDeleteZone}
                     onDragEnd={onDragEnd}
                     onDropInDeleteZone={onDropInDeleteZone}
-                    renderItem={(
-                      task,
-                      isActive,
-                      index,
-                      totalCount,
-                      onSwipeX,
-                      onScrollEnabledChangeItem
-                    ) => (
-                      <TaskRow
-                        task={task}
-                        isLast={index === totalCount - 1}
-                        onPress={() => beginEditing(task)}
-                        onPendingDelete={handlePendingDelete}
-                        isActive={isActive}
-                        onSwipeX={onSwipeX}
-                        onScrollEnabledChange={onScrollEnabledChangeItem}
-                        cardBg={colors.card}
-                        cardSurface
-                      />
-                    )}
+                    renderItem={renderTaskItem}
                   />
                 </View>
               ) : (
@@ -693,8 +707,13 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
   const scrollEnabledRef = useRef(true);
   const handleScrollEnabled = useCallback((enabled: boolean) => {
+    if (scrollEnabledRef.current === enabled) return;
     scrollEnabledRef.current = enabled;
     setScrollEnabled(enabled);
+  }, []);
+
+  const handleBeginEditing = useCallback((task: Task) => {
+    setPreviewTask(task);
   }, []);
 
   const handleTaskListScroll = useCallback(() => {
@@ -1028,7 +1047,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     handleScrollEnabled={handleScrollEnabled}
                     isScrollingRef={isScrollingRef}
                     handleTaskListScroll={handleTaskListScroll}
-                    beginEditing={(task) => setPreviewTask(task)}
+                    beginEditing={handleBeginEditing}
                     beginAdding={beginAdding}
                     closeCard={closeCard}
                     handlePendingDelete={handlePendingDelete}

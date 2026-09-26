@@ -117,6 +117,15 @@ function SortableRowItem<T>({
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const gestureActiveRef = useRef(false);
+  const dragStartTimeRef = useRef(0);
+  const touchEndFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTouchEndFallback = React.useCallback(() => {
+    if (touchEndFallbackTimerRef.current) {
+      clearTimeout(touchEndFallbackTimerRef.current);
+      touchEndFallbackTimerRef.current = null;
+    }
+  }, []);
 
   const clearLongPress = React.useCallback(() => {
     if (longPressTimerRef.current) {
@@ -127,31 +136,39 @@ function SortableRowItem<T>({
 
   const startLongPress = React.useCallback(
     (event: any) => {
+      if (isActive) return;
       clearLongPress();
+      clearTouchEndFallback();
       longPressRef.current = false;
+      gestureActiveRef.current = false;
       touchStartRef.current = {
         x: event.nativeEvent.pageX,
         y: event.nativeEvent.pageY,
       };
       longPressTimerRef.current = setTimeout(() => {
         longPressRef.current = true;
+        gestureActiveRef.current = true;
+        dragStartTimeRef.current = Date.now();
         longPressTimerRef.current = null;
-        onScrollEnabledChange?.(false);
         onGrant(itemKey);
       }, 230);
     },
-    [clearLongPress, itemKey, onGrant, onScrollEnabledChange]
+    [clearLongPress, clearTouchEndFallback, itemKey, onGrant, isActive]
   );
 
   const handleTouchMove = React.useCallback(
     (event: any) => {
-      if (longPressRef.current || !touchStartRef.current) return;
+      if (longPressRef.current) {
+        clearTouchEndFallback();
+        return;
+      }
+      if (!touchStartRef.current) return;
       const { pageX, pageY } = event.nativeEvent;
       const dx = Math.abs(pageX - touchStartRef.current.x);
       const dy = Math.abs(pageY - touchStartRef.current.y);
       if (dx > 8 || dy > 8) clearLongPress();
     },
-    [clearLongPress]
+    [clearLongPress, clearTouchEndFallback]
   );
 
   React.useEffect(() => {
@@ -160,8 +177,17 @@ function SortableRowItem<T>({
         clearTimeout(longPressTimerRef.current);
         longPressTimerRef.current = null;
       }
+      if (touchEndFallbackTimerRef.current) {
+        clearTimeout(touchEndFallbackTimerRef.current);
+        touchEndFallbackTimerRef.current = null;
+      }
+      if (gestureActiveRef.current) {
+        gestureActiveRef.current = false;
+        longPressRef.current = false;
+        onTerminate();
+      }
     };
-  }, []);
+  }, [onTerminate]);
 
   const handleSwipeX = React.useCallback((anim: Animated.Value, onDelete?: () => void) => {
     setSwipeXAnim(anim);
@@ -211,21 +237,27 @@ function SortableRowItem<T>({
         onPanResponderGrant: () => {
           gestureActiveRef.current = true;
           clearLongPress();
+          clearTouchEndFallback();
           onScrollEnabledChange?.(false);
         },
-        onPanResponderMove: (_, gs) => onMove(gs.dy, gs.moveY),
+        onPanResponderMove: (_, gs) => {
+          clearTouchEndFallback();
+          onMove(gs.dy, gs.moveY);
+        },
         onPanResponderRelease: () => {
+          clearTouchEndFallback();
           gestureActiveRef.current = false;
           longPressRef.current = false;
           onRelease();
         },
         onPanResponderTerminate: () => {
+          clearTouchEndFallback();
           gestureActiveRef.current = false;
           longPressRef.current = false;
           onTerminate();
         },
       }),
-    [onMove, onRelease, onTerminate, onScrollEnabledChange, clearLongPress, isScrollingRef]
+    [onMove, onRelease, onTerminate, onScrollEnabledChange, clearLongPress, clearTouchEndFallback, isScrollingRef]
   );
 
   const shadowOpacityAnim = activeAnim.interpolate({
@@ -276,7 +308,7 @@ function SortableRowItem<T>({
             { scale: scaleAnim },
             { translateY: dragYAnim },
           ],
-          zIndex: 9999,
+          zIndex: 10,
           elevation: 8,
           shadowColor: isOverDeleteZone ? '#FF3B30' : '#000000',
           shadowOffset: { width: 0, height: 4 },
@@ -297,17 +329,63 @@ function SortableRowItem<T>({
 
   const handleTouchEnd = React.useCallback(() => {
     clearLongPress();
-    if (longPressRef.current && !gestureActiveRef.current) {
+    touchStartRef.current = null;
+
+    if (!longPressRef.current) return;
+
+    // Guard against immediate synthetic UIKit touchEnd events emitted right after grant
+    // due to subview reordering (zIndex) or native hierarchy changes.
+    const elapsed = Date.now() - dragStartTimeRef.current;
+    if (elapsed < 120) {
+      clearTouchEndFallback();
+      const remaining = Math.max(10, 120 - elapsed);
+      touchEndFallbackTimerRef.current = setTimeout(() => {
+        touchEndFallbackTimerRef.current = null;
+        if (gestureActiveRef.current) {
+          gestureActiveRef.current = false;
+          longPressRef.current = false;
+          onRelease();
+        }
+      }, remaining);
+      return;
+    }
+
+    clearTouchEndFallback();
+    if (gestureActiveRef.current) {
+      gestureActiveRef.current = false;
       longPressRef.current = false;
       onRelease();
     }
-    touchStartRef.current = null;
-  }, [clearLongPress, onRelease]);
+  }, [clearLongPress, clearTouchEndFallback, onRelease]);
 
   const handleTouchCancel = React.useCallback(() => {
     clearLongPress();
     touchStartRef.current = null;
-  }, [clearLongPress]);
+
+    if (!longPressRef.current) return;
+
+    const elapsed = Date.now() - dragStartTimeRef.current;
+    if (elapsed < 120) {
+      clearTouchEndFallback();
+      const remaining = Math.max(10, 120 - elapsed);
+      touchEndFallbackTimerRef.current = setTimeout(() => {
+        touchEndFallbackTimerRef.current = null;
+        if (gestureActiveRef.current) {
+          gestureActiveRef.current = false;
+          longPressRef.current = false;
+          onTerminate();
+        }
+      }, remaining);
+      return;
+    }
+
+    clearTouchEndFallback();
+    if (gestureActiveRef.current) {
+      gestureActiveRef.current = false;
+      longPressRef.current = false;
+      onTerminate();
+    }
+  }, [clearLongPress, clearTouchEndFallback, onTerminate]);
 
   return (
     <Animated.View
@@ -680,7 +758,6 @@ export function SortableTaskList<T>({
     dragY.setValue(0);
     resetAllShifts();
 
-    onScrollEnabledChange?.(false);
     setActiveIndex(idx);
 
     const activeItem = dataStateRef.current[idx];
@@ -1078,3 +1155,5 @@ const styles = StyleSheet.create({
     height: 32,
   },
 });
+
+export default SortableTaskList;
