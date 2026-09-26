@@ -130,14 +130,16 @@ const sortTasksForRange = (tasks: Task[], opts?: TaskSortOptions) => {
       if (aDone !== bDone) return aDone - bDone;
     }
 
-    // Always sort timed tasks chronologically (e.g. 08:00 < 11:31 < 12:52)
-    const aHas = !!a.time;
-    const bHas = !!b.time;
-    if (aHas && bHas && a.time !== b.time) {
-      return a.time!.localeCompare(b.time!);
-    }
-    if (aHas !== bHas) {
-      return aHas ? -1 : 1;
+    if (opts?.sortMode !== 'manual') {
+      // Always sort timed tasks chronologically (e.g. 08:00 < 11:31 < 12:52)
+      const aHas = !!a.time;
+      const bHas = !!b.time;
+      if (aHas && bHas && a.time !== b.time) {
+        return a.time!.localeCompare(b.time!);
+      }
+      if (aHas !== bHas) {
+        return aHas ? -1 : 1;
+      }
     }
 
     const sortDiff = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);

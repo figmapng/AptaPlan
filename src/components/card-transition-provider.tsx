@@ -527,7 +527,7 @@ const CarouselCard = React.memo(function CarouselCard({
 export function CardTransitionProvider({ children }: { children: React.ReactNode }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const { tasks, settings, loadRange, remove } = usePlanner();
+  const { tasks, settings, loadRange, refresh, remove, setPref } = usePlanner();
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
 
@@ -649,7 +649,6 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
   const handleReorder = useCallback(
     async (newData: Task[], targetDate?: Date) => {
-      const dateKey = toDateKey(targetDate ?? activeCardDate);
       const db = await getDatabase();
       const updatedAt = new Date().toISOString();
 
@@ -663,9 +662,12 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
           );
         }
       });
-      await loadRange(dateKey, dateKey);
+      if (settings.sortMode !== 'manual') {
+        void setPref('sortMode', 'manual');
+      }
+      await refresh();
     },
-    [activeCardDate, loadRange]
+    [settings.sortMode, setPref, refresh]
   );
 
   const cleanupClose = () => {

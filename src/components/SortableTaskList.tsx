@@ -77,7 +77,7 @@ interface RowItemProps<T> {
     onScrollEnabledChange?: (enabled: boolean) => void
   ) => React.ReactNode;
   onLayout: (key: string, height: number) => void;
-  onGrant: (index: number) => void;
+  onGrant: (itemKey: string) => void;
   onMove: (dy: number, moveY: number) => void;
   onRelease: () => void;
   onTerminate: () => void;
@@ -130,10 +130,10 @@ function SortableRowItem<T>({
         longPressRef.current = true;
         longPressTimerRef.current = null;
         onScrollEnabledChange?.(false);
-        onGrant(index);
+        onGrant(itemKey);
       }, 230);
     },
-    [clearLongPress, index, onGrant, onScrollEnabledChange]
+    [clearLongPress, itemKey, onGrant, onScrollEnabledChange]
   );
 
   const handleTouchMove = React.useCallback(
@@ -413,39 +413,15 @@ export function SortableTaskList<T>({
 
   const autoScrollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoScrollOffsetRef = useRef(0);
-  const pendingOrderRef = useRef<string | null>(null);
-  const isCommittingRef = useRef(false);
 
-  // Synchronize incoming external data changes without reverting local reorders
+  // Synchronize incoming external data changes directly when not dragging
   useEffect(() => {
-    dataStateRef.current = [...data];
     if (activeIndexRef.current === -1) {
-      const incomingOrder = data.map((item) => keyExtractorRef.current(item)).join('|');
-      if (pendingOrderRef.current) {
-        if (pendingOrderRef.current === incomingOrder) {
-          pendingOrderRef.current = null;
-        }
-        return;
-      }
       resetAllShifts();
+      dataStateRef.current = [...data];
       setDataState([...data]);
     }
   }, [data]);
-
-  useLayoutEffect(() => {
-    if (isCommittingRef.current) {
-      isCommittingRef.current = false;
-      resetAllShifts();
-      dragY.stopAnimation();
-      dragY.setValue(0);
-      activeAnim.stopAnimation();
-      activeAnim.setValue(0);
-      activeIndexRef.current = -1;
-      targetIndexRef.current = -1;
-      startIndexRef.current = -1;
-      autoScrollOffsetRef.current = 0;
-    }
-  }, [dataState]);
 
   const stopAutoScroll = () => {
     if (autoScrollTimer.current) {
@@ -569,10 +545,15 @@ export function SortableTaskList<T>({
     return startIdx;
   };
 
-  const handleGrant = useRef((index: number) => {
-    activeIndexRef.current = index;
-    startIndexRef.current = index;
-    targetIndexRef.current = index;
+  const handleGrant = useRef((itemKey: string) => {
+    const idx = dataStateRef.current.findIndex(
+      (item) => keyExtractorRef.current(item) === itemKey
+    );
+    if (idx === -1) return;
+
+    activeIndexRef.current = idx;
+    startIndexRef.current = idx;
+    targetIndexRef.current = idx;
     autoScrollOffsetRef.current = 0;
 
     dragY.stopAnimation();
@@ -580,7 +561,7 @@ export function SortableTaskList<T>({
     resetAllShifts();
 
     onScrollEnabledChange?.(false);
-    setActiveIndex(index);
+    setActiveIndex(idx);
 
     // Fluid lift spring
     Animated.spring(activeAnim, {
@@ -661,16 +642,16 @@ export function SortableTaskList<T>({
     Animated.parallel([
       Animated.spring(dragY, {
         toValue: targetDragY,
-        stiffness: 260,
+        stiffness: 280,
         damping: 26,
-        mass: 0.95,
+        mass: 0.9,
         useNativeDriver: true,
       }),
       Animated.spring(activeAnim, {
         toValue: 0,
-        stiffness: 240,
+        stiffness: 260,
         damping: 25,
-        mass: 0.95,
+        mass: 0.9,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -692,18 +673,18 @@ export function SortableTaskList<T>({
       list.splice(targetIdx, 0, movedItem);
 
       dataStateRef.current = list;
-      pendingOrderRef.current = list.map((item) => keyExtractorRef.current(item)).join('|');
-      isCommittingRef.current = true;
-
-      // Commit the new order into React state
       setDataState(list);
+      resetAllShifts();
+      dragY.setValue(0);
+      activeAnim.setValue(0);
+      activeIndexRef.current = -1;
+      targetIndexRef.current = -1;
+      startIndexRef.current = -1;
       setActiveIndex(-1);
+      onScrollEnabledChange?.(true);
 
-      // Persist reorder to database in background
-      requestAnimationFrame(() => {
-        onReorder(list);
-        onScrollEnabledChange?.(true);
-      });
+      // Persist reorder to database
+      onReorder(list);
     });
 
     if (process.env.EXPO_OS === 'ios') {
