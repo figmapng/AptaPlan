@@ -712,43 +712,26 @@ export function SortableTaskList<T>({
       if (process.env.EXPO_OS === 'ios') {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
       }
+
+      resetAllShifts();
+      dragY.setValue(0);
+      activeAnim.setValue(0);
+      activeIndexRef.current = -1;
+      targetIndexRef.current = -1;
+      startIndexRef.current = -1;
+      isOverDeleteZoneRef.current = false;
+      setIsOverDeleteZone(false);
+      setActiveIndex(-1);
+      onScrollEnabledChange?.(true);
+
+      const nextData = dataStateRef.current.filter((_, i) => i !== startIdx);
+      dataStateRef.current = nextData;
+      setDataState(nextData);
+
       if (activeItem) {
         onDropInDeleteZoneRef.current?.(activeItem);
       }
-
-      Animated.parallel([
-        Animated.timing(dragY, {
-          toValue: 0,
-          duration: 120,
-          useNativeDriver: true,
-        }),
-        Animated.timing(activeAnim, {
-          toValue: 0,
-          duration: 120,
-          useNativeDriver: true,
-        }),
-        ...dataStateRef.current.map((item) =>
-          Animated.spring(getShiftAnim(keyExtractorRef.current(item)), {
-            toValue: 0,
-            stiffness: 300,
-            damping: 28,
-            mass: 0.8,
-            useNativeDriver: true,
-          })
-        ),
-      ]).start(() => {
-        resetAllShifts();
-        dragY.setValue(0);
-        activeAnim.setValue(0);
-        activeIndexRef.current = -1;
-        targetIndexRef.current = -1;
-        startIndexRef.current = -1;
-        isOverDeleteZoneRef.current = false;
-        setIsOverDeleteZone(false);
-        setActiveIndex(-1);
-        onScrollEnabledChange?.(true);
-        onDragEndRef.current?.(true);
-      });
+      onDragEndRef.current?.(true);
       return;
     }
 
