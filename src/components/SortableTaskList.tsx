@@ -472,6 +472,12 @@ export function SortableTaskList<T>({
   }, []);
 
   const checkAutoScroll = (moveY: number) => {
+    // If approaching or over delete zone, stop auto-scrolling
+    if (deleteZoneThresholdYRef.current && moveY >= deleteZoneThresholdYRef.current - 50) {
+      stopAutoScroll();
+      return;
+    }
+
     const bottomThreshold = 680;
     const topThreshold = 180;
 
@@ -625,20 +631,25 @@ export function SortableTaskList<T>({
   };
 
   const clampDragDy = (startIdx: number, rawDy: number): number => {
-    const count = dataStateRef.current.length;
-    if (count <= 1) {
-      return rawDy > 0 ? applyRubberBand(rawDy, 16) : -applyRubberBand(-rawDy, 16);
-    }
-
     const maxUp = getDistanceBetween(0, startIdx);
-    const maxDown = getDistanceBetween(startIdx, count - 1);
 
+    // Prevent dragging too far above top item
     if (rawDy < -maxUp) {
       const overshoot = -rawDy - maxUp;
       return -maxUp - applyRubberBand(overshoot, 22);
-    } else if (rawDy > maxDown) {
-      const overshoot = rawDy - maxDown;
-      return maxDown + applyRubberBand(overshoot, 22);
+    }
+
+    // Only clamp downwards if there is NO delete zone configured
+    if (!deleteZoneThresholdYRef.current) {
+      const count = dataStateRef.current.length;
+      if (count <= 1) {
+        return rawDy > 0 ? applyRubberBand(rawDy, 16) : -applyRubberBand(-rawDy, 16);
+      }
+      const maxDown = getDistanceBetween(startIdx, count - 1);
+      if (rawDy > maxDown) {
+        const overshoot = rawDy - maxDown;
+        return maxDown + applyRubberBand(overshoot, 22);
+      }
     }
 
     return rawDy;

@@ -64,6 +64,7 @@ type CarouselCardProps = {
   headerPanHandlers?: any;
   deleteZoneThresholdY?: number;
   pendingDeleteTaskId?: string;
+  isDraggingTask?: boolean;
   onDragStart?: (task: Task) => void;
   onDragMoveOverDeleteZone?: (isOver: boolean) => void;
   onDragEnd?: (didDelete: boolean) => void;
@@ -97,6 +98,7 @@ const CarouselCard = React.memo(function CarouselCard({
   headerPanHandlers,
   deleteZoneThresholdY,
   pendingDeleteTaskId,
+  isDraggingTask = false,
   onDragStart,
   onDragMoveOverDeleteZone,
   onDragEnd,
@@ -286,7 +288,7 @@ const CarouselCard = React.memo(function CarouselCard({
           flex: 1,
           borderRadius: 24,
           borderCurve: 'continuous',
-          overflow: 'hidden',
+          overflow: isDraggingTask ? 'visible' : 'hidden',
           backgroundColor: colors.card,
         }}
       >
@@ -379,7 +381,7 @@ const CarouselCard = React.memo(function CarouselCard({
             flex: 1,
             paddingHorizontal: 0,
             backgroundColor: colors.card,
-            overflow: 'hidden',
+            overflow: isDraggingTask ? 'visible' : 'hidden',
             opacity: 1,
             paddingTop: 0,
           }}
@@ -447,6 +449,7 @@ const CarouselCard = React.memo(function CarouselCard({
           <Animated.View
             style={{
               flex: 1,
+              overflow: isDraggingTask ? 'visible' : 'hidden',
               opacity: progress.interpolate({
                 inputRange: [0.05, 0.45, 1],
                 outputRange: [0, 0.8, 1],
@@ -456,6 +459,7 @@ const CarouselCard = React.memo(function CarouselCard({
           >
             <ScrollView
               ref={scrollRef}
+              style={{ overflow: isDraggingTask ? 'visible' : 'hidden' }}
               scrollEnabled={scrollEnabled}
               nestedScrollEnabled
               directionalLockEnabled={true}
@@ -474,6 +478,7 @@ const CarouselCard = React.memo(function CarouselCard({
             >
               {cardTasks.length ? (
                 <View
+                  style={{ overflow: isDraggingTask ? 'visible' : undefined }}
                   onLayout={(e) => {
                     const h = e.nativeEvent.layout.height;
                     setLocalListHeight((prev) => (Math.abs(prev - h) > 8 ? h : prev));
@@ -964,7 +969,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
 
             <View
               pointerEvents="box-none"
-              style={[StyleSheet.absoluteFill, { zIndex: 2 }]}
+              style={[StyleSheet.absoluteFill, { zIndex: isDraggingTask ? 10002 : 2 }]}
             >
               {renderedIndices.map((virtualIndex) => {
                 const cardDate = addDays(current.date, virtualIndex);
@@ -999,6 +1004,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     headerPanHandlers={carouselPanResponder.panHandlers}
                     deleteZoneThresholdY={deleteZoneThresholdY}
                     pendingDeleteTaskId={pendingDeleteTask?.id}
+                    isDraggingTask={isDraggingTask}
                     onDragStart={handleDragStart}
                     onDragMoveOverDeleteZone={handleDragMoveOverDeleteZone}
                     onDragEnd={handleDragEnd}
