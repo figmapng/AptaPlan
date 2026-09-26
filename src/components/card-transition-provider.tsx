@@ -573,6 +573,27 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (pendingDeleteTask) {
+      Animated.spring(toastAnim, {
+        toValue: 1,
+        stiffness: 350,
+        damping: 26,
+        mass: 0.8,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(toastAnim, {
+        toValue: 0,
+        duration: 160,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [pendingDeleteTask, toastAnim]);
+
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const isScrollingRef = useRef(false);
   const scrollResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -704,7 +725,13 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-    setPendingDeleteTask(null);
+    Animated.timing(toastAnim, {
+      toValue: 0,
+      duration: 120,
+      useNativeDriver: true,
+    }).start(() => {
+      setPendingDeleteTask(null);
+    });
   };
 
   const handleReorder = useCallback(
@@ -1180,25 +1207,43 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   position: 'absolute',
                   left: 16,
                   right: 16,
-                  bottom: Math.max(insets.bottom + 12, 24),
-                  zIndex: 10000,
-                  elevation: 12,
+                  bottom: bottomBarBottomOffset + 58,
+                  zIndex: 10010,
+                  elevation: 20,
+                  opacity: toastAnim,
+                  transform: [
+                    {
+                      translateY: toastAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [14, 0],
+                      }),
+                    },
+                    {
+                      scale: toastAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.96, 1],
+                      }),
+                    },
+                  ],
                 }}
               >
                 <View
                   style={{
                     backgroundColor: isDark ? '#2C2C2E' : '#1E293B',
                     borderRadius: 14,
+                    borderCurve: 'continuous',
                     paddingHorizontal: 16,
-                    paddingVertical: 14,
+                    paddingVertical: 12,
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 8,
-                    elevation: 6,
+                    shadowColor: '#000000',
+                    shadowOffset: { width: 0, height: 6 },
+                    shadowOpacity: isDark ? 0.4 : 0.22,
+                    shadowRadius: 10,
+                    elevation: 8,
+                    borderWidth: isDark ? 1 : 0,
+                    borderColor: 'rgba(255, 255, 255, 0.12)',
                   }}
                 >
                   <Text
@@ -1217,9 +1262,9 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     onPress={handleUndo}
                     style={({ pressed }) => ({
                       opacity: pressed ? 0.7 : 1,
-                      paddingHorizontal: 12,
-                      paddingVertical: 6,
-                      backgroundColor: 'rgba(255,255,255,0.15)',
+                      paddingHorizontal: 14,
+                      paddingVertical: 7,
+                      backgroundColor: 'rgba(255,255,255,0.18)',
                       borderRadius: 8,
                     })}
                   >
