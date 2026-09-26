@@ -413,7 +413,10 @@ const CarouselCard = React.memo(function CarouselCard({
           style={{
             flex: 1,
             paddingHorizontal: 0,
-            backgroundColor: colors.card,
+            backgroundColor: 'transparent',
+            borderBottomLeftRadius: 24,
+            borderBottomRightRadius: 24,
+            borderCurve: 'continuous',
             overflow: isDraggingTask ? 'visible' : 'hidden',
             opacity: 1,
             paddingTop: 0,
