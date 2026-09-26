@@ -414,6 +414,12 @@ export function SortableTaskList<T>({
   const dragY = useRef(new Animated.Value(0)).current;
   const activeAnim = useRef(new Animated.Value(0)).current;
 
+  // Drop target placeholder mask
+  const { colors: themeColors, isDark } = useTheme();
+  const maskYAnim = useRef(new Animated.Value(0)).current;
+  const maskOpacityAnim = useRef(new Animated.Value(0)).current;
+  const [maskHeight, setMaskHeight] = useState<number>(54);
+
   // Item-key-based shift animated values
   const shiftAnims = useRef<Map<string, Animated.Value>>(new Map());
 
@@ -523,6 +529,36 @@ export function SortableTaskList<T>({
     return dist;
   };
 
+  const getItemY = (index: number): number => {
+    let y = 0;
+    for (let i = 0; i < index; i++) {
+      const item = dataStateRef.current[i];
+      if (!item) continue;
+      const key = keyExtractorRef.current(item);
+      const h = itemHeightsRef.current.get(key) || itemHeightRef.current;
+      y += h + gap;
+    }
+    return y;
+  };
+
+  const getDropTargetY = (startIdx: number, targetIdx: number): number => {
+    if (targetIdx === startIdx) {
+      return getItemY(startIdx);
+    }
+    const activeItem = dataStateRef.current[startIdx];
+    const activeKey = activeItem ? keyExtractorRef.current(activeItem) : '';
+    const activeH = itemHeightsRef.current.get(activeKey) || itemHeightRef.current;
+
+    if (targetIdx < startIdx) {
+      return getItemY(targetIdx);
+    } else {
+      const targetItem = dataStateRef.current[targetIdx];
+      const targetKey = targetItem ? keyExtractorRef.current(targetItem) : '';
+      const targetH = itemHeightsRef.current.get(targetKey) || itemHeightRef.current;
+      return getItemY(targetIdx) + targetH - activeH;
+    }
+  };
+
   const updateNeighborShifts = (startIdx: number, targetIdx: number) => {
     const activeItem = dataStateRef.current[startIdx];
     if (!activeItem) return;
@@ -609,6 +645,18 @@ export function SortableTaskList<T>({
     const activeItem = dataStateRef.current[idx];
     if (activeItem) {
       onDragStartRef.current?.(activeItem);
+      const activeKey = keyExtractorRef.current(activeItem);
+      const activeH = itemHeightsRef.current.get(activeKey) || itemHeightRef.current;
+      setMaskHeight(activeH);
+      const initialY = getItemY(idx);
+      maskYAnim.setValue(initialY);
+      Animated.spring(maskOpacityAnim, {
+        toValue: 1,
+        stiffness: 350,
+        damping: 26,
+        mass: 0.8,
+        useNativeDriver: true,
+      }).start();
     }
 
     // Fluid lift spring
@@ -685,7 +733,18 @@ export function SortableTaskList<T>({
         targetIndexRef.current = startIdx;
         updateNeighborShifts(startIdx, startIdx);
       }
+      Animated.timing(maskOpacityAnim, {
+        toValue: 0,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
       return;
+    } else {
+      Animated.timing(maskOpacityAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
     }
 
     checkAutoScroll(moveY);
@@ -695,6 +754,16 @@ export function SortableTaskList<T>({
     if (newTargetIdx !== targetIndexRef.current) {
       targetIndexRef.current = newTargetIdx;
       updateNeighborShifts(startIdx, newTargetIdx);
+
+      const targetY = getDropTargetY(startIdx, newTargetIdx);
+      Animated.spring(maskYAnim, {
+        toValue: targetY,
+        stiffness: 320,
+        damping: 26,
+        mass: 0.8,
+        useNativeDriver: true,
+      }).start();
+
       if (process.env.EXPO_OS === 'ios') {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
@@ -713,6 +782,7 @@ export function SortableTaskList<T>({
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
       }
 
+      maskOpacityAnim.setValue(0);
       resetAllShifts();
       dragY.setValue(0);
       activeAnim.setValue(0);
@@ -736,6 +806,11 @@ export function SortableTaskList<T>({
     }
 
     onDragEndRef.current?.(false);
+    Animated.timing(maskOpacityAnim, {
+      toValue: 0,
+      duration: 140,
+      useNativeDriver: true,
+    }).start();
 
     const targetIdx = targetIndexRef.current !== -1 ? targetIndexRef.current : startIdx;
 
@@ -831,6 +906,8 @@ export function SortableTaskList<T>({
   const handleTerminate = useRef(() => {
     stopAutoScroll();
     resetAllShifts();
+    maskOpacityAnim.stopAnimation();
+    maskOpacityAnim.setValue(0);
     dragY.stopAnimation();
     dragY.setValue(0);
     activeAnim.stopAnimation();
@@ -852,6 +929,27 @@ export function SortableTaskList<T>({
 
   return (
     <View style={styles.container}>
+      {/* Drop Target Placeholder Mask */}
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: 10,
+          right: 10,
+          top: 3,
+          height: Math.max(34, maskHeight - 6),
+          borderRadius: 12,
+          borderCurve: 'continuous',
+          borderWidth: 1.5,
+          borderStyle: 'dashed',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.35)' : (themeColors.today || '#007AFF') + '66',
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 122, 255, 0.05)',
+          transform: [{ translateY: maskYAnim }],
+          opacity: maskOpacityAnim,
+          zIndex: 0,
+        }}
+      />
+
       {dataState.map((item, index) => {
         const keyStr = keyExtractor(item);
         const isActive = index === activeIndex;
