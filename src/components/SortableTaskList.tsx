@@ -417,6 +417,12 @@ export function SortableTaskList<T>({
   // Synchronize incoming external data changes directly when not dragging
   useEffect(() => {
     if (activeIndexRef.current === -1) {
+      const currentKeys = dataStateRef.current.map((item) => keyExtractorRef.current(item)).join('|');
+      const incomingKeys = data.map((item) => keyExtractorRef.current(item)).join('|');
+      if (currentKeys === incomingKeys) {
+        dataStateRef.current = [...data];
+        return;
+      }
       resetAllShifts();
       dataStateRef.current = [...data];
       setDataState([...data]);
@@ -631,31 +637,33 @@ export function SortableTaskList<T>({
     if (active === -1) return;
 
     const targetIdx = targetIndexRef.current !== -1 ? targetIndexRef.current : startIdx;
-    const targetDragY =
-      targetIdx > startIdx
-        ? getDistanceBetween(startIdx, targetIdx)
-        : targetIdx < startIdx
-        ? -getDistanceBetween(targetIdx, startIdx)
-        : 0;
 
-    // Smooth, graceful drop & settling physics
-    Animated.parallel([
-      Animated.spring(dragY, {
-        toValue: targetDragY,
-        stiffness: 280,
-        damping: 26,
-        mass: 0.9,
-        useNativeDriver: true,
-      }),
-      Animated.spring(activeAnim, {
-        toValue: 0,
-        stiffness: 260,
-        damping: 25,
-        mass: 0.9,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      if (targetIdx === startIdx) {
+    if (targetIdx === startIdx) {
+      Animated.parallel([
+        Animated.spring(dragY, {
+          toValue: 0,
+          stiffness: 300,
+          damping: 28,
+          mass: 0.8,
+          useNativeDriver: true,
+        }),
+        Animated.spring(activeAnim, {
+          toValue: 0,
+          stiffness: 280,
+          damping: 26,
+          mass: 0.8,
+          useNativeDriver: true,
+        }),
+        ...dataStateRef.current.map((item) =>
+          Animated.spring(getShiftAnim(keyExtractorRef.current(item)), {
+            toValue: 0,
+            stiffness: 300,
+            damping: 28,
+            mass: 0.8,
+            useNativeDriver: true,
+          })
+        ),
+      ]).start(() => {
         resetAllShifts();
         dragY.setValue(0);
         activeAnim.setValue(0);
@@ -664,9 +672,32 @@ export function SortableTaskList<T>({
         startIndexRef.current = -1;
         setActiveIndex(-1);
         onScrollEnabledChange?.(true);
-        return;
-      }
+      });
+      return;
+    }
 
+    const targetDragY =
+      targetIdx > startIdx
+        ? getDistanceBetween(startIdx, targetIdx)
+        : -getDistanceBetween(targetIdx, startIdx);
+
+    // Smooth drop settling
+    Animated.parallel([
+      Animated.spring(dragY, {
+        toValue: targetDragY,
+        stiffness: 320,
+        damping: 28,
+        mass: 0.85,
+        useNativeDriver: true,
+      }),
+      Animated.spring(activeAnim, {
+        toValue: 0,
+        stiffness: 280,
+        damping: 26,
+        mass: 0.85,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
       // Create new list order
       const list = [...dataStateRef.current];
       const [movedItem] = list.splice(startIdx, 1);
@@ -760,11 +791,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     overflow: 'visible',
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   noRowFrame: {
     backgroundColor: 'transparent',
-    borderWidth: 0,
-    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   activeRow: {
     borderRadius: 12,
