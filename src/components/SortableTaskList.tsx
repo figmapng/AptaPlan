@@ -719,6 +719,11 @@ export function SortableTaskList<T>({
             isOver ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light
           );
         }
+        Animated.timing(maskOpacityAnim, {
+          toValue: isOver ? 0 : 1,
+          duration: 100,
+          useNativeDriver: true,
+        }).start();
       }
     }
 
@@ -733,18 +738,7 @@ export function SortableTaskList<T>({
         targetIndexRef.current = startIdx;
         updateNeighborShifts(startIdx, startIdx);
       }
-      Animated.timing(maskOpacityAnim, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: true,
-      }).start();
       return;
-    } else {
-      Animated.timing(maskOpacityAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }).start();
     }
 
     checkAutoScroll(moveY);
@@ -782,7 +776,9 @@ export function SortableTaskList<T>({
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
       }
 
+      maskOpacityAnim.stopAnimation();
       maskOpacityAnim.setValue(0);
+      maskYAnim.stopAnimation();
       resetAllShifts();
       dragY.setValue(0);
       activeAnim.setValue(0);
@@ -908,6 +904,7 @@ export function SortableTaskList<T>({
     resetAllShifts();
     maskOpacityAnim.stopAnimation();
     maskOpacityAnim.setValue(0);
+    maskYAnim.stopAnimation();
     dragY.stopAnimation();
     dragY.setValue(0);
     activeAnim.stopAnimation();
@@ -934,16 +931,16 @@ export function SortableTaskList<T>({
         pointerEvents="none"
         style={{
           position: 'absolute',
-          left: 10,
-          right: 10,
+          left: 4,
+          right: 4,
           top: 3,
           height: Math.max(34, maskHeight - 6),
           borderRadius: 12,
           borderCurve: 'continuous',
           borderWidth: 1.5,
           borderStyle: 'dashed',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.35)' : (themeColors.today || '#007AFF') + '66',
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 122, 255, 0.05)',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.32)' : (themeColors.today ? `${themeColors.today}66` : 'rgba(0, 122, 255, 0.4)'),
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : (themeColors.today ? `${themeColors.today}0D` : 'rgba(0, 122, 255, 0.05)'),
           transform: [{ translateY: maskYAnim }],
           opacity: maskOpacityAnim,
           zIndex: 0,
