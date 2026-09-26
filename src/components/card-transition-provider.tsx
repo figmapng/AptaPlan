@@ -1207,7 +1207,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                   position: 'absolute',
                   left: 16,
                   right: 16,
-                  bottom: bottomBarBottomOffset + 58,
+                  bottom: bottomBarBottomOffset + 62,
                   zIndex: 10010,
                   elevation: 20,
                   opacity: toastAnim,
