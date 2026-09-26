@@ -455,7 +455,7 @@ const CarouselCard = React.memo(function CarouselCard({
                 scrollYRef.current = e.nativeEvent.contentOffset.y;
               }}
               scrollEventThrottle={16}
-              contentContainerStyle={{ paddingHorizontal: 14, paddingTop: 10, paddingBottom: 16 }}
+              contentContainerStyle={{ paddingHorizontal: 6, paddingTop: 10, paddingBottom: 16 }}
             >
               {cardTasks.length ? (
                 <View

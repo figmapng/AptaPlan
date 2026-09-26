@@ -221,27 +221,15 @@ function SortableRowItem<T>({
     [onMove, onRelease, onTerminate, onScrollEnabledChange, clearLongPress, isScrollingRef]
   );
 
-  const rotateAnim = dragYAnim.interpolate({
-    inputRange: [-160, 0, 160],
-    outputRange: ['-1.5deg', '0deg', '1.5deg'],
-    extrapolate: 'clamp',
-  });
-
   const scaleAnim = activeAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.035],
+    outputRange: [1, 1.02],
     extrapolate: 'clamp',
   });
 
   const shadowOpacityAnim = activeAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, isDark ? 0.38 : 0.12],
-    extrapolate: 'clamp',
-  });
-
-  const translateXAnim = activeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 18],
+    outputRange: [0, isDark ? 0.35 : 0.12],
     extrapolate: 'clamp',
   });
 
@@ -251,21 +239,20 @@ function SortableRowItem<T>({
         styles.activeRow,
         {
           backgroundColor: isDark ? (themeColors.card || '#27272A') : '#FFFFFF',
-          borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
+          borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)',
           borderWidth: 1,
-          borderRadius: 14,
+          borderRadius: 12,
+          borderCurve: 'continuous' as const,
           transform: [
-            { translateX: translateXAnim },
             { translateY: dragYAnim },
             { scale: scaleAnim },
-            { rotate: rotateAnim },
           ],
           zIndex: 9999,
           elevation: 8,
           shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 6 },
+          shadowOffset: { width: 0, height: 4 },
           shadowOpacity: shadowOpacityAnim,
-          shadowRadius: 12,
+          shadowRadius: 10,
         },
       ]
     : [
@@ -787,9 +774,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
     backgroundColor: 'transparent',
     overflow: 'visible',
+    borderRadius: 12,
   },
   noRowFrame: {
     backgroundColor: 'transparent',
@@ -797,7 +786,7 @@ const styles = StyleSheet.create({
     borderRadius: 0,
   },
   activeRow: {
-    borderRadius: 14,
+    borderRadius: 12,
   },
   contentWrapper: {
     flex: 1,
