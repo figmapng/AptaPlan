@@ -188,7 +188,7 @@ export function CompactWeekStrip({
         glassEffectStyle="clear"
         isInteractive={true}
         colorScheme={isDark ? 'dark' : 'light'}
-        borderRadius={27}
+        borderRadius={19}
         borderCurve="continuous"
         style={[
           styles.container,
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   container: {
     height: 54,
     marginHorizontal: 16,
-    borderRadius: 27,
+    borderRadius: 19,
     borderCurve: 'continuous',
     paddingHorizontal: 5,
     paddingVertical: 5,
