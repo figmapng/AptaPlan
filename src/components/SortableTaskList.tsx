@@ -939,6 +939,7 @@ export function SortableTaskList<T>({
 
   const handleTerminate = useRef(() => {
     stopAutoScroll();
+    isDroppingRef.current = false;
     resetAllShifts();
     maskOpacityAnim.stopAnimation();
     maskOpacityAnim.setValue(0);
