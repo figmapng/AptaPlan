@@ -147,6 +147,15 @@ function SortableRowItem<T>({
     [clearLongPress]
   );
 
+  React.useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const handleSwipeX = React.useCallback((anim: Animated.Value, onDelete?: () => void) => {
     setSwipeXAnim(anim);
     if (onDelete) onDeleteRef.current = onDelete;
@@ -457,6 +466,12 @@ export function SortableTaskList<T>({
       autoScrollTimer.current = null;
     }
   };
+
+  useEffect(() => {
+    return () => {
+      stopAutoScroll();
+    };
+  }, []);
 
   const checkAutoScroll = (moveY: number) => {
     const bottomThreshold = 680;

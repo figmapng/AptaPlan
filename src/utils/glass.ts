@@ -29,6 +29,8 @@ export {
   type GlassColorScheme,
 };
 
+let cachedSupported: boolean | null = null;
+
 /**
  * Safely checks if Apple native Liquid Glass effect is available on the current device and runtime.
  */
@@ -36,13 +38,16 @@ export function checkIsLiquidGlassSupported(): boolean {
   if (Platform.OS !== 'ios') {
     return false;
   }
+  if (cachedSupported !== null) {
+    return cachedSupported;
+  }
   try {
     const lga = Boolean(isLiquidGlassAvailable?.());
     const gea = Boolean(isGlassEffectAPIAvailable?.());
-    console.log('[LiquidGlass Diagnosis]', { lga, gea });
-    return lga && gea;
-  } catch (e) {
-    console.log('[LiquidGlass Diagnosis Error]', e);
+    cachedSupported = lga && gea;
+    return cachedSupported;
+  } catch {
+    cachedSupported = false;
     return false;
   }
 }

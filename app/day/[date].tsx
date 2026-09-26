@@ -44,6 +44,21 @@ export default function DayScreen() {
   const [previewTask, setPreviewTask] = useState<Task | null>(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDeleteTaskRef = useRef<Task | null>(null);
+  pendingDeleteTaskRef.current = pendingDeleteTask;
+
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = null;
+        if (pendingDeleteTaskRef.current) {
+          const t = pendingDeleteTaskRef.current;
+          void remove(t.id, t.occurrenceDate || t.date, 'all');
+        }
+      }
+    };
+  }, [remove]);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const scrollRef = useRef<ScrollView>(null);
   const scrollYRef = useRef(0);

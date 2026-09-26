@@ -551,6 +551,24 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const isScrollingRef = useRef(false);
   const scrollResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingDeleteTaskRef = useRef<Task | null>(null);
+  pendingDeleteTaskRef.current = pendingDeleteTask;
+
+  useEffect(() => {
+    return () => {
+      if (scrollResetTimerRef.current) {
+        clearTimeout(scrollResetTimerRef.current);
+        scrollResetTimerRef.current = null;
+      }
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = null;
+        if (pendingDeleteTaskRef.current) {
+          void remove(pendingDeleteTaskRef.current.id);
+        }
+      }
+    };
+  }, [remove]);
 
   const [measuredListHeight, setMeasuredListHeight] = useState<number>(0);
   const isAnimatingRef = useRef(false);
