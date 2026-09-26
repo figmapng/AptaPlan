@@ -188,8 +188,14 @@ export const TaskRow = React.memo(function TaskRow({
   };
 
 
+  useEffect(() => {
+    if (isActive) {
+      pressScale.setValue(1);
+    }
+  }, [isActive, pressScale]);
+
   const handlePressIn = () => {
-    if (isSwipingRef?.current) return;
+    if (isActive || isSwipingRef?.current) return;
     Animated.spring(pressScale, {
       toValue: 0.97,
       speed: 24,
@@ -208,7 +214,7 @@ export const TaskRow = React.memo(function TaskRow({
   };
 
   const handlePress = () => {
-    if (isSwipingRef?.current) return;
+    if (isActive || isSwipingRef?.current) return;
     onInteraction?.();
     onPress?.();
   };
@@ -395,6 +401,7 @@ export const TaskRow = React.memo(function TaskRow({
         </Pressable>
 
         <Pressable
+          disabled={isActive}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           onPress={handlePress}

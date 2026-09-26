@@ -135,6 +135,7 @@ function SortableRowItem<T>({
       };
       longPressTimerRef.current = setTimeout(() => {
         longPressRef.current = true;
+        gestureActiveRef.current = true;
         longPressTimerRef.current = null;
         onScrollEnabledChange?.(false);
         onGrant(itemKey);
@@ -234,9 +235,9 @@ function SortableRowItem<T>({
     extrapolate: 'clamp',
   });
 
-  const translateXAnim = activeAnim.interpolate({
+  const scaleAnim = activeAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 12],
+    outputRange: [1, 1.025],
     extrapolate: 'clamp',
   });
 
@@ -273,7 +274,7 @@ function SortableRowItem<T>({
           borderRadius: 12,
           borderCurve: 'continuous' as const,
           transform: [
-            { translateX: translateXAnim },
+            { scale: scaleAnim },
             { translateY: dragYAnim },
           ],
           zIndex: 9999,
@@ -297,12 +298,20 @@ function SortableRowItem<T>({
 
   const handleTouchEnd = React.useCallback(() => {
     clearLongPress();
-    if (longPressRef.current && !gestureActiveRef.current) {
+    if (longPressRef.current || gestureActiveRef.current) {
       longPressRef.current = false;
-      onTerminate();
+      gestureActiveRef.current = false;
+      onRelease();
     }
     touchStartRef.current = null;
-  }, [clearLongPress, onTerminate]);
+  }, [clearLongPress, onRelease]);
+
+  const handleTouchCancel = React.useCallback(() => {
+    if (!longPressRef.current && !gestureActiveRef.current) {
+      clearLongPress();
+      touchStartRef.current = null;
+    }
+  }, [clearLongPress]);
 
   return (
     <Animated.View
@@ -310,7 +319,7 @@ function SortableRowItem<T>({
       onTouchStart={startLongPress}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
       style={rowStyle}
       onLayout={(e) => {
         const h = e.nativeEvent.layout.height;
