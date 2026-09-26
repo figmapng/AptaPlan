@@ -13,7 +13,7 @@ import { useI18n } from '@/i18n/use-i18n';
 import { TaskRow } from './task-row';
 import { TaskBottomSheet } from './TaskBottomSheet';
 import { TaskPreviewModal } from './TaskPreviewModal';
-import { SortableTaskList } from './SortableTaskList';
+import { SortableTaskList, TrashIcon } from './SortableTaskList';
 import { CompactWeekStrip } from './CompactWeekStrip';
 import { getDatabase } from '@/database/database';
 import { TaskListFrame } from './task-list-frame';
@@ -62,6 +62,12 @@ type CarouselCardProps = {
   handlePendingDelete: (task: Task) => void;
   isTransitionSettled?: boolean;
   headerPanHandlers?: any;
+  deleteZoneThresholdY?: number;
+  pendingDeleteTaskId?: string;
+  onDragStart?: (task: Task) => void;
+  onDragMoveOverDeleteZone?: (isOver: boolean) => void;
+  onDragEnd?: (didDelete: boolean) => void;
+  onDropInDeleteZone?: (task: Task) => void;
 };
 
 const CarouselCard = React.memo(function CarouselCard({
@@ -89,9 +95,18 @@ const CarouselCard = React.memo(function CarouselCard({
   handlePendingDelete,
   isTransitionSettled = true,
   headerPanHandlers,
+  deleteZoneThresholdY,
+  pendingDeleteTaskId,
+  onDragStart,
+  onDragMoveOverDeleteZone,
+  onDragEnd,
+  onDropInDeleteZone,
 }: CarouselCardProps & { pageIndex?: number }) {
   const cardKey = useMemo(() => toDateKey(cardDate), [cardDate]);
-  const cardTasks = useMemo(() => tasks.filter((t: Task) => t.date === cardKey), [tasks, cardKey]);
+  const cardTasks = useMemo(
+    () => tasks.filter((t: Task) => t.date === cardKey && t.id !== pendingDeleteTaskId),
+    [tasks, cardKey, pendingDeleteTaskId]
+  );
   const completedCount = useMemo(() => cardTasks.filter((t: Task) => t.isCompleted).length, [cardTasks]);
   const isTodayCard = isToday(cardDate);
   const isWeekendCard = isWeekendDay(cardDate);
@@ -473,6 +488,11 @@ const CarouselCard = React.memo(function CarouselCard({
                     onAutoScroll={handleAutoScroll}
                     isScrollingRef={isScrollingRef}
                     gap={0}
+                    deleteZoneThresholdY={deleteZoneThresholdY}
+                    onDragStart={onDragStart}
+                    onDragMoveOverDeleteZone={onDragMoveOverDeleteZone}
+                    onDragEnd={onDragEnd}
+                    onDropInDeleteZone={onDropInDeleteZone}
                     renderItem={(
                       task,
                       isActive,
@@ -605,6 +625,35 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const cardToInputGap = 26;
   const bottomInputBarHeight = 50;
   const bottomBarBottomOffset = insets.bottom > 0 ? Math.max(insets.bottom - 2, 18) : 24;
+  const deleteZoneThresholdY = height - bottomBarBottomOffset - 70;
+  const [isDraggingTask, setIsDraggingTask] = useState(false);
+  const [isOverDeleteZone, setIsOverDeleteZone] = useState(false);
+  const dragZoneAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(dragZoneAnim, {
+      toValue: isDraggingTask ? 1 : 0,
+      stiffness: 340,
+      damping: 26,
+      mass: 0.8,
+      useNativeDriver: true,
+    }).start();
+  }, [isDraggingTask, dragZoneAnim]);
+
+  const handleDragStart = useCallback(() => {
+    setIsDraggingTask(true);
+    setIsOverDeleteZone(false);
+  }, []);
+
+  const handleDragMoveOverDeleteZone = useCallback((isOver: boolean) => {
+    setIsOverDeleteZone(isOver);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDraggingTask(false);
+    setIsOverDeleteZone(false);
+  }, []);
+
   const bottomBarSpace = bottomBarBottomOffset + bottomInputBarHeight + cardToInputGap;
   const maxHeight = height - openedCardTop - bottomBarSpace;
   const emptyCardHeight = maxHeight;
@@ -630,14 +679,20 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const handleAutoScroll = useCallback((delta: number) => {
   }, []);
 
-  const handlePendingDelete = (task: Task) => {
+  const handlePendingDelete = useCallback((task: Task) => {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     setPendingDeleteTask(task);
     undoTimerRef.current = setTimeout(() => {
       void remove(task.id);
       setPendingDeleteTask(null);
     }, 4000);
-  };
+  }, [remove]);
+
+  const handleDropInDeleteZone = useCallback((task: Task) => {
+    handlePendingDelete(task);
+    setIsDraggingTask(false);
+    setIsOverDeleteZone(false);
+  }, [handlePendingDelete]);
 
   const handleUndo = async () => {
     if (settings.haptics && Platform.OS === 'ios') {
@@ -680,6 +735,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
     setJumpTargetIndex(null);
     carouselX.setValue(0);
     isAnimatingRef.current = false;
+    setIsDraggingTask(false);
+    setIsOverDeleteZone(false);
   };
 
   const openCard = (date: Date, cardTasks: Task[], frame: Frame) => {
@@ -940,6 +997,12 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                     handlePendingDelete={handlePendingDelete}
                     isTransitionSettled={isTransitionSettled}
                     headerPanHandlers={carouselPanResponder.panHandlers}
+                    deleteZoneThresholdY={deleteZoneThresholdY}
+                    pendingDeleteTaskId={pendingDeleteTask?.id}
+                    onDragStart={handleDragStart}
+                    onDragMoveOverDeleteZone={handleDragMoveOverDeleteZone}
+                    onDragEnd={handleDragEnd}
+                    onDropInDeleteZone={handleDropInDeleteZone}
                   />
                 );
               })}
@@ -1004,9 +1067,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 left: 16,
                 right: 16,
                 bottom: bottomBarBottomOffset,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
+                height: 50,
                 zIndex: 10001,
                 elevation: 12,
                 transform: [
@@ -1020,11 +1081,90 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
                 ],
               }}
             >
-              <BackButton onPress={closeCard} size={50} />
+              {/* Normal Bottom Bar: BackButton + BottomTaskInput */}
+              <Animated.View
+                pointerEvents={isDraggingTask ? 'none' : 'box-none'}
+                style={{
+                  ...StyleSheet.absoluteFill as any,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  opacity: dragZoneAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [1, 0],
+                  }),
+                  transform: [
+                    {
+                      scale: dragZoneAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 0.96],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <BackButton onPress={closeCard} size={50} />
 
-              <View style={{ flex: 1 }}>
-                <BottomTaskInput onAddTask={() => beginAdding(activeCardDate)} />
-              </View>
+                <View style={{ flex: 1 }}>
+                  <BottomTaskInput onAddTask={() => beginAdding(activeCardDate)} />
+                </View>
+              </Animated.View>
+
+              {/* Delete Drop Zone during Drag */}
+              <Animated.View
+                pointerEvents={isDraggingTask ? 'auto' : 'none'}
+                style={{
+                  ...StyleSheet.absoluteFill as any,
+                  opacity: dragZoneAnim,
+                  transform: [
+                    {
+                      scale: dragZoneAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.96, 1],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    height: 50,
+                    borderRadius: 16,
+                    borderCurve: 'continuous',
+                    borderWidth: 1.5,
+                    borderStyle: isOverDeleteZone ? 'solid' : 'dashed',
+                    borderColor: isOverDeleteZone ? '#FF3B30' : (isDark ? '#FF453A' : '#FF3B30'),
+                    backgroundColor: isOverDeleteZone
+                      ? '#FF3B30'
+                      : (isDark ? 'rgba(255, 69, 58, 0.12)' : 'rgba(255, 59, 48, 0.08)'),
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    shadowColor: '#FF3B30',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isOverDeleteZone ? 0.45 : 0,
+                    shadowRadius: 10,
+                    elevation: isOverDeleteZone ? 8 : 0,
+                  }}
+                >
+                  <TrashIcon
+                    color={isOverDeleteZone ? '#FFFFFF' : (isDark ? '#FF453A' : '#FF3B30')}
+                    size={20}
+                  />
+                  <Text
+                    style={{
+                      color: isOverDeleteZone ? '#FFFFFF' : (isDark ? '#FF453A' : '#FF3B30'),
+                      fontSize: 14.5,
+                      fontWeight: isOverDeleteZone ? '700' : '600',
+                      letterSpacing: -0.2,
+                    }}
+                  >
+                    {isOverDeleteZone ? t.common.releaseToDelete : t.common.dropToDelete}
+                  </Text>
+                </View>
+              </Animated.View>
             </Animated.View>
 
             {pendingDeleteTask && (

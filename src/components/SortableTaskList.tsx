@@ -21,9 +21,9 @@ function DragHandle({ active, opacity }: { active: boolean; opacity?: any }) {
   );
 }
 
-function TrashIcon({ color = 'white' }: { color?: string }) {
+export function TrashIcon({ color = 'white', size = 18 }: { color?: string; size?: number }) {
   return (
-    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"
         stroke={color}
@@ -53,6 +53,11 @@ interface Props<T> {
   dragHandleOpacity?: any;
   isScrollingRef?: React.RefObject<boolean>;
   showRowFrame?: boolean;
+  deleteZoneThresholdY?: number;
+  onDragStart?: (item: T) => void;
+  onDragMoveOverDeleteZone?: (isOver: boolean) => void;
+  onDragEnd?: (didDelete: boolean) => void;
+  onDropInDeleteZone?: (item: T) => void;
 }
 
 interface RowItemProps<T> {
@@ -61,6 +66,7 @@ interface RowItemProps<T> {
   index: number;
   totalCount: number;
   isActive: boolean;
+  isOverDeleteZone?: boolean;
   dragYAnim: Animated.Value;
   activeAnim: Animated.Value;
   shiftAnim: Animated.Value;
@@ -89,6 +95,7 @@ function SortableRowItem<T>({
   index,
   totalCount,
   isActive,
+  isOverDeleteZone = false,
   dragYAnim,
   activeAnim,
   shiftAnim,
@@ -238,8 +245,12 @@ function SortableRowItem<T>({
         styles.rowWrapper,
         styles.activeRow,
         {
-          backgroundColor: isDark ? (themeColors.card || '#27272A') : '#FFFFFF',
-          borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)',
+          backgroundColor: isOverDeleteZone
+            ? (isDark ? 'rgba(255, 69, 58, 0.28)' : 'rgba(255, 59, 48, 0.16)')
+            : (isDark ? (themeColors.card || '#27272A') : '#FFFFFF'),
+          borderColor: isOverDeleteZone
+            ? '#FF3B30'
+            : (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)'),
           borderWidth: 1,
           borderRadius: 12,
           borderCurve: 'continuous' as const,
@@ -249,7 +260,7 @@ function SortableRowItem<T>({
           ],
           zIndex: 9999,
           elevation: 8,
-          shadowColor: '#000000',
+          shadowColor: isOverDeleteZone ? '#FF3B30' : '#000000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: shadowOpacityAnim,
           shadowRadius: 10,
@@ -378,9 +389,27 @@ export function SortableTaskList<T>({
   dragHandleOpacity,
   isScrollingRef,
   showRowFrame = true,
+  deleteZoneThresholdY,
+  onDragStart,
+  onDragMoveOverDeleteZone,
+  onDragEnd,
+  onDropInDeleteZone,
 }: Props<T>) {
   const [dataState, setDataState] = useState<T[]>(() => [...data]);
   const [activeIndex, setActiveIndex] = useState<number>(-1);
+  const [isOverDeleteZone, setIsOverDeleteZone] = useState(false);
+  const isOverDeleteZoneRef = useRef(false);
+
+  const onDragStartRef = useRef(onDragStart);
+  onDragStartRef.current = onDragStart;
+  const onDragMoveOverDeleteZoneRef = useRef(onDragMoveOverDeleteZone);
+  onDragMoveOverDeleteZoneRef.current = onDragMoveOverDeleteZone;
+  const onDragEndRef = useRef(onDragEnd);
+  onDragEndRef.current = onDragEnd;
+  const onDropInDeleteZoneRef = useRef(onDropInDeleteZone);
+  onDropInDeleteZoneRef.current = onDropInDeleteZone;
+  const deleteZoneThresholdYRef = useRef(deleteZoneThresholdY);
+  deleteZoneThresholdYRef.current = deleteZoneThresholdY;
 
   const dragY = useRef(new Animated.Value(0)).current;
   const activeAnim = useRef(new Animated.Value(0)).current;
@@ -561,6 +590,8 @@ export function SortableTaskList<T>({
     startIndexRef.current = idx;
     targetIndexRef.current = idx;
     autoScrollOffsetRef.current = 0;
+    isOverDeleteZoneRef.current = false;
+    setIsOverDeleteZone(false);
 
     dragY.stopAnimation();
     dragY.setValue(0);
@@ -568,6 +599,11 @@ export function SortableTaskList<T>({
 
     onScrollEnabledChange?.(false);
     setActiveIndex(idx);
+
+    const activeItem = dataStateRef.current[idx];
+    if (activeItem) {
+      onDragStartRef.current?.(activeItem);
+    }
 
     // Fluid lift spring
     Animated.spring(activeAnim, {
@@ -612,11 +648,35 @@ export function SortableTaskList<T>({
     const active = activeIndexRef.current;
     if (active === -1) return;
 
+    const thresholdY = deleteZoneThresholdYRef.current;
+    if (thresholdY !== undefined && thresholdY > 0) {
+      const isOver = moveY >= thresholdY;
+      if (isOver !== isOverDeleteZoneRef.current) {
+        isOverDeleteZoneRef.current = isOver;
+        setIsOverDeleteZone(isOver);
+        onDragMoveOverDeleteZoneRef.current?.(isOver);
+        if (process.env.EXPO_OS === 'ios') {
+          void Haptics.impactAsync(
+            isOver ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light
+          );
+        }
+      }
+    }
+
     const startIdx = startIndexRef.current;
     const rawAdjustedDy = dy + autoScrollOffsetRef.current;
     const clampedDy = clampDragDy(startIdx, rawAdjustedDy);
 
     dragY.setValue(clampedDy);
+
+    if (isOverDeleteZoneRef.current) {
+      if (targetIndexRef.current !== startIdx) {
+        targetIndexRef.current = startIdx;
+        updateNeighborShifts(startIdx, startIdx);
+      }
+      return;
+    }
+
     checkAutoScroll(moveY);
 
     const newTargetIdx = getTargetIndex(startIdx, clampedDy);
@@ -635,6 +695,53 @@ export function SortableTaskList<T>({
     const active = activeIndexRef.current;
     const startIdx = startIndexRef.current;
     if (active === -1) return;
+
+    if (isOverDeleteZoneRef.current) {
+      const activeItem = dataStateRef.current[startIdx];
+      if (process.env.EXPO_OS === 'ios') {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+      }
+      if (activeItem) {
+        onDropInDeleteZoneRef.current?.(activeItem);
+      }
+
+      Animated.parallel([
+        Animated.timing(dragY, {
+          toValue: 0,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(activeAnim, {
+          toValue: 0,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        ...dataStateRef.current.map((item) =>
+          Animated.spring(getShiftAnim(keyExtractorRef.current(item)), {
+            toValue: 0,
+            stiffness: 300,
+            damping: 28,
+            mass: 0.8,
+            useNativeDriver: true,
+          })
+        ),
+      ]).start(() => {
+        resetAllShifts();
+        dragY.setValue(0);
+        activeAnim.setValue(0);
+        activeIndexRef.current = -1;
+        targetIndexRef.current = -1;
+        startIndexRef.current = -1;
+        isOverDeleteZoneRef.current = false;
+        setIsOverDeleteZone(false);
+        setActiveIndex(-1);
+        onScrollEnabledChange?.(true);
+        onDragEndRef.current?.(true);
+      });
+      return;
+    }
+
+    onDragEndRef.current?.(false);
 
     const targetIdx = targetIndexRef.current !== -1 ? targetIndexRef.current : startIdx;
 
@@ -670,6 +777,8 @@ export function SortableTaskList<T>({
         activeIndexRef.current = -1;
         targetIndexRef.current = -1;
         startIndexRef.current = -1;
+        isOverDeleteZoneRef.current = false;
+        setIsOverDeleteZone(false);
         setActiveIndex(-1);
         onScrollEnabledChange?.(true);
       });
@@ -711,6 +820,8 @@ export function SortableTaskList<T>({
       activeIndexRef.current = -1;
       targetIndexRef.current = -1;
       startIndexRef.current = -1;
+      isOverDeleteZoneRef.current = false;
+      setIsOverDeleteZone(false);
       setActiveIndex(-1);
       onScrollEnabledChange?.(true);
 
@@ -733,8 +844,11 @@ export function SortableTaskList<T>({
     activeIndexRef.current = -1;
     targetIndexRef.current = -1;
     startIndexRef.current = -1;
+    isOverDeleteZoneRef.current = false;
+    setIsOverDeleteZone(false);
     setActiveIndex(-1);
     onScrollEnabledChange?.(true);
+    onDragEndRef.current?.(false);
   }).current;
 
   const handleLayout = useRef((key: string, height: number) => {
@@ -756,6 +870,7 @@ export function SortableTaskList<T>({
             index={index}
             totalCount={dataState.length}
             isActive={isActive}
+            isOverDeleteZone={isActive ? isOverDeleteZone : false}
             dragYAnim={dragY}
             activeAnim={activeAnim}
             shiftAnim={getShiftAnim(keyStr)}

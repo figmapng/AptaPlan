@@ -35,6 +35,8 @@ export interface Translations {
     notSet: string;
     noTasks: string;
     addTask: string;
+    dropToDelete: string;
+    releaseToDelete: string;
     tasksCount: string;
     completedOf: (done: number, total: number) => string;
     moreTasks: (count: number) => string;
