@@ -240,6 +240,24 @@ function SortableRowItem<T>({
     extrapolate: 'clamp',
   });
 
+  const activeBgAnim = activeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [
+      isDark ? 'rgba(39, 39, 42, 0)' : 'rgba(255, 255, 255, 0)',
+      isDark ? (themeColors.card || '#27272A') : '#FFFFFF',
+    ],
+    extrapolate: 'clamp',
+  });
+
+  const activeBorderAnim = activeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [
+      'rgba(0, 0, 0, 0)',
+      isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)',
+    ],
+    extrapolate: 'clamp',
+  });
+
   const rowStyle = isActive
     ? [
         styles.rowWrapper,
@@ -247,10 +265,10 @@ function SortableRowItem<T>({
         {
           backgroundColor: isOverDeleteZone
             ? (isDark ? 'rgba(255, 69, 58, 0.28)' : 'rgba(255, 59, 48, 0.16)')
-            : (isDark ? (themeColors.card || '#27272A') : '#FFFFFF'),
+            : activeBgAnim,
           borderColor: isOverDeleteZone
             ? '#FF3B30'
-            : (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)'),
+            : activeBorderAnim,
           borderWidth: 1,
           borderRadius: 12,
           borderCurve: 'continuous' as const,
@@ -463,6 +481,18 @@ export function SortableTaskList<T>({
       setDataState([...data]);
     }
   }, [data]);
+
+  const isDroppingRef = useRef(false);
+
+  // Synchronize animation resets synchronously during the React commit phase to prevent 1-frame jerks
+  useLayoutEffect(() => {
+    if (isDroppingRef.current && activeIndex === -1) {
+      isDroppingRef.current = false;
+      resetAllShifts();
+      dragY.setValue(0);
+      activeAnim.setValue(0);
+    }
+  }, [dataState, activeIndex]);
 
   const stopAutoScroll = () => {
     if (autoScrollTimer.current) {
@@ -802,11 +832,6 @@ export function SortableTaskList<T>({
     }
 
     onDragEndRef.current?.(false);
-    Animated.timing(maskOpacityAnim, {
-      toValue: 0,
-      duration: 140,
-      useNativeDriver: true,
-    }).start();
 
     const targetIdx = targetIndexRef.current !== -1 ? targetIndexRef.current : startIdx;
 
@@ -814,16 +839,21 @@ export function SortableTaskList<T>({
       Animated.parallel([
         Animated.spring(dragY, {
           toValue: 0,
-          stiffness: 300,
+          stiffness: 320,
           damping: 28,
           mass: 0.8,
           useNativeDriver: true,
         }),
         Animated.spring(activeAnim, {
           toValue: 0,
-          stiffness: 280,
-          damping: 26,
+          stiffness: 320,
+          damping: 28,
           mass: 0.8,
+          useNativeDriver: true,
+        }),
+        Animated.timing(maskOpacityAnim, {
+          toValue: 0,
+          duration: 180,
           useNativeDriver: true,
         }),
         ...dataStateRef.current.map((item) =>
@@ -855,20 +885,28 @@ export function SortableTaskList<T>({
         ? getDistanceBetween(startIdx, targetIdx)
         : -getDistanceBetween(targetIdx, startIdx);
 
-    // Smooth drop settling
+    isDroppingRef.current = true;
+
+    // Smooth drop settling: mask dissolves concurrently with card landing
     Animated.parallel([
       Animated.spring(dragY, {
         toValue: targetDragY,
-        stiffness: 320,
-        damping: 28,
+        stiffness: 340,
+        damping: 30,
         mass: 0.85,
         useNativeDriver: true,
       }),
       Animated.spring(activeAnim, {
         toValue: 0,
-        stiffness: 280,
-        damping: 26,
+        stiffness: 320,
+        damping: 28,
         mass: 0.85,
+        useNativeDriver: true,
+      }),
+      Animated.timing(maskOpacityAnim, {
+        toValue: 0,
+        duration: 220,
+        delay: 50,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -878,25 +916,25 @@ export function SortableTaskList<T>({
       list.splice(targetIdx, 0, movedItem);
 
       dataStateRef.current = list;
-      setDataState(list);
-      resetAllShifts();
-      dragY.setValue(0);
-      activeAnim.setValue(0);
       activeIndexRef.current = -1;
       targetIndexRef.current = -1;
       startIndexRef.current = -1;
       isOverDeleteZoneRef.current = false;
       setIsOverDeleteZone(false);
-      setActiveIndex(-1);
       onScrollEnabledChange?.(true);
+
+      // Trigger state updates (resets are handled synchronously in useLayoutEffect before paint)
+      setDataState(list);
+      setActiveIndex(-1);
+
+      // Tactile impact right as the card docks into place
+      if (process.env.EXPO_OS === 'ios') {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
 
       // Persist reorder to database
       onReorder(list);
     });
-
-    if (process.env.EXPO_OS === 'ios') {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
   }).current;
 
   const handleTerminate = useRef(() => {
