@@ -335,6 +335,7 @@ export const TaskRow = React.memo(function TaskRow({
           styles.rowContainer,
           compact && styles.compactRowContainer,
           cardSurface && styles.cardRowContainer,
+          cardSurface && !hasMetadata && { alignItems: 'center' },
           compact && task.isCompleted && { opacity: 0.68 },
         ]}
       >
@@ -348,7 +349,7 @@ export const TaskRow = React.memo(function TaskRow({
           }
           onPress={onToggle}
           hitSlop={8}
-          style={[styles.checkboxTouch, !hasMetadata && { marginTop: 0 }]}
+          style={[styles.checkboxTouch, (!hasMetadata || cardSurface) && { marginTop: 0 }]}
         >
           <Animated.View
             style={[
@@ -550,7 +551,7 @@ const styles = StyleSheet.create({
   },
   cardRowContainer: {
     width: '100%',
-    paddingVertical: 7,
+    paddingVertical: 8,
     paddingHorizontal: 0,
     gap: 12,
   },

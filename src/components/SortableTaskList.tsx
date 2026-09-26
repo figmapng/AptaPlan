@@ -233,6 +233,12 @@ function SortableRowItem<T>({
     extrapolate: 'clamp',
   });
 
+  const translateXAnim = activeAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 12],
+    extrapolate: 'clamp',
+  });
+
   const rowStyle = isActive
     ? [
         styles.rowWrapper,
@@ -244,6 +250,7 @@ function SortableRowItem<T>({
           borderRadius: 12,
           borderCurve: 'continuous' as const,
           transform: [
+            { translateX: translateXAnim },
             { translateY: dragYAnim },
             { scale: scaleAnim },
           ],
