@@ -221,12 +221,6 @@ function SortableRowItem<T>({
     [onMove, onRelease, onTerminate, onScrollEnabledChange, clearLongPress, isScrollingRef]
   );
 
-  const scaleAnim = activeAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.02],
-    extrapolate: 'clamp',
-  });
-
   const shadowOpacityAnim = activeAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, isDark ? 0.35 : 0.12],
@@ -252,7 +246,6 @@ function SortableRowItem<T>({
           transform: [
             { translateX: translateXAnim },
             { translateY: dragYAnim },
-            { scale: scaleAnim },
           ],
           zIndex: 9999,
           elevation: 8,
@@ -782,7 +775,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 2,
+    paddingVertical: 3,
     backgroundColor: 'transparent',
     overflow: 'visible',
     borderRadius: 12,

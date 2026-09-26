@@ -551,7 +551,8 @@ const styles = StyleSheet.create({
   },
   cardRowContainer: {
     width: '100%',
-    paddingVertical: 8,
+    paddingTop: 6,
+    paddingBottom: 8,
     paddingHorizontal: 0,
     gap: 12,
   },
