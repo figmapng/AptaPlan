@@ -653,6 +653,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const bottomBarBottomOffset = insets.bottom > 0 ? Math.max(insets.bottom - 2, 18) : 24;
   const deleteZoneThresholdY = height - bottomBarBottomOffset - 70;
   const [isDraggingTask, setIsDraggingTask] = useState(false);
+  const isDraggingTaskRef = useRef(false);
+  isDraggingTaskRef.current = isDraggingTask;
   const [isOverDeleteZone, setIsOverDeleteZone] = useState(false);
   const dragZoneAnim = useRef(new Animated.Value(0)).current;
 
@@ -667,6 +669,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   }, [isDraggingTask, dragZoneAnim]);
 
   const handleDragStart = useCallback(() => {
+    isDraggingTaskRef.current = true;
     setIsDraggingTask(true);
     setIsOverDeleteZone(false);
   }, []);
@@ -676,6 +679,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   }, []);
 
   const handleDragEnd = useCallback(() => {
+    isDraggingTaskRef.current = false;
     setIsDraggingTask(false);
     setIsOverDeleteZone(false);
   }, []);
@@ -715,6 +719,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   }, [remove]);
 
   const handleDropInDeleteZone = useCallback((task: Task) => {
+    isDraggingTaskRef.current = false;
     handlePendingDelete(task);
     setIsDraggingTask(false);
     setIsOverDeleteZone(false);
@@ -866,11 +871,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
       onStartShouldSetPanResponder: () => false,
       onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_, gesture) => {
-        if (isAnimatingRef.current) return false;
+        if (isAnimatingRef.current || isDraggingTaskRef.current) return false;
         return Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.1;
       },
       onMoveShouldSetPanResponderCapture: (_, gesture) => {
-        if (isAnimatingRef.current) return false;
+        if (isAnimatingRef.current || isDraggingTaskRef.current) return false;
         return Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.1;
       },
       onPanResponderGrant: () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Animated, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
@@ -504,6 +504,7 @@ export function SortableTaskList<T>({
   useEffect(() => {
     return () => {
       stopAutoScroll();
+      isDroppingRef.current = false;
     };
   }, []);
 
@@ -514,8 +515,11 @@ export function SortableTaskList<T>({
       return;
     }
 
-    const bottomThreshold = 680;
-    const topThreshold = 180;
+    const windowH = Dimensions.get('window').height;
+    const bottomThreshold = deleteZoneThresholdYRef.current
+      ? deleteZoneThresholdYRef.current - 60
+      : windowH * 0.82;
+    const topThreshold = Math.max(140, windowH * 0.22);
 
     if (moveY > bottomThreshold) {
       if (!autoScrollTimer.current) {
@@ -653,6 +657,8 @@ export function SortableTaskList<T>({
   };
 
   const handleGrant = useRef((itemKey: string) => {
+    if (isDroppingRef.current || activeIndexRef.current !== -1) return;
+
     const idx = dataStateRef.current.findIndex(
       (item) => keyExtractorRef.current(item) === itemKey
     );
@@ -960,7 +966,9 @@ export function SortableTaskList<T>({
 
   const handleLayout = useRef((key: string, height: number) => {
     itemHeightsRef.current.set(key, height);
-    itemHeightRef.current = height;
+    if (height >= 44 && height <= 68) {
+      itemHeightRef.current = height;
+    }
   }).current;
 
   return (
@@ -970,8 +978,8 @@ export function SortableTaskList<T>({
         pointerEvents="none"
         style={{
           position: 'absolute',
-          left: 4,
-          right: 4,
+          left: 2,
+          right: 2,
           top: 3,
           height: Math.max(34, maskHeight - 6),
           borderRadius: 12,
