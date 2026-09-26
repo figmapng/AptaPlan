@@ -135,7 +135,6 @@ function SortableRowItem<T>({
       };
       longPressTimerRef.current = setTimeout(() => {
         longPressRef.current = true;
-        gestureActiveRef.current = true;
         longPressTimerRef.current = null;
         onScrollEnabledChange?.(false);
         onGrant(itemKey);
@@ -204,9 +203,9 @@ function SortableRowItem<T>({
         onStartShouldSetPanResponder: () => false,
         onStartShouldSetPanResponderCapture: () => false,
         onMoveShouldSetPanResponder: (_, gs) =>
-          !isScrollingRef?.current && longPressRef.current && (Math.abs(gs.dy) > 3 || Math.abs(gs.dx) > 3),
+          !isScrollingRef?.current && longPressRef.current,
         onMoveShouldSetPanResponderCapture: (_, gs) =>
-          !isScrollingRef?.current && longPressRef.current && (Math.abs(gs.dy) > 3 || Math.abs(gs.dx) > 3),
+          !isScrollingRef?.current && longPressRef.current,
         onPanResponderTerminationRequest: () => false,
         onShouldBlockNativeResponder: () => true,
         onPanResponderGrant: () => {
@@ -298,19 +297,16 @@ function SortableRowItem<T>({
 
   const handleTouchEnd = React.useCallback(() => {
     clearLongPress();
-    if (longPressRef.current || gestureActiveRef.current) {
+    if (longPressRef.current && !gestureActiveRef.current) {
       longPressRef.current = false;
-      gestureActiveRef.current = false;
       onRelease();
     }
     touchStartRef.current = null;
   }, [clearLongPress, onRelease]);
 
   const handleTouchCancel = React.useCallback(() => {
-    if (!longPressRef.current && !gestureActiveRef.current) {
-      clearLongPress();
-      touchStartRef.current = null;
-    }
+    clearLongPress();
+    touchStartRef.current = null;
   }, [clearLongPress]);
 
   return (
@@ -813,7 +809,7 @@ export function SortableTaskList<T>({
     stopAutoScroll();
     const active = activeIndexRef.current;
     const startIdx = startIndexRef.current;
-    if (active === -1) return;
+    if (active === -1 || isDroppingRef.current) return;
 
     if (isOverDeleteZoneRef.current) {
       const activeItem = dataStateRef.current[startIdx];
@@ -851,6 +847,7 @@ export function SortableTaskList<T>({
     const targetIdx = targetIndexRef.current !== -1 ? targetIndexRef.current : startIdx;
 
     if (targetIdx === startIdx) {
+      isDroppingRef.current = true;
       Animated.parallel([
         Animated.spring(dragY, {
           toValue: 0,
@@ -881,6 +878,7 @@ export function SortableTaskList<T>({
           })
         ),
       ]).start(() => {
+        isDroppingRef.current = false;
         resetAllShifts();
         dragY.setValue(0);
         activeAnim.setValue(0);

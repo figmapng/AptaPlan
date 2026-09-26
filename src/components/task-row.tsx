@@ -401,7 +401,6 @@ export const TaskRow = React.memo(function TaskRow({
         </Pressable>
 
         <Pressable
-          disabled={isActive}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           onPress={handlePress}
