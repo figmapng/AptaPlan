@@ -1,23 +1,41 @@
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import type * as NotificationsType from 'expo-notifications';
 import type { TaskInput } from '@/types/task';
 import { fromDateKey } from './date-service';
+
+const isExpoGo =
+  Constants.appOwnership === 'expo' ||
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+const isAndroidExpoGo = Platform.OS === 'android' && isExpoGo;
+
+let Notifications: typeof NotificationsType | null = null;
+if (!isAndroidExpoGo) {
+  try {
+    Notifications = require('expo-notifications');
+  } catch (e) {
+    console.warn('Could not load expo-notifications:', e);
+  }
+}
 
 const DEFAULT_OFFSET_MINUTES = 0;
 
 // Without a handler, Expo deliberately suppresses notifications while the app
 // is open. Keep the reminder visible and audible in both foreground and background.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+if (Notifications?.setNotificationHandler) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 export async function ensureNotificationChannel(): Promise<void> {
-  if (Platform.OS === 'android') {
+  if (Platform.OS === 'android' && Notifications?.setNotificationChannelAsync) {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Еске салғыш',
       importance: Notifications.AndroidImportance.HIGH,
@@ -33,7 +51,7 @@ export async function ensureNotificationChannel(): Promise<void> {
  * task has no time / offset, permission is denied, or the time already passed.
  */
 export async function scheduleReminder(task: TaskInput): Promise<string | null> {
-  if (task.isCompleted || task.notificationOffset == null || !task.time) return null;
+  if (!Notifications || task.isCompleted || task.notificationOffset == null || !task.time) return null;
   await ensureNotificationChannel();
   const permission = await Notifications.requestPermissionsAsync();
   if (!permission.granted) return null;
@@ -56,7 +74,7 @@ export async function scheduleReminder(task: TaskInput): Promise<string | null> 
   });
 }
 
-export function getNotificationTrigger(task: TaskInput, triggerDate: Date): Notifications.NotificationTriggerInput | null {
+export function getNotificationTrigger(task: TaskInput, triggerDate: Date): NotificationsType.NotificationTriggerInput | null {
   const hour = triggerDate.getHours();
   const minute = triggerDate.getMinutes();
 
@@ -65,11 +83,11 @@ export function getNotificationTrigger(task: TaskInput, triggerDate: Date): Noti
   // be represented accurately by a single native trigger.
   if ((task.repeatInterval ?? 1) === 1 && task.date <= new Date().toISOString().slice(0, 10)) {
     if (task.repeatType === 'daily') {
-      return { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute };
+      return { type: 'daily' as any, hour, minute };
     }
     if (task.repeatType === 'weekly') {
       return {
-        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+        type: 'weekly' as any,
         weekday: triggerDate.getDay() + 1,
         hour,
         minute,
@@ -77,7 +95,7 @@ export function getNotificationTrigger(task: TaskInput, triggerDate: Date): Noti
     }
     if (task.repeatType === 'monthly') {
       return {
-        type: Notifications.SchedulableTriggerInputTypes.MONTHLY,
+        type: 'monthly' as any,
         day: triggerDate.getDate(),
         hour,
         minute,
@@ -86,11 +104,11 @@ export function getNotificationTrigger(task: TaskInput, triggerDate: Date): Noti
   }
 
   if (triggerDate <= new Date()) return null;
-  return { type: Notifications.SchedulableTriggerInputTypes.DATE, date: triggerDate };
+  return { type: 'date' as any, date: triggerDate };
 }
 
 export async function cancelReminder(id: string | null): Promise<void> {
-  if (!id) return;
+  if (!id || !Notifications?.cancelScheduledNotificationAsync) return;
   await Notifications.cancelScheduledNotificationAsync(id);
 }
 
