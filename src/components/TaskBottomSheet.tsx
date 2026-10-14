@@ -10,14 +10,12 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { Task, TaskRepeat } from '@/types/task';
-import { colors } from '@/constants/colors';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { getTodayKey } from '@/utils/dateHelpers';

@@ -10,7 +10,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -147,7 +146,7 @@ interface TaskPreviewModalProps {
   task: Task | null;
   onClose: () => void;
   onEdit: (task: Task) => void;
-  onDelete?: (task: Task) => void;
+  onDelete?: (task: Task, scope: 'single' | 'all') => void;
 }
 
 export function TaskPreviewModal({
@@ -276,20 +275,26 @@ export function TaskPreviewModal({
   };
 
   const handleDelete = () => {
+    const runDelete = async (scope: 'single' | 'all') => {
+      onClose();
+      if (onDelete) {
+        onDelete(taskObj, scope);
+      } else {
+        await remove(taskObj.id, taskObj.occurrenceDate || taskObj.date, scope);
+      }
+    };
+    const isRecurring = !!taskObj.repeatType && taskObj.repeatType !== 'none';
+    if (isRecurring) {
+      Alert.alert(t.alerts.recurringTask, t.alerts.chooseDeleteMethod, [
+        { text: t.alerts.deleteThisOnly, style: 'destructive', onPress: () => void runDelete('single') },
+        { text: t.alerts.deleteAll, style: 'destructive', onPress: () => void runDelete('all') },
+        { text: t.common.cancel, style: 'cancel' },
+      ]);
+      return;
+    }
     Alert.alert(t.alerts.deleteTaskTitle, t.alerts.deleteTaskMessage, [
       { text: t.common.cancel, style: 'cancel' },
-      {
-        text: t.common.delete,
-        style: 'destructive',
-        onPress: async () => {
-          onClose();
-          if (onDelete) {
-            onDelete(taskObj);
-          } else {
-            await remove(taskObj.id, taskObj.occurrenceDate || taskObj.date, 'all');
-          }
-        },
-      },
+      { text: t.common.delete, style: 'destructive', onPress: () => void runDelete('all') },
     ]);
   };
 

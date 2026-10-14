@@ -1,6 +1,4 @@
 import type { Language, ThemeId } from '@/types/settings';
-import type { TaskRepeat } from '@/types/task';
-import type { ViewMode } from '@/components/ViewModeModal';
 
 export type UserGuideSlide = {
   id: string;
@@ -180,10 +178,7 @@ export interface Translations {
     modeLight: string;
     modeDark: string;
     modeSystem: string;
-    appIcon: string;
-    appIconSubtitle: string;
     themeNames: Record<ThemeId, string>;
-    iconNames: Record<string, string>;
     appearanceAndLanguage: string;
     calendarAndView: string;
     defaultViewMode: string;
@@ -322,5 +317,31 @@ export interface Translations {
   accessibility: {
     markIncomplete: string;
     markComplete: string;
+    chooseViewMode: string;
+    openSettings: string;
+  };
+
+  // Local reminders
+  notifications: {
+    title: string;
+    channelName: string;
+  };
+
+  // App-level states and screen titles
+  system: {
+    loading: string;
+    loadFailed: string;
+    retry: string;
+    storageError: string;
+    newTask: string;
+    editTask: string;
+    cityAlmaty: string;
+  };
+
+  // Apple Reminders import errors
+  remindersErrors: {
+    iosOnly: string;
+    permissionDenied: string;
+    syncFailed: string;
   };
 }

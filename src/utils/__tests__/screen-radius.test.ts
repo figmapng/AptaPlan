@@ -1,5 +1,5 @@
 import { getDeviceScreenRadius, getConcentricRadius } from '../screen-radius';
-import { Platform, Dimensions } from 'react-native';
+import { Platform } from 'react-native';
 
 describe('screen-radius utility', () => {
   it('returns 0 for Home button devices (insets.bottom === 0, insets.top <= 24)', () => {

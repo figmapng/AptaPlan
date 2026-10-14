@@ -205,8 +205,6 @@ export const translations: Record<Language, Translations> = {
       modeLight: 'Ашық',
       modeDark: 'Қараңғы',
       modeSystem: 'Жүйелік',
-      appIcon: 'Қолданба белгішесі',
-      appIconSubtitle: 'Экрандағы негізгі белгіше',
       themeNames: {
         slate: 'Әдепкі',
         ocean: 'Көк',
@@ -217,14 +215,6 @@ export const translations: Record<Language, Translations> = {
         violet: 'Күлгін',
         minimal: 'Қара',
         teal: 'Көк',
-      },
-      iconNames: {
-        default: 'Әдепкі',
-        amber: 'Сары',
-        emerald: 'Жасыл',
-        dark: 'Қараңғы',
-        classic: 'Классикалық',
-        minimal: 'Минимал',
       },
       calendarAndView: 'Күнтізбе және көрініс',
       appearanceAndLanguage: 'Сыртқы түрі мен тіл',
@@ -356,6 +346,26 @@ export const translations: Record<Language, Translations> = {
     accessibility: {
       markIncomplete: 'Тапсырманы орындалмаған деп белгілеу',
       markComplete: 'Тапсырманы орындалды деп белгілеу',
+      chooseViewMode: 'Көрініс режимін таңдау',
+      openSettings: 'Баптаулар',
+    },
+    notifications: {
+      title: 'Тапсырма уақыты келді',
+      channelName: 'Еске салғыштар',
+    },
+    system: {
+      loading: 'Жоспар жүктелуде…',
+      loadFailed: 'Деректер ашылмады',
+      retry: 'Қайталау',
+      storageError: 'Деректерді оқу кезінде қате орын алды',
+      newTask: 'Жаңа тапсырма',
+      editTask: 'Тапсырманы өңдеу',
+      cityAlmaty: 'Алматы',
+    },
+    remindersErrors: {
+      iosOnly: 'Apple Reminders синхрондау тек iOS құрылғыларында қолжетімді.',
+      permissionDenied: 'Еске салғыштарға кіру рұқсаты берілмеді. iPhone баптауларынан рұқсат беріңіз.',
+      syncFailed: 'Синхрондау кезінде қате орын алды.',
     },
   },
 
@@ -562,8 +572,6 @@ export const translations: Record<Language, Translations> = {
       modeLight: 'Светлая',
       modeDark: 'Темная',
       modeSystem: 'Системная',
-      appIcon: 'Иконка приложения',
-      appIconSubtitle: 'Иконка на домашнем экране',
       themeNames: {
         slate: 'По умолчанию',
         ocean: 'Синий',
@@ -574,14 +582,6 @@ export const translations: Record<Language, Translations> = {
         violet: 'Фиолетовый',
         minimal: 'Черный',
         teal: 'Синий',
-      },
-      iconNames: {
-        default: 'Стандарт',
-        amber: 'Янтарный',
-        emerald: 'Изумрудный',
-        dark: 'Темная',
-        classic: 'Классическая',
-        minimal: 'Минимал',
       },
       calendarAndView: 'Календарь и отображение',
       appearanceAndLanguage: 'Внешний вид и язык',
@@ -713,6 +713,26 @@ export const translations: Record<Language, Translations> = {
     accessibility: {
       markIncomplete: 'Отметить задачу как невыполненную',
       markComplete: 'Отметить задачу как выполненную',
+      chooseViewMode: 'Выбрать режим просмотра',
+      openSettings: 'Настройки',
+    },
+    notifications: {
+      title: 'Пора выполнить задачу',
+      channelName: 'Напоминания',
+    },
+    system: {
+      loading: 'Загрузка плана…',
+      loadFailed: 'Не удалось открыть данные',
+      retry: 'Повторить',
+      storageError: 'Ошибка при чтении данных',
+      newTask: 'Новая задача',
+      editTask: 'Редактировать задачу',
+      cityAlmaty: 'Алматы',
+    },
+    remindersErrors: {
+      iosOnly: 'Синхронизация с Apple Reminders доступна только на iOS.',
+      permissionDenied: 'Нет доступа к напоминаниям. Разрешите доступ в настройках iPhone.',
+      syncFailed: 'Во время синхронизации произошла ошибка.',
     },
   },
 
@@ -919,8 +939,6 @@ export const translations: Record<Language, Translations> = {
       modeLight: 'Light',
       modeDark: 'Dark',
       modeSystem: 'System',
-      appIcon: 'App Icon',
-      appIconSubtitle: 'Home screen app icon',
       themeNames: {
         slate: 'Default',
         ocean: 'Blue',
@@ -931,14 +949,6 @@ export const translations: Record<Language, Translations> = {
         violet: 'Purple',
         minimal: 'Black',
         teal: 'Blue',
-      },
-      iconNames: {
-        default: 'Default',
-        amber: 'Amber',
-        emerald: 'Emerald',
-        dark: 'Dark',
-        classic: 'Classic',
-        minimal: 'Minimal',
       },
       calendarAndView: 'Calendar & Display',
       appearanceAndLanguage: 'Appearance & Language',
@@ -1070,6 +1080,26 @@ export const translations: Record<Language, Translations> = {
     accessibility: {
       markIncomplete: 'Mark task as incomplete',
       markComplete: 'Mark task as completed',
+      chooseViewMode: 'Choose view mode',
+      openSettings: 'Settings',
+    },
+    notifications: {
+      title: 'Time for your task',
+      channelName: 'Reminders',
+    },
+    system: {
+      loading: 'Loading your plan…',
+      loadFailed: 'Could not open your data',
+      retry: 'Try again',
+      storageError: 'Failed to read data',
+      newTask: 'New task',
+      editTask: 'Edit task',
+      cityAlmaty: 'Almaty',
+    },
+    remindersErrors: {
+      iosOnly: 'Apple Reminders sync is only available on iOS.',
+      permissionDenied: 'Access to Reminders was denied. Allow it in iPhone Settings.',
+      syncFailed: 'An error occurred while syncing.',
     },
   },
 };

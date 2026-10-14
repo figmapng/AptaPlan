@@ -31,7 +31,7 @@ export const TaskRow = React.memo(function TaskRow({
   onPress?: () => void;
   isActive?: boolean;
   onInteraction?: () => void;
-  onPendingDelete?: (task: Task) => void;
+  onPendingDelete?: (task: Task, scope: 'single' | 'all') => void;
   isSwipingRef?: React.RefObject<boolean>;
   onSwipeX?: (anim: Animated.Value, onDelete: () => void) => void;
   onScrollEnabledChange?: (enabled: boolean) => void;
@@ -118,7 +118,7 @@ export const TaskRow = React.memo(function TaskRow({
     ]).start(() => {
       if (mode === 'all') {
         if (onPendingDelete) {
-          onPendingDelete(task);
+          onPendingDelete(task, 'all');
         } else {
           void remove(task.id, task.occurrenceDate || task.date, 'all');
         }
@@ -317,7 +317,7 @@ export const TaskRow = React.memo(function TaskRow({
     }
     const rep = ((task.repeat || task.repeatType) as TaskRepeat) || 'none';
     return getShortRepeatLabel(rep, task.repeatInterval || 1);
-  }, [hasRepeat, task.repeatConfig, task.repeat, task.repeatType, task.repeatInterval]);
+  }, [hasRepeat, task.repeatConfig, task.repeat, task.repeatType, task.repeatInterval, describeCustomRepeat, getShortRepeatLabel]);
 
   if (isDeleting) {
     return (

@@ -1,24 +1,37 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { defaultSettings, type PlannerSettings } from '@/types/settings';
+import { defaultSettings, sanitizeSettings, type PlannerSettings } from '@/types/settings';
+
+type SettingRow = { key: string; value: string };
+
+// A single malformed row (e.g. from a hand-edited backup) must never prevent
+// the app from starting, so each value is parsed and validated independently.
+function rowsToSettings(rows: SettingRow[]): PlannerSettings {
+  const raw: Record<string, unknown> = {};
+  for (const r of rows) {
+    try {
+      raw[r.key] = JSON.parse(r.value);
+    } catch {
+      // ignore unreadable value, the default is used instead
+    }
+  }
+  return { ...defaultSettings, ...sanitizeSettings(raw) };
+}
 
 export function getSettingsSync(db: SQLiteDatabase): PlannerSettings {
   try {
-    const rows = db.getAllSync<{ key: string; value: string }>('SELECT * FROM settings');
-    return {
-      ...defaultSettings,
-      ...Object.fromEntries(rows.map(r => [r.key, JSON.parse(r.value)])),
-    };
+    return rowsToSettings(db.getAllSync<SettingRow>('SELECT key, value FROM settings'));
   } catch {
     return defaultSettings;
   }
 }
 
 export async function getSettings(db: SQLiteDatabase): Promise<PlannerSettings> {
-  const rows = await db.getAllAsync<{ key: string; value: string }>('SELECT * FROM settings');
-  return {
-    ...defaultSettings,
-    ...Object.fromEntries(rows.map(r => [r.key, JSON.parse(r.value)])),
-  };
+  try {
+    return rowsToSettings(await db.getAllAsync<SettingRow>('SELECT key, value FROM settings'));
+  } catch (e) {
+    console.warn('Failed to read settings, using defaults', e);
+    return defaultSettings;
+  }
 }
 
 export async function setSetting<K extends keyof PlannerSettings>(

@@ -10,9 +10,19 @@ import type { Task } from '@/types/task';
 interface WeatherState {
   temp: number;
   emoji: string;
-  cityName: string;
-  sunrise: string;
-  sunset: string;
+  sunrise: string | null;
+  sunset: string | null;
+}
+
+// Open-Meteo weather codes → emoji. https://open-meteo.com/en/docs
+export function weatherEmoji(code: number): string {
+  if (code === 0) return '☀️';
+  if (code <= 3) return '🌤️';
+  if (code <= 48) return '🌫️';
+  if (code <= 67 || (code >= 80 && code <= 82)) return '🌧️';
+  if (code <= 77 || (code >= 85 && code <= 86)) return '❄️';
+  if (code >= 95) return '⛈️';
+  return '🌤️';
 }
 
 interface MotivationalHeaderProps {
@@ -82,13 +92,9 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
   const monthsLeft = Math.max(0, 11 - today.getMonth());
 
   // ── Live Weather State ────────────────────────────────────────────────
-  const [weather, setWeather] = useState<WeatherState>({
-    temp: 25,
-    emoji: '🌤️',
-    cityName: 'Алматы',
-    sunrise: '05:42',
-    sunset: '20:18',
-  });
+  // Nothing is shown until real data arrives, so an offline device never
+  // displays made-up numbers.
+  const [weather, setWeather] = useState<WeatherState | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -102,37 +108,17 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
           if (data.current_weather && isMounted) {
             const temp = Math.round(data.current_weather.temperature);
             const code = data.current_weather.weathercode;
-            
-            let emoji = '☀️';
-            if (code <= 3) emoji = '🌤️';
-            else if (code <= 48) emoji = '🌫️';
-            else if (code <= 67 || (code >= 80 && code <= 82)) emoji = '🌧️';
-            else if (code <= 77 || code >= 85) emoji = '❄️';
-            else if (code >= 95) emoji = '⛈️';
-
-            let sunriseStr = '05:42';
-            let sunsetStr = '20:18';
-
-            if (data.daily?.sunrise?.[0]) {
-              const srDate = new Date(data.daily.sunrise[0]);
-              sunriseStr = format(srDate, 'HH:mm');
-            }
-            if (data.daily?.sunset?.[0]) {
-              const ssDate = new Date(data.daily.sunset[0]);
-              sunsetStr = format(ssDate, 'HH:mm');
-            }
-
-            setWeather({
-              temp,
-              emoji,
-              cityName: 'Алматы',
-              sunrise: sunriseStr,
-              sunset: sunsetStr,
-            });
+            const emoji = weatherEmoji(Number(code));
+            // With timezone=auto the API returns Almaty local times ("2026-10-14T07:21"),
+            // so take the clock part as-is instead of converting to the device time zone.
+            const clock = (v: unknown) => (typeof v === 'string' && v.length >= 16 ? v.slice(11, 16) : null);
+            const sunrise = clock(data.daily?.sunrise?.[0]);
+            const sunset = clock(data.daily?.sunset?.[0]);
+            if (Number.isFinite(temp)) setWeather({ temp, emoji, sunrise, sunset });
           }
         }
       } catch {
-        // Fallback to initial state if network is offline
+        // Offline: the weather badges simply stay hidden
       }
     };
 
@@ -188,17 +174,21 @@ export function MotivationalHeader({ tasks, insetsTop, onClose, anim }: Motivati
 
       {/* 3. Metrics Row: Weather, Sunrise/Sunset & Year Countdown (Third Sequential Fade-In) */}
       <Animated.View style={[styles.statsRow, { opacity: statsOpacity }]}>
-        <View style={styles.statBadge}>
-          <Text style={styles.statText}>
-            {`${weather.emoji} ${weather.temp > 0 ? `+${weather.temp}` : weather.temp}°C · ${weather.cityName}`}
-          </Text>
-        </View>
+        {weather && (
+          <View style={styles.statBadge}>
+            <Text style={styles.statText}>
+              {`${weather.emoji} ${weather.temp > 0 ? `+${weather.temp}` : weather.temp}°C · ${t.system.cityAlmaty}`}
+            </Text>
+          </View>
+        )}
 
-        <View style={styles.statBadge}>
-          <Text style={styles.statText}>
-            {`☀️ ${weather.sunrise} · 🌙 ${weather.sunset}`}
-          </Text>
-        </View>
+        {weather?.sunrise && weather.sunset && (
+          <View style={styles.statBadge}>
+            <Text style={styles.statText}>
+              {`☀️ ${weather.sunrise} · 🌙 ${weather.sunset}`}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.statBadge}>
           <Text style={styles.statText}>

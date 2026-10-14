@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Dimensions,
   Image,
@@ -17,20 +16,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 
 import { colors } from '@/constants/colors';
-import { THEMES, THEME_LIST, type ThemeConfig } from '@/constants/themes';
-import { type Language, type ThemeId } from '@/types/settings';
 import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { UserGuideModal } from '@/components/UserGuideModal';
 import { checkIsLiquidGlassSupported, GlassView } from '@/utils/glass';
-import { getDeviceScreenRadius, getConcentricRadius } from '@/utils/screen-radius';
 import { getDatabase } from '@/database/database';
 import { exportBackup, importBackup } from '@/services/backup-service';
 
@@ -43,7 +38,7 @@ export default function SettingsScreen() {
     settings,
     setPref,
     clearAll,
-    refresh,
+    reload,
   } = usePlanner();
 
   // Modals for selection settings
@@ -85,7 +80,7 @@ export default function SettingsScreen() {
 
   const handleImport = async () => {
     const db = await getDatabase();
-    await importBackup(db, refresh, language);
+    await importBackup(db, reload, language);
   };
 
   const themeDisplayName = t.settings.themeNames[theme] || themeConfig.name;

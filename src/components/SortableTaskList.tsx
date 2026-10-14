@@ -2,7 +2,6 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { Animated, Dimensions, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
 
 function DragHandle({ active, opacity }: { active: boolean; opacity?: any }) {

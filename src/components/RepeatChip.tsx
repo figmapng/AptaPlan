@@ -3,7 +3,7 @@ import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import type { TaskRepeat } from '@/types/task';
 import { useTheme } from '@/hooks/use-theme';
-import { useI18n, getLocalizedShortRepeatLabel } from '@/i18n/use-i18n';
+import { useI18n } from '@/i18n/use-i18n';
 import { AnimatedPressable } from './AnimatedPressable';
 
 interface RepeatChipProps {
@@ -12,22 +12,6 @@ interface RepeatChipProps {
   customLabel?: string;
   onPress: () => void;
   hapticsEnabled?: boolean;
-}
-
-export const repeatLabels: Record<TaskRepeat, string> = {
-  none: 'Қайталанбайды',
-  hourly: 'Сағат сайын',
-  daily: 'Күнде',
-  weekdays: 'Жұмыс күндері',
-  weekends: 'Демалыс күндері',
-  weekly: 'Апта сайын',
-  monthly: 'Ай сайын',
-  yearly: 'Жыл сайын',
-  custom: 'Арнайы',
-};
-
-export function getShortRepeatLabel(repeat: TaskRepeat | null, interval = 1): string | null {
-  return getLocalizedShortRepeatLabel(repeat, interval, 'kk');
 }
 
 export function RepeatChip({ repeat, interval = 1, customLabel, onPress, hapticsEnabled = true }: RepeatChipProps) {

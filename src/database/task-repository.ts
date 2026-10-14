@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import type { RepeatConfig, RepeatType, Task, TaskInput, TaskRepeat } from '@/types/task';
+import type { RepeatConfig, Task, TaskInput, TaskRepeat } from '@/types/task';
 import { addDays, fromDateKey, toDateKey } from '@/services/date-service';
 import { createId } from '@/utils/id';
 
@@ -81,11 +81,9 @@ const occursCustom = (task: Task, start: Date, target: Date, interval: number): 
   return target.getDate() === start.getDate();
 };
 
-const occursOn = (task: Task, date: string) => {
-  if (task.date > date) return false;
-  if (task.repeatType === 'none') return task.date === date;
-  const start = fromDateKey(task.date);
-  const target = fromDateKey(date);
+const occursOnDate = (task: Task, start: Date, target: Date, targetKey: string) => {
+  if (task.date > targetKey) return false;
+  if (task.repeatType === 'none') return task.date === targetKey;
   const interval = Math.max(1, task.repeatInterval ?? 1);
   const dayOfWeek = target.getDay();
 
@@ -117,6 +115,26 @@ const occursOn = (task: Task, date: string) => {
     ((target.getFullYear() - start.getFullYear()) * 12 + target.getMonth() - start.getMonth()) % interval === 0
   );
 };
+
+export const occursOn = (task: Task, date: string) =>
+  occursOnDate(task, fromDateKey(task.date), fromDateKey(date), date);
+
+/**
+ * Returns the first date key >= `fromKey` on which the task occurs and which is
+ * not listed in `skip` (deleted/completed occurrences). Searches up to
+ * `maxDays` ahead; returns null when nothing is found.
+ */
+export function findNextOccurrence(task: Task, fromKey: string, skip: Set<string> = new Set(), maxDays = 400) {
+  const start = fromDateKey(task.date);
+  let cursor = fromDateKey(fromKey > task.date ? fromKey : task.date);
+  for (let i = 0; i <= maxDays; i++) {
+    const key = toDateKey(cursor);
+    if (!skip.has(key) && occursOnDate(task, start, cursor, key)) return key;
+    if (task.repeatType === 'none') return null;
+    cursor = addDays(cursor, 1);
+  }
+  return null;
+}
 
 export type TaskSortOptions = { sortMode?: 'time' | 'manual'; completedPlacement?: 'keep' | 'bottom' };
 const sortTasksForRange = (tasks: Task[], opts?: TaskSortOptions) => {
@@ -164,10 +182,12 @@ export async function getTasksForRange(db: SQLiteDatabase, start: string, end: s
   );
   const overrideMap = new Map(overrides.map((o) => [`${o.taskId}:${o.occurrenceDate}`, !!o.isCompleted]));
   const deletedSet = new Set(overrides.filter((o) => o.isDeleted === 1).map((o) => `${o.taskId}:${o.occurrenceDate}`));
+  const compiled = rows.map((task) => ({ task, start: fromDateKey(task.date) }));
   const result: Task[] = [];
   for (let cursor = start; cursor <= end; cursor = toDateKey(addDays(fromDateKey(cursor), 1))) {
-    for (const task of rows) {
-      if (occursOn(task, cursor)) {
+    const target = fromDateKey(cursor);
+    for (const { task, start: taskStart } of compiled) {
+      if (occursOnDate(task, taskStart, target, cursor)) {
         if (deletedSet.has(`${task.id}:${cursor}`)) continue;
         result.push({
           ...task,
@@ -212,6 +232,16 @@ export async function reorderTasksByTimeForDate(db: SQLiteDatabase, date: string
       if (sorted[i].sortOrder !== i) {
         await db.runAsync('UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?', i, now, sorted[i].id);
       }
+    }
+  });
+}
+
+/** Persists a manual order: the task at index i gets sortOrder i. */
+export async function saveManualOrder(db: SQLiteDatabase, taskIds: string[]) {
+  const now = new Date().toISOString();
+  await db.withTransactionAsync(async () => {
+    for (let i = 0; i < taskIds.length; i++) {
+      await db.runAsync('UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?', i, now, taskIds[i]);
     }
   });
 }
@@ -278,29 +308,66 @@ export async function getTaskByExternalId(db: SQLiteDatabase, externalId: string
 }
 
 export async function setNotificationId(db: SQLiteDatabase, id: string, notificationId: string | null) {
-  await db.runAsync('UPDATE tasks SET notificationId=?,updatedAt=? WHERE id=?', notificationId, new Date().toISOString(), id);
+  // Device-local metadata: deliberately leaves updatedAt untouched.
+  await db.runAsync('UPDATE tasks SET notificationId=? WHERE id=?', notificationId, id);
 }
 
+// These helpers deliberately avoid withTransactionAsync: expo-sqlite cannot
+// nest transactions, and deletes are often fired concurrently from the UI.
 export async function deleteTask(db: SQLiteDatabase, id: string) {
-  await db.runAsync('UPDATE tasks SET deletedAt=?,updatedAt=? WHERE id=?', new Date().toISOString(), new Date().toISOString(), id);
+  await db.runAsync('DELETE FROM task_occurrences WHERE taskId=?', id);
+  await db.runAsync('DELETE FROM tasks WHERE id=?', id);
 }
 
 export async function deleteSyncedTasks(db: SQLiteDatabase) {
   const rows = await db.getAllAsync<{ id: string; notificationId: string | null }>(
     'SELECT id, notificationId FROM tasks WHERE externalId IS NOT NULL'
   );
-  await db.runAsync('DELETE FROM tasks WHERE externalId IS NOT NULL');
-  await db.runAsync('DELETE FROM task_occurrences WHERE taskId NOT IN (SELECT id FROM tasks)');
+  await db.execAsync(`
+    DELETE FROM task_occurrences WHERE taskId IN (SELECT id FROM tasks WHERE externalId IS NOT NULL);
+    DELETE FROM tasks WHERE externalId IS NOT NULL;`);
   return rows;
 }
 
 export async function deleteAllTasks(db: SQLiteDatabase) {
-  await db.runAsync(
-    'UPDATE tasks SET deletedAt=?,updatedAt=? WHERE deletedAt IS NULL',
-    new Date().toISOString(),
-    new Date().toISOString()
+  await db.execAsync('DELETE FROM task_occurrences; DELETE FROM tasks;');
+}
+
+/** Removes rows left behind by the old soft-delete implementation. */
+export async function purgeSoftDeletedTasks(db: SQLiteDatabase) {
+  await db.execAsync(`
+    DELETE FROM task_occurrences WHERE taskId IN (SELECT id FROM tasks WHERE deletedAt IS NOT NULL);
+    DELETE FROM tasks WHERE deletedAt IS NOT NULL;
+    DELETE FROM task_occurrences WHERE taskId NOT IN (SELECT id FROM tasks);`);
+}
+
+export async function getTasksWithReminders(db: SQLiteDatabase) {
+  const rows = await db.getAllAsync<Row>(
+    'SELECT * FROM tasks WHERE deletedAt IS NULL AND time IS NOT NULL AND notificationOffset IS NOT NULL'
   );
-  await db.runAsync('DELETE FROM task_occurrences');
+  return rows.map(map);
+}
+
+export async function getOccurrenceSkips(db: SQLiteDatabase, taskId: string, fromKey: string) {
+  const rows = await db.getAllAsync<{ occurrenceDate: string }>(
+    'SELECT occurrenceDate FROM task_occurrences WHERE taskId=? AND occurrenceDate>=? AND (isDeleted=1 OR isCompleted=1)',
+    taskId,
+    fromKey
+  );
+  return new Set(rows.map((r) => r.occurrenceDate));
+}
+
+export async function getAllNotificationIds(db: SQLiteDatabase) {
+  const rows = await db.getAllAsync<{ notificationId: string }>(
+    'SELECT notificationId FROM tasks WHERE notificationId IS NOT NULL'
+  );
+  return rows.map((r) => r.notificationId);
+}
+
+export async function getAllExternalIds(db: SQLiteDatabase) {
+  return db.getAllAsync<{ id: string; externalId: string; notificationId: string | null }>(
+    'SELECT id, externalId, notificationId FROM tasks WHERE externalId IS NOT NULL'
+  );
 }
 
 export async function deleteTaskOccurrence(db: SQLiteDatabase, taskId: string, occurrenceDate: string) {

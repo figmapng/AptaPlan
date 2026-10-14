@@ -1,4 +1,4 @@
-import { addDays, format, getDay, isSameMonth, isSameYear, parseISO } from 'date-fns';
+import { addDays, format, isSameMonth, isSameYear } from 'date-fns';
 import { translations } from './translations';
 import { getDefaultSystemLanguage, type Language } from '@/types/settings';
 import type { Translations } from './types';

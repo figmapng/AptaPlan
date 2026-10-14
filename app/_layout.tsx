@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { PlannerProvider } from '@/store/planner-store';
 import { CardTransitionProvider } from '@/components/card-transition-provider';
 import { useTheme } from '@/hooks/use-theme';
+import { useI18n } from '@/i18n/use-i18n';
 
 // Expo Router error boundary – prevents full crashes, shows recovery UI
 export { ErrorBoundary } from 'expo-router';
@@ -17,6 +18,7 @@ export const unstable_settings = {
 
 function LayoutContent() {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -38,11 +40,11 @@ function LayoutContent() {
         >
           <Stack.Screen name="index" options={{ headerShown: false, headerBackTitle: ' ' }} />
           <Stack.Screen name="day/[date]" options={{ headerShown: false, animation: 'none' }} />
-          <Stack.Screen name="task/new" options={{ title: 'Жаңа тапсырма', presentation: 'modal' }} />
-          <Stack.Screen name="task/[id]" options={{ title: 'Тапсырманы өңдеу', presentation: 'modal' }} />
-          <Stack.Screen name="settings" options={{ headerShown: true, title: 'Баптаулар', headerBackButtonDisplayMode: 'minimal', headerBackTitle: ' ' }} />
-          <Stack.Screen name="appearance" options={{ headerShown: true, title: 'Сыртқы түрі', headerBackButtonDisplayMode: 'minimal', headerBackTitle: ' ' }} />
-          <Stack.Screen name="integrations" options={{ headerShown: true, title: 'Интеграция', headerBackButtonDisplayMode: 'minimal', headerBackTitle: ' ' }} />
+          <Stack.Screen name="task/new" options={{ title: t.system.newTask, presentation: 'modal' }} />
+          <Stack.Screen name="task/[id]" options={{ title: t.system.editTask, presentation: 'modal' }} />
+          <Stack.Screen name="settings" options={{ headerShown: true, title: t.settings.title, headerBackButtonDisplayMode: 'minimal', headerBackTitle: ' ' }} />
+          <Stack.Screen name="appearance" options={{ headerShown: true, title: t.settings.appearance, headerBackButtonDisplayMode: 'minimal', headerBackTitle: ' ' }} />
+          <Stack.Screen name="integrations" options={{ headerShown: true, title: t.integrations.title, headerBackButtonDisplayMode: 'minimal', headerBackTitle: ' ' }} />
         </Stack>
       </CardTransitionProvider>
     </View>

@@ -1,20 +1,27 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import type { Task, TaskInput } from '@/types/task';
 import type { PlannerSettings } from '@/types/settings';
 import { defaultSettings } from '@/types/settings';
 import { getDatabase, getDatabaseSync } from '@/database/database';
 import * as repo from '@/database/task-repository';
 import { getSettings, getSettingsSync, setSetting } from '@/database/settings-repository';
-import { cancelReminder, scheduleReminder } from '@/services/notification-service';
+import { cancelAllReminders, cancelReminder } from '@/services/notification-service';
+import { refreshTaskReminder, rescheduleAllReminders } from '@/services/reminder-scheduler';
 import { removeSyncedAppleReminders, syncAppleRemindersToAptaPlan, type SyncResult } from '@/services/apple-reminders-service';
+import { getTranslations } from '@/i18n/formatters';
 
 type Store = {
   ready: boolean;
+  /** Set only when the database could not be opened at launch. */
   error: string | null;
+  retry: () => void;
   tasks: Task[];
   settings: PlannerSettings;
   loadRange: (s: string, e: string) => Promise<Task[]>;
   refresh: () => Promise<void>;
+  /** Re-reads settings and tasks from the database (e.g. after restoring a backup). */
+  reload: () => Promise<void>;
   toggle: (t: Task) => Promise<void>;
   create: (i: TaskInput) => Promise<string>;
   update: (id: string, i: TaskInput) => Promise<void>;
@@ -43,6 +50,11 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
+  const [initAttempt, setInitAttempt] = useState(0);
+  const retry = useCallback(() => setInitAttempt((n) => n + 1), []);
+  const readyRef = useRef(false);
+  readyRef.current = ready;
+
   const rangeRef = useRef<[string, string] | null>(null);
   const tasksRef = useRef<Task[]>([]);
   tasksRef.current = tasks;
@@ -60,12 +72,18 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
           })
         : [];
       setTasks(loaded);
-      setError(null);
     } catch (e) {
-      setError('Байланыс жоқ');
-      console.warn(e);
+      console.warn('Failed to refresh tasks', e);
     }
   }, []);
+
+  const reload = useCallback(async () => {
+    const db = await getDatabase();
+    const dbSettings = await getSettings(db);
+    settingsRef.current = dbSettings;
+    setSettings(dbSettings);
+    await refresh();
+  }, [refresh]);
 
   const loadRange = useCallback(async (s: string, e: string) => {
     try {
@@ -79,11 +97,9 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
       });
       rangeRef.current = [s, e];
       setTasks(result);
-      setError(null);
       return result;
-    } catch (e) {
-      setError('Байланыс жоқ');
-      console.warn(e);
+    } catch (err) {
+      console.warn('Failed to load tasks', err);
       return [];
     }
   }, []);
@@ -93,79 +109,66 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     return repo.getTask(db, id);
   }, []);
 
+  const lang = () => settingsRef.current.language;
+
   const toggle = useCallback(async (t: Task) => {
     const db = await getDatabase();
     setTasks((x) => {
-      const next = x.map((v) => {
-        if (v.id === t.id && v.date === t.date) {
-          return { ...v, isCompleted: !v.isCompleted, completed: !v.isCompleted };
-        }
-        return v;
-      });
+      const next = x.map((v) => (v.id === t.id && v.date === t.date ? { ...v, isCompleted: !v.isCompleted } : v));
       tasksRef.current = next;
       return next;
     });
     try {
       await repo.toggleTaskCompletion(db, t);
     } catch (e) {
-      await refresh();
       console.warn(e);
+      await refresh();
+      return;
     }
+    // Completing a task (or one occurrence) silences its reminder; un-completing restores it.
+    await refreshTaskReminder(db, t.id, { lang: lang(), requestPermission: false });
   }, [refresh]);
 
   const create = useCallback(async (i: TaskInput) => {
     const db = await getDatabase();
     const id = await repo.createTask(db, i);
-    try {
-      const reminderId = await scheduleReminder(i);
-      if (reminderId) await repo.setNotificationId(db, id, reminderId);
-    } catch (e) {
-      console.warn('Reminder schedule failed', e);
-    }
+    await refreshTaskReminder(db, id, { lang: lang(), requestPermission: true });
     await refresh();
     return id;
   }, [refresh]);
 
   const update = useCallback(async (id: string, i: TaskInput) => {
     const db = await getDatabase();
-    const prev = await repo.getTask(db, id);
-    try {
-      if (prev?.notificationId) await cancelReminder(prev.notificationId);
-      await repo.updateTask(db, id, i);
-      const reminderId = await scheduleReminder({ ...i, isCompleted: i.isCompleted ?? prev?.isCompleted });
-      await repo.setNotificationId(db, id, reminderId);
-    } catch (e) {
-      console.warn('Reminder reschedule failed', e);
-      await repo.updateTask(db, id, i);
-      await repo.setNotificationId(db, id, null);
-    }
-    await refresh();
-  }, [refresh]);
-
-  const remove = useCallback(async (id: string, date?: string, mode?: 'single' | 'all') => {
-    const db = await getDatabase();
-    const prev = await repo.getTask(db, id);
-    if (date && mode === 'single') {
-      if (prev?.repeatType === 'none' && prev.date === date && prev.notificationId) {
-        await cancelReminder(prev.notificationId);
-      }
-      await repo.deleteTaskOccurrence(db, id, date);
-    } else {
-      if (prev?.notificationId) await cancelReminder(prev.notificationId);
-      await repo.deleteTask(db, id);
-    }
+    await repo.updateTask(db, id, i);
+    await refreshTaskReminder(db, id, { lang: lang(), requestPermission: true });
     await refresh();
   }, [refresh]);
 
   const removeOccurrence = useCallback(async (taskId: string, occurrenceDate: string) => {
     const db = await getDatabase();
     const prev = await repo.getTask(db, taskId);
-    if (prev?.repeatType === 'none' && prev.date === occurrenceDate && prev.notificationId) {
+    if (prev?.repeatType === 'none' && prev.date === occurrenceDate) {
+      // A one-off task has a single occurrence: removing it removes the task.
       await cancelReminder(prev.notificationId);
+      await repo.deleteTask(db, taskId);
+    } else {
+      await repo.deleteTaskOccurrence(db, taskId, occurrenceDate);
+      await refreshTaskReminder(db, taskId, { lang: lang(), requestPermission: false });
     }
-    await repo.deleteTaskOccurrence(db, taskId, occurrenceDate);
     await refresh();
   }, [refresh]);
+
+  const remove = useCallback(async (id: string, date?: string, mode?: 'single' | 'all') => {
+    if (date && mode === 'single') {
+      await removeOccurrence(id, date);
+      return;
+    }
+    const db = await getDatabase();
+    const prev = await repo.getTask(db, id);
+    await cancelReminder(prev?.notificationId);
+    await repo.deleteTask(db, id);
+    await refresh();
+  }, [refresh, removeOccurrence]);
 
   const setPref = useCallback(async (k: keyof PlannerSettings, v: PlannerSettings[keyof PlannerSettings]) => {
     const db = await getDatabase();
@@ -182,12 +185,8 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
 
   const clearAll = useCallback(async () => {
     const db = await getDatabase();
-    const rows = await db.getAllAsync<{ notificationId: string | null }>(
-      `SELECT notificationId FROM tasks WHERE notificationId IS NOT NULL`
-    );
-    for (const r of rows) {
-      if (r.notificationId) await cancelReminder(r.notificationId);
-    }
+    for (const id of await repo.getAllNotificationIds(db)) await cancelReminder(id);
+    await cancelAllReminders();
     await repo.deleteAllTasks(db);
     await refresh();
   }, [refresh]);
@@ -203,6 +202,7 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
         settingsRef.current = updated;
         return updated;
       });
+      await rescheduleAllReminders(db, lang());
       await refresh();
     }
     return result;
@@ -226,6 +226,7 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
         settingsRef.current = updated;
         return updated;
       });
+      await rescheduleAllReminders(db, lang());
       await refresh();
     }
     return result;
@@ -247,10 +248,12 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     () => ({
       ready,
       error,
+      retry,
       tasks,
       settings,
       loadRange,
       refresh,
+      reload,
       toggle,
       create,
       update,
@@ -266,10 +269,12 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
     [
       ready,
       error,
+      retry,
       tasks,
       settings,
       loadRange,
       refresh,
+      reload,
       toggle,
       create,
       update,
@@ -287,28 +292,59 @@ export function PlannerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      let db;
       try {
-        const db = await getDatabase();
+        db = await getDatabase();
+        await repo.purgeSoftDeletedTasks(db);
         const dbSettings = await getSettings(db);
-        if (!cancelled) {
-          setSettings(dbSettings);
-          settingsRef.current = dbSettings;
-        }
-        if (dbSettings.syncAppleReminders && dbSettings.autoSyncAppleReminders !== false) {
-          try {
-            await syncAppleRemindersToAptaPlan(db);
-          } catch (err) {
-            console.warn('Auto sync reminders failed:', err);
-          }
-        }
+        if (cancelled) return;
+        setSettings(dbSettings);
+        settingsRef.current = dbSettings;
+        setError(null);
         await refresh();
         if (!cancelled) setReady(true);
       } catch (e) {
-        if (!cancelled) setError('Байланыс жоқ');
         console.warn(e);
+        if (!cancelled) setError(getTranslations(settingsRef.current.language).system.storageError);
+        return;
+      }
+
+      // Background work that must not delay the first render.
+      if (settingsRef.current.syncAppleReminders && settingsRef.current.autoSyncAppleReminders !== false) {
+        try {
+          const res = await syncAppleRemindersToAptaPlan(db);
+          if (res.success) await refresh();
+        } catch (err) {
+          console.warn('Auto sync reminders failed:', err);
+        }
+      }
+      try {
+        await rescheduleAllReminders(db, settingsRef.current.language);
+      } catch (err) {
+        console.warn('Reminder reschedule failed:', err);
       }
     })();
     return () => { cancelled = true; };
+  }, [refresh, initAttempt]);
+
+  // Returning to the app: roll repeating reminders forward and pick up a new day.
+  useEffect(() => {
+    let last = AppState.currentState;
+    const sub = AppState.addEventListener('change', (next) => {
+      if (last.match(/inactive|background/) && next === 'active' && readyRef.current) {
+        void (async () => {
+          try {
+            const db = await getDatabase();
+            await rescheduleAllReminders(db, settingsRef.current.language);
+            await refresh();
+          } catch (e) {
+            console.warn('Foreground refresh failed', e);
+          }
+        })();
+      }
+      last = next;
+    });
+    return () => sub.remove();
   }, [refresh]);
 
   return <Context value={value}>{children}</Context>;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -24,9 +24,6 @@ export default function AppearanceScreen() {
   const { settings, setPref } = usePlanner();
   const scrollRef = React.useRef<ScrollView>(null);
 
-  // App icon state
-  const [selectedIcon, setSelectedIcon] = useState<string>(settings.appIcon || 'default');
-
   const handleSelectTheme = (themeId: ThemeId) => {
     if (settings.haptics) {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -40,21 +37,6 @@ export default function AppearanceScreen() {
     }
     void setThemeMode(mode);
   };
-
-  const handleSelectIcon = (iconId: string) => {
-    if (settings.haptics) {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setSelectedIcon(iconId);
-    void setPref('appIcon' as any, iconId);
-  };
-
-  const appIcons = [
-    { id: 'default', label: t.settings.iconNames.default || 'Default', bg: '#0195FF', mark: '#FFFFFF' },
-    { id: 'amber', label: t.settings.iconNames.amber || 'Amber', bg: '#F6C543', mark: '#FFFFFF' },
-    { id: 'emerald', label: t.settings.iconNames.emerald || 'Emerald', bg: '#53B55A', mark: '#FFFFFF' },
-    { id: 'dark', label: t.settings.iconNames.dark || 'Dark', bg: '#1C1C1E', mark: '#FFFFFF' },
-  ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -301,61 +283,6 @@ export default function AppearanceScreen() {
           </View>
         </View>
 
-        {/* ── Section 3: Қолданба белгішесі (App Icon) ── */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeaderContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>{t.settings.appIcon}</Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>
-              {t.settings.appIconSubtitle}
-            </Text>
-          </View>
-
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder, paddingVertical: 18, paddingHorizontal: 16 }]}>
-            <View style={styles.iconGrid}>
-              {appIcons.map((ico) => {
-                const isSelected = selectedIcon === ico.id;
-                return (
-                  <AnimatedPressable
-                    key={ico.id}
-                    activeScale={0.92}
-                    onPress={() => handleSelectIcon(ico.id)}
-                    style={styles.iconGridItem}
-                    accessibilityRole="button"
-                    accessibilityLabel={ico.label}
-                  >
-                    <View
-                      style={[
-                        styles.appIconMockup,
-                        { backgroundColor: ico.bg },
-                        isSelected && { borderWidth: 2.5, borderColor: colors.today },
-                        ico.id === 'dark' && { borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#2C2C2E' },
-                      ]}
-                    >
-                      <Ionicons name="calendar" size={24} color={ico.mark} />
-                      {isSelected && (
-                        <View style={[styles.iconCheckmarkBadge, { backgroundColor: colors.today, borderColor: colors.card }]}>
-                          <Ionicons name="checkmark" size={11} color="#FFFFFF" />
-                        </View>
-                      )}
-                    </View>
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.iconItemLabel,
-                        {
-                          color: isSelected ? colors.text : colors.secondary,
-                          fontWeight: isSelected ? '700' : '500',
-                        },
-                      ]}
-                    >
-                      {ico.label}
-                    </Text>
-                  </AnimatedPressable>
-                );
-              })}
-            </View>
-          </View>
-        </View>
       </ScrollView>
     </View>
   );
@@ -509,44 +436,5 @@ const styles = StyleSheet.create({
   },
   modeLabel: {
     fontSize: 12.5,
-  },
-  iconGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  iconGridItem: {
-    width: '23%',
-    alignItems: 'center',
-    gap: 7,
-  },
-  appIconMockup: {
-    width: 52,
-    height: 52,
-    borderRadius: 13,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  iconCheckmarkBadge: {
-    position: 'absolute',
-    top: -5,
-    right: -5,
-    width: 19,
-    height: 19,
-    borderRadius: 9.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-  },
-  iconItemLabel: {
-    fontSize: 12,
-    textAlign: 'center',
   },
 });

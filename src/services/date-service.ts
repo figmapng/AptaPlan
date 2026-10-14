@@ -1,4 +1,4 @@
-import { addDays, addMonths, addYears, eachDayOfInterval, endOfMonth, format, getDay, isSameMonth, isSameYear, parseISO, startOfMonth, startOfWeek } from 'date-fns';
+import { addDays, addMonths, addYears, eachDayOfInterval, endOfMonth, format, isSameMonth, parseISO, startOfMonth, startOfWeek } from 'date-fns';
 import type { Language } from '@/types/settings';
 import { formatLocalizedFullDate, formatLocalizedWeekRange } from '@/i18n/formatters';
 

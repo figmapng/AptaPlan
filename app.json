@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "default",
     "scheme": "aptaplan",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "platforms": [
       "ios",
       "android"
@@ -28,7 +28,8 @@
       "buildNumber": "1",
       "infoPlist": {
         "NSRemindersUsageDescription": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет.",
-        "NSRemindersFullAccessUsageDescription": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет."
+        "NSRemindersFullAccessUsageDescription": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет.",
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "android": {
@@ -50,6 +51,11 @@
     },
     "updates": {
       "url": "https://u.expo.dev/4d981943-e979-4edd-92e2-4c923bf4d05a"
+    },
+    "locales": {
+      "kk": "./locales/kk.json",
+      "ru": "./locales/ru.json",
+      "en": "./locales/en.json"
     }
   }
 }

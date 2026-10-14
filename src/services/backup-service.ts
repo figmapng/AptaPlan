@@ -3,8 +3,8 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { format } from 'date-fns';
 import type { Language } from '@/types/settings';
 import { getTranslations } from '@/i18n/formatters';
-import { cancelReminder, scheduleReminder } from '@/services/notification-service';
-import type { TaskInput } from '@/types/task';
+import { rescheduleAllReminders } from '@/services/reminder-scheduler';
+import { sanitizeSettings } from '@/types/settings';
 
 export interface BackupData {
   version: number;
@@ -15,9 +15,93 @@ export interface BackupData {
   settings: Record<string, string>;
 }
 
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+const TIME = /^\d{2}:\d{2}$/;
+const str = (v: unknown) => (typeof v === 'string' ? v : null);
+const int = (v: unknown, fallback: number) => (Number.isFinite(Number(v)) ? Math.trunc(Number(v)) : fallback);
+const flag = (v: unknown) => (v === true || v === 1 || v === '1' ? 1 : 0);
+
+type TaskRowInput = {
+  id: string;
+  externalId: string | null;
+  title: string;
+  note: string | null;
+  date: string;
+  time: string | null;
+  isCompleted: number;
+  priority: string;
+  repeatType: string;
+  repeatInterval: number;
+  repeatConfig: string | null;
+  notificationOffset: number | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** Validates one task from a backup file; returns null for unusable entries. */
+export function normalizeBackupTask(item: any): TaskRowInput | null {
+  if (!item || typeof item !== 'object') return null;
+  if (item.deletedAt) return null;
+  const id = str(item.id);
+  const title = str(item.title)?.trim();
+  const date = str(item.date);
+  if (!id || !title || !date || !DATE_KEY.test(date)) return null;
+  const time = str(item.time);
+  let repeatConfig: string | null = null;
+  if (typeof item.repeatConfig === 'string') {
+    try {
+      JSON.parse(item.repeatConfig);
+      repeatConfig = item.repeatConfig;
+    } catch {
+      repeatConfig = null;
+    }
+  } else if (item.repeatConfig && typeof item.repeatConfig === 'object') {
+    repeatConfig = JSON.stringify(item.repeatConfig);
+  }
+  const now = new Date().toISOString();
+  return {
+    id,
+    externalId: str(item.externalId),
+    title,
+    note: str(item.note),
+    date,
+    time: time && TIME.test(time) ? time : null,
+    isCompleted: flag(item.isCompleted),
+    priority: item.priority === 'important' ? 'important' : 'normal',
+    repeatType: str(item.repeatType) ?? 'none',
+    repeatInterval: Math.max(1, int(item.repeatInterval, 1)),
+    repeatConfig,
+    notificationOffset: item.notificationOffset == null ? null : int(item.notificationOffset, 0),
+    sortOrder: int(item.sortOrder, 0),
+    createdAt: str(item.createdAt) ?? now,
+    updatedAt: str(item.updatedAt) ?? now,
+  };
+}
+
+/** Parses the settings section of a backup into rows safe to store. */
+export function normalizeBackupSettings(raw: unknown): [string, string][] {
+  if (!raw || typeof raw !== 'object') return [];
+  const parsed: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value !== 'string') {
+      parsed[key] = value;
+      continue;
+    }
+    try {
+      parsed[key] = JSON.parse(value);
+    } catch {
+      // unreadable value — skipped
+    }
+  }
+  return Object.entries(sanitizeSettings(parsed)).map(([k, v]) => [k, JSON.stringify(v)]);
+}
+
 function getFileSystem() {
   try {
-    return require('expo-file-system');
+    // The root `expo-file-system` export throws for these string-based methods
+    // since SDK 54; the legacy entry point keeps them working.
+    return require('expo-file-system/legacy');
   } catch {
     return null;
   }
@@ -46,8 +130,15 @@ function getDocumentPicker() {
 export async function exportBackup(db: SQLiteDatabase, lang: Language = 'kk'): Promise<boolean> {
   const t = getTranslations(lang);
   try {
-    const tasks = await db.getAllAsync('SELECT * FROM tasks');
-    const occurrences = await db.getAllAsync('SELECT * FROM task_occurrences');
+    // notificationId is device-local and meaningless elsewhere, so it is not exported.
+    const tasks = await db.getAllAsync(
+      `SELECT id, externalId, title, note, date, time, isCompleted, priority, repeatType, repeatInterval,
+              repeatConfig, notificationOffset, sortOrder, createdAt, updatedAt
+         FROM tasks WHERE deletedAt IS NULL`
+    );
+    const occurrences = await db.getAllAsync(
+      'SELECT * FROM task_occurrences WHERE taskId IN (SELECT id FROM tasks WHERE deletedAt IS NULL)'
+    );
     const rawSettings = await db.getAllAsync<{ key: string; value: string }>('SELECT * FROM settings');
 
     const settingsObj: Record<string, string> = {};
@@ -77,11 +168,18 @@ export async function exportBackup(db: SQLiteDatabase, lang: Language = 'kk'): P
       await FileSystem.writeAsStringAsync(filePath, jsonString, { encoding });
 
       if (Sharing && (await Sharing.isAvailableAsync())) {
-        await Sharing.shareAsync(filePath, {
-          mimeType: 'application/json',
-          dialogTitle: `${t.settings.exportBackup}`,
-          UTI: 'public.json',
-        });
+        try {
+          await Sharing.shareAsync(filePath, {
+            mimeType: 'application/json',
+            dialogTitle: `${t.settings.exportBackup}`,
+            UTI: 'public.json',
+          });
+        } finally {
+          // Don't leave a copy of the user's data lying around in the cache.
+          if (FileSystem.deleteAsync) {
+            await FileSystem.deleteAsync(filePath, { idempotent: true }).catch(() => {});
+          }
+        }
         return true;
       }
     }
@@ -137,15 +235,22 @@ export async function importBackup(
       return false;
     }
 
-    if (!payload.tasks || !Array.isArray(payload.tasks)) {
+    if (!payload || !Array.isArray(payload.tasks)) {
       Alert.alert(t.alerts.importErrorTitle, t.alerts.importInvalidStructure);
       return false;
     }
 
+    const tasks = payload.tasks.map(normalizeBackupTask).filter((x): x is TaskRowInput => x !== null);
+    const taskIds = new Set(tasks.map((x) => x.id));
+    const occurrences = (Array.isArray(payload.occurrences) ? payload.occurrences : []).filter(
+      (o: any) => o && typeof o.id === 'string' && taskIds.has(o.taskId) && DATE_KEY.test(String(o.occurrenceDate))
+    );
+    const settingsRows = normalizeBackupSettings(payload.settings);
+
     return new Promise((resolve) => {
       Alert.alert(
         t.alerts.restoreBackupTitle,
-        t.alerts.restoreBackupMessage(payload.tasks.length),
+        t.alerts.restoreBackupMessage(tasks.length),
         [
           { text: t.common.cancel, style: 'cancel', onPress: () => resolve(false) },
           {
@@ -153,81 +258,40 @@ export async function importBackup(
             style: 'destructive',
             onPress: async () => {
               try {
-                const previousNotificationIds = await db.getAllAsync<{ notificationId: string }>(
-                  'SELECT notificationId FROM tasks WHERE notificationId IS NOT NULL'
-                );
                 await db.withTransactionAsync(async () => {
                   await db.execAsync('DELETE FROM task_occurrences; DELETE FROM tasks; DELETE FROM settings;');
 
-                  for (const taskItem of payload.tasks) {
-                    const repeatConfig =
-                      typeof taskItem.repeatConfig === 'string'
-                        ? taskItem.repeatConfig
-                        : taskItem.repeatConfig
-                        ? JSON.stringify(taskItem.repeatConfig)
-                        : null;
+                  for (const x of tasks) {
                     await db.runAsync(
                       `INSERT OR REPLACE INTO tasks (
                         id, externalId, title, note, date, time, isCompleted, priority,
                         repeatType, repeatInterval, repeatConfig, notificationOffset, notificationId,
                         sortOrder, createdAt, updatedAt, deletedAt
-                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL)`,
                       [
-                        taskItem.id,
-                        taskItem.externalId ?? null,
-                        taskItem.title,
-                        taskItem.note ?? null,
-                        taskItem.date,
-                        taskItem.time ?? null,
-                        taskItem.isCompleted ?? 0,
-                        taskItem.priority ?? 'normal',
-                        taskItem.repeatType ?? 'none',
-                        taskItem.repeatInterval ?? 1,
-                        repeatConfig,
-                        taskItem.notificationOffset ?? null,
-                        null,
-                        taskItem.sortOrder ?? 0,
-                        taskItem.createdAt ?? new Date().toISOString(),
-                        taskItem.updatedAt ?? new Date().toISOString(),
-                        taskItem.deletedAt ?? null,
+                        x.id, x.externalId, x.title, x.note, x.date, x.time, x.isCompleted, x.priority,
+                        x.repeatType, x.repeatInterval, x.repeatConfig, x.notificationOffset,
+                        x.sortOrder, x.createdAt, x.updatedAt,
                       ]
                     );
                   }
 
-                  if (payload.occurrences && Array.isArray(payload.occurrences)) {
-                    for (const o of payload.occurrences) {
-                      await db.runAsync(
-                        `INSERT OR REPLACE INTO task_occurrences (
-                          id, taskId, occurrenceDate, isCompleted, completedAt, isDeleted
-                        ) VALUES (?, ?, ?, ?, ?, ?)`,
-                        [o.id, o.taskId, o.occurrenceDate, o.isCompleted ?? 0, o.completedAt ?? null, o.isDeleted ?? 0]
-                      );
-                    }
+                  for (const o of occurrences) {
+                    await db.runAsync(
+                      `INSERT OR REPLACE INTO task_occurrences (
+                        id, taskId, occurrenceDate, isCompleted, completedAt, isDeleted
+                      ) VALUES (?, ?, ?, ?, ?, ?)`,
+                      [o.id, o.taskId, o.occurrenceDate, flag(o.isCompleted), str(o.completedAt), flag(o.isDeleted)]
+                    );
                   }
 
-                  if (payload.settings && typeof payload.settings === 'object') {
-                    for (const [key, value] of Object.entries(payload.settings)) {
-                      await db.runAsync(
-                        'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-                        [key, String(value)]
-                      );
-                    }
+                  for (const [key, value] of settingsRows) {
+                    await db.runAsync('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', [key, value]);
                   }
                 });
 
-                // Notification identifiers are local to one device. Cancel the
-                // previous set, then create fresh identifiers for restored tasks.
-                await Promise.allSettled(previousNotificationIds.map(({ notificationId }) => cancelReminder(notificationId)));
-                for (const taskItem of payload.tasks) {
-                  const notificationId = await scheduleReminder(taskItem as TaskInput);
-                  if (notificationId) {
-                    await db.runAsync('UPDATE tasks SET notificationId=?, updatedAt=? WHERE id=?', [
-                      notificationId,
-                      new Date().toISOString(),
-                      taskItem.id,
-                    ]);
-                  }
-                }
+                // Notification identifiers are local to one device: rebuild them all.
+                await rescheduleAllReminders(db, lang);
 
                 await onSuccess();
                 Alert.alert(t.alerts.importSuccessTitle, t.alerts.importSuccessMessage);

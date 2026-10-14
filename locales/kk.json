@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSRemindersUsageDescription": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет.",
+    "NSRemindersFullAccessUsageDescription": "Тапсырмаларды Apple Reminders қосымшасынан AptaPlan-ға импорттау үшін рұқсат қажет."
+  }
+}

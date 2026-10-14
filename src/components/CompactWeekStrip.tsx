@@ -1,7 +1,6 @@
 import React, { useMemo, useRef } from 'react';
-import { Animated, PanResponder, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { addDays, differenceInCalendarDays, isSameDay, isToday, startOfWeek } from 'date-fns';
-import { colors as defaultColors } from '@/constants/colors';
+import { Animated, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { addDays, isSameDay, isToday, startOfWeek } from 'date-fns';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { usePlanner } from '@/store/planner-store';

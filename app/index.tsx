@@ -1,5 +1,5 @@
-import { format, isToday } from 'date-fns';
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { format } from 'date-fns';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -15,7 +15,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Svg, { Circle, Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -27,13 +27,10 @@ import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import {
   addDays,
-  formatWeekRange,
   getFirstDominantWeekOfMonth,
   getMonthGrid,
   getStartOfWeekWith,
   isSameMonth,
-  months,
-  shortMonths,
   toDateKey,
 } from '@/services/date-service';
 import { DayCard } from '@/components/day-card';
@@ -47,7 +44,6 @@ import { MotivationalHeader } from '@/components/MotivationalHeader';
 import { useCardTransition } from '@/components/card-transition-provider';
 import { MonthPickerModal } from '@/components/MonthPickerModal';
 import { ViewModeModal, type ViewMode } from '@/components/ViewModeModal';
-import { CompactWeekStrip } from '@/components/CompactWeekStrip';
 import { useI18n } from '@/i18n/use-i18n';
 import type { Task } from '@/types/task';
 
@@ -79,7 +75,7 @@ export default function Home() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { openCard } = useCardTransition();
-  const { ready, error, tasks, loadRange, create, settings } = usePlanner();
+  const { ready, error, retry, tasks, loadRange, create, settings } = usePlanner();
   const { colors, isDark } = useTheme();
   const { t, language } = useI18n();
   const [measuredContentHeight, setMeasuredContentHeight] = useState(0);
@@ -1144,15 +1140,18 @@ export default function Home() {
   if (error)
     return (
       <Center>
-        <Text style={{ fontSize: 19 }}>Деректер ашылмады</Text>
+        <Text style={{ fontSize: 19, color: colors.text }}>{t.system.loadFailed}</Text>
         <Text style={{ color: colors.secondary }}>{error}</Text>
+        <Pressable onPress={retry} accessibilityRole="button" style={{ marginTop: 12, padding: 10 }}>
+          <Text style={{ color: colors.today, fontWeight: '600' }}>{t.system.retry}</Text>
+        </Pressable>
       </Center>
     );
   if (!ready)
     return (
       <Center>
         <ActivityIndicator color={colors.today} />
-        <Text>Жоспар жүктелуде…</Text>
+        <Text style={{ color: colors.text }}>{t.system.loading}</Text>
       </Center>
     );
 
@@ -1368,7 +1367,7 @@ export default function Home() {
                 ref={modeButtonRef}
                 collapsable={false}
                 accessibilityRole="button"
-                accessibilityLabel="Режим таңдау"
+                accessibilityLabel={t.accessibility.chooseViewMode}
                 onPress={openModePicker}
                 activeScale={0.95}
                 style={{
@@ -1399,7 +1398,7 @@ export default function Home() {
               {/* Settings Segment */}
               <AnimatedPressable
                 accessibilityRole="button"
-                accessibilityLabel="Баптаулар"
+                accessibilityLabel={t.accessibility.openSettings}
                 onPress={() => { collapseWeek(); router.push('/settings'); }}
                 activeScale={0.90}
                 style={{
@@ -1450,7 +1449,7 @@ export default function Home() {
                   ref={modeButtonRef}
                   collapsable={false}
                   accessibilityRole="button"
-                  accessibilityLabel="Режим таңдау"
+                  accessibilityLabel={t.accessibility.chooseViewMode}
                   onPress={openModePicker}
                   activeScale={0.95}
                   style={{
@@ -1481,7 +1480,7 @@ export default function Home() {
                 {/* Settings Segment */}
                 <AnimatedPressable
                   accessibilityRole="button"
-                  accessibilityLabel="Баптаулар"
+                  accessibilityLabel={t.accessibility.openSettings}
                   onPress={() => { collapseWeek(); router.push('/settings'); }}
                   activeScale={0.90}
                   style={{
@@ -2583,8 +2582,9 @@ const yearStyles = StyleSheet.create({
 
 
 function Center({ children }: { children: React.ReactNode }) {
+  const { colors: themeColors } = useTheme();
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: colors.background, padding: 24 }}>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: themeColors.background, padding: 24 }}>
       {children}
     </View>
   );

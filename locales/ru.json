@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSRemindersUsageDescription": "Доступ нужен, чтобы импортировать задачи из Apple Reminders в AptaPlan.",
+    "NSRemindersFullAccessUsageDescription": "Доступ нужен, чтобы импортировать задачи из Apple Reminders в AptaPlan."
+  }
+}

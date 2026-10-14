@@ -1,11 +1,9 @@
-import React, { memo, useMemo, useRef, useState } from 'react';
+import React, { memo, useRef } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
-import Svg, { Path, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { format, isToday } from 'date-fns';
-import { colors } from '@/constants/colors';
 import { toDateKey } from '@/services/date-service';
 import type { Task } from '@/types/task';
-import { usePlanner } from '@/store/planner-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/i18n/use-i18n';
 import { TaskListFrame } from './task-list-frame';

@@ -55,7 +55,12 @@ export default function IntegrationsScreen() {
             t.integrations.alerts.syncEnabledMessage(res.importedCount, res.updatedCount)
           );
         } else {
-          Alert.alert(t.integrations.alerts.permissionRequiredTitle, res.error || t.common.error);
+          Alert.alert(
+            res.errorCode === 'permissionDenied'
+              ? t.integrations.alerts.permissionRequiredTitle
+              : t.integrations.alerts.syncErrorTitle,
+            res.errorCode ? t.remindersErrors[res.errorCode] : t.common.error
+          );
         }
       } catch (e: any) {
         Alert.alert(t.common.error, e?.message || t.common.error);
@@ -99,7 +104,7 @@ export default function IntegrationsScreen() {
     try {
       const res = await syncAppleReminders();
       if (res.success) {
-        const total = res.importedCount + res.updatedCount;
+        const total = res.importedCount + res.updatedCount + (res.removedCount ?? 0);
         const msg = total > 0 ? t.integrations.alerts.updatedCount(total) : t.integrations.alerts.noNewTasks;
         setSyncStatusText(msg);
         Alert.alert(
@@ -107,7 +112,10 @@ export default function IntegrationsScreen() {
           t.integrations.alerts.syncSuccessMessage(res.importedCount, res.updatedCount, res.totalFound)
         );
       } else {
-        Alert.alert(t.integrations.alerts.syncErrorTitle, res.error || t.common.error);
+        Alert.alert(
+          t.integrations.alerts.syncErrorTitle,
+          res.errorCode ? t.remindersErrors[res.errorCode] : t.common.error
+        );
       }
     } catch (e: any) {
       Alert.alert(t.common.error, e?.message || t.common.error);

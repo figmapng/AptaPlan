@@ -5,7 +5,6 @@ import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { BottomTaskInput } from './BottomTaskInput';
 import { addDays, differenceInCalendarDays, format, isToday } from 'date-fns';
-import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
 import { toDateKey } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
@@ -16,8 +15,8 @@ import { TaskPreviewModal } from './TaskPreviewModal';
 import { SortableTaskList, TrashIcon } from './SortableTaskList';
 import { CompactWeekStrip } from './CompactWeekStrip';
 import { getDatabase } from '@/database/database';
+import { saveManualOrder } from '@/database/task-repository';
 import { TaskListFrame } from './task-list-frame';
-import { AnimatedPressable } from './AnimatedPressable';
 import { BackButton } from './BackButton';
 import type { Task } from '@/types/task';
 
@@ -59,7 +58,7 @@ type CarouselCardProps = {
   beginEditing: (task: Task) => void;
   beginAdding: (targetDate?: Date) => void;
   closeCard: () => void;
-  handlePendingDelete: (task: Task) => void;
+  handlePendingDelete: (task: Task, scope: 'single' | 'all') => void;
   isTransitionSettled?: boolean;
   headerPanHandlers?: any;
   deleteZoneThresholdY?: number;
@@ -616,6 +615,15 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const scrollResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingDeleteTaskRef = useRef<Task | null>(null);
   pendingDeleteTaskRef.current = pendingDeleteTask;
+  const pendingDeleteScopeRef = useRef<'single' | 'all'>('all');
+
+  // 'single' removes just this day of a repeating task; 'all' removes the whole task.
+  const commitDelete = useCallback(
+    (task: Task, scope: 'single' | 'all') => {
+      void remove(task.id, task.occurrenceDate || task.date, scope);
+    },
+    [remove]
+  );
 
   useEffect(() => {
     return () => {
@@ -627,11 +635,11 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
         clearTimeout(undoTimerRef.current);
         undoTimerRef.current = null;
         if (pendingDeleteTaskRef.current) {
-          void remove(pendingDeleteTaskRef.current.id);
+          commitDelete(pendingDeleteTaskRef.current, pendingDeleteScopeRef.current);
         }
       }
     };
-  }, [remove]);
+  }, [commitDelete]);
 
   const [measuredListHeight, setMeasuredListHeight] = useState<number>(0);
   const isAnimatingRef = useRef(false);
@@ -731,18 +739,29 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const handleAutoScroll = useCallback((delta: number) => {
   }, []);
 
-  const handlePendingDelete = useCallback((task: Task) => {
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+  const handlePendingDelete = useCallback((task: Task, scope: 'single' | 'all') => {
+    if (undoTimerRef.current) {
+      // A new pending delete commits the previous one instead of silently dropping it.
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+      const previous = pendingDeleteTaskRef.current;
+      if (previous) commitDelete(previous, pendingDeleteScopeRef.current);
+    }
+    pendingDeleteScopeRef.current = scope;
+    pendingDeleteTaskRef.current = task;
     setPendingDeleteTask(task);
     undoTimerRef.current = setTimeout(() => {
-      void remove(task.id);
+      undoTimerRef.current = null;
+      commitDelete(task, scope);
+      pendingDeleteTaskRef.current = null;
       setPendingDeleteTask(null);
     }, 4000);
-  }, [remove]);
+  }, [commitDelete]);
 
   const handleDropInDeleteZone = useCallback((task: Task) => {
     isDraggingTaskRef.current = false;
-    handlePendingDelete(task);
+    // Dragging one day of a repeating task to the bin removes only that day.
+    handlePendingDelete(task, task.repeatType && task.repeatType !== 'none' ? 'single' : 'all');
     setIsDraggingTask(false);
     setIsOverDeleteZone(false);
   }, [handlePendingDelete]);
@@ -752,6 +771,8 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = null;
+    pendingDeleteTaskRef.current = null;
     Animated.timing(toastAnim, {
       toValue: 0,
       duration: 120,
@@ -764,18 +785,7 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
   const handleReorder = useCallback(
     async (newData: Task[], targetDate?: Date) => {
       const db = await getDatabase();
-      const updatedAt = new Date().toISOString();
-
-      await db.withTransactionAsync(async () => {
-        for (let i = 0; i < newData.length; i++) {
-          await db.runAsync(
-            'UPDATE tasks SET sortOrder=?, updatedAt=? WHERE id=?',
-            i,
-            updatedAt,
-            newData[i].id
-          );
-        }
-      });
+      await saveManualOrder(db, newData.map((task) => task.id));
       if (settings.sortMode !== 'manual') {
         void setPref('sortMode', 'manual');
       }
@@ -1320,9 +1330,9 @@ export function CardTransitionProvider({ children }: { children: React.ReactNode
             setPreviewTask(null);
             beginEditing(t);
           }}
-          onDelete={(t) => {
+          onDelete={(t, scope) => {
             setPreviewTask(null);
-            handlePendingDelete(t);
+            handlePendingDelete(t, scope);
           }}
         />
 

@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSRemindersUsageDescription": "AptaPlan needs access to import your tasks from Apple Reminders.",
+    "NSRemindersFullAccessUsageDescription": "AptaPlan needs access to import your tasks from Apple Reminders."
+  }
+}

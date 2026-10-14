@@ -23,6 +23,7 @@ jest.mock('@/database/task-repository', () => ({
   deleteTask: jest.fn(),
   deleteSyncedTasks: jest.fn(),
   getTaskByExternalId: jest.fn(),
+  getAllExternalIds: jest.fn(),
 }));
 
 jest.mock('@/services/notification-service', () => ({
@@ -38,6 +39,7 @@ describe('Apple Reminders Synchronization - All Scenarios', () => {
     (Platform as any).OS = 'ios';
     (Calendar.requestRemindersPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
     (Calendar.getCalendarsAsync as jest.Mock).mockResolvedValue([{ id: 'cal-1', title: 'Reminders' }]);
+    (taskRepo.getAllExternalIds as jest.Mock).mockResolvedValue([]);
   });
 
   test('Situation 1: Incomplete task with explicit dueDate -> imports with exact dueDate and time', async () => {
@@ -242,6 +244,9 @@ describe('Apple Reminders Synchronization - All Scenarios', () => {
       note: null,
       priority: 'normal',
       repeatType: 'none',
+      repeatInterval: 1,
+      repeatConfig: null,
+      notificationOffset: 10,
     });
 
     const result = await syncAppleRemindersToAptaPlan(mockDb);
@@ -278,7 +283,7 @@ describe('Apple Reminders Synchronization - All Scenarios', () => {
     const result = await syncAppleRemindersToAptaPlan(mockDb);
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('iOS');
+    expect(result.errorCode).toBe('iosOnly');
   });
 
   test('Situation 11: Permission denied -> returns permission error cleanly', async () => {
@@ -287,7 +292,7 @@ describe('Apple Reminders Synchronization - All Scenarios', () => {
     const result = await syncAppleRemindersToAptaPlan(mockDb);
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('рұқсат');
+    expect(result.errorCode).toBe('permissionDenied');
   });
 
   test('Situation 12: No reminder calendars found -> returns success with 0 items', async () => {
@@ -298,6 +303,58 @@ describe('Apple Reminders Synchronization - All Scenarios', () => {
     expect(result.success).toBe(true);
     expect(result.importedCount).toBe(0);
     expect(result.totalFound).toBe(0);
+  });
+
+  test('Situation 12b: User-set reminder offset and repeat rule survive an update from iOS', async () => {
+    (Calendar.getRemindersAsync as jest.Mock).mockResolvedValue([
+      { id: 'rem-14', title: 'Жаңа атау', completed: false, dueDate: '2026-08-21T10:00:00.000Z' },
+    ]);
+    (taskRepo.getTaskByExternalId as jest.Mock).mockResolvedValue({
+      id: 'local-14',
+      externalId: 'rem-14',
+      title: 'Ескі атау',
+      date: '2026-08-21',
+      time: '09:00',
+      isCompleted: false,
+      note: null,
+      priority: 'important',
+      repeatType: 'custom',
+      repeatInterval: 2,
+      repeatConfig: { unit: 'weekly', interval: 2 },
+      notificationOffset: 15,
+    });
+
+    await syncAppleRemindersToAptaPlan(mockDb);
+
+    expect(taskRepo.updateTask).toHaveBeenCalledWith(
+      mockDb,
+      'local-14',
+      expect.objectContaining({
+        priority: 'important',
+        repeatType: 'custom',
+        repeatInterval: 2,
+        repeatConfig: { unit: 'weekly', interval: 2 },
+        notificationOffset: 15,
+      })
+    );
+  });
+
+  test('Situation 12c: Reminder deleted in iOS is removed locally (only inside the fetched window)', async () => {
+    (Calendar.getRemindersAsync as jest.Mock).mockResolvedValue([]);
+    (taskRepo.getAllExternalIds as jest.Mock).mockResolvedValue([
+      { id: 'local-gone', externalId: 'rem-gone', notificationId: 'n-1' },
+      { id: 'local-old', externalId: 'rem-old', notificationId: null },
+    ]);
+    (taskRepo.getTaskByExternalId as jest.Mock).mockImplementation(async (_db: unknown, ext: string) =>
+      ext === 'rem-gone' ? { id: 'local-gone', date: todayKey } : { id: 'local-old', date: '2000-01-01' }
+    );
+
+    const result = await syncAppleRemindersToAptaPlan(mockDb);
+
+    expect(result.removedCount).toBe(1);
+    expect(taskRepo.deleteTask).toHaveBeenCalledWith(mockDb, 'local-gone');
+    expect(taskRepo.deleteTask).not.toHaveBeenCalledWith(mockDb, 'local-old');
+    expect(notifService.cancelReminder).toHaveBeenCalledWith('n-1');
   });
 
   test('Situation 13: removeSyncedAppleReminders cleans up all synced tasks and notifications', async () => {

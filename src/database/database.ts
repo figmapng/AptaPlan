@@ -12,6 +12,15 @@ export function getDatabaseSync(): SQLite.SQLiteDatabase {
 }
 
 export function getDatabase() {
-  database ??= SQLite.openDatabaseAsync('aptaplan.db').then(async db => { await migrate(db); return db; });
+  database ??= SQLite.openDatabaseAsync('aptaplan.db')
+    .then(async (db) => {
+      await migrate(db);
+      return db;
+    })
+    .catch((e) => {
+      // Let the next call try again instead of caching the failure forever.
+      database = undefined;
+      throw e;
+    });
   return database;
 }

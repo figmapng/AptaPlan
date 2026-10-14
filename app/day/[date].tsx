@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Animated,
-  PanResponder,
   Platform,
   Pressable,
   ScrollView,
@@ -9,11 +7,9 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { format, isToday } from 'date-fns';
-import { colors } from '@/constants/colors';
 import { useTheme } from '@/hooks/use-theme';
 import { fromDateKey, toDateKey } from '@/services/date-service';
 import { usePlanner } from '@/store/planner-store';
@@ -22,7 +18,6 @@ import { useCardTransition } from '@/components/card-transition-provider';
 import { TaskBottomSheet } from '@/components/TaskBottomSheet';
 import { TaskPreviewModal } from '@/components/TaskPreviewModal';
 import { SortableTaskList } from '@/components/SortableTaskList';
-import { AnimatedPressable } from '@/components/AnimatedPressable';
 import { BackButton } from '@/components/BackButton';
 import { BottomTaskInput } from '@/components/BottomTaskInput';
 import { CompactWeekStrip } from '@/components/CompactWeekStrip';
@@ -30,6 +25,7 @@ import { useI18n } from '@/i18n/use-i18n';
 import type { Task } from '@/types/task';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getDatabase } from '@/database/database';
+import { saveManualOrder } from '@/database/task-repository';
 
 export default function DayScreen() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -46,6 +42,7 @@ export default function DayScreen() {
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingDeleteTaskRef = useRef<Task | null>(null);
   pendingDeleteTaskRef.current = pendingDeleteTask;
+  const pendingDeleteScopeRef = useRef<'single' | 'all'>('all');
 
   useEffect(() => {
     return () => {
@@ -54,7 +51,7 @@ export default function DayScreen() {
         undoTimerRef.current = null;
         if (pendingDeleteTaskRef.current) {
           const t = pendingDeleteTaskRef.current;
-          void remove(t.id, t.occurrenceDate || t.date, 'all');
+          void remove(t.id, t.occurrenceDate || t.date, pendingDeleteScopeRef.current);
         }
       }
     };
@@ -73,11 +70,20 @@ export default function DayScreen() {
     scrollRef.current?.scrollTo({ y: nextY, animated: false });
   }, []);
 
-  const handlePendingDelete = useCallback((task: Task) => {
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+  const handlePendingDelete = useCallback((task: Task, scope: 'single' | 'all') => {
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+      const previous = pendingDeleteTaskRef.current;
+      if (previous) void remove(previous.id, previous.occurrenceDate || previous.date, pendingDeleteScopeRef.current);
+    }
+    pendingDeleteScopeRef.current = scope;
+    pendingDeleteTaskRef.current = task;
     setPendingDeleteTask(task);
     undoTimerRef.current = setTimeout(() => {
-      void remove(task.id, task.occurrenceDate || task.date, 'all');
+      undoTimerRef.current = null;
+      void remove(task.id, task.occurrenceDate || task.date, scope);
+      pendingDeleteTaskRef.current = null;
       setPendingDeleteTask(null);
     }, 4000);
   }, [remove]);
@@ -87,25 +93,16 @@ export default function DayScreen() {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = null;
+    pendingDeleteTaskRef.current = null;
     setPendingDeleteTask(null);
     await refresh();
   }, [settings.haptics, refresh]);
 
   const handleReorder = useCallback(async (newData: Task[]) => {
     const db = await getDatabase();
-    const updatedAt = new Date().toISOString();
-
-    // Save the entire order at once. This prevents a partial order from being
-    // rendered when a user drops a row and immediately starts another drag.
-    await db.withTransactionAsync(async () => {
-      for (let i = 0; i < newData.length; i++) {
-        await db.runAsync(
-          'UPDATE tasks SET sort_order = ?, updated_at = ? WHERE id = ?;',
-          [i, updatedAt, newData[i].id]
-        );
-      }
-    });
-
+    // Save the entire order at once so a quick second drag never sees a partial order.
+    await saveManualOrder(db, newData.map((task) => task.id));
     await refresh();
   }, [refresh]);
 
@@ -348,9 +345,9 @@ export default function DayScreen() {
         setPreviewTask(null);
         beginEditing(tVal);
       }}
-      onDelete={(tVal) => {
+      onDelete={(tVal, scope) => {
         setPreviewTask(null);
-        handlePendingDelete(tVal);
+        handlePendingDelete(tVal, scope);
       }}
     />
     <TaskBottomSheet
